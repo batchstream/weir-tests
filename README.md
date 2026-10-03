@@ -5,7 +5,7 @@ comparisons for [Weir](https://github.com/batchstream/weir). The first benchmark
 compares native MongoDB/Elasticsearch clients with the published Weir Go SDK
 under matched native/SDK bulk workloads with database saturation evidence. The finite single-operation profile remains available for latency diagnosis.
 
-The test module depends on **SDK v0.4.0** and **protocol v0.2.0**. It imports no
+The test module depends on **SDK v0.4.1** and **protocol v0.2.0**. It imports no
 Weir server packages. The server executable is prepared separately from an
 immutable source revision and checksum in [versions.json](versions.json);
 there is no floating `main` dependency or local module replacement.
