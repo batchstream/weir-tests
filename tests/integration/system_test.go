@@ -14,11 +14,11 @@ import (
 	weir "github.com/batchstream/weir-go"
 	pb "github.com/batchstream/weir-protocol/api/weir/v1"
 	"github.com/batchstream/weir-tests/internal/fixture"
+	"github.com/batchstream/weir-tests/internal/observe"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 const rpcTimeout = 5 * time.Second
@@ -44,7 +44,7 @@ func TestSystemIntegration(t *testing.T) {
 		WeirBinary: binary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"),
 		Backends:   []string{"mongo", "search"},
 		OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 2,
-		BatchSize: 16, BatchCollect: time.Millisecond,
+		BatchSize: 513,
 	}
 	cluster, err := fixture.Start(ctx, options)
 	if err != nil {
@@ -86,6 +86,7 @@ func TestSystemIntegration(t *testing.T) {
 			testLifecycle(t, ctx, client, backend)
 			testCrossOwnerScan(t, ctx, cluster, backend)
 			testPublicBatch(t, ctx, client, backend)
+			suite.testLargeDistinctBatch(t, backend)
 		}) {
 			return
 		}
@@ -157,31 +158,15 @@ func (s *system) testDiscovery(t *testing.T) {
 		t.Fatalf("unannounced store ResolveStore: want Unavailable and no endpoints, got response=%v err=%v", response, err)
 	}
 	for _, backend := range backends {
+		s.testServerPreflight(t, backend)
+		s.testBatchOwnerRouting(t, backend)
 		read := &pb.ReadRequest{Resource: backend.resource("primary")}
-		operation := &pb.Command_Read{Read: read}
-		command := &pb.Command{Version: 1, Operation: operation}
-		encoded, err := proto.Marshal(command)
-		if err != nil {
-			t.Fatal(err)
-		}
-		frame := &pb.ExecuteRequest{RequestId: 1, StoreName: backend.name, CommandPayload: encoded}
+		request := &pb.ReadBatchRequest{StoreName: backend.name, Requests: []*pb.ReadRequest{read}}
 		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		stream, err := wire.Execute(rpc)
-		if err == nil {
-			// Recv exposes final status even when the server has already rejected
-			// the stream before Send finishes.
-			_ = stream.Send(frame)
-			_ = stream.CloseSend()
-			var response *pb.ExecuteResponse
-			response, err = stream.Recv()
-			if response != nil {
-				cancel()
-				t.Fatal("discovery-only node relayed a business response", response)
-			}
-		}
+		response, err := wire.Read(rpc, request)
 		cancel()
-		if status.Code(err) != codes.Unavailable {
-			t.Fatalf("non-owner %s Execute: want Unavailable, got %v", backend.name, err)
+		if response != nil || status.Code(err) != codes.Unavailable {
+			t.Fatalf("non-owner %s unary Read: want Unavailable and no business response, got response=%v err=%v", backend.name, response, err)
 		}
 	}
 }
@@ -328,4 +313,97 @@ func poll(t *testing.T, parent context.Context, description string, check func(c
 		case <-timer.C:
 		}
 	}
+}
+
+func (s *system) nodeMetrics(t *testing.T) []observe.Snapshot {
+	t.Helper()
+	snapshots := make([]observe.Snapshot, len(s.cluster.Nodes))
+	for index, node := range s.cluster.Nodes {
+		snapshots[index] = observe.Fetch(s.ctx, node.Diagnostics)
+		if snapshots[index].Error != "" {
+			t.Fatalf("node %d diagnostic observation failed: %s", index, snapshots[index].Error)
+		}
+	}
+	return snapshots
+}
+
+type unaryBatchEvidence struct {
+	Before, After    []observe.Snapshot
+	Store, Method    string
+	Records          int
+	SingleInvocation bool
+}
+
+func assertUnaryBatchMetrics(t *testing.T, evidence unaryBatchEvidence) {
+	t.Helper()
+	var owners int
+	var rpcCount float64
+	labels := map[string]string{"store": evidence.Store, "operation": evidence.Method}
+	storeLabels := map[string]string{"store": evidence.Store}
+	methodLabels := map[string]string{"method": evidence.Method}
+	for index, before := range evidence.Before {
+		after := evidence.After[index]
+		left, beforeFound := before.Sum("weir_store_records_total", labels)
+		right, afterFound := after.Sum("weir_store_records_total", labels)
+		if index < len(evidence.Before)-1 && (!beforeFound || !afterFound) {
+			t.Fatalf("owner %d terminal-record observation unavailable", index)
+		}
+		if index == len(evidence.Before)-1 && (beforeFound || afterFound) {
+			t.Fatal("discovery-only node unexpectedly exposes a local Store")
+		}
+		if right < left {
+			t.Fatal("owned store metrics reset")
+		}
+		delta := right - left
+		if delta != 0 {
+			if index == len(evidence.Before)-1 || delta != float64(evidence.Records) {
+				t.Fatalf("whole batch relayed or split across owners: node=%d delta=%v", index, delta)
+			}
+			owners++
+			if evidence.SingleInvocation {
+				count, err := observe.Delta(before, after, "weir_store_batch_operations_count", storeLabels)
+				if err != nil || count != 1 {
+					t.Fatalf("physical adapter invocations=%v error=%v", count, err)
+				}
+				operations, err := observe.Delta(before, after, "weir_store_batch_operations_sum", storeLabels)
+				if err != nil || operations != float64(evidence.Records) {
+					t.Fatalf("physical adapter batch operations=%v error=%v", operations, err)
+				}
+			}
+		}
+		left, beforeFound = before.Sum("weir_rpc_completions_total", methodLabels)
+		right, afterFound = after.Sum("weir_rpc_completions_total", methodLabels)
+		if !beforeFound || !afterFound {
+			t.Fatalf("node %d unary completion observation unavailable", index)
+		}
+		if right < left {
+			t.Fatal("RPC completion metrics reset")
+		}
+		rpcCount += right - left
+	}
+	if owners != 1 || rpcCount != 1 {
+		t.Fatalf("single owner unary batch: owners=%d completed RPCs=%v", owners, rpcCount)
+	}
+}
+
+func (s *system) testBatchOwnerRouting(t *testing.T, backend *backendData) {
+	t.Helper()
+	before := s.nodeMetrics(t)
+	reads := make([]*weir.ReadRequest, 32)
+	for index := range reads {
+		request := &weir.ReadRequest{Resource: backend.resource("primary")}
+		reads[index] = request
+	}
+	opts := weir.ReadOptions{StoreName: backend.name, Requests: reads}
+	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
+	results, err := s.client.Read(rpc, opts)
+	cancel()
+	if err != nil || len(results) != len(reads) {
+		t.Fatalf("routed unary batch: results=%d err=%v", len(results), err)
+	}
+	for _, result := range results {
+		backend.assertReadResult(t, result, nil, 5)
+	}
+	evidence := unaryBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "read", Records: len(reads)}
+	assertUnaryBatchMetrics(t, evidence)
 }

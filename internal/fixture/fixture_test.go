@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 func executableFile(t *testing.T) string {
@@ -34,9 +33,7 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, OwnerCount: -1},
 		{WeirBinary: binary, OwnerCount: 9},
 		{WeirBinary: binary, StoreConcurrency: 33},
-		{WeirBinary: binary, BatchSize: 129},
-		{WeirBinary: binary, BatchCollect: -1},
-		{WeirBinary: binary, BatchCollect: 11 * time.Millisecond},
+		{WeirBinary: binary, BatchSize: -1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},
 	}
 	for _, options := range cases {
@@ -51,8 +48,12 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	backends[0] = "search"
-	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 || validated.BatchCollect != 0 {
+	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 {
 		t.Fatalf("invalid defaults or retained caller slice: %+v", validated)
+	}
+	large := Options{WeirBinary: binary, BatchSize: 513}
+	if _, err := validateOptions(large); err != nil {
+		t.Fatal("valid physical batch greater than 128 rejected:", err)
 	}
 	ctx := context.Background()
 	missing := Options{}
@@ -137,7 +138,7 @@ func TestPublishedPortMustBeOneLoopbackBinding(t *testing.T) {
 }
 
 func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
-	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16, BatchCollect: 3 * time.Millisecond}
+	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true", SearchURL: "http://127.0.0.1:50002"}
 	c.Nodes = []Node{
 		{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true},

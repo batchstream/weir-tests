@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/batchstream/weir-tests/internal/fixture"
+	"github.com/batchstream/weir-tests/internal/observe"
 	"github.com/batchstream/weir-tests/internal/workload"
 )
 
@@ -40,10 +41,11 @@ type SaturationParameters struct {
 
 type SaturationResult struct {
 	Result
-	Reads     uint64    `json:"reads"`
-	Writes    uint64    `json:"writes"`
-	Requests  uint64    `json:"client_batch_requests"`
-	Resources Resources `json:"resources"`
+	Reads         uint64         `json:"reads"`
+	Writes        uint64         `json:"writes"`
+	Requests      uint64         `json:"client_batch_requests"`
+	Resources     Resources      `json:"resources"`
+	ServerMetrics *ServerMetrics `json:"server_metrics,omitempty"`
 }
 
 type SaturationPair struct {
@@ -245,6 +247,11 @@ type durationMeasureOptions struct {
 }
 
 func measureDuration(ctx context.Context, options durationMeasureOptions) SaturationResult {
+	var metricsBefore observe.Snapshot
+	measureServer := options.Sample && options.Executor.Name() == "weir"
+	if measureServer {
+		metricsBefore = fetchServerMetrics(ctx, options.Target.Diagnostics)
+	}
 	workers := make([]workerResult, len(options.State.workers))
 	reads, writes, requests := make([]uint64, len(workers)), make([]uint64, len(workers)), make([]uint64, len(workers))
 	start := make(chan struct{})
@@ -354,9 +361,16 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 	elapsed := time.Since(started)
 	close(monitorStop)
 	monitorJoined.Wait()
+	var metricsAfter observe.Snapshot
+	if measureServer {
+		metricsAfter = fetchServerMetrics(ctx, options.Target.Diagnostics)
+	}
 	base := Result{Path: options.Executor.Name(), ElapsedNS: elapsed.Nanoseconds(), Evidence: options.Executor.Evidence()}
 	base.Evidence.ClientBatch = fmt.Sprintf("native database bulk / same-Store SDK batch, %d distinct records per request", options.State.batch)
 	result := SaturationResult{Result: base, Resources: resources}
+	if measureServer {
+		result.ServerMetrics = serverMetricDelta(metricsBefore, metricsAfter, options.State.dataset.Config.StoreName)
+	}
 	result.Resources.MeasurementNS = elapsed.Nanoseconds()
 	var hist histogram
 	for index, worker := range workers {

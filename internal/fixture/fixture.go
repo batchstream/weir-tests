@@ -38,7 +38,6 @@ type Options struct {
 	DiscoveryOnly    bool
 	StoreConcurrency int
 	BatchSize        int
-	BatchCollect     time.Duration
 	IngressSessions  int
 	DatabaseCPUs     float64
 }
@@ -74,8 +73,8 @@ type process struct {
 }
 
 // Start creates new resources; it never adopts an existing container or process.
-// BatchCollect zero explicitly disables collection wait. All owners share the
-// same logical Stores and backend, but each advertises only its own endpoint.
+// All owners share the same logical Stores and backend, but each advertises
+// only its own endpoint.
 func Start(ctx context.Context, options Options) (*Cluster, error) {
 	ctx, cancel := context.WithTimeout(ctx, 8*time.Minute)
 	defer cancel()
@@ -168,8 +167,8 @@ func validateOptions(options Options) (Options, error) {
 	if options.BatchSize == 0 {
 		options.BatchSize = 32
 	}
-	if options.StoreConcurrency < 1 || options.StoreConcurrency > 32 || options.BatchSize < 1 || options.BatchSize > 128 || options.BatchCollect < 0 || options.BatchCollect > 10*time.Millisecond {
-		return options, errors.New("StoreConcurrency, BatchSize or BatchCollect exceeds Weir bounds")
+	if options.StoreConcurrency < 1 || options.StoreConcurrency > 32 || options.BatchSize < 1 {
+		return options, errors.New("StoreConcurrency or BatchSize exceeds Weir bounds")
 	}
 	return options, nil
 }
@@ -263,7 +262,7 @@ func (c *Cluster) writeConfiguration(index int) error {
 	stores := make([]map[string]any, 0, len(c.options.Backends))
 	if node.Owner {
 		for _, backend := range c.options.Backends {
-			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "batch_collect": c.options.BatchCollect.String(), "max_read_size": "2MiB"}
+			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "max_read_size": "2MiB"}
 			if backend == "mongo" {
 				store["mongodb"] = map[string]any{"uri": c.MongoURI}
 			} else {

@@ -36,7 +36,6 @@ type labOptions struct {
 	concurrency      int
 	rounds           int
 	writePercent     int
-	batchCollect     time.Duration
 	mode             string
 	levels           string
 	batches          string
@@ -59,7 +58,6 @@ func main() {
 	flag.IntVar(&opts.concurrency, "concurrency", 8, "matched client workers and Weir Store concurrency")
 	flag.IntVar(&opts.rounds, "rounds", 3, "alternating paired rounds")
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
-	flag.DurationVar(&opts.batchCollect, "batch-collect", 5*time.Millisecond, "explicit Weir microbatch collection interval")
 	flag.StringVar(&opts.mode, "mode", "fixed", "fixed or saturation; saturation requires resource evidence before full-load conclusions")
 	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,64", "ascending client worker ladder for saturation mode, at most 64 for the owned single-owner fixture")
 	flag.StringVar(&opts.batches, "batch-sizes", "32", "native and SDK logical records per bulk request in saturation mode")
@@ -115,7 +113,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.mode == "saturation" {
 		maxWorkers = 64
 	}
-	if opts.operations < 1 || opts.operations > 10000000 || opts.warmup < 0 || opts.warmup > 10000000 || opts.rounds < 1 || opts.rounds > 100 || opts.writePercent < 0 || opts.writePercent > 100 || opts.concurrency < 1 || opts.concurrency > maxWorkers || opts.records < opts.concurrency || opts.payload < 1 || opts.batchCollect < 0 || opts.batchCollect > 10*time.Millisecond {
+	if opts.operations < 1 || opts.operations > 10000000 || opts.warmup < 0 || opts.warmup > 10000000 || opts.rounds < 1 || opts.rounds > 100 || opts.writePercent < 0 || opts.writePercent > 100 || opts.concurrency < 1 || opts.concurrency > maxWorkers || opts.records < opts.concurrency || opts.payload < 1 {
 		return errors.New("invalid bounded workload parameters")
 	}
 	backends := []string{opts.backend}
@@ -138,7 +136,6 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		"topology":                     "native client and Weir on one host; dedicated database Docker containers with loopback ports",
 		"weir_store_concurrency":       fmt.Sprint(opts.concurrency),
 		"weir_max_batch_operations":    "32",
-		"weir_batch_collect":           opts.batchCollect.String(),
 		"weir_memory_budget":           "8GiB (declared process admission budget; not an OS reservation)",
 		"weir_ingress_max_sessions":    "64",
 		"weir_ingress_max_connections": "64",
@@ -191,7 +188,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	provenance["weir_store_concurrency"] = fmt.Sprint(storeWorkers)
 	provenance["weir_ingress_max_sessions"] = fmt.Sprint(max(64, opts.concurrency))
 	provenance["database_docker_cpu_quota"] = fmt.Sprint(opts.databaseCPUs)
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: 32, BatchCollect: opts.batchCollect, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: 32, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs}
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
 		return err

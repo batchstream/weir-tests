@@ -5,7 +5,7 @@ comparisons for [Weir](https://github.com/batchstream/weir). The first benchmark
 compares native MongoDB/Elasticsearch clients with the published Weir Go SDK
 under matched native/SDK bulk workloads with database saturation evidence. The finite single-operation profile remains available for latency diagnosis.
 
-The test module depends on **SDK v0.3.0** and **protocol v0.1.0**. It imports no
+The test module depends on **SDK v0.4.0** and **protocol v0.2.0**. It imports no
 Weir server packages. The server executable is prepared separately from an
 immutable source revision and checksum in [versions.json](versions.json);
 there is no floating `main` dependency or local module replacement.
@@ -42,7 +42,9 @@ GOWORK=off GOPROXY=off GOSUMDB=off python3 scripts/check_dependencies.py
 ```
 
 `go test ./...` and its race variant do not launch databases or Weir processes.
-Default tests verify deterministic schedules, accounting and cancellation,
+Default tests verify whole-batch lost acknowledgements without replay, retained
+APPLIED-with-failure evidence, diagnostic monitoring failures, deterministic
+schedules, accounting and cancellation,
 latency histogram bounds, fair pairing, failed-result suppression, endpoint
 validation, source locks and fixture ownership. CI also checks the complete
 module/package graphs to prevent a dependency on server internals.
@@ -63,10 +65,15 @@ The suite covers:
 - Direct business execution through discovered owners; rejection at a nonowner.
 - Typed CRUD, duplicate/precondition outcomes, atomic transforms and independently
   checked persistence on both databases.
-- Same-Store batches of 48 mutations/reads across multiple targets, input-order
-  results with missing/precondition outcomes, and whole-input validation before
-  dispatch, verified against both real databases.
-- Completion-gated mixed execution, finite Scan continuation across owners,
+- Unary same-Store batches of 48 mutations/reads across multiple targets, input-order
+  results with missing/precondition outcomes, same-URI mutation chains (including
+  failures), and 513 repeated/missing reads within the encoded byte limit. SDK
+  preflight and raw server preflight reject late-invalid batches without side
+  effects on either real database. Public node metrics prove an entire 32-item
+  read reaches exactly one owner in one unary RPC. An additional 513-distinct-record
+  Put/Read uses a physical batch limit of 513 and verifies one actual adapter
+  invocation per unary call, with all values independently persisted.
+- Typed Read/Mutate sequences, finite Scan continuation across owners,
   failed-page checkpoint suppression and Native response evidence.
 - Cancellation, graceful owner withdrawal/restart, directory convergence,
   persistent clients and reads after losing the discovery node.
@@ -90,7 +97,7 @@ make benchmark
 go run ./cmd/weir-lab -mode saturation \
   -weir .tools/weir -backend all -database-cpus 1 -store-concurrency 32 \
   -concurrency-levels 8,32,64 -batch-sizes 32 \
-  -records 2048 -payload-bytes 1024 -write-percent 0 -batch-collect 0ms \
+  -records 2048 -payload-bytes 1024 -write-percent 0 \
   -rounds 3 -warmup-duration 10s -duration 20s \
   -output results/local/saturation-read
 ```
@@ -112,6 +119,19 @@ time must reach that threshold in every round. A neighboring higher concurrency
 must add no more than 10% throughput. Both paths must satisfy these conditions
 independently before the report emits a database-saturated throughput ratio.
 
+Every measured Weir stage also saves the before/after raw public metrics after
+warmup and before independent postflight. Deltas report actual adapter invocation
+counts, average operations per invocation, unary Read/Mutate completions, terminal
+records, queue wait, adapter time and rejection/backpressure actions. Missing
+scrapes, absent metrics and counter resets are explicitly unavailable. These are
+stage deltas, not totals from fixture startup. Adapter invocations can split by
+namespace, action or byte bounds, so their counts are not a universal claim about
+physical database wire commands. A normal same-namespace 32-item workload should
+show an adapter batch of 32; larger documents can require splits. CPU and these
+counters are collected without enabling a profiler during the timed comparison.
+Use a separate diagnostic run to collect a CPU profile; never mix profiled data
+into the capacity report.
+
 A plateau while database CPU remains low produces **comparison unavailable**:
 client/Weir limits or storage/network bottlenecks require more evidence. Byte
 counters alone do not establish disk/link saturation. Increase the concurrency
@@ -119,8 +139,8 @@ ladder (up to 64 workers in the owned single-owner fixture), batch sizes (up
 to 64), record count (at least
 max-workers times batch size), or duration when a run lacks sufficient evidence.
 No noisy performance ratio is used as a CI pass/fail threshold; workload errors
-and failed persistence checks do fail the job. `saturation.yml` runs the read
-matrix on PRs and supports explicit mixed/write workflow dispatches.
+and failed persistence checks do fail the job. `saturation.yml` runs read,
+mixed (10% writes) and write matrices on PRs; dispatch selects a workload.
 
 ## Finite single-operation comparison
 
@@ -132,7 +152,7 @@ go run ./cmd/weir-lab -mode fixed \
   -backend all \
   -operations 10000 -warmup 1000 \
   -records 1024 -payload-bytes 1024 \
-  -concurrency 8 -rounds 3 -write-percent 10 -batch-collect 0ms \
+  -concurrency 8 -rounds 3 -write-percent 10 \
   -output results/local/mixed
 ```
 
@@ -143,10 +163,9 @@ equivalent explicit option. Choose a new output directory for each run. Use
 CLI retains `fixed` mode as its default; `make benchmark` selects saturation.
 
 The local profile runs one Weir owner, matches Store concurrency to client
-concurrency, and records batch size 32. The example explicitly disables collection
-wait; use `-batch-collect 5ms` for the separate batching-wait comparison. The CLI
-default is 5 ms and every report records the chosen interval. These are benchmark
-parameters, not a claim about every production deployment.
+concurrency, and records physical batch size 32. Each unary batch dispatches
+immediately; there is no collection wait. These are benchmark parameters, not a
+claim about every production deployment.
 
 Each paired round executes the exact same deterministic IDs, payloads and
 read/write schedule through both paths, alternating direct/Weir and Weir/direct.

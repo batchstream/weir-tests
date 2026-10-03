@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"slices"
 	"strings"
@@ -58,7 +57,7 @@ func testLifecycle(t *testing.T, ctx context.Context, client *weir.Client, backe
 	want := record{id: "primary", n: 4}
 	backend.assertRead(t, ctx, client, want)
 	backend.assertPersisted(t, ctx, "primary", 4)
-	testMixedBatch(t, ctx, client, backend)
+	testTypedSequence(t, ctx, client, backend)
 	testNative(t, ctx, client, backend)
 
 	options.Request = backend.write(t, "disposable", 7)
@@ -88,7 +87,7 @@ func testLifecycle(t *testing.T, ctx context.Context, client *weir.Client, backe
 		cancel()
 		assertApplied(t, result, err)
 	}
-	t.Log("Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, finite mixed Execute, Native, and direct database persistence verified")
+	t.Log("Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, typed Read/Mutate sequence, Native, and direct database persistence verified")
 }
 
 func assertApplied(t *testing.T, result *weir.MutationResult, err error) {
@@ -105,62 +104,34 @@ func assertPrecondition(t *testing.T, result *weir.MutationResult, err error) {
 	}
 }
 
-func testMixedBatch(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
+func testTypedSequence(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
 	t.Helper()
 	read := &weir.ReadRequest{Resource: backend.resource("primary")}
-	write := backend.write(t, "primary", 5)
-	commands := []*weir.Command{
-		weir.NewReadCommand(read), weir.NewReplaceCommand(write), weir.NewReadCommand(read),
-	}
-	results := make([]*weir.Result, len(commands))
-	completed := make(chan uint64, 1)
-	produced, completions := 0, 0
-	batch := weir.ExecuteOptions{StoreName: backend.name}
-	// Execute permits concurrent requests; Complete is the application ordering
-	// boundary for this deliberate read/write/read dependency.
-	batch.Produce = func(ctx context.Context) (*weir.Command, error) {
-		if produced > 0 {
-			select {
-			case id := <-completed:
-				if id != uint64(produced) {
-					return nil, fmt.Errorf("completion id=%d, want %d", id, produced)
-				}
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			}
-		}
-		if produced == len(commands) {
-			return nil, io.EOF
-		}
-		command := commands[produced]
-		produced++
-		return command, nil
-	}
-	batch.Consume = func(_ context.Context, id uint64, event *weir.Event) error {
-		if id == 0 || id > uint64(len(results)) || event.GetResult() == nil || results[id-1] != nil {
-			return fmt.Errorf("unexpected or duplicate result for id %d", id)
-		}
-		results[id-1] = event.GetResult()
-		return nil
-	}
-	batch.Complete = func(ctx context.Context, id uint64) error {
-		completions++
-		select {
-		case completed <- id:
-			return nil
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
+	readOptions := weir.ReadOptions{StoreName: backend.name, Requests: []*weir.ReadRequest{read}}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	err := client.Execute(rpc, batch)
+	before, err := client.Read(rpc, readOptions)
 	cancel()
-	if err != nil || produced != 3 || completions != 3 {
-		t.Fatalf("finite mixed Execute: produced=%d complete=%d err=%v", produced, completions, err)
+	if err != nil || len(before) != 1 {
+		t.Fatalf("typed Read before mutation: results=%v err=%v", before, err)
 	}
-	backend.assertReadResult(t, results[0].GetRead(), nil, 4)
-	assertApplied(t, results[1].GetMutation(), nil)
-	backend.assertReadResult(t, results[2].GetRead(), nil, 5)
+	backend.assertReadResult(t, before[0], nil, 4)
+	write := backend.write(t, "primary", 5)
+	mutation := &weir.MutateRequest{Resource: write.Resource, Action: weir.MutationReplace, Document: write.Document}
+	mutationOptions := weir.MutateOptions{StoreName: backend.name, Requests: []*weir.MutateRequest{mutation}}
+	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
+	results, err := client.Mutate(rpc, mutationOptions)
+	cancel()
+	if err != nil || len(results) != 1 {
+		t.Fatalf("typed Mutate: results=%v err=%v", results, err)
+	}
+	assertApplied(t, results[0], nil)
+	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
+	after, err := client.Read(rpc, readOptions)
+	cancel()
+	if err != nil || len(after) != 1 {
+		t.Fatalf("typed Read after mutation: results=%v err=%v", after, err)
+	}
+	backend.assertReadResult(t, after[0], nil, 5)
 	backend.assertPersisted(t, ctx, "primary", 5)
 }
 
