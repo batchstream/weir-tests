@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func executableFile(t *testing.T) string {
@@ -513,5 +515,52 @@ esac
 	log, err := os.ReadFile(filepath.Join(directory, "docker.log"))
 	if err != nil || !bytes.Contains(log, []byte("WARNING: fixture example warning")) || !bytes.Contains(log, []byte("WARNING: fixture inspect warning")) || !bytes.Contains(log, []byte("daemon failure diagnostic")) || !bytes.Contains(log, []byte(id)) {
 		t.Fatal("Docker log lost stdout or stderr", string(log), err)
+	}
+}
+
+func TestSearchStartupWaitsForSlowTemplatePublication(t *testing.T) {
+	templateEntered := make(chan struct{}, 2)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/":
+			_, _ = fmt.Fprintf(writer, `{"version":{"number":%q}}`, SearchVersion)
+		case "/_cluster/health":
+			_, _ = writer.Write([]byte(`{"timed_out":false,"status":"green","number_of_nodes":1}`))
+		case "/_index_template/weir-tests":
+			templateEntered <- struct{}{}
+			select {
+			case <-time.After(3100 * time.Millisecond):
+				_, _ = writer.Write([]byte(`{"acknowledged":true}`))
+			case <-request.Context().Done():
+			}
+		default:
+			writer.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	cluster := &Cluster{SearchURL: server.URL}
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	if err := cluster.readySearch(ctx); err != nil {
+		t.Fatal(err)
+	}
+	<-templateEntered
+	canceled, stop := context.WithCancel(t.Context())
+	defer stop()
+	finished := make(chan error, 1)
+	go func() { finished <- cluster.readySearch(canceled) }()
+	select {
+	case <-templateEntered:
+		stop()
+	case <-time.After(2 * time.Second):
+		t.Fatal("startup did not reach template publication")
+	}
+	select {
+	case err := <-finished:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatal("template publication lost caller cancellation", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("template publication ignored caller cancellation")
 	}
 }
