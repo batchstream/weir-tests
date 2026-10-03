@@ -16,7 +16,7 @@ func metricsSnapshot(t *testing.T, measured bool) observe.Snapshot {
 		"weir_store_executions_total": 100, "weir_store_records_total": 3200,
 		"weir_store_queue_wait_seconds_sum": .1, "weir_store_queue_wait_seconds_count": 100,
 		"weir_store_execution_seconds_sum": .5, "weir_store_execution_seconds_count": 100,
-		"weir_store_rejections_total": 0, "weir_store_backpressure_events_total": 0,
+		"weir_store_rejections_total": 0,
 	}
 	for name, value := range values {
 		if measured {
@@ -24,6 +24,7 @@ func metricsSnapshot(t *testing.T, measured bool) observe.Snapshot {
 		}
 		fmt.Fprintf(&raw, "%s{store=\"mongo\"} %g\n%s{store=\"search\"} 999999\n", name, value, name)
 	}
+	raw.WriteString("weir_store_concurrency_limit{store=\"mongo\"} 32\nweir_store_concurrency_limit{store=\"search\"} 16\n")
 	rpc := 10
 	if measured {
 		rpc += 100
@@ -47,6 +48,9 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	if metrics.QueueWaitMeanSeconds == nil || *metrics.QueueWaitMeanSeconds != .001 || metrics.ExecutionMeanSeconds == nil || *metrics.ExecutionMeanSeconds != .005 {
 		t.Fatal("queue/adapter means lost", metrics)
 	}
+	if metrics.ConcurrencyLimit == nil || *metrics.ConcurrencyLimit != 32 {
+		t.Fatal("configured limit became a delta or came from another store", metrics)
+	}
 	if metrics.RPCUnavailable["mutate"] == "" {
 		t.Fatal("missing optional RPC observation silently disappeared")
 	}
@@ -60,5 +64,16 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	metrics = serverMetricDelta(before, after, "mongo")
 	if metrics.Unavailable == "" || metrics.AdapterBatchAverage != nil {
 		t.Fatal("missing metrics became zero batching", metrics)
+	}
+	after = metricsSnapshot(t, true)
+	for index := range after.Metrics {
+		metric := &after.Metrics[index]
+		if metric.Name == "weir_store_concurrency_limit" && metric.Labels["store"] == "mongo" {
+			metric.Value = 16
+		}
+	}
+	metrics = serverMetricDelta(before, after, "mongo")
+	if metrics.Unavailable == "" || metrics.ConcurrencyLimit != nil || metrics.AdapterBatchAverage != nil {
+		t.Fatal("changing concurrency configuration produced comparable evidence", metrics)
 	}
 }

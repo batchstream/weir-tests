@@ -31,7 +31,7 @@ func (r *SaturationReport) Markdown() string {
 			fmt.Fprintf(&text, "| %d | %d | %d | %s | %d | %d | %d | %d | %.1f | %.3f | %.1f | %.1f | %.1f | %t |\n", pair.BatchSize, pair.Concurrency, pair.Round, result.Path, result.Reads, result.Writes, result.Succeeded, result.Errors+result.Indeterminate, result.OperationsPerSec, float64(result.Latency.P95NS)/1e6, result.Resources.MeanCPUPercent, result.Resources.FullCPUFraction*100, result.Resources.Coverage*100, result.Verified)
 		}
 	}
-	text.WriteString("\nMeasured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):\n\n| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backpressure |\n| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |\n")
+	text.WriteString("\nMeasured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):\n\n| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |\n| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |\n")
 	var metricWarnings []string
 	for _, pair := range r.Pairs {
 		metrics := pair.Weir.ServerMetrics
@@ -41,7 +41,7 @@ func (r *SaturationReport) Markdown() string {
 		}
 		fmt.Fprintf(&text, "| %d | %d | %d | %s | %s | %s/%s | %s | %s | %s | %s |\n", pair.BatchSize, pair.Concurrency, pair.Round,
 			metricCounter(metrics, "weir_store_executions_total"), metricMean(metrics.AdapterBatchAverage, 1), metricCounter(metrics, "weir_rpc_completions_total:read"), metricCounter(metrics, "weir_rpc_completions_total:mutate"),
-			metricMean(metrics.QueueWaitMeanSeconds, 1000), metricMean(metrics.ExecutionMeanSeconds, 1000), metricCounter(metrics, "weir_store_rejections_total"), metricCounter(metrics, "weir_store_backpressure_events_total"))
+			metricMean(metrics.QueueWaitMeanSeconds, 1000), metricMean(metrics.ExecutionMeanSeconds, 1000), metricCounter(metrics, "weir_store_rejections_total"), metricMean(metrics.ConcurrencyLimit, 1))
 		if metrics.Unavailable != "" {
 			warning := fmt.Sprintf("Metrics unavailable (batch %d, workers %d, round %d): %s.", pair.BatchSize, pair.Concurrency, pair.Round, strings.ReplaceAll(metrics.Unavailable, "\n", " "))
 			metricWarnings = append(metricWarnings, warning)

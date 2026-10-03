@@ -5,7 +5,7 @@ comparisons for [Weir](https://github.com/batchstream/weir). The first benchmark
 compares native MongoDB/Elasticsearch clients with the published Weir Go SDK
 under matched native/SDK bulk workloads with database saturation evidence. The finite single-operation profile remains available for latency diagnosis.
 
-The test module depends on **SDK v0.4.1** and **protocol v0.2.0**. It imports no
+The test module depends on **SDK v0.4.2** and **protocol v0.2.1**. It imports no
 Weir server packages. The server executable is prepared separately from an
 immutable source revision and checksum in [versions.json](versions.json);
 there is no floating `main` dependency or local module replacement.
@@ -120,17 +120,24 @@ must add no more than 10% throughput. Both paths must satisfy these conditions
 independently before the report emits a database-saturated throughput ratio.
 
 Every measured Weir stage also saves the before/after raw public metrics after
-warmup and before independent postflight. Deltas report actual adapter invocation
-counts, average operations per invocation, unary Read/Mutate completions, terminal
-records, queue wait, adapter time and rejection/backpressure actions. Missing
-scrapes, absent metrics and counter resets are explicitly unavailable. These are
-stage deltas, not totals from fixture startup. Adapter invocations can split by
+warmup and before independent postflight. Timed counter deltas report actual adapter
+invocation counts, average operations per invocation, unary Read/Mutate completions,
+terminal records, queue wait, adapter time and rejections. The configured backend
+concurrency limit is reported separately as a stable before/after gauge. Dispatch
+uses that fixed limit and the bounded working-memory budget. Missing scrapes,
+absent metrics and counter resets are explicitly unavailable. These measurements
+exclude fixture startup. Adapter invocations can split by
 namespace, action or byte bounds, so their counts are not a universal claim about
 physical database wire commands. A normal same-namespace 32-item workload should
 show an adapter batch of 32; larger documents can require splits. CPU and these
 counters are collected without enabling a profiler during the timed comparison.
 Use a separate diagnostic run to collect a CPU profile; never mix profiled data
 into the capacity report.
+
+`python3 scripts/profile_weir.py --offline --output results/local/cpu-diagnostic`
+runs the integration-only CPU and mutex profiler from the locked Weir source.
+Its receipt marks the helper as instrumented and excludes its workload from
+capacity evidence. It owns and verifies cleanup of its temporary services.
 
 A plateau while database CPU remains low produces **comparison unavailable**:
 client/Weir limits or storage/network bottlenecks require more evidence. Byte
