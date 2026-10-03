@@ -1,0 +1,7 @@
+{
+  "run": "https://github.com/batchstream/weir-tests/actions/runs/37114906058",
+  "test_source": "ee2b760c7b84853f4475be010a9e8de95a5975ce",
+  "weir_source": "00e307f56f5b707ce0130d0e9a9e9047426ae19f",
+  "capacity_evidence": false,
+  "reason": "All three workloads stopped at the first 64-worker Weir warmup with ResourceExhausted session limit. MongoDB earlier stages are diagnostics; Elasticsearch was not measured."
+}

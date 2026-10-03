@@ -1,0 +1,111 @@
+Owned fixture logs: /tmp/weir-tests-1014233614
+saturation backend=mongo batch=32 concurrency=8 round=1 direct=53580.5 weir=45541.2 DB-CPU direct=99.6% weir=99.5%
+saturation backend=mongo batch=32 concurrency=8 round=2 direct=54451.8 weir=46701.0 DB-CPU direct=99.5% weir=100.0%
+saturation backend=mongo batch=32 concurrency=8 round=3 direct=54093.3 weir=47353.9 DB-CPU direct=99.6% weir=100.0%
+saturation backend=mongo batch=32 concurrency=32 round=1 direct=51870.1 weir=46559.8 DB-CPU direct=100.0% weir=100.1%
+saturation backend=mongo batch=32 concurrency=32 round=2 direct=52088.3 weir=47015.3 DB-CPU direct=100.0% weir=100.0%
+saturation backend=mongo batch=32 concurrency=32 round=3 direct=51756.9 weir=46836.4 DB-CPU direct=99.8% weir=100.1%
+saturation backend=mongo batch=32 concurrency=64 round=1 direct=50203.3 weir=45271.0 DB-CPU direct=99.9% weir=100.0%
+saturation backend=mongo batch=32 concurrency=64 round=2 direct=51973.1 weir=45689.8 DB-CPU direct=99.9% weir=100.0%
+saturation backend=mongo batch=32 concurrency=64 round=3 direct=51644.4 weir=48557.8 DB-CPU direct=100.1% weir=100.1%
+# Database saturation comparison
+
+Backend **mongo**. Started 2026-10-03T12:38:51.668649449Z.
+
+duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation.
+
+Warmup 10s and measurement 20s per path/stage, 3 paired rounds, requested writes 0%. Latency is the end-to-end batch completion latency, assigned to every logical operation in the batch.
+
+| Batch | Workers | Round | Path | Read | Write | Success | Errors/unknown | Ops/s | p95 batch ms | DB CPU budget % | Full CPU time % | Sampling coverage % | Verified |
+| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 32 | 8 | 1 | direct | 1075328 | 0 | 1075328 | 0 | 53580.5 | 6.143 | 99.6 | 99.7 | 99.7 | true |
+| 32 | 8 | 1 | weir | 911072 | 0 | 911072 | 0 | 45541.2 | 14.335 | 99.5 | 98.1 | 98.1 | true |
+| 32 | 8 | 2 | direct | 1089088 | 0 | 1089088 | 0 | 54451.8 | 6.143 | 99.5 | 95.0 | 95.0 | true |
+| 32 | 8 | 2 | weir | 935136 | 0 | 935136 | 0 | 46701.0 | 14.335 | 100.0 | 98.0 | 98.0 | true |
+| 32 | 8 | 3 | direct | 1081920 | 0 | 1081920 | 0 | 54093.3 | 6.143 | 99.6 | 95.1 | 95.1 | true |
+| 32 | 8 | 3 | weir | 947232 | 0 | 947232 | 0 | 47353.9 | 14.335 | 100.0 | 97.9 | 97.9 | true |
+| 32 | 32 | 1 | direct | 1037696 | 0 | 1037696 | 0 | 51870.1 | 81.919 | 100.0 | 98.5 | 98.5 | true |
+| 32 | 32 | 1 | weir | 931904 | 0 | 931904 | 0 | 46559.8 | 53.247 | 100.1 | 99.0 | 99.0 | true |
+| 32 | 32 | 2 | direct | 1042016 | 0 | 1042016 | 0 | 52088.3 | 81.919 | 100.0 | 99.0 | 99.0 | true |
+| 32 | 32 | 2 | weir | 942176 | 0 | 942176 | 0 | 47015.3 | 53.247 | 100.0 | 98.7 | 98.7 | true |
+| 32 | 32 | 3 | direct | 1035360 | 0 | 1035360 | 0 | 51756.9 | 81.919 | 99.8 | 98.4 | 98.4 | true |
+| 32 | 32 | 3 | weir | 936960 | 0 | 936960 | 0 | 46836.4 | 53.247 | 100.1 | 99.5 | 99.5 | true |
+| 32 | 64 | 1 | direct | 1004768 | 0 | 1004768 | 0 | 50203.3 | 98.303 | 99.9 | 99.9 | 99.9 | true |
+| 32 | 64 | 1 | weir | 906176 | 0 | 906176 | 0 | 45271.0 | 90.111 | 100.0 | 99.8 | 99.8 | true |
+| 32 | 64 | 2 | direct | 1039872 | 0 | 1039872 | 0 | 51973.1 | 98.303 | 99.9 | 99.4 | 99.4 | true |
+| 32 | 64 | 2 | weir | 914496 | 0 | 914496 | 0 | 45689.8 | 90.111 | 100.0 | 99.5 | 99.5 | true |
+| 32 | 64 | 3 | direct | 1033472 | 0 | 1033472 | 0 | 51644.4 | 98.303 | 100.1 | 94.0 | 94.0 | true |
+| 32 | 64 | 3 | weir | 971872 | 0 | 971872 | 0 | 48557.8 | 81.919 | 100.1 | 99.5 | 99.5 | true |
+
+Measured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):
+
+| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |
+| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 32 | 8 | 1 | 28471 | 32.000 | 28471/0 | 0.037 | 2.592 | 0 | 32.000 |
+| 32 | 8 | 2 | 29223 | 32.000 | 29223/0 | 0.039 | 2.514 | 0 | 32.000 |
+| 32 | 8 | 3 | 29601 | 32.000 | 29601/0 | 0.039 | 2.516 | 0 | 32.000 |
+| 32 | 32 | 1 | 29122 | 32.000 | 29122/0 | 0.303 | 11.372 | 0 | 32.000 |
+| 32 | 32 | 2 | 29443 | 32.000 | 29443/0 | 0.302 | 11.164 | 0 | 32.000 |
+| 32 | 32 | 3 | 29280 | 32.000 | 29280/0 | 0.327 | 11.226 | 0 | 32.000 |
+| 32 | 64 | 1 | 28318 | 32.000 | 28318/0 | 9.095 | 15.392 | 0 | 32.000 |
+| 32 | 64 | 2 | 28578 | 32.000 | 28578/0 | 9.179 | 15.286 | 0 | 32.000 |
+| 32 | 64 | 3 | 30371 | 32.000 | 30371/0 | 8.577 | 14.246 | 0 | 32.000 |
+
+**Batch 32 at demonstrated database CPU saturation:** direct 54041.3 logical ops/s (8 workers), Weir 46803.9 logical ops/s (32 workers), Weir/direct 0.8661, change -13.39%.
+
+The JSON retains before/after raw public Weir metrics and their observed deltas, every resource sample, monitor failures, raw cumulative database/container I/O and network counters, CPU quota/host core denominator, and client/Weir cumulative CPU. Docker CPU uses cumulative Engine usage and read timestamps across each entire sampling interval, never CLI instantaneous percentages. Both interval endpoints must succeed; missing intervals reduce full-run coverage. Samples include monitoring traffic and background database work. Native ps CPU has platform-dependent clock resolution. Native databases share the host CPU budget with the client and Weir. Disk/network utilization or capacity is not inferred from byte counters. A plateau without sustained database CPU saturation is not a database-full-load result. Startup/discovery/reset/postflight and warmup are excluded from throughput; all in-flight completion and validation is included.
+saturation backend=search batch=32 concurrency=8 round=1 direct=7671.2 weir=9328.9 DB-CPU direct=99.6% weir=99.6%
+saturation backend=search batch=32 concurrency=8 round=2 direct=23111.4 weir=19679.4 DB-CPU direct=98.8% weir=99.4%
+saturation backend=search batch=32 concurrency=8 round=3 direct=23768.0 weir=21725.7 DB-CPU direct=99.0% weir=99.4%
+saturation backend=search batch=32 concurrency=32 round=1 direct=24848.5 weir=23288.0 DB-CPU direct=99.6% weir=99.8%
+saturation backend=search batch=32 concurrency=32 round=2 direct=24656.8 weir=23242.7 DB-CPU direct=99.5% weir=99.7%
+saturation backend=search batch=32 concurrency=32 round=3 direct=26063.3 weir=23727.4 DB-CPU direct=99.8% weir=99.6%
+saturation backend=search batch=32 concurrency=64 round=1 direct=25920.8 weir=23012.8 DB-CPU direct=99.6% weir=99.3%
+saturation backend=search batch=32 concurrency=64 round=2 direct=26567.7 weir=23877.5 DB-CPU direct=99.7% weir=99.5%
+saturation backend=search batch=32 concurrency=64 round=3 direct=26924.8 weir=24223.5 DB-CPU direct=99.8% weir=99.5%
+# Database saturation comparison
+
+Backend **search**. Started 2026-10-03T12:47:56.103997483Z.
+
+duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation.
+
+Warmup 10s and measurement 20s per path/stage, 3 paired rounds, requested writes 0%. Latency is the end-to-end batch completion latency, assigned to every logical operation in the batch.
+
+| Batch | Workers | Round | Path | Read | Write | Success | Errors/unknown | Ops/s | p95 batch ms | DB CPU budget % | Full CPU time % | Sampling coverage % | Verified |
+| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 32 | 8 | 1 | direct | 153472 | 0 | 153472 | 0 | 7671.2 | 98.303 | 99.6 | 98.5 | 98.5 | true |
+| 32 | 8 | 1 | weir | 186624 | 0 | 186624 | 0 | 9328.9 | 90.111 | 99.6 | 97.9 | 97.9 | true |
+| 32 | 8 | 2 | direct | 462272 | 0 | 462272 | 0 | 23111.4 | 73.727 | 98.8 | 95.4 | 95.4 | true |
+| 32 | 8 | 2 | weir | 393664 | 0 | 393664 | 0 | 19679.4 | 49.151 | 99.4 | 99.1 | 99.1 | true |
+| 32 | 8 | 3 | direct | 475424 | 0 | 475424 | 0 | 23768.0 | 73.727 | 99.0 | 95.0 | 95.0 | true |
+| 32 | 8 | 3 | weir | 434656 | 0 | 434656 | 0 | 21725.7 | 45.055 | 99.4 | 98.9 | 98.9 | true |
+| 32 | 32 | 1 | direct | 497184 | 0 | 497184 | 0 | 24848.5 | 98.303 | 99.6 | 98.5 | 98.5 | true |
+| 32 | 32 | 1 | weir | 466176 | 0 | 466176 | 0 | 23288.0 | 90.111 | 99.8 | 95.0 | 95.0 | true |
+| 32 | 32 | 2 | direct | 493280 | 0 | 493280 | 0 | 24656.8 | 98.303 | 99.5 | 98.9 | 98.9 | true |
+| 32 | 32 | 2 | weir | 465312 | 0 | 465312 | 0 | 23242.7 | 90.111 | 99.7 | 95.0 | 95.0 | true |
+| 32 | 32 | 3 | direct | 521568 | 0 | 521568 | 0 | 26063.3 | 90.111 | 99.8 | 98.9 | 98.9 | true |
+| 32 | 32 | 3 | weir | 474880 | 0 | 474880 | 0 | 23727.4 | 90.111 | 99.6 | 99.5 | 99.5 | true |
+| 32 | 64 | 1 | direct | 520512 | 0 | 520512 | 0 | 25920.8 | 114.687 | 99.6 | 99.1 | 99.1 | true |
+| 32 | 64 | 1 | weir | 462240 | 0 | 462240 | 0 | 23012.8 | 131.071 | 99.3 | 99.8 | 99.8 | true |
+| 32 | 64 | 2 | direct | 531936 | 0 | 531936 | 0 | 26567.7 | 114.687 | 99.7 | 98.9 | 98.9 | true |
+| 32 | 64 | 2 | weir | 479136 | 0 | 479136 | 0 | 23877.5 | 131.071 | 99.5 | 99.5 | 99.5 | true |
+| 32 | 64 | 3 | direct | 538944 | 0 | 538944 | 0 | 26924.8 | 114.687 | 99.8 | 98.9 | 98.9 | true |
+| 32 | 64 | 3 | weir | 486016 | 0 | 486016 | 0 | 24223.5 | 131.071 | 99.5 | 95.0 | 95.0 | true |
+
+Measured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):
+
+| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |
+| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 32 | 8 | 1 | 5832 | 32.000 | 5832/0 | 0.024 | 23.510 | 0 | 32.000 |
+| 32 | 8 | 2 | 12302 | 32.000 | 12302/0 | 0.027 | 9.500 | 0 | 32.000 |
+| 32 | 8 | 3 | 13583 | 32.000 | 13583/0 | 0.024 | 8.410 | 0 | 32.000 |
+| 32 | 32 | 1 | 14568 | 32.000 | 14568/0 | 0.188 | 32.001 | 0 | 32.000 |
+| 32 | 32 | 2 | 14541 | 32.000 | 14541/0 | 0.187 | 32.210 | 0 | 32.000 |
+| 32 | 32 | 3 | 14840 | 32.000 | 14840/0 | 0.194 | 31.303 | 0 | 32.000 |
+| 32 | 64 | 1 | 14445 | 32.000 | 14445/0 | 29.489 | 41.592 | 0 | 32.000 |
+| 32 | 64 | 2 | 14973 | 32.000 | 14973/0 | 27.702 | 39.705 | 0 | 32.000 |
+| 32 | 64 | 3 | 15188 | 32.000 | 15188/0 | 27.631 | 39.345 | 0 | 32.000 |
+
+**Batch 32 at demonstrated database CPU saturation:** direct 25189.6 logical ops/s (32 workers), Weir 23419.3 logical ops/s (32 workers), Weir/direct 0.9297, change -7.03%.
+
+The JSON retains before/after raw public Weir metrics and their observed deltas, every resource sample, monitor failures, raw cumulative database/container I/O and network counters, CPU quota/host core denominator, and client/Weir cumulative CPU. Docker CPU uses cumulative Engine usage and read timestamps across each entire sampling interval, never CLI instantaneous percentages. Both interval endpoints must succeed; missing intervals reduce full-run coverage. Samples include monitoring traffic and background database work. Native ps CPU has platform-dependent clock resolution. Native databases share the host CPU budget with the client and Weir. Disk/network utilization or capacity is not inferred from byte counters. A plateau without sustained database CPU saturation is not a database-full-load result. Startup/discovery/reset/postflight and warmup are excluded from throughput; all in-flight completion and validation is included.

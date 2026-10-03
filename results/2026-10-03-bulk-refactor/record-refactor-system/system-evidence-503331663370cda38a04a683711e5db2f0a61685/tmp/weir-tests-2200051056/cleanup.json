@@ -1,0 +1,20 @@
+{
+  "containers": [
+    {
+      "id": "6f76029254848334684f0fd9946f855b855890932b8356e0a69128a5c79bc917",
+      "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+      "name": "weir-tests-f1d0bd2c4f19f63e6b8a2f9f-mongo",
+      "removed": true
+    }
+  ],
+  "errors": "",
+  "finished_at": "2026-10-03T12:17:09.248010123Z",
+  "owner": "f1d0bd2c4f19f63e6b8a2f9f",
+  "processes": [
+    {
+      "index": 0,
+      "pid": 8246,
+      "stopped": true
+    }
+  ]
+}

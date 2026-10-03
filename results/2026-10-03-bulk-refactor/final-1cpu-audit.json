@@ -1,0 +1,1253 @@
+{
+  "baseline_comparison": [
+    {
+      "backend": "mongo",
+      "baseline_ratio": 0.8463434930046965,
+      "capacity_ratio_change_percent": 11.318010124647104,
+      "database_cpus": 1,
+      "final_ratio": 0.94213273523226,
+      "points": [
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.86440922370997,
+          "baseline_rate": 39488.44489105102,
+          "concurrency": 8,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.52860415998255,
+          "final_rate": 58245.63519828769,
+          "measured_rate_delta_percent": 47.50045325661198,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.86264263675837,
+          "baseline_rate": 35316.80367885809,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.92743827572895,
+          "final_rate": 54223.823981556234,
+          "measured_rate_delta_percent": 53.535479809053534,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.8767330881768,
+          "baseline_rate": 35187.78428123703,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 100.08310745341261,
+          "final_rate": 52698.01513959291,
+          "measured_rate_delta_percent": 49.762243392212554,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 94.58695559946602,
+          "baseline_rate": 36706.233810188445,
+          "concurrency": 8,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 98.58876004166308,
+          "final_rate": 54875.11960470318,
+          "measured_rate_delta_percent": 49.4980931262734,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.79622106922193,
+          "baseline_rate": 33420.78838241558,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 100.02810989276001,
+          "final_rate": 51924.65130040555,
+          "measured_rate_delta_percent": 55.36632680911209,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.78446598233775,
+          "baseline_rate": 34278.392568206786,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 100.00886488397805,
+          "final_rate": 50768.981295279045,
+          "measured_rate_delta_percent": 48.10782388427188,
+          "path": "weir"
+        }
+      ],
+      "write_percent": 10
+    },
+    {
+      "backend": "mongo",
+      "baseline_ratio": 0.8743114472949723,
+      "capacity_ratio_change_percent": 3.9544135101511557,
+      "database_cpus": 1,
+      "final_ratio": 0.9088853372876029,
+      "points": [
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.57687646354425,
+          "baseline_rate": 6666.027739264044,
+          "concurrency": 8,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.68244322847272,
+          "final_rate": 6518.133509739472,
+          "measured_rate_delta_percent": -2.2186260740178043,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.91536781007517,
+          "baseline_rate": 6059.144377968072,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.9156129712526,
+          "final_rate": 6263.7480757536505,
+          "measured_rate_delta_percent": 3.37677541617174,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 100.03982530826413,
+          "baseline_rate": 6152.465916716343,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 100.0945029647665,
+          "final_rate": 6178.321798023377,
+          "measured_rate_delta_percent": 0.42025232901792275,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.80748620800226,
+          "baseline_rate": 5828.184360424379,
+          "concurrency": 8,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.7364037055725,
+          "final_rate": 5924.235973485187,
+          "measured_rate_delta_percent": 1.6480537869226541,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 100.02572777596907,
+          "baseline_rate": 5320.446263702243,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.86986512900698,
+          "final_rate": 5391.687353898346,
+          "measured_rate_delta_percent": 1.3390059153896905,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.87073147644817,
+          "baseline_rate": 5314.143725018078,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 99.74150643021206,
+          "final_rate": 5483.858185467974,
+          "measured_rate_delta_percent": 3.193637004037164,
+          "path": "weir"
+        }
+      ],
+      "write_percent": 100
+    },
+    {
+      "backend": "mongo",
+      "baseline_ratio": null,
+      "database_cpus": 1,
+      "final_ratio": null,
+      "points": [
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.90889545244124,
+          "baseline_rate": 104486.36979394099,
+          "concurrency": 8,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.92175076723345,
+          "final_rate": 105935.33698529523,
+          "measured_rate_delta_percent": 1.3867523526865488,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.95982299894638,
+          "baseline_rate": 102891.60704024868,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.99764408243821,
+          "final_rate": 106813.83299586475,
+          "measured_rate_delta_percent": 3.8119979543927096,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.96236388274974,
+          "baseline_rate": 103733.36419416378,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 99.99765153982209,
+          "final_rate": 106896.54626894326,
+          "measured_rate_delta_percent": 3.0493391391980484,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 53.26168771309727,
+          "baseline_rate": 52208.1836852404,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 56.78586158663711,
+          "final_rate": 57363.33491170667,
+          "measured_rate_delta_percent": 9.874220596422823,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 58.94454056499047,
+          "baseline_rate": 56846.14987498161,
+          "concurrency": 32,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 64.68499591704644,
+          "final_rate": 65227.98841846567,
+          "measured_rate_delta_percent": 14.74477789950197,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 60.24021981816296,
+          "baseline_rate": 59049.75951518501,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 66.83363934680104,
+          "final_rate": 67308.560598935,
+          "measured_rate_delta_percent": 13.986172258036355,
+          "path": "weir"
+        }
+      ],
+      "write_percent": 0
+    },
+    {
+      "backend": "search",
+      "baseline_ratio": null,
+      "database_cpus": 1,
+      "final_ratio": 0.8527860288631807,
+      "points": [
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.69115485113535,
+          "baseline_rate": 24945.510907121152,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 99.76950396475888,
+          "final_rate": 42898.973508974406,
+          "measured_rate_delta_percent": 71.97071516674414,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.72305296823845,
+          "baseline_rate": 41620.16560347978,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.7422243067097,
+          "final_rate": 60312.49401765915,
+          "measured_rate_delta_percent": 44.91171080928267,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.84787232680493,
+          "baseline_rate": 42849.108900515595,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 99.87102518940628,
+          "final_rate": 62168.3970213692,
+          "measured_rate_delta_percent": 45.086790872846215,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 93.95539935333004,
+          "baseline_rate": 19759.729485040672,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 92.35237927200404,
+          "final_rate": 36483.71085047171,
+          "measured_rate_delta_percent": 84.63669190457348,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 86.67989261504685,
+          "baseline_rate": 31738.36027596828,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 92.87350893864954,
+          "final_rate": 51433.65226415388,
+          "measured_rate_delta_percent": 62.055165474627636,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 86.7692283073876,
+          "baseline_rate": 33109.457138052036,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 94.0737605419597,
+          "final_rate": 52840.216925877605,
+          "measured_rate_delta_percent": 59.59251976121771,
+          "path": "weir"
+        }
+      ],
+      "write_percent": 10
+    },
+    {
+      "backend": "search",
+      "baseline_ratio": null,
+      "database_cpus": 1,
+      "final_ratio": null,
+      "points": [
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 92.12186857031877,
+          "baseline_rate": 20235.04498413774,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 93.95078110287243,
+          "final_rate": 18668.565302068113,
+          "measured_rate_delta_percent": -7.741419321269571,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 91.98468208841024,
+          "baseline_rate": 26500.78759101825,
+          "concurrency": 32,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 93.76511222513352,
+          "final_rate": 24756.107314081255,
+          "measured_rate_delta_percent": -6.583503493791665,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 90.73880682256173,
+          "baseline_rate": 27914.636517439332,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 93.32781808531986,
+          "final_rate": 26327.1966179461,
+          "measured_rate_delta_percent": -5.686765430391672,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 94.93715001913533,
+          "baseline_rate": 15001.02571139328,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 96.90023040118426,
+          "final_rate": 13467.943783474606,
+          "measured_rate_delta_percent": -10.219847345200527,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 88.06259241828725,
+          "baseline_rate": 22064.341497337187,
+          "concurrency": 32,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 91.43576941108363,
+          "final_rate": 20194.702921999036,
+          "measured_rate_delta_percent": -8.473575227993035,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 86.15097157286785,
+          "baseline_rate": 22200.292425147007,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 90.26261748041058,
+          "final_rate": 21115.178904892553,
+          "measured_rate_delta_percent": -4.887834355845289,
+          "path": "weir"
+        }
+      ],
+      "write_percent": 100
+    },
+    {
+      "backend": "search",
+      "baseline_ratio": null,
+      "database_cpus": 1,
+      "final_ratio": null,
+      "points": [
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.6428275502119,
+          "baseline_rate": 41072.902195246555,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 99.61618135277702,
+          "final_rate": 41754.43012691282,
+          "measured_rate_delta_percent": 1.659312819986547,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": true,
+          "baseline_cpu_budget_percent": 99.888485498398,
+          "baseline_rate": 52472.80335101127,
+          "concurrency": 32,
+          "final_capacity_demonstrated": true,
+          "final_cpu_budget_percent": 99.78932397451297,
+          "final_rate": 52910.67603396439,
+          "measured_rate_delta_percent": 0.8344754901391749,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 99.88690247182262,
+          "baseline_rate": 52991.71787258011,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 99.78439723581984,
+          "final_rate": 53065.84606935018,
+          "measured_rate_delta_percent": 0.1398863817706486,
+          "path": "direct"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 72.6984045679887,
+          "baseline_rate": 32724.291148787295,
+          "concurrency": 8,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 76.386573596638,
+          "final_rate": 35166.13771039511,
+          "measured_rate_delta_percent": 7.461877632445835,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 76.15212238695615,
+          "baseline_rate": 35079.96230025308,
+          "concurrency": 32,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 80.73577719374946,
+          "final_rate": 39832.39710516091,
+          "measured_rate_delta_percent": 13.54743418545108,
+          "path": "weir"
+        },
+        {
+          "baseline_capacity_demonstrated": false,
+          "baseline_cpu_budget_percent": 77.58918742287818,
+          "baseline_rate": 36150.77903422132,
+          "concurrency": 64,
+          "final_capacity_demonstrated": false,
+          "final_cpu_budget_percent": 82.80387524582879,
+          "final_rate": 40913.383293907806,
+          "measured_rate_delta_percent": 13.174278361133162,
+          "path": "weir"
+        }
+      ],
+      "write_percent": 0
+    }
+  ],
+  "baseline_source": "2b3a67d84a5c24bf017ca02879c44212cd5a176a",
+  "baseline_weir_source": "ed43aa2702c4826df4899edb947524658b26c3c5",
+  "client_binary_sha256": "c9dbbc9d4e8b583a9a2e438882902631055a7b34adf5a685d1a3e5cb71670add",
+  "cpu_sampling_coverage_max": 0.999106215109744,
+  "cpu_sampling_coverage_min": 0.9464166875911886,
+  "database_cpus": 1,
+  "legacy_baseline": false,
+  "limitations": [
+    "Adapter batch metrics count 32 logical records per invocation; they do not prove identical database wire commands or acknowledgement encoding.",
+    "Native Mongo Collection.BulkWrite aggregate ACK differs from Weir Mongo admin bulkWrite verbose per-item ACK.",
+    "Client/Weir CPU is approximate from ps cumulative process counters.",
+    "Unavailable capacity comparisons must remain unavailable even when measured throughput improves."
+  ],
+  "protocol": "v0.2.1",
+  "reports": [
+    {
+      "backend": "mongo",
+      "delta_percent": -5.786726476773996,
+      "diagnostics": [
+        {
+          "client_cpu_approximate_cores": 0.6117491521486311,
+          "concurrency": 8,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "client_cpu_approximate_cores": 0.5572981919307415,
+          "concurrency": 32,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "client_cpu_approximate_cores": 0.5583053195023906,
+          "concurrency": 64,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.01684001900191572
+        },
+        {
+          "adapter_execution_mean_ms": 2.556631587378472,
+          "client_cpu_approximate_cores": 0.6772012489877249,
+          "concurrency": 8,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.023087074519494016,
+          "weir_cpu_approximate_cores": 1.2358475089724836
+        },
+        {
+          "adapter_execution_mean_ms": 11.81993835922757,
+          "client_cpu_approximate_cores": 0.6039854511152892,
+          "concurrency": 32,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.1840415473166944,
+          "weir_cpu_approximate_cores": 1.0066424185254819
+        },
+        {
+          "adapter_execution_mean_ms": 16.771466642406914,
+          "client_cpu_approximate_cores": 0.6103174972688836,
+          "concurrency": 64,
+          "path": "weir",
+          "queue_wait_mean_ms": 10.627513420503776,
+          "weir_cpu_approximate_cores": 0.9488611457357731
+        }
+      ],
+      "file": "saturation-evidence-writes-10-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/saturation/mongo.json",
+      "points": [
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 99.52860415998255,
+          "path": "direct",
+          "plateau": true,
+          "rate": 58245.63519828769,
+          "sat": true
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 99.92743827572895,
+          "path": "direct",
+          "plateau": true,
+          "rate": 54223.823981556234,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 100.08310745341261,
+          "path": "direct",
+          "plateau": false,
+          "rate": 52698.01513959291,
+          "sat": false
+        },
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 98.58876004166308,
+          "path": "weir",
+          "plateau": true,
+          "rate": 54875.11960470318,
+          "sat": true
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 100.02810989276001,
+          "path": "weir",
+          "plateau": true,
+          "rate": 51924.65130040555,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 100.00886488397805,
+          "path": "weir",
+          "plateau": false,
+          "rate": 50768.981295279045,
+          "sat": false
+        }
+      ],
+      "quota": 1,
+      "ratio": 0.94213273523226,
+      "selected": {
+        "direct": [
+          8,
+          {
+            "full": true,
+            "mean": 99.52860415998255,
+            "plateau": true,
+            "rate": 58245.63519828769,
+            "sat": true
+          }
+        ],
+        "weir": [
+          8,
+          {
+            "full": true,
+            "mean": 98.58876004166308,
+            "plateau": true,
+            "rate": 54875.11960470318,
+            "sat": true
+          }
+        ]
+      },
+      "unavailable": null,
+      "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+      "workspace_mib": {
+        "mongo": 1312,
+        "search": 3072
+      },
+      "write_percent": 10
+    },
+    {
+      "backend": "mongo",
+      "delta_percent": -9.11146627123971,
+      "diagnostics": [
+        {
+          "client_cpu_approximate_cores": 0.08522332277200412,
+          "concurrency": 8,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "client_cpu_approximate_cores": 0.06728402169467448,
+          "concurrency": 32,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "client_cpu_approximate_cores": 0.08528895780892197,
+          "concurrency": 64,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "adapter_execution_mean_ms": 41.23801711363363,
+          "client_cpu_approximate_cores": 0.08658248259490486,
+          "concurrency": 8,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.026954513948731402,
+          "weir_cpu_approximate_cores": 0.27757820663397276
+        },
+        {
+          "adapter_execution_mean_ms": 184.7561090617937,
+          "client_cpu_approximate_cores": 0.08399134321021284,
+          "concurrency": 32,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.047773159778193484,
+          "weir_cpu_approximate_cores": 0.25190440295936023
+        },
+        {
+          "adapter_execution_mean_ms": 184.5093457747064,
+          "client_cpu_approximate_cores": 0.10013526652702387,
+          "concurrency": 64,
+          "path": "weir",
+          "queue_wait_mean_ms": 178.86832905896745,
+          "weir_cpu_approximate_cores": 0.28372216475019224
+        }
+      ],
+      "file": "saturation-evidence-writes-100-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/saturation/mongo.json",
+      "points": [
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 99.68244322847272,
+          "path": "direct",
+          "plateau": true,
+          "rate": 6518.133509739472,
+          "sat": true
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 99.9156129712526,
+          "path": "direct",
+          "plateau": true,
+          "rate": 6263.7480757536505,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 100.0945029647665,
+          "path": "direct",
+          "plateau": false,
+          "rate": 6178.321798023377,
+          "sat": false
+        },
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 99.7364037055725,
+          "path": "weir",
+          "plateau": true,
+          "rate": 5924.235973485187,
+          "sat": true
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 99.86986512900698,
+          "path": "weir",
+          "plateau": true,
+          "rate": 5391.687353898346,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 99.74150643021206,
+          "path": "weir",
+          "plateau": false,
+          "rate": 5483.858185467974,
+          "sat": false
+        }
+      ],
+      "quota": 1,
+      "ratio": 0.9088853372876029,
+      "selected": {
+        "direct": [
+          8,
+          {
+            "full": true,
+            "mean": 99.68244322847272,
+            "plateau": true,
+            "rate": 6518.133509739472,
+            "sat": true
+          }
+        ],
+        "weir": [
+          8,
+          {
+            "full": true,
+            "mean": 99.7364037055725,
+            "plateau": true,
+            "rate": 5924.235973485187,
+            "sat": true
+          }
+        ]
+      },
+      "unavailable": null,
+      "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+      "workspace_mib": {
+        "mongo": 1312,
+        "search": 3072
+      },
+      "write_percent": 100
+    },
+    {
+      "backend": "mongo",
+      "delta_percent": null,
+      "diagnostics": [
+        {
+          "client_cpu_approximate_cores": 1.3886568431001383,
+          "concurrency": 8,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "client_cpu_approximate_cores": 1.3605729813433436,
+          "concurrency": 32,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.01739395049556505
+        },
+        {
+          "client_cpu_approximate_cores": 1.335986309882425,
+          "concurrency": 64,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0169194965847344
+        },
+        {
+          "adapter_execution_mean_ms": 1.5866700456347473,
+          "client_cpu_approximate_cores": 1.029356905365411,
+          "concurrency": 8,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.04196116857838846,
+          "weir_cpu_approximate_cores": 1.620009206640889
+        },
+        {
+          "adapter_execution_mean_ms": 4.520544847945768,
+          "client_cpu_approximate_cores": 1.0594145381095164,
+          "concurrency": 32,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.3897141407138129,
+          "weir_cpu_approximate_cores": 1.6647942741720971
+        },
+        {
+          "adapter_execution_mean_ms": 7.597623281322201,
+          "client_cpu_approximate_cores": 1.1054216946922168,
+          "concurrency": 64,
+          "path": "weir",
+          "queue_wait_mean_ms": 2.057719769028169,
+          "weir_cpu_approximate_cores": 1.6581325420383253
+        }
+      ],
+      "file": "saturation-evidence-writes-0-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/saturation/mongo.json",
+      "points": [
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 99.92175076723345,
+          "path": "direct",
+          "plateau": true,
+          "rate": 105935.33698529523,
+          "sat": true
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 99.99764408243821,
+          "path": "direct",
+          "plateau": true,
+          "rate": 106813.83299586475,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 99.99765153982209,
+          "path": "direct",
+          "plateau": false,
+          "rate": 106896.54626894326,
+          "sat": false
+        },
+        {
+          "concurrency": 8,
+          "full": false,
+          "mean": 56.78586158663711,
+          "path": "weir",
+          "plateau": false,
+          "rate": 57363.33491170667,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": false,
+          "mean": 64.68499591704644,
+          "path": "weir",
+          "plateau": true,
+          "rate": 65227.98841846567,
+          "sat": false
+        },
+        {
+          "concurrency": 64,
+          "full": false,
+          "mean": 66.83363934680104,
+          "path": "weir",
+          "plateau": false,
+          "rate": 67308.560598935,
+          "sat": false
+        }
+      ],
+      "quota": 1,
+      "ratio": null,
+      "selected": {
+        "direct": [
+          32,
+          {
+            "full": true,
+            "mean": 99.99764408243821,
+            "plateau": true,
+            "rate": 106813.83299586475,
+            "sat": true
+          }
+        ]
+      },
+      "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence",
+      "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+      "workspace_mib": {
+        "mongo": 1312,
+        "search": 3072
+      },
+      "write_percent": 0
+    },
+    {
+      "backend": "search",
+      "delta_percent": -14.721397113681933,
+      "diagnostics": [
+        {
+          "client_cpu_approximate_cores": 0.8867737443581412,
+          "concurrency": 8,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "client_cpu_approximate_cores": 1.1712359677061175,
+          "concurrency": 32,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.01667416805389638
+        },
+        {
+          "client_cpu_approximate_cores": 1.1934164544710653,
+          "concurrency": 64,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "adapter_execution_mean_ms": 4.669411688248243,
+          "client_cpu_approximate_cores": 0.6610711817174602,
+          "concurrency": 8,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.017259428421078634,
+          "weir_cpu_approximate_cores": 1.3221423634349203
+        },
+        {
+          "adapter_execution_mean_ms": 9.125088199295384,
+          "client_cpu_approximate_cores": 0.8623123783087708,
+          "concurrency": 32,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.15039207005399832,
+          "weir_cpu_approximate_cores": 1.673900499069967
+        },
+        {
+          "adapter_execution_mean_ms": 12.722262514336707,
+          "client_cpu_approximate_cores": 0.9106212601075684,
+          "concurrency": 64,
+          "path": "weir",
+          "queue_wait_mean_ms": 3.138502041164171,
+          "weir_cpu_approximate_cores": 1.669418504156339
+        }
+      ],
+      "file": "saturation-evidence-writes-10-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/saturation/search.json",
+      "points": [
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 99.76950396475888,
+          "path": "direct",
+          "plateau": false,
+          "rate": 42898.973508974406,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 99.7422243067097,
+          "path": "direct",
+          "plateau": true,
+          "rate": 60312.49401765915,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 99.87102518940628,
+          "path": "direct",
+          "plateau": false,
+          "rate": 62168.3970213692,
+          "sat": false
+        },
+        {
+          "concurrency": 8,
+          "full": false,
+          "mean": 92.35237927200404,
+          "path": "weir",
+          "plateau": false,
+          "rate": 36483.71085047171,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 92.87350893864954,
+          "path": "weir",
+          "plateau": true,
+          "rate": 51433.65226415388,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 94.0737605419597,
+          "path": "weir",
+          "plateau": false,
+          "rate": 52840.216925877605,
+          "sat": false
+        }
+      ],
+      "quota": 1,
+      "ratio": 0.8527860288631807,
+      "selected": {
+        "direct": [
+          32,
+          {
+            "full": true,
+            "mean": 99.7422243067097,
+            "plateau": true,
+            "rate": 60312.49401765915,
+            "sat": true
+          }
+        ],
+        "weir": [
+          32,
+          {
+            "full": true,
+            "mean": 92.87350893864954,
+            "plateau": true,
+            "rate": 51433.65226415388,
+            "sat": true
+          }
+        ]
+      },
+      "unavailable": null,
+      "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+      "workspace_mib": {
+        "mongo": 1312,
+        "search": 3072
+      },
+      "write_percent": 10
+    },
+    {
+      "backend": "search",
+      "delta_percent": null,
+      "diagnostics": [
+        {
+          "client_cpu_approximate_cores": 0.32488972621024864,
+          "concurrency": 8,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.017019654150788936
+        },
+        {
+          "client_cpu_approximate_cores": 0.37461449837918187,
+          "concurrency": 32,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.016975858238057893
+        },
+        {
+          "client_cpu_approximate_cores": 0.407658789463268,
+          "concurrency": 64,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "adapter_execution_mean_ms": 19.377264700527785,
+          "client_cpu_approximate_cores": 0.2711102177946679,
+          "concurrency": 8,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.018559420139002622,
+          "weir_cpu_approximate_cores": 0.8308409351003329
+        },
+        {
+          "adapter_execution_mean_ms": 49.56864473936724,
+          "client_cpu_approximate_cores": 0.37030183858627225,
+          "concurrency": 32,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.01975166641341879,
+          "weir_cpu_approximate_cores": 1.228495527700013
+        },
+        {
+          "adapter_execution_mean_ms": 48.67205688035028,
+          "client_cpu_approximate_cores": 0.40592813155647356,
+          "concurrency": 64,
+          "path": "weir",
+          "queue_wait_mean_ms": 46.89188283515956,
+          "weir_cpu_approximate_cores": 1.234845352307824
+        }
+      ],
+      "file": "saturation-evidence-writes-100-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/saturation/search.json",
+      "points": [
+        {
+          "concurrency": 8,
+          "full": false,
+          "mean": 93.95078110287243,
+          "path": "direct",
+          "plateau": false,
+          "rate": 18668.565302068113,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": false,
+          "mean": 93.76511222513352,
+          "path": "direct",
+          "plateau": true,
+          "rate": 24756.107314081255,
+          "sat": false
+        },
+        {
+          "concurrency": 64,
+          "full": false,
+          "mean": 93.32781808531986,
+          "path": "direct",
+          "plateau": false,
+          "rate": 26327.1966179461,
+          "sat": false
+        },
+        {
+          "concurrency": 8,
+          "full": false,
+          "mean": 96.90023040118426,
+          "path": "weir",
+          "plateau": false,
+          "rate": 13467.943783474606,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": false,
+          "mean": 91.43576941108363,
+          "path": "weir",
+          "plateau": true,
+          "rate": 20194.702921999036,
+          "sat": false
+        },
+        {
+          "concurrency": 64,
+          "full": false,
+          "mean": 90.26261748041058,
+          "path": "weir",
+          "plateau": false,
+          "rate": 21115.178904892553,
+          "sat": false
+        }
+      ],
+      "quota": 1,
+      "ratio": null,
+      "selected": {},
+      "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence",
+      "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+      "workspace_mib": {
+        "mongo": 1312,
+        "search": 3072
+      },
+      "write_percent": 100
+    },
+    {
+      "backend": "search",
+      "delta_percent": null,
+      "diagnostics": [
+        {
+          "client_cpu_approximate_cores": 1.1875897803593212,
+          "concurrency": 8,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.01754529139753672
+        },
+        {
+          "client_cpu_approximate_cores": 1.5009545064113088,
+          "concurrency": 32,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.017420841707909102
+        },
+        {
+          "client_cpu_approximate_cores": 1.4995739461185071,
+          "concurrency": 64,
+          "path": "direct",
+          "weir_cpu_approximate_cores": 0.0
+        },
+        {
+          "adapter_execution_mean_ms": 3.891613651078415,
+          "client_cpu_approximate_cores": 0.9613992044788254,
+          "concurrency": 8,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.026789646587489436,
+          "weir_cpu_approximate_cores": 1.7203985764357927
+        },
+        {
+          "adapter_execution_mean_ms": 10.995459950998084,
+          "client_cpu_approximate_cores": 1.005290292627426,
+          "concurrency": 32,
+          "path": "weir",
+          "queue_wait_mean_ms": 0.21698574384149896,
+          "weir_cpu_approximate_cores": 1.7592580120979957
+        },
+        {
+          "adapter_execution_mean_ms": 18.619562449238767,
+          "client_cpu_approximate_cores": 1.0360374610271819,
+          "concurrency": 64,
+          "path": "weir",
+          "queue_wait_mean_ms": 4.395394462028799,
+          "weir_cpu_approximate_cores": 1.7546321440975374
+        }
+      ],
+      "file": "saturation-evidence-writes-0-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/saturation/search.json",
+      "points": [
+        {
+          "concurrency": 8,
+          "full": true,
+          "mean": 99.61618135277702,
+          "path": "direct",
+          "plateau": false,
+          "rate": 41754.43012691282,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": true,
+          "mean": 99.78932397451297,
+          "path": "direct",
+          "plateau": true,
+          "rate": 52910.67603396439,
+          "sat": true
+        },
+        {
+          "concurrency": 64,
+          "full": true,
+          "mean": 99.78439723581984,
+          "path": "direct",
+          "plateau": false,
+          "rate": 53065.84606935018,
+          "sat": false
+        },
+        {
+          "concurrency": 8,
+          "full": false,
+          "mean": 76.386573596638,
+          "path": "weir",
+          "plateau": false,
+          "rate": 35166.13771039511,
+          "sat": false
+        },
+        {
+          "concurrency": 32,
+          "full": false,
+          "mean": 80.73577719374946,
+          "path": "weir",
+          "plateau": true,
+          "rate": 39832.39710516091,
+          "sat": false
+        },
+        {
+          "concurrency": 64,
+          "full": false,
+          "mean": 82.80387524582879,
+          "path": "weir",
+          "plateau": false,
+          "rate": 40913.383293907806,
+          "sat": false
+        }
+      ],
+      "quota": 1,
+      "ratio": null,
+      "selected": {
+        "direct": [
+          32,
+          {
+            "full": true,
+            "mean": 99.78932397451297,
+            "plateau": true,
+            "rate": 52910.67603396439,
+            "sat": true
+          }
+        ]
+      },
+      "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence",
+      "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+      "workspace_mib": {
+        "mongo": 1312,
+        "search": 3072
+      },
+      "write_percent": 0
+    }
+  ],
+  "sdk": "v0.4.2",
+  "source": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+  "successful_operations": 93827392,
+  "timed_paths": 108,
+  "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+  "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43"
+}

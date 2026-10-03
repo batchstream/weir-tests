@@ -1,0 +1,60 @@
+{
+  "binary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+  "binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+  "containers": [
+    {
+      "id": "fb96056b8def9a7c787aed0eae3fc00091bf73258203b807f2b7136294076833",
+      "name": "weir-tests-6eebfc9447e92d4367364746-mongo",
+      "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+      "backend": "mongo"
+    },
+    {
+      "id": "53eb18d88e78e2313e6f531ada4317c8e836fcaf9cbe76684efaeda1ddfd1851",
+      "name": "weir-tests-6eebfc9447e92d4367364746-search",
+      "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+      "backend": "search"
+    }
+  ],
+  "created_at": "2026-10-03T12:37:37.5704989Z",
+  "host_arch": "amd64",
+  "host_os": "linux",
+  "mongo_uri": "mongodb://127.0.0.1:32768/?directConnection=true",
+  "nodes": [
+    {
+      "Application": "127.0.0.1:43743",
+      "Peer": "127.0.0.1:46083",
+      "Diagnostics": "127.0.0.1:36013",
+      "Owner": true
+    },
+    {
+      "Application": "127.0.0.1:46017",
+      "Peer": "127.0.0.1:46449",
+      "Diagnostics": "127.0.0.1:44225",
+      "Owner": true
+    },
+    {
+      "Application": "127.0.0.1:41171",
+      "Peer": "127.0.0.1:36605",
+      "Diagnostics": "127.0.0.1:36495",
+      "Owner": false
+    }
+  ],
+  "options": {
+    "WeirBinary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+    "MongoBinary": "",
+    "Backends": [
+      "mongo",
+      "search"
+    ],
+    "OwnerCount": 2,
+    "DiscoveryOnly": true,
+    "StoreConcurrency": 2,
+    "BatchSize": 513,
+    "IngressSessions": 64,
+    "DatabaseCPUs": 2,
+    "ProcessMemoryMiB": 8192,
+    "WorkingMemoryMiB": {}
+  },
+  "owner": "6eebfc9447e92d4367364746",
+  "search_url": "http://127.0.0.1:32769"
+}
