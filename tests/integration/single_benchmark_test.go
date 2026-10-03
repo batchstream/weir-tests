@@ -36,7 +36,8 @@ func TestIndependentSingleRequestClients(t *testing.T) {
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build real client executable: %v\n%s", err, output)
 	}
-	options := fixture.Options{WeirBinary: serverBinary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"), Backends: []string{"mongo", "search"}, OwnerCount: 1, StoreConcurrency: 2, BatchSize: 32, IngressSessions: 64, DatabaseCPUs: 1}
+	operationTimeout := 10 * time.Second
+	options := fixture.Options{WeirBinary: serverBinary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"), Backends: []string{"mongo", "search"}, OwnerCount: 1, StoreConcurrency: 2, BatchSize: 32, BackendTimeout: operationTimeout, IngressSessions: 64, DatabaseCPUs: 1}
 	cluster, err := fixture.Start(ctx, options)
 	if err != nil {
 		t.Fatal(err)
@@ -74,10 +75,13 @@ func TestIndependentSingleRequestClients(t *testing.T) {
 					t.Error(err)
 				}
 			}()
-			params := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: []int{2, 4}, BatchSizes: []int{1}, Warmup: time.Second, Duration: 5 * time.Second, Rounds: 1, WritePercent: 10, OperationTimeout: 10 * time.Second, Resources: cluster.Resources(backend), CPUThreshold: 90, ClientProcesses: 2, ClientExecutable: binary}
+			params := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: []int{2, 4}, BatchSizes: []int{1}, Warmup: time.Second, Duration: 5 * time.Second, Rounds: 1, WritePercent: 10, OperationTimeout: operationTimeout, Resources: cluster.Resources(backend), CPUThreshold: 90, ClientProcesses: 2, ClientExecutable: binary, Provenance: map[string]string{"client_operation_timeout": operationTimeout.String(), "weir_backend_timeout": options.BackendTimeout.String()}}
 			report, err := benchmark.RunSaturation(ctx, params)
 			if err != nil || report == nil || !report.Verified() {
 				t.Fatal("real multiprocess single-request workload failed", err)
+			}
+			if report.Parameters.OperationTimeout != operationTimeout.String() || report.Provenance["weir_backend_timeout"] != operationTimeout.String() {
+				t.Fatal("report lost the matched request/backend timeout policy")
 			}
 			if len(report.BusinessComparisons) != 2 {
 				t.Fatal("observed business performance missing")

@@ -38,6 +38,7 @@ type SaturationParameters struct {
 	Duration             string          `json:"measurement_duration"`
 	Rounds               int             `json:"paired_rounds"`
 	WritePercent         int             `json:"requested_write_percent"`
+	OperationTimeout     string          `json:"operation_timeout"`
 	CPUThreshold         float64         `json:"database_cpu_budget_threshold_percent"`
 	ClientProcesses      int             `json:"client_process_count,omitempty"`
 	ClientRequestRecords int             `json:"records_per_business_request,omitempty"`
@@ -113,7 +114,7 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 	if err != nil {
 		return nil, err
 	}
-	parameters := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: options.BatchSizes, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, CPUThreshold: options.CPUThreshold}
+	parameters := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: options.BatchSizes, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, OperationTimeout: options.OperationTimeout.String(), CPUThreshold: options.CPUThreshold}
 	provenance := make(map[string]string, len(options.Provenance)+3)
 	for key, value := range options.Provenance {
 		provenance[key] = value

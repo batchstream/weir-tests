@@ -38,6 +38,7 @@ type Options struct {
 	DiscoveryOnly    bool
 	StoreConcurrency int
 	BatchSize        int
+	BackendTimeout   time.Duration
 	IngressSessions  int
 	DatabaseCPUs     float64
 	ProcessMemoryMiB int
@@ -110,6 +111,12 @@ func Start(ctx context.Context, options Options) (*Cluster, error) {
 }
 
 func validateOptions(options Options) (Options, error) {
+	if options.BackendTimeout == 0 {
+		options.BackendTimeout = 2 * time.Second
+	}
+	if options.BackendTimeout < 0 {
+		return options, errors.New("backend timeout must be positive")
+	}
 	if options.IngressSessions == 0 {
 		options.IngressSessions = 64
 	}
@@ -278,7 +285,7 @@ func (c *Cluster) writeConfiguration(index int) error {
 	stores := make([]map[string]any, 0, len(c.options.Backends))
 	if node.Owner {
 		for _, backend := range c.options.Backends {
-			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "max_read_size": "2MiB"}
+			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "max_read_size": "2MiB", "backend_timeout": c.options.BackendTimeout.String()}
 			if memory, configured := c.options.WorkingMemoryMiB[backend]; configured {
 				store["working_memory"] = fmt.Sprintf("%dMiB", memory)
 			}

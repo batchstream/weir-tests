@@ -136,3 +136,33 @@ func TestLateBarrierInvalidatesThePhaseWithoutBusinessRequests(t *testing.T) {
 		t.Fatal("late common start silently shortened a supposedly valid measurement", result)
 	}
 }
+
+type requestBudgetExecutor struct {
+	singleOnlyExecutor
+	observed []time.Duration
+}
+
+func (e *requestBudgetExecutor) Execute(ctx context.Context, operation workload.Operation) workload.Outcome {
+	deadline, ok := ctx.Deadline()
+	remaining := time.Duration(0)
+	if ok {
+		remaining = time.Until(deadline)
+	}
+	e.observed = append(e.observed, remaining)
+	return e.fakeExecutor.Execute(ctx, operation)
+}
+
+func TestSingleMeasurementUsesCompleteRequestBudgetAndJoinsAfterPhaseEnd(t *testing.T) {
+	dataset := singleDataset(t)
+	executor := &requestBudgetExecutor{}
+	executor.delay = 200 * time.Millisecond
+	command := clientCommand{Phase: "timed", StartUnixNS: time.Now().Add(5 * time.Millisecond).UnixNano(), DurationNS: int64(100 * time.Millisecond)}
+	opts := singleMeasureOptions{Executor: executor, State: newDurationState(dataset, 8, 1, 100), Threads: 1, Timeout: 10 * time.Second, Command: command}
+	result := measureSingleRequests(context.Background(), opts)
+	if !result.Result.complete() || result.Requests != 1 || result.Result.ElapsedNS < int64(executor.delay) {
+		t.Fatal("measurement did not await the acknowledged in-flight request", result)
+	}
+	if len(executor.observed) != 1 || executor.observed[0] < 9*time.Second || executor.observed[0] > 10*time.Second {
+		t.Fatal("phase end shortened the complete business-request budget", executor.observed)
+	}
+}

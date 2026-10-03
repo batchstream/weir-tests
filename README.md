@@ -99,7 +99,7 @@ make benchmark
 # Equivalent explicit command with a fresh output directory:
 go run ./cmd/weir-lab -mode saturation \
   -weir .tools/weir -backend all -database-cpus 1 -store-concurrency 32 -backend-batch-limit 32 \
-  -client-processes 4 -concurrency-levels 8,32,128,512 -batch-sizes 1 \
+  -client-processes 4 -concurrency-levels 8,32,128 -batch-sizes 1 \
   -records 2048 -payload-bytes 1024 -write-percent 0 \
   -rounds 3 -warmup-duration 10s -duration 20s \
   -output results/local/saturation-read
@@ -107,7 +107,7 @@ go run ./cmd/weir-lab -mode saturation \
 
 Every timed worker makes one native database call or one SDK `ReadOne`/`Put`
 RPC containing exactly one record. The coordinator launches four real client OS
-processes. At total concurrency 8/32/128/512, each has 2/8/32/128 concurrent
+processes. At primary concurrency 8/32/128, each has 2/8/32 concurrent
 sequential workers, its own driver or SDK pool, and a disjoint ID partition.
 MongoDB uses `FindOne`/`ReplaceOne`, never `BulkWrite` for a timed single write.
 Search uses one-ID `POST _mget` and single-document `PUT _doc`; the read POST keeps
@@ -117,8 +117,17 @@ concurrency is independently fixed at 32. Actual database connection gauges are
 sampled, so changing the database request/connection ratio remains visible.
 
 Both paths use identical bodies, read/write policies and deterministic request
-generators. The same clients, connection pools and worker-owned revision state
-continue from warmup into measurement. Actual read/write counts are reported,
+generators. Each business call has a complete 10s client budget; the fixture
+explicitly sets every Weir Store `backend_timeout` to 10s. Weir also honors the
+active caller deadline, so queueing cannot grant an extra 10s after dispatch.
+Native Search retains its 10s response-header limit within that request context.
+The Search write query `timeout=1s` is identical on both paths and governs server
+prerequisites, not the complete HTTP acknowledgement budget. JSON parameters,
+provenance, the measurement receipt and generated routes retain the timeout
+policy. Timeout and UNKNOWN acknowledgements invalidate the stage without retry.
+The production default remains 2s when `backend_timeout` is omitted.
+
+The same clients, connection pools and worker-owned revision state continue from warmup into measurement. Actual read/write counts are reported,
 since timed runs complete different amounts of work. Every acknowledged mutation
 changes its revision. The coordinator merges each child's final revision ranges
 and independently verifies all documents and the record count. AB/BA order
@@ -171,10 +180,16 @@ maximum capacity remains unavailable; neither outcome is assumed.
 No noisy performance ratio is used as a CI pass/fail threshold; workload errors
 and failed persistence checks do fail the job. `saturation.yml` runs read,
 mixed (10% writes) and write matrices on PRs, with a one-CPU database quota.
-PRs use the 8/32/128 ladder to bound runtime. Dispatch can select that ladder or
-8/32/128/512, a workload, database CPU quota (0.5, 1 or 2), and backend grouping
+The CLI, Makefile and PRs use the primary 8/32/128 ladder. Dispatch can select
+that ladder or 8/32/128/512, a workload, database CPU quota (0.5, 1 or 2), and backend grouping
 limit (32 or 1). Each run keeps
 the quota identical for direct and Weir paths and records the inspected denominator.
+The primary ladder describes observed performance through 128 workers; it does
+not assume that 128 workers reach maximum capacity. The optional 512-worker stage
+is a separate stress extension: each process has 128 workers. The archived 512-worker direct-path warmup failures remain failed
+stress evidence; they do not produce a paired capacity comparison. Earlier
+results with Weir's implicit 2s backend deadline and a 10s client deadline remain
+separate from this matched-budget recipe.
 Reports from different quotas are separate experiments; a lower-quota saturation
 result cannot establish the capacity of a one-CPU database.
 

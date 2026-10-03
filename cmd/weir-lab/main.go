@@ -24,6 +24,9 @@ import (
 	"github.com/batchstream/weir-tests/internal/workload"
 )
 
+// Both paths use the same complete business-request budget.
+const businessTimeout = 10 * time.Second
+
 type labOptions struct {
 	binary            string
 	mongoBinary       string
@@ -71,7 +74,7 @@ func main() {
 	flag.IntVar(&opts.rounds, "rounds", 3, "alternating paired rounds")
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
 	flag.StringVar(&opts.mode, "mode", "saturation", "saturation sends independent single requests from OS client processes; bulk-saturation measures bulk overhead; fixed is a finite diagnostic")
-	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128,512", "ascending total client concurrency, at most 512 in single-request mode")
+	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 512 in single-request mode")
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
 	flag.IntVar(&opts.clientProcesses, "client-processes", 4, "independent client OS processes; each level is evenly divided into concurrent workers and its own connection pool")
 	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 32, "server adapter aggregation limit, independent of one-record client requests; 1 disables cross-request aggregation")
@@ -169,6 +172,8 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	provenance := map[string]string{
 		"weir_binary_sha256":           hex.EncodeToString(digest[:]),
 		"topology":                     "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+		"client_operation_timeout":     businessTimeout.String(),
+		"weir_backend_timeout":         businessTimeout.String(),
 		"weir_store_concurrency":       fmt.Sprint(opts.concurrency),
 		"weir_max_batch_operations":    fmt.Sprint(opts.backendBatchLimit),
 		"weir_memory_budget":           "8GiB (declared process admission budget; not an OS reservation)",
@@ -231,7 +236,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		provenance["weir_"+backend+"_working_memory_mib"] = fmt.Sprint(memory)
 	}
 	provenance["weir_memory_budget"] = fmt.Sprintf("%dMiB (declared process admission budget; not an OS reservation)", memoryMiB)
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: opts.backendBatchLimit, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: opts.backendBatchLimit, BackendTimeout: businessTimeout, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
 		return err
@@ -257,10 +262,10 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if err != nil {
 			return err
 		}
-		benchOptions := benchmark.Options{Dataset: dataset, Paths: paths, Operations: opts.operations, WarmupOperations: opts.warmup, WritePercent: opts.writePercent, Rounds: opts.rounds, OperationTimeout: 10 * time.Second, Provenance: provenance}
+		benchOptions := benchmark.Options{Dataset: dataset, Paths: paths, Operations: opts.operations, WarmupOperations: opts.warmup, WritePercent: opts.writePercent, Rounds: opts.rounds, OperationTimeout: businessTimeout, Provenance: provenance}
 		var caseErr error
 		if opts.mode != "fixed" {
-			saturation := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: levels, BatchSizes: batches, Warmup: opts.warmupDuration, Duration: opts.duration, Rounds: opts.rounds, WritePercent: opts.writePercent, OperationTimeout: 10 * time.Second, Resources: cluster.Resources(backend), CPUThreshold: 90, Provenance: provenance}
+			saturation := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: levels, BatchSizes: batches, Warmup: opts.warmupDuration, Duration: opts.duration, Rounds: opts.rounds, WritePercent: opts.writePercent, OperationTimeout: businessTimeout, Resources: cluster.Resources(backend), CPUThreshold: 90, Provenance: provenance}
 			if opts.mode == "saturation" {
 				executable, err := os.Executable()
 				if err != nil {

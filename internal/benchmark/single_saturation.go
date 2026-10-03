@@ -62,7 +62,7 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 	if err != nil {
 		return nil, err
 	}
-	params := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: []int{1}, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, CPUThreshold: options.CPUThreshold, ClientProcesses: options.ClientProcesses, ClientRequestRecords: 1}
+	params := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: []int{1}, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, OperationTimeout: options.OperationTimeout.String(), CPUThreshold: options.CPUThreshold, ClientProcesses: options.ClientProcesses, ClientRequestRecords: 1}
 	provenance := make(map[string]string, len(options.Provenance)+3)
 	for key, value := range options.Provenance {
 		provenance[key] = value

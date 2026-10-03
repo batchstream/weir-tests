@@ -25,6 +25,12 @@ func (r *SaturationReport) Write(jsonPath, markdownPath string) error {
 func (r *SaturationReport) Markdown() string {
 	var text strings.Builder
 	fmt.Fprintf(&text, "# Database saturation comparison\n\nBackend **%s**. Started %s.\n\n%s.\n\nWarmup %s and measurement %s per path/stage, %d paired rounds, requested writes %d%%.\n\n", r.Parameters.Dataset.Backend, r.Started, r.Method, r.Parameters.Warmup, r.Parameters.Duration, r.Parameters.Rounds, r.Parameters.WritePercent)
+	if r.Parameters.OperationTimeout != "" {
+		fmt.Fprintf(&text, "Complete business-request budget for both paths: %s.\n\n", r.Parameters.OperationTimeout)
+	}
+	if timeout := r.Provenance["weir_backend_timeout"]; timeout != "" {
+		fmt.Fprintf(&text, "Configured Weir Store backend budget: %s; the active caller deadline also applies.\n\n", timeout)
+	}
 	if r.Parameters.ClientProcesses > 0 {
 		fmt.Fprintf(&text, "%d independent OS client processes. Each worker sends one business request containing one record, waits for its acknowledged result, and validates it. p50/p95/p99 describe individual requests; histograms are pooled rather than averaging process quantiles.\n\n", r.Parameters.ClientProcesses)
 	} else {
