@@ -114,7 +114,7 @@ func (c *Cluster) startBackend(ctx context.Context, backend string) error {
 		}
 	}
 	name := "weir-tests-" + c.owner + "-" + backend
-	args := []string{"create", "--pull=never", "--name", name, "--label", ownerLabel + "=" + c.owner, "--label", "io.batchstream.weir-tests.backend=" + backend, "--publish", "127.0.0.1::" + port, "--cpus", "2", "--memory", "1536m"}
+	args := []string{"create", "--pull=never", "--name", name, "--label", ownerLabel + "=" + c.owner, "--label", "io.batchstream.weir-tests.backend=" + backend, "--publish", "127.0.0.1::" + port, "--cpus", strconv.FormatFloat(c.options.DatabaseCPUs, 'f', -1, 64), "--memory", "1536m"}
 	if backend == "mongo" {
 		args = append(args, image, "mongod", "--replSet", "weir_tests", "--bind_ip_all", "--wiredTigerCacheSizeGB", "0.25")
 	} else {

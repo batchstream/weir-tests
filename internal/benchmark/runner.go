@@ -124,7 +124,7 @@ func Run(ctx context.Context, options Options) (*Report, error) {
 		order := pairOrder(round)
 		pair := Pair{Round: round + 1, Order: order}
 		for _, name := range order {
-			if err := options.Paths.Prepare(ctx); err != nil {
+			if err := options.Paths.Prepare(ctx, 1); err != nil {
 				report.Incomplete = "prepare: " + err.Error()
 				return report, err
 			}
@@ -138,17 +138,17 @@ func Run(ctx context.Context, options Options) (*Report, error) {
 					report.Incomplete = fmt.Sprintf("warmup failed for %s: success=%d errors=%d indeterminate=%d unattempted=%d examples=%v", name, result.Succeeded, result.Errors, result.Indeterminate, result.NotAttempted, result.ErrorExamples)
 					return report, errors.New(report.Incomplete)
 				}
-				if err := options.Paths.Verify(ctx, warmup); err != nil {
+				if err := options.Paths.Verify(ctx, warmup, 1); err != nil {
 					report.Incomplete = "warmup verification: " + err.Error()
 					return report, err
 				}
-				if err := options.Paths.Prepare(ctx); err != nil {
+				if err := options.Paths.Prepare(ctx, 1); err != nil {
 					report.Incomplete = "reset after warmup: " + err.Error()
 					return report, err
 				}
 			}
 			result := measure(ctx, executor, plan, options.OperationTimeout)
-			if err := options.Paths.Verify(ctx, plan); err != nil {
+			if err := options.Paths.Verify(ctx, plan, 1); err != nil {
 				result.VerificationError = err.Error()
 			} else {
 				result.Verified = true

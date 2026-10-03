@@ -243,9 +243,9 @@ func (b *backendData) httpDo(t *testing.T, ctx context.Context, request httpRequ
 func (b *backendData) assertRead(t *testing.T, ctx context.Context, client *weir.Client, want record) {
 	t.Helper()
 	request := &weir.ReadRequest{Resource: b.resource(want.id)}
-	options := weir.ReadOptions{StoreName: b.name, Request: request}
+	options := weir.ReadOneOptions{StoreName: b.name, Request: request}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	result, err := client.Read(rpc, options)
+	result, err := client.ReadOne(rpc, options)
 	cancel()
 	b.assertReadResult(t, result, err, want.n)
 }
@@ -264,9 +264,9 @@ func (b *backendData) assertReadResult(t *testing.T, result *weir.ReadResult, er
 func (b *backendData) waitRead(t *testing.T, ctx context.Context, client *weir.Client, want record) {
 	t.Helper()
 	request := &weir.ReadRequest{Resource: b.resource(want.id)}
-	options := weir.ReadOptions{StoreName: b.name, Request: request}
+	options := weir.ReadOneOptions{StoreName: b.name, Request: request}
 	poll(t, ctx, "read-only recovery "+b.name, func(attempt context.Context) error {
-		result, err := client.Read(attempt, options)
+		result, err := client.ReadOne(attempt, options)
 		if err != nil {
 			return err
 		}

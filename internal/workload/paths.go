@@ -52,6 +52,7 @@ type Executor interface {
 	Name() string
 	Evidence() Evidence
 	Execute(context.Context, Operation) Outcome
+	ExecuteBatch(context.Context, []Operation) []Outcome
 }
 
 type Paths struct {
@@ -204,32 +205,57 @@ func (p *directPath) create(ctx context.Context) error {
 	return nil
 }
 
-func (p *Paths) Prepare(ctx context.Context) error {
-	if !p.owned {
+func (p *Paths) Prepare(ctx context.Context, batchSize int) error {
+	if !p.owned || batchSize < 1 || batchSize > 64 {
 		return errors.New("dataset is not owned")
 	}
-	for record := range p.direct.dataset.Config.Records {
-		operation := Operation{Record: record, Write: true}
-		outcome := p.Direct.Execute(ctx, operation)
-		if outcome.Status != Success {
-			return fmt.Errorf("seed %d: %s", record, outcome.Error)
+	for start := 0; start < p.direct.dataset.Config.Records; start += batchSize {
+		operations := make([]Operation, min(batchSize, p.direct.dataset.Config.Records-start))
+		for index := range operations {
+			operation := Operation{Record: start + index, Write: true}
+			operations[index] = operation
+		}
+		var outcomes []Outcome
+		if p.direct.mongo != nil {
+			// Reset is deliberately idempotent. Timed native writes require
+			// actual changes, but repeating revision zero during setup is valid.
+			outcomes = p.direct.mongoBatch(ctx, operations, false)
+		} else {
+			outcomes = p.Direct.ExecuteBatch(ctx, operations)
+		}
+		if len(outcomes) != len(operations) {
+			return errors.New("seed result count mismatch")
+		}
+		for index, outcome := range outcomes {
+			if outcome.Status != Success {
+				return fmt.Errorf("seed %d: %s", start+index, outcome.Error)
+			}
 		}
 	}
 	plan := &Plan{Expected: make([]int, p.direct.dataset.Config.Records)}
-	return p.Verify(ctx, plan)
+	return p.Verify(ctx, plan, batchSize)
 }
 
 // Verify reads every expected record through the independent direct path and
 // checks collection/index count. Search refresh affects only postflight count.
-func (p *Paths) Verify(ctx context.Context, plan *Plan) error {
-	if !p.owned || plan == nil || len(plan.Expected) != p.direct.dataset.Config.Records {
+func (p *Paths) Verify(ctx context.Context, plan *Plan, batchSize int) error {
+	if !p.owned || plan == nil || len(plan.Expected) != p.direct.dataset.Config.Records || batchSize < 1 || batchSize > 64 {
 		return errors.New("invalid verification plan or unowned dataset")
 	}
-	for record, revision := range plan.Expected {
-		operation := Operation{Record: record, Revision: revision}
-		outcome := p.Direct.Execute(ctx, operation)
-		if outcome.Status != Success {
-			return fmt.Errorf("postflight %d: %s", record, outcome.Error)
+	for start := 0; start < len(plan.Expected); start += batchSize {
+		operations := make([]Operation, min(batchSize, len(plan.Expected)-start))
+		for index := range operations {
+			operation := Operation{Record: start + index, Revision: plan.Expected[start+index]}
+			operations[index] = operation
+		}
+		outcomes := p.Direct.ExecuteBatch(ctx, operations)
+		if len(outcomes) != len(operations) {
+			return errors.New("postflight result count mismatch")
+		}
+		for index, outcome := range outcomes {
+			if outcome.Status != Success {
+				return fmt.Errorf("postflight %d: %s", start+index, outcome.Error)
+			}
 		}
 	}
 	var count int64
@@ -326,6 +352,9 @@ func (p *directPath) executeMongo(ctx context.Context, operation Operation) Outc
 		}
 		if result == nil || !result.Acknowledged || result.MatchedCount+result.UpsertedCount != 1 {
 			return failed(errors.New("missing acknowledged single-document replacement"), true)
+		}
+		if result.ModifiedCount+result.UpsertedCount != 1 {
+			return failed(errors.New("timed native replacement did not change the record"), true)
 		}
 		outcome := Outcome{Status: Success, Applied: true, RequestBytes: uint64(len(document))}
 		return outcome
@@ -424,7 +453,7 @@ func (p *directPath) request(ctx context.Context, method, path string, body []by
 		return 0, nil, err
 	}
 	defer response.Body.Close()
-	limit := int64(p.dataset.Config.PayloadBytes + 64<<10)
+	limit := int64(64*(p.dataset.Config.PayloadBytes+1024) + 64<<10)
 	raw, err := io.ReadAll(io.LimitReader(response.Body, limit+1))
 	if err != nil || int64(len(raw)) > limit {
 		return response.StatusCode, nil, errors.New("Search response exceeds bounded document workspace or is incomplete")
@@ -441,23 +470,11 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 		request := &weir.WriteRequest{Resource: p.dataset.Resource(operation.Record), Document: document}
 		opts := weir.WriteOptions{StoreName: p.dataset.Config.StoreName, Request: request}
 		result, err := p.client.Put(ctx, opts)
-		if result != nil && result.GetOutcome() == weir.MutationApplied && result.GetFailure() == nil {
-			outcome := Outcome{Status: Success, Applied: true, RequestBytes: uint64(len(document.Data))}
-			if err != nil {
-				outcome.Status = Failed
-				outcome.Error = err.Error()
-			}
-			return outcome
-		}
-		if err == nil {
-			err = fmt.Errorf("Weir Put outcome=%s failure=%v", result.GetOutcome(), result.GetFailure())
-		}
-		uncertain := result == nil || result.GetOutcome() == weir.MutationUnknown
-		return failed(err, uncertain)
+		return mutationOutcome(result, len(document.Data), err)
 	}
 	request := &weir.ReadRequest{Resource: p.dataset.Resource(operation.Record)}
-	opts := weir.ReadOptions{StoreName: p.dataset.Config.StoreName, Request: request}
-	result, err := p.client.Read(ctx, opts)
+	opts := weir.ReadOneOptions{StoreName: p.dataset.Config.StoreName, Request: request}
+	result, err := p.client.ReadOne(ctx, opts)
 	if err != nil {
 		return failed(err, false)
 	}

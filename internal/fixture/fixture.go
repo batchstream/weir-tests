@@ -39,6 +39,8 @@ type Options struct {
 	StoreConcurrency int
 	BatchSize        int
 	BatchCollect     time.Duration
+	IngressSessions  int
+	DatabaseCPUs     float64
 }
 
 type Node struct {
@@ -107,6 +109,15 @@ func Start(ctx context.Context, options Options) (*Cluster, error) {
 }
 
 func validateOptions(options Options) (Options, error) {
+	if options.IngressSessions == 0 {
+		options.IngressSessions = 64
+	}
+	if options.DatabaseCPUs == 0 {
+		options.DatabaseCPUs = 2
+	}
+	if options.IngressSessions < 1 || options.IngressSessions > 64 || options.DatabaseCPUs <= 0 || options.DatabaseCPUs > float64(runtime.NumCPU()) {
+		return options, errors.New("invalid ingress sessions or database CPU budget")
+	}
 	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
 		return options, errors.New("fixture requires Linux or macOS")
 	}
@@ -244,7 +255,7 @@ func (c *Cluster) writeConfiguration(index int) error {
 	if !node.Owner {
 		discovery["group"] = "directory-" + c.owner
 	}
-	transport := map[string]any{"max_connections": 64, "max_sessions": 64}
+	transport := map[string]any{"max_connections": 64, "max_sessions": c.options.IngressSessions}
 	basic := map[string]any{"listeners": listeners, "diagnostics": diagnostics, "discovery": discovery, "transport": transport, "memory": "8GiB"}
 	if err := writeJSON(c.nodeFile(index, "config.json"), basic); err != nil {
 		return err

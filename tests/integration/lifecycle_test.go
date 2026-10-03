@@ -73,9 +73,9 @@ func testLifecycle(t *testing.T, ctx context.Context, client *weir.Client, backe
 	cancel()
 	assertApplied(t, result, err)
 	read := &weir.ReadRequest{Resource: backend.resource("disposable")}
-	readOptions := weir.ReadOptions{StoreName: backend.name, Request: read}
+	readOptions := weir.ReadOneOptions{StoreName: backend.name, Request: read}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	missing, err := client.Read(rpc, readOptions)
+	missing, err := client.ReadOne(rpc, readOptions)
 	cancel()
 	if err != nil || !missing.GetMissing() || missing.GetFailure() != nil {
 		t.Fatalf("Read after Delete: result=%v err=%v", missing, err)
