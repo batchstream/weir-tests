@@ -83,7 +83,7 @@ go run ./cmd/weir-lab \
   -backend all \
   -operations 10000 -warmup 1000 \
   -records 1024 -payload-bytes 1024 \
-  -concurrency 8 -rounds 3 -write-percent 10 \
+  -concurrency 8 -rounds 3 -write-percent 10 -batch-collect 0ms \
   -output results/local/mixed
 ```
 
@@ -92,9 +92,10 @@ equivalent explicit option. Choose a new output directory for each run. Use
 `-write-percent 0`, `10` or `100` for read, 90/10 mixed and write-only workloads.
 
 The local profile runs one Weir owner, matches Store concurrency to client
-concurrency, and records batch size 32 and collection interval 5 ms. Configure
-the interval explicitly with `-batch-collect`; every report records it. These
-are benchmark parameters, not a claim about every production deployment.
+concurrency, and records batch size 32. The example explicitly disables collection
+wait; use `-batch-collect 5ms` for the separate batching-wait comparison. The CLI
+default is 5 ms and every report records the chosen interval. These are benchmark
+parameters, not a claim about every production deployment.
 
 Each paired round executes the exact same deterministic IDs, payloads and
 read/write schedule through both paths, alternating direct/Weir and Weir/direct.
@@ -102,6 +103,11 @@ Workers own separate key partitions. Data preparation, preflight, warmup, reset
 and independent postflight validation are excluded from timing. Timing includes
 payload validation, all attempted calls and worker joins. Failed or indeterminate
 operations invalidate the aggregate throughput comparison.
+
+Every replacement flips between two precomputed document revisions, so repeated
+writes to the same ID change its stored contents. Reads verify the latest revision
+from the identical plan. The workload measures replacements in a fixed working
+set; it does not model continual insertion of new records.
 
 The native baseline uses one database operation per client call. Weir's internal
 batching follows its recorded configuration. MongoDB uses primary reads,

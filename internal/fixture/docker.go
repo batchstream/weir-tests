@@ -21,7 +21,7 @@ const (
 	MongoVersion  = "8.0.32"
 	MongoImage    = "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c"
 	SearchVersion = "8.19.22"
-	SearchImage   = "docker.elastic.co/elasticsearch/elasticsearch@sha256:c2a3ed5f968be6d59c960aa0c60cfdaee667b6bc8211142021a41d0e85b43237"
+	SearchImage   = "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595"
 )
 
 type container struct {
@@ -30,6 +30,8 @@ type container struct {
 	Image   string `json:"image"`
 	Backend string `json:"backend"`
 	removed bool
+	stopped bool
+	exitErr error
 }
 
 type inspection struct {
@@ -67,8 +69,7 @@ func (c *Cluster) docker(ctx context.Context, args ...string) ([]byte, error) {
 	}
 	defer log.Close()
 	_, _ = fmt.Fprintf(log, "%s docker %s\n", time.Now().UTC().Format(time.RFC3339Nano), strings.Join(args, " "))
-	var capture boundedOutput
-	writer := io.MultiWriter(log, &capture)
+	var stdout, stderr boundedOutput
 	commandArgs := append([]string{"--config", filepath.Join(c.Directory, "docker-config"), "--host", c.dockerHost}, args...)
 	cmd := exec.CommandContext(commandCtx, "docker", commandArgs...)
 	for _, entry := range os.Environ() {
@@ -76,11 +77,12 @@ func (c *Cluster) docker(ctx context.Context, args ...string) ([]byte, error) {
 			cmd.Env = append(cmd.Env, entry)
 		}
 	}
-	cmd.Stdout, cmd.Stderr = writer, writer
+	cmd.Stdout = io.MultiWriter(log, &stdout)
+	cmd.Stderr = io.MultiWriter(log, &stderr)
 	if err := cmd.Run(); err != nil {
-		return capture.Bytes(), fmt.Errorf("docker %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(capture.String()))
+		return stdout.Bytes(), fmt.Errorf("docker %s: %w; stdout: %s; stderr: %s", strings.Join(args, " "), err, strings.TrimSpace(stdout.String()), strings.TrimSpace(stderr.String()))
 	}
-	return capture.Bytes(), nil
+	return stdout.Bytes(), nil
 }
 
 // Command output is fully retained in logs and bounded when parsed in memory.
@@ -204,18 +206,21 @@ func (c *Cluster) inspectContainer(ctx context.Context, id string) (inspection, 
 
 func (c *Cluster) removeContainer(ctx context.Context, owned *container) error {
 	if owned.removed {
-		return nil
+		return owned.exitErr
 	}
 	state, err := c.inspectContainer(ctx, owned.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "No such container:") || strings.Contains(err.Error(), "No such object:") {
 			owned.removed = true
-			return nil
+			return owned.exitErr
 		}
 		return err
 	}
 	if err := verifyOwned(state, *owned, c.owner); err != nil {
 		return err
+	}
+	if !state.State.Running && !owned.stopped && (state.State.ExitCode != 0 || state.State.Error != "") {
+		owned.exitErr = fmt.Errorf("owned %s container %s exited before fixture cleanup (exit %d, error %q); logs: %s", owned.Backend, owned.ID, state.State.ExitCode, state.State.Error, filepath.Join(c.Directory, owned.Backend+"-container.log"))
 	}
 	logPath := filepath.Join(c.Directory, owned.Backend+"-container.log")
 	output, logErr := c.docker(ctx, "logs", owned.ID)
@@ -223,12 +228,15 @@ func (c *Cluster) removeContainer(ctx context.Context, owned *container) error {
 	var stopErr error
 	if state.State.Running {
 		_, stopErr = c.docker(ctx, "stop", "--time", "10", owned.ID)
+		if stopErr == nil {
+			owned.stopped = true
+		}
 	}
 	_, removeErr := c.docker(ctx, "rm", "--volumes", owned.ID)
 	if removeErr == nil {
 		owned.removed = true
 	}
-	return errors.Join(logErr, writeErr, stopErr, removeErr)
+	return errors.Join(owned.exitErr, logErr, writeErr, stopErr, removeErr)
 }
 
 func stopProcess(ctx context.Context, p *process) error {

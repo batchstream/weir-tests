@@ -413,6 +413,9 @@ func (p *directPath) request(ctx context.Context, method, path string, body []by
 	if err != nil {
 		return 0, nil, err
 	}
+	// NewRequest makes bytes.Reader bodies replayable. Disable even the
+	// transport's zero-byte write retry so each call offers one request only.
+	request.GetBody = nil
 	if len(body) != 0 {
 		request.Header.Set("Content-Type", "application/json")
 	}

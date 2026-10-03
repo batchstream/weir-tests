@@ -366,3 +366,140 @@ func TestSingleOwnerConfigurationUsesAnEmptySeedList(t *testing.T) {
 		t.Fatal("single-owner config emits unsupported null seeds", string(data), err)
 	}
 }
+
+func TestContainerCrashIsPreservedWhileOwnedCleanupCompletes(t *testing.T) {
+	cases := []struct {
+		name              string
+		running           bool
+		exitCode          int
+		stateError        string
+		wantFailure       bool
+		previouslyStopped bool
+	}{
+		{name: "already_crashed", exitCode: 137, wantFailure: true},
+		{name: "already_failed", stateError: "runtime failure", wantFailure: true},
+		{name: "running_graceful_stop", running: true},
+		{name: "already_stopped_cleanly"},
+		{name: "previous_successful_own_stop", exitCode: 137, previouslyStopped: true},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			directory := t.TempDir()
+			cliDirectory := filepath.Join(directory, "bin")
+			if err := os.Mkdir(cliDirectory, 0700); err != nil {
+				t.Fatal(err)
+			}
+			statePath := filepath.Join(directory, "state.json")
+			commandsPath := filepath.Join(directory, "commands.log")
+			owner := "test-owner"
+			owned := container{ID: strings.Repeat("a", 64), Name: "weir-tests-owned-mongo", Image: MongoImage, Backend: "mongo", stopped: test.previouslyStopped}
+			var state inspection
+			state.ID, state.Name, state.Config.Image = owned.ID, "/"+owned.Name, owned.Image
+			state.Config.Labels = map[string]string{ownerLabel: owner, "io.batchstream.weir-tests.backend": owned.Backend}
+			state.State.Running, state.State.ExitCode, state.State.Error = test.running, test.exitCode, test.stateError
+			states := []inspection{state}
+			if err := writeJSON(statePath, states); err != nil {
+				t.Fatal(err)
+			}
+			script := `#!/bin/sh
+shift 4
+printf '%s\n' "$*" >> "$WEIR_FIXTURE_FAKE_DOCKER_COMMANDS"
+case "$1" in
+  container) cat "$WEIR_FIXTURE_FAKE_DOCKER_STATE" ;;
+  logs) printf '%s\n' 'owned backend log' ;;
+  stop) printf '%s\n' 'stopped' ;;
+  rm) printf '%s\n' 'removed' ;;
+  *) exit 2 ;;
+esac
+`
+			if err := os.WriteFile(filepath.Join(cliDirectory, "docker"), []byte(script), 0700); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PATH", cliDirectory+string(os.PathListSeparator)+os.Getenv("PATH"))
+			t.Setenv("WEIR_FIXTURE_FAKE_DOCKER_STATE", statePath)
+			t.Setenv("WEIR_FIXTURE_FAKE_DOCKER_COMMANDS", commandsPath)
+			c := &Cluster{Directory: directory, owner: owner, dockerHost: "unix:///unused-fixture.sock", containers: []container{owned}}
+			err := c.Close(context.Background())
+			if (err != nil) != test.wantFailure {
+				t.Fatal("wrong cleanup outcome", err)
+			}
+			if !c.containers[0].removed {
+				t.Fatal("owned crashed container was not removed")
+			}
+			commands, readErr := os.ReadFile(commandsPath)
+			if readErr != nil || !bytes.Contains(commands, []byte("rm --volumes "+owned.ID)) {
+				t.Fatal("cleanup did not remove exact owned ID", string(commands), readErr)
+			}
+			if bytes.Contains(commands, []byte("stop --time 10 "+owned.ID)) != test.running {
+				t.Fatal("cleanup stop does not match initial running state", string(commands))
+			}
+			if err := c.Close(context.Background()); (err != nil) != test.wantFailure {
+				t.Fatal("repeat cleanup lost backend failure", err)
+			}
+			data, readErr := os.ReadFile(filepath.Join(directory, "cleanup.json"))
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			var receipt struct {
+				Errors     string
+				Containers []struct{ Removed bool }
+			}
+			if err := json.Unmarshal(data, &receipt); err != nil {
+				t.Fatal(err)
+			}
+			if len(receipt.Containers) != 1 || !receipt.Containers[0].Removed || (receipt.Errors != "") != test.wantFailure {
+				t.Fatal("cleanup receipt hides backend crash or owned removal", string(data))
+			}
+		})
+	}
+}
+
+func TestDockerWarningsDoNotPolluteMachineReadableStdout(t *testing.T) {
+	directory := t.TempDir()
+	cliDirectory := filepath.Join(directory, "bin")
+	if err := os.Mkdir(cliDirectory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	id := strings.Repeat("a", 64)
+	t.Setenv("WEIR_FIXTURE_FAKE_DOCKER_ID", id)
+	script := `#!/bin/sh
+shift 4
+case "$1" in
+  create)
+    printf '%s\n' 'WARNING: fixture example warning' >&2
+    printf '%s\n' "$WEIR_FIXTURE_FAKE_DOCKER_ID"
+    ;;
+  container)
+    printf '%s\n' 'WARNING: fixture inspect warning' >&2
+    printf '[{"Id":"%s"}]\n' "$WEIR_FIXTURE_FAKE_DOCKER_ID"
+    ;;
+  fail)
+    printf '%s\n' 'partial standard output'
+    printf '%s\n' 'daemon failure diagnostic' >&2
+    exit 17
+    ;;
+  *) exit 2 ;;
+esac
+`
+	if err := os.WriteFile(filepath.Join(cliDirectory, "docker"), []byte(script), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", cliDirectory+string(os.PathListSeparator)+os.Getenv("PATH"))
+	c := &Cluster{Directory: directory, dockerHost: "unix:///unused-fixture.sock"}
+	output, err := c.docker(context.Background(), "create")
+	if err != nil || !validContainerID(strings.TrimSpace(string(output))) || strings.TrimSpace(string(output)) != id {
+		t.Fatal("stderr warning corrupted Docker create ID", string(output), err)
+	}
+	state, err := c.inspectContainer(context.Background(), id)
+	if err != nil || state.ID != id {
+		t.Fatal("stderr warning corrupted Docker inspect JSON", state.ID, err)
+	}
+	output, err = c.docker(context.Background(), "fail")
+	if err == nil || !strings.Contains(err.Error(), "daemon failure diagnostic") || !strings.Contains(err.Error(), "partial standard output") || !strings.Contains(err.Error(), "exit status 17") || strings.TrimSpace(string(output)) != "partial standard output" {
+		t.Fatal("Docker command failure lost stream diagnostics", string(output), err)
+	}
+	log, err := os.ReadFile(filepath.Join(directory, "docker.log"))
+	if err != nil || !bytes.Contains(log, []byte("WARNING: fixture example warning")) || !bytes.Contains(log, []byte("WARNING: fixture inspect warning")) || !bytes.Contains(log, []byte("daemon failure diagnostic")) || !bytes.Contains(log, []byte(id)) {
+		t.Fatal("Docker log lost stdout or stderr", string(log), err)
+	}
+}

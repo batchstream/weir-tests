@@ -153,7 +153,9 @@ func (d *Dataset) Plan(options PlanOptions) (*Plan, error) {
 			record := start + int(x%uint64(end-start))
 			write := int((x>>32)%100) < options.WritePercent
 			if write {
-				plan.Expected[record] = 1
+				// Each acknowledged replacement changes the persisted body,
+				// including repeated writes to one worker-owned record.
+				plan.Expected[record] = 1 - plan.Expected[record]
 				plan.Writes++
 			} else {
 				plan.Reads++

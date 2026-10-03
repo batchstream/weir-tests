@@ -4,12 +4,94 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync/atomic"
 	"testing"
 )
+
+// This fault is at the external TCP boundary. It preserves the real HTTP
+// transport and connection reuse while deterministically sending zero bytes.
+type zeroWriteFailureConn struct {
+	net.Conn
+	failNext atomic.Bool
+	failures atomic.Int64
+}
+
+func (c *zeroWriteFailureConn) Write(data []byte) (int, error) {
+	if c.failNext.CompareAndSwap(true, false) {
+		c.failures.Add(1)
+		return 0, io.ErrClosedPipe
+	}
+	return c.Conn.Write(data)
+}
+
+func TestSearchNonemptyRequestsDoNotReplayAfterZeroByteWriteFailure(t *testing.T) {
+	read := Operation{Record: 2}
+	write := Operation{Record: 2, Write: true, Revision: 1}
+	cases := []struct {
+		name      string
+		operation Operation
+		failure   Status
+	}{
+		{name: "POST", operation: read, failure: Failed},
+		{name: "PUT", operation: write, failure: Indeterminate},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			dataset := testDataset(t, "search")
+			var requests atomic.Int64
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				requests.Add(1)
+				body, err := io.ReadAll(request.Body)
+				if err != nil || len(body) == 0 {
+					t.Error("regression requires a nonempty request body", err)
+				}
+				if request.Method != test.name {
+					t.Error("unexpected method", request.Method)
+				}
+				if request.Method == http.MethodPut {
+					fmt.Fprintf(writer, `{"_index":%q,"_id":%q,"result":"updated","_shards":{"successful":1,"failed":0}}`, dataset.Config.Namespace, dataset.ID(2))
+					return
+				}
+				fmt.Fprintf(writer, `{"docs":[{"_index":%q,"_id":%q,"found":true,"_source":%s}]}`, dataset.Config.Namespace, dataset.ID(2), dataset.Document(test.operation))
+			}))
+			defer server.Close()
+			var connection atomic.Pointer[zeroWriteFailureConn]
+			var dials atomic.Int64
+			transport := &http.Transport{MaxConnsPerHost: 1, MaxIdleConnsPerHost: 1}
+			transport.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+				dialer := net.Dialer{}
+				raw, err := dialer.DialContext(ctx, network, address)
+				if err != nil {
+					return nil, err
+				}
+				wrapped := &zeroWriteFailureConn{Conn: raw}
+				dials.Add(1)
+				connection.Store(wrapped)
+				return wrapped, nil
+			}
+			client := &http.Client{Transport: transport}
+			defer client.CloseIdleConnections()
+			path := &directPath{dataset: dataset, search: client, baseURL: server.URL}
+			if result := path.Execute(context.Background(), test.operation); result.Status != Success {
+				t.Fatal("initial request failed", result)
+			}
+			first := connection.Load()
+			if first == nil || dials.Load() != 1 {
+				t.Fatal("initial connection missing")
+			}
+			first.failNext.Store(true)
+			result := path.Execute(context.Background(), test.operation)
+			if result.Status != test.failure || first.failures.Load() != 1 || requests.Load() != 1 || dials.Load() != 1 {
+				t.Fatal("zero-byte write failure was replayed", result, first.failures.Load(), requests.Load(), dials.Load())
+			}
+		})
+	}
+}
 
 func TestSearchDirectUsesMatchingPolicyAndNeverReplaysMutation(t *testing.T) {
 	dataset := testDataset(t, "search")
