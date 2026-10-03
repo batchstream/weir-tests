@@ -20,49 +20,62 @@ type DatabaseCounters struct {
 	CommandUnavailable string            `json:"physical_command_observation_unavailable,omitempty"`
 }
 
+type mongoCommandCounter struct {
+	Total *uint64 `bson:"total"`
+}
+
+type mongoServerStatus struct {
+	Connections struct {
+		Current *uint64 `bson:"current"`
+	} `bson:"connections"`
+	Metrics struct {
+		Commands struct {
+			Find        mongoCommandCounter `bson:"find"`
+			Update      mongoCommandCounter `bson:"update"`
+			BulkWrite   mongoCommandCounter `bson:"bulkWrite"`
+			GetMore     mongoCommandCounter `bson:"getMore"`
+			KillCursors mongoCommandCounter `bson:"killCursors"`
+		} `bson:"commands"`
+	} `bson:"metrics"`
+	Network struct {
+		In  uint64 `bson:"bytesIn"`
+		Out uint64 `bson:"bytesOut"`
+	} `bson:"network"`
+	WiredTiger struct {
+		Cache struct {
+			Read    uint64 `bson:"bytes read into cache"`
+			Written uint64 `bson:"bytes written from cache"`
+		} `bson:"cache"`
+	} `bson:"wiredTiger"`
+}
+
+func (s mongoServerStatus) counters() DatabaseCounters {
+	counters := DatabaseCounters{NetworkIn: s.Network.In, NetworkOut: s.Network.Out, ReadBytes: s.WiredTiger.Cache.Read, WriteBytes: s.WiredTiger.Cache.Written, Connections: s.Connections.Current, Commands: make(map[string]uint64)}
+	commands := s.Metrics.Commands
+	observed := map[string]*uint64{"find": commands.Find.Total, "update": commands.Update.Total, "bulkWrite": commands.BulkWrite.Total, "getMore": commands.GetMore.Total, "killCursors": commands.KillCursors.Total}
+	for _, name := range []string{"find", "update", "bulkWrite", "getMore", "killCursors"} {
+		total := observed[name]
+		if total == nil {
+			counters.CommandUnavailable += "missing " + name + "; "
+			continue
+		}
+		counters.Commands[name] = *total
+	}
+	counters.IOScope = "MongoDB WiredTiger cache storage bytes; excludes other files and does not measure device busy time"
+	return counters
+}
+
 // DatabaseCounters reads cumulative evidence, including the monitor's own
 // traffic. Storage counters measure bytes and never imply disk saturation.
 func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) {
 	var counters DatabaseCounters
 	if p.direct.mongo != nil {
-		var reply struct {
-			Connections struct {
-				Current *uint64 `bson:"current"`
-			} `bson:"connections"`
-			Metrics struct {
-				Commands map[string]struct {
-					Total *uint64 `bson:"total"`
-				} `bson:"commands"`
-			} `bson:"metrics"`
-			Network struct {
-				In  uint64 `bson:"bytesIn"`
-				Out uint64 `bson:"bytesOut"`
-			} `bson:"network"`
-			WiredTiger struct {
-				Cache struct {
-					Read    uint64 `bson:"bytes read into cache"`
-					Written uint64 `bson:"bytes written from cache"`
-				} `bson:"cache"`
-			} `bson:"wiredTiger"`
-		}
+		var reply mongoServerStatus
 		command := bson.D{{Key: "serverStatus", Value: 1}}
 		if err := p.direct.mongo.Database("admin").RunCommand(ctx, command).Decode(&reply); err != nil {
 			return counters, err
 		}
-		counters.NetworkIn, counters.NetworkOut = reply.Network.In, reply.Network.Out
-		counters.ReadBytes, counters.WriteBytes = reply.WiredTiger.Cache.Read, reply.WiredTiger.Cache.Written
-		counters.Connections = reply.Connections.Current
-		counters.Commands = make(map[string]uint64)
-		for _, name := range []string{"find", "update", "bulkWrite", "getMore", "killCursors"} {
-			entry, found := reply.Metrics.Commands[name]
-			if !found || entry.Total == nil {
-				counters.CommandUnavailable += "missing " + name + "; "
-				continue
-			}
-			counters.Commands[name] = *entry.Total
-		}
-		counters.IOScope = "MongoDB WiredTiger cache storage bytes; excludes other files and does not measure device busy time"
-		return counters, nil
+		return reply.counters(), nil
 	}
 	status, raw, err := p.direct.request(ctx, http.MethodGet, "/_nodes/stats/fs,transport,http", nil)
 	if err != nil {

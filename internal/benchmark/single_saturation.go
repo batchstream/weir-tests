@@ -9,6 +9,7 @@ import (
 	"io"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -232,15 +233,15 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	if counterErr == nil {
 		result.DatabaseAfter = &afterDatabase
 	} else {
-		result.PhysicalCommandUnavailable = counterErr.Error()
+		result.PhysicalCommandUnavailable = mergeCommandUnavailable(result.PhysicalCommandUnavailable, counterErr.Error())
 	}
 	if result.DatabaseBefore != nil && result.DatabaseAfter != nil {
-		result.PhysicalCommandUnavailable = result.DatabaseBefore.CommandUnavailable + result.DatabaseAfter.CommandUnavailable
+		result.PhysicalCommandUnavailable = mergeCommandUnavailable(result.DatabaseBefore.CommandUnavailable, result.DatabaseAfter.CommandUnavailable)
 		result.PhysicalCommands = make(map[string]uint64)
 		for name, after := range result.DatabaseAfter.Commands {
 			before, found := result.DatabaseBefore.Commands[name]
 			if !found || after < before {
-				result.PhysicalCommandUnavailable += "unavailable or reset " + name + "; "
+				result.PhysicalCommandUnavailable = mergeCommandUnavailable(result.PhysicalCommandUnavailable, "unavailable or reset "+name)
 				continue
 			}
 			result.PhysicalCommands[name] = after - before
@@ -287,6 +288,21 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	}
 	result.Verified = true
 	return result, nil
+}
+
+func mergeCommandUnavailable(reasons ...string) string {
+	var unique []string
+	seen := make(map[string]bool)
+	for _, reason := range reasons {
+		for _, part := range strings.Split(reason, ";") {
+			part = strings.TrimSpace(part)
+			if part != "" && !seen[part] {
+				seen[part] = true
+				unique = append(unique, part)
+			}
+		}
+	}
+	return strings.Join(unique, "; ")
 }
 
 func histogramFromClient(value ClientProcessResult) histogram {
