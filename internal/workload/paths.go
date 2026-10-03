@@ -101,7 +101,7 @@ func Open(ctx context.Context, dataset *Dataset) (*Paths, error) {
 	}
 	paths.client = client
 	info := direct.info
-	info.Protocol = "gRPC Execute via published Weir SDK"
+	info.Protocol = "gRPC unary Read/Mutate batches via published Weir SDK"
 	info.Endpoint = dataset.Config.WeirSeed
 	info.RetryPolicy = "SDK never replays business requests"
 	via := &weirPath{dataset: dataset, client: client, info: info}
