@@ -78,7 +78,7 @@ jobs:
         env:
           GOPROXY: 'off'
           GOSUMDB: 'off'
-        run: go run ./cmd/weir-lab -weir .tools/weir -operations 128 -warmup 32 -records 64 -rounds 2 -output results/local/smoke
+        run: go run ./cmd/weir-lab -mode fixed -weir .tools/weir -operations 128 -warmup 32 -records 64 -rounds 2 -output results/local/smoke
       - name: Separate opt-in server CPU diagnostic
         env:
           GOPROXY: 'off'

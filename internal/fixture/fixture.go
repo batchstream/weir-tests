@@ -116,7 +116,7 @@ func validateOptions(options Options) (Options, error) {
 	if options.DatabaseCPUs == 0 {
 		options.DatabaseCPUs = 2
 	}
-	if options.IngressSessions < 1 || options.IngressSessions > 64 || options.DatabaseCPUs <= 0 || options.DatabaseCPUs > float64(runtime.NumCPU()) {
+	if options.IngressSessions < 1 || options.IngressSessions > 512 || options.DatabaseCPUs <= 0 || options.DatabaseCPUs > float64(runtime.NumCPU()) {
 		return options, errors.New("invalid ingress sessions or database CPU budget")
 	}
 	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {

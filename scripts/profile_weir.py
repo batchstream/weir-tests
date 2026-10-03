@@ -62,7 +62,7 @@ def main():
     wrapper.chmod(0o755)
     lab = ROOT / '.tools' / 'weir-profile-lab'
     subprocess.run(['go', 'build', '-o', str(lab), './cmd/weir-lab'], cwd=ROOT, env=env, check=True, timeout=180)
-    command = [str(lab), '-mode', 'saturation', '-weir', str(wrapper), '-backend', 'mongo', '-database-cpus', '1', '-store-concurrency', '32', '-concurrency-levels', '8,32', '-batch-sizes', '32', '-records', '2048', '-payload-bytes', '1024', '-write-percent', '0', '-rounds', '1', '-warmup-duration', '3s', '-duration', '10s', '-output', str(output / 'workload')]
+    command = [str(lab), '-mode', 'saturation', '-weir', str(wrapper), '-backend', 'mongo', '-database-cpus', '1', '-store-concurrency', '32', '-concurrency-levels', '8,32', '-client-processes', '4', '-batch-sizes', '1', '-records', '2048', '-payload-bytes', '1024', '-write-percent', '0', '-rounds', '1', '-warmup-duration', '3s', '-duration', '10s', '-output', str(output / 'workload')]
     receipt = dict(diagnostic_only=True, capacity_evidence=False, identity=identity, versions=pins, helper_sha256=hashlib.sha256(helper.read_bytes()).hexdigest(), wrapper_sha256=hashlib.sha256(wrapper.read_bytes()).hexdigest(), helper_build=subprocess.check_output(['go', 'version', '-m', str(helper)], env=env, text=True), source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(), source_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT)), command=command)
     (output / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
     with (output / 'workload.log').open('w') as log:

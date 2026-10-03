@@ -32,6 +32,8 @@ type ResourceSample struct {
 	NetworkOutBytes  uint64                    `json:"container_network_out_bytes"`
 	ClientCPUTimeNS  *int64                    `json:"client_cpu_time_ns,omitempty"`
 	WeirCPUTimeNS    *int64                    `json:"weir_cpu_time_ns,omitempty"`
+	WeirMemoryBytes  uint64                    `json:"weir_memory_bytes,omitempty"`
+	ClientProcesses  []ProcessResource         `json:"client_processes,omitempty"`
 	Database         workload.DatabaseCounters `json:"database_counters"`
 	Error            string                    `json:"error,omitempty"`
 }
@@ -104,10 +106,18 @@ func resourceHTTPClient(target fixture.ResourceTarget) (*http.Client, error) {
 }
 
 type resourceSampleOptions struct {
-	Target  fixture.ResourceTarget
-	Paths   *workload.Paths
-	Client  *http.Client
-	Started time.Time
+	Target     fixture.ResourceTarget
+	Paths      *workload.Paths
+	Client     *http.Client
+	Started    time.Time
+	ClientPIDs []int
+}
+
+type ProcessResource struct {
+	PID         int    `json:"pid"`
+	CPUTimeNS   int64  `json:"cpu_time_ns"`
+	MemoryBytes uint64 `json:"memory_bytes"`
+	Error       string `json:"error,omitempty"`
 }
 
 func sampleResources(ctx context.Context, options resourceSampleOptions) ResourceSample {
@@ -130,14 +140,26 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		sample.Error = "database resource identity unavailable"
 	}
 	sample.ElapsedNS = time.Since(options.Started).Nanoseconds()
-	clientCPU, _, err := processStats(ctx, os.Getpid())
-	if err == nil {
-		sample.ClientCPUTimeNS = &clientCPU
+	if len(options.ClientPIDs) == 0 {
+		clientCPU, _, err := processStats(ctx, os.Getpid())
+		if err == nil {
+			sample.ClientCPUTimeNS = &clientCPU
+		}
+	} else {
+		for _, pid := range options.ClientPIDs {
+			cpu, memory, err := processStats(ctx, pid)
+			process := ProcessResource{PID: pid, CPUTimeNS: cpu, MemoryBytes: memory}
+			if err != nil {
+				process.Error = err.Error()
+			}
+			sample.ClientProcesses = append(sample.ClientProcesses, process)
+		}
 	}
 	if target.WeirProcessID > 0 {
-		weirCPU, _, err := processStats(ctx, target.WeirProcessID)
+		weirCPU, memory, err := processStats(ctx, target.WeirProcessID)
 		if err == nil {
 			sample.WeirCPUTimeNS = &weirCPU
+			sample.WeirMemoryBytes = memory
 		}
 	}
 	if paths != nil {

@@ -10,11 +10,14 @@ import (
 )
 
 type DatabaseCounters struct {
-	NetworkIn  uint64 `json:"network_in_bytes"`
-	NetworkOut uint64 `json:"network_out_bytes"`
-	ReadBytes  uint64 `json:"storage_read_bytes"`
-	WriteBytes uint64 `json:"storage_write_bytes"`
-	IOScope    string `json:"io_scope"`
+	NetworkIn          uint64            `json:"network_in_bytes"`
+	NetworkOut         uint64            `json:"network_out_bytes"`
+	ReadBytes          uint64            `json:"storage_read_bytes"`
+	WriteBytes         uint64            `json:"storage_write_bytes"`
+	IOScope            string            `json:"io_scope"`
+	Connections        *uint64           `json:"current_connections,omitempty"`
+	Commands           map[string]uint64 `json:"physical_command_totals,omitempty"`
+	CommandUnavailable string            `json:"physical_command_observation_unavailable,omitempty"`
 }
 
 // DatabaseCounters reads cumulative evidence, including the monitor's own
@@ -23,6 +26,14 @@ func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) 
 	var counters DatabaseCounters
 	if p.direct.mongo != nil {
 		var reply struct {
+			Connections struct {
+				Current *uint64 `bson:"current"`
+			} `bson:"connections"`
+			Metrics struct {
+				Commands map[string]struct {
+					Total *uint64 `bson:"total"`
+				} `bson:"commands"`
+			} `bson:"metrics"`
 			Network struct {
 				In  uint64 `bson:"bytesIn"`
 				Out uint64 `bson:"bytesOut"`
@@ -40,15 +51,28 @@ func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) 
 		}
 		counters.NetworkIn, counters.NetworkOut = reply.Network.In, reply.Network.Out
 		counters.ReadBytes, counters.WriteBytes = reply.WiredTiger.Cache.Read, reply.WiredTiger.Cache.Written
+		counters.Connections = reply.Connections.Current
+		counters.Commands = make(map[string]uint64)
+		for _, name := range []string{"find", "update", "bulkWrite", "getMore", "killCursors"} {
+			entry, found := reply.Metrics.Commands[name]
+			if !found || entry.Total == nil {
+				counters.CommandUnavailable += "missing " + name + "; "
+				continue
+			}
+			counters.Commands[name] = *entry.Total
+		}
 		counters.IOScope = "MongoDB WiredTiger cache storage bytes; excludes other files and does not measure device busy time"
 		return counters, nil
 	}
-	status, raw, err := p.direct.request(ctx, http.MethodGet, "/_nodes/stats/fs,transport", nil)
+	status, raw, err := p.direct.request(ctx, http.MethodGet, "/_nodes/stats/fs,transport,http", nil)
 	if err != nil {
 		return counters, err
 	}
 	var reply struct {
 		Nodes map[string]struct {
+			HTTP struct {
+				CurrentOpen *uint64 `json:"current_open"`
+			} `json:"http"`
 			Transport struct {
 				RX uint64 `json:"rx_size_in_bytes"`
 				TX uint64 `json:"tx_size_in_bytes"`
@@ -67,9 +91,11 @@ func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) 
 		return counters, errors.New("resource evidence requires exactly one Elasticsearch node")
 	}
 	for _, node := range reply.Nodes {
+		counters.Connections = node.HTTP.CurrentOpen
 		counters.NetworkIn, counters.NetworkOut = node.Transport.RX, node.Transport.TX
 		counters.ReadBytes, counters.WriteBytes = node.FS.IO.Total.Read*1024, node.FS.IO.Total.Write*1024
 	}
 	counters.IOScope = "Elasticsearch node filesystem bytes where available; transport network excludes client HTTP traffic; Docker network is the complete container measurement"
+	counters.CommandUnavailable = "Elasticsearch node statistics do not count physical client HTTP commands; adapter invocation counts are separate"
 	return counters, nil
 }
