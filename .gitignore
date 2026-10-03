@@ -1,0 +1,5 @@
+.tools/
+.testdata/
+results/local/
+*.test
+__pycache__/

@@ -1,0 +1,9 @@
+{
+  "go": "1.27.1",
+  "sdk": "v0.2.0",
+  "protocol": "v0.1.0",
+  "weir_source": "42749f6d1653682c76ecb6b84ccaf4be0f3f1aa5",
+  "mongodb_version": "8.0.32",
+  "elasticsearch_version": "8.19.22",
+  "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:c2a3ed5f968be6d59c960aa0c60cfdaee667b6bc8211142021a41d0e85b43237"
+}
