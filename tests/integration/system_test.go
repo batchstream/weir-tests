@@ -78,10 +78,14 @@ func TestSystemIntegration(t *testing.T) {
 		}
 	})
 	suite := &system{ctx: ctx, cluster: cluster, client: client, openOptions: openOptions, backends: backends}
+	if !t.Run("native_reset_and_write_change_evidence", func(t *testing.T) { testNativeWriteChangeEvidence(t, ctx, cluster) }) {
+		return
+	}
 	for _, backend := range backends {
 		if !t.Run(backend.name+"_lifecycle", func(t *testing.T) {
 			testLifecycle(t, ctx, client, backend)
 			testCrossOwnerScan(t, ctx, cluster, backend)
+			testPublicBatch(t, ctx, client, backend)
 		}) {
 			return
 		}
@@ -207,8 +211,8 @@ func (s *system) testCancellation(t *testing.T) {
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
 	read := &weir.ReadRequest{Resource: backend.resource("primary")}
-	request := weir.ReadOptions{StoreName: backend.name, Request: read}
-	result, err := client.Read(canceled, request)
+	request := weir.ReadOneOptions{StoreName: backend.name, Request: read}
+	result, err := client.ReadOne(canceled, request)
 	if result != nil || !cancellation(err) {
 		t.Fatalf("canceled Read: result=%v err=%v", result, err)
 	}
@@ -285,9 +289,9 @@ func (s *system) testRecovery(t *testing.T) {
 		backend.assertPersisted(t, ctx, "durable", 99)
 		owner := transport(t, cluster.Nodes[0].Application)
 		read := &weir.ReadRequest{Resource: backend.resource("durable")}
-		readOptions := weir.ReadOptions{StoreName: backend.name, Request: read}
+		readOptions := weir.ReadOneOptions{StoreName: backend.name, Request: read}
 		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		result, err := weir.Read(rpc, owner, readOptions)
+		result, err := weir.ReadOne(rpc, owner, readOptions)
 		cancel()
 		backend.assertReadResult(t, result, err, 99)
 	}

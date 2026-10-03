@@ -1,0 +1,81 @@
+name: Database saturation benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      write-percent:
+        description: Deterministic write percentage (0 read, 10 mixed, 100 write)
+        default: '0'
+        required: true
+        type: choice
+        options: ['0', '10', '100']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saturation-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GOENV: 'off'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  database-full-load:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - name: Prepare immutable tools and owned database images
+        run: |
+          python3 scripts/download_modules.py
+          python3 scripts/prepare_weir.py
+          python3 scripts/prepare_images.py
+      - name: Matched native and SDK bulk saturation sweep
+        env:
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+          WRITE_PERCENT: ${{ inputs.write-percent || '0' }}
+        run: |
+          mkdir -p results/local
+          go build -o .tools/weir-lab ./cmd/weir-lab
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          binary = pathlib.Path('.tools/weir-lab')
+          command = [str(binary), '-mode', 'saturation', '-weir', '.tools/weir', '-backend', 'all', '-database-cpus', '1', '-store-concurrency', '32', '-concurrency-levels', '8,32,64', '-batch-sizes', '32', '-records', '2048', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-batch-collect', '0ms', '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', 'results/local/saturation']
+          receipt = {'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'])), 'client_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'client_build': subprocess.check_output(['go', 'version', '-m', str(binary)], text=True), 'versions': json.loads(pathlib.Path('versions.json').read_text()), 'command': command}
+          if receipt['source_dirty']:
+              raise SystemExit('measurement requires a clean source checkout')
+          pathlib.Path('results/local/measurement.receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          PY
+          .tools/weir-lab -mode saturation -weir .tools/weir -backend all -database-cpus 1 -store-concurrency 32 -concurrency-levels 8,32,64 -batch-sizes 32 -records 2048 -payload-bytes 1024 -write-percent "$WRITE_PERCENT" -batch-collect 0ms -rounds 3 -warmup-duration 10s -duration 20s -output results/local/saturation 2>&1 | tee results/local/saturation.log
+          git diff --exit-code
+      - name: Preserve raw resource samples, workload validation and cleanup
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: saturation-evidence-${{ github.sha }}
+          path: |
+            results/local/
+            /tmp/weir-tests-*/manifest.json
+            /tmp/weir-tests-*/cleanup.json
+            /tmp/weir-tests-*/*config.json
+            /tmp/weir-tests-*/*routes.json
+            /tmp/weir-tests-*/*process.log
+            /tmp/weir-tests-*/docker-engine.json
+          retention-days: 14

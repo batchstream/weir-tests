@@ -35,6 +35,11 @@ func (f *fakeExecutor) Execute(ctx context.Context, operation workload.Operation
 		}
 	}
 	outcome := workload.Outcome{Status: workload.Success, RequestBytes: 3, ResponseBytes: 7}
+	if f.mode == "applied_error" {
+		outcome.Status = workload.Failed
+		outcome.Applied = true
+		outcome.Error = "post-write acknowledgement failure"
+	}
 	if f.mode == "mixed" {
 		switch operation.Sequence % 3 {
 		case 1:
@@ -44,6 +49,14 @@ func (f *fakeExecutor) Execute(ctx context.Context, operation workload.Operation
 		}
 	}
 	return outcome
+}
+
+func (f *fakeExecutor) ExecuteBatch(ctx context.Context, operations []workload.Operation) []workload.Outcome {
+	results := make([]workload.Outcome, len(operations))
+	for index, operation := range operations {
+		results[index] = f.Execute(ctx, operation)
+	}
+	return results
 }
 
 func testPlan(t *testing.T, count int) *workload.Plan {
@@ -71,6 +84,15 @@ func TestMeasureCountsAllOutcomesWithoutInflatingThroughput(t *testing.T) {
 	want := float64(result.Succeeded) * 1e9 / float64(result.ElapsedNS)
 	if math.Abs(result.OperationsPerSec-want)/want > 1e-12 || result.RequestBytes != 36 || result.ResponseBytes != 84 || result.complete() {
 		t.Fatal("throughput/bytes accounting included failures")
+	}
+}
+
+func TestAppliedWithErrorIsRetainedAndNeverCountsAsThroughput(t *testing.T) {
+	plan := testPlan(t, 12)
+	executor := &fakeExecutor{mode: "applied_error"}
+	result := measure(context.Background(), executor, plan, time.Second)
+	if result.Succeeded != 0 || result.Errors != 12 || result.AppliedWithError != 12 || result.RequestBytes != 36 || result.complete() {
+		t.Fatal("applied evidence counted as success or lost", result)
 	}
 }
 

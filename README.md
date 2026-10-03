@@ -3,9 +3,9 @@
 Independent blackbox integration tests and reproducible database throughput
 comparisons for [Weir](https://github.com/batchstream/weir). The first benchmark
 compares native MongoDB/Elasticsearch clients with the published Weir Go SDK
-under the same finite logical workload.
+under matched native/SDK bulk workloads with database saturation evidence. The finite single-operation profile remains available for latency diagnosis.
 
-The test module depends on **SDK v0.2.0** and **protocol v0.1.0**. It imports no
+The test module depends on **SDK v0.3.0** and **protocol v0.1.0**. It imports no
 Weir server packages. The server executable is prepared separately from an
 immutable source revision and checksum in [versions.json](versions.json);
 there is no floating `main` dependency or local module replacement.
@@ -63,6 +63,9 @@ The suite covers:
 - Direct business execution through discovered owners; rejection at a nonowner.
 - Typed CRUD, duplicate/precondition outcomes, atomic transforms and independently
   checked persistence on both databases.
+- Same-Store batches of 48 mutations/reads across multiple targets, input-order
+  results with missing/precondition outcomes, and whole-input validation before
+  dispatch, verified against both real databases.
 - Completion-gated mixed execution, finite Scan continuation across owners,
   failed-page checkpoint suppression and Native response evidence.
 - Cancellation, graceful owner withdrawal/restart, directory convergence,
@@ -73,12 +76,58 @@ Cleanup targets exact process handles/container IDs after ownership verification
 Startup failures also run cleanup. Logs, a manifest and `cleanup.json` are
 preserved in the printed fixture directory.
 
-## Throughput comparison
+## Database-full-load comparison
+
+The capacity benchmark raises client concurrency until the database, rather than
+an eight-worker request loop, limits throughput. Run on Linux with Docker so each
+owned database has an enforced, inspected CPU quota and the client/Weir retain
+CPU capacity:
+
+```sh
+make benchmark
+
+# Equivalent explicit command with a fresh output directory:
+go run ./cmd/weir-lab -mode saturation \
+  -weir .tools/weir -backend all -database-cpus 1 -store-concurrency 32 \
+  -concurrency-levels 8,32,64 -batch-sizes 32 \
+  -records 2048 -payload-bytes 1024 -write-percent 0 -batch-collect 0ms \
+  -rounds 3 -warmup-duration 10s -duration 20s \
+  -output results/local/saturation-read
+```
+
+Every stage uses real native bulk reads/writes and same-Store SDK Read/Mutate
+batches of distinct worker-owned IDs. Both paths use the same batch size, document
+bodies, write policy and deterministic read/write generator. Actual read/write
+counts are reported because a timed capacity run completes different amounts of
+work on each path. Warmup continues into measurement without a cache-disturbing
+reset. Every mutation changes its document revision; all final records and counts
+are independently verified. AB/BA order alternates across stages and rounds.
+
+JSON reports retain database CPU, memory, cumulative I/O/network bytes and
+client/Weir CPU samples. CPU is normalized by the **inspected Docker quota**;
+native Mongo uses all host cores and shares them with the load generator and
+Weir. At least five valid intervals must cover at least 80% of the measurement,
+mean CPU must reach 90% of the budget, and at least 80% of the complete measured
+time must reach that threshold in every round. A neighboring higher concurrency
+must add no more than 10% throughput. Both paths must satisfy these conditions
+independently before the report emits a database-saturated throughput ratio.
+
+A plateau while database CPU remains low produces **comparison unavailable**:
+client/Weir limits or storage/network bottlenecks require more evidence. Byte
+counters alone do not establish disk/link saturation. Increase the concurrency
+ladder (up to 64 workers in the owned single-owner fixture), batch sizes (up
+to 64), record count (at least
+max-workers times batch size), or duration when a run lacks sufficient evidence.
+No noisy performance ratio is used as a CI pass/fail threshold; workload errors
+and failed persistence checks do fail the job. `saturation.yml` runs the read
+matrix on PRs and supports explicit mixed/write workflow dispatches.
+
+## Finite single-operation comparison
 
 Run a complete local comparison with owned services:
 
 ```sh
-go run ./cmd/weir-lab \
+go run ./cmd/weir-lab -mode fixed \
   -weir .tools/weir \
   -backend all \
   -operations 10000 -warmup 1000 \
@@ -90,6 +139,8 @@ go run ./cmd/weir-lab \
 `WEIR_TEST_MONGODB_BINARY` is honored by the lab; `-mongod .tools/mongod` is an
 equivalent explicit option. Choose a new output directory for each run. Use
 `-write-percent 0`, `10` or `100` for read, 90/10 mixed and write-only workloads.
+`make diagnostic` explicitly runs this finite single-operation profile. The lab
+CLI retains `fixed` mode as its default; `make benchmark` selects saturation.
 
 The local profile runs one Weir owner, matches Store concurrency to client
 concurrency, and records batch size 32. The example explicitly disables collection
