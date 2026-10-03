@@ -1,6 +1,10 @@
 package workload
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -45,6 +49,95 @@ func TestMongoCommandCountersIgnoreHeterogeneousUnknownAndPreserveMissing(t *tes
 	}
 	if len(counters.Commands) != 3 || counters.Commands["bulkWrite"] != 71 || counters.Connections == nil || *counters.Connections != 9 || counters.NetworkIn != 12 || counters.NetworkOut != 34 || counters.ReadBytes != 56 || counters.WriteBytes != 78 {
 		t.Fatal("known physical command, connection or storage evidence lost", counters)
+	}
+}
+
+func TestSearchCountersProjectScalarsAndExcludeLargeClientHistory(t *testing.T) {
+	dataset := testDataset(t, "search")
+	agent := strings.Repeat("x", 256)
+	entry := fmt.Sprintf(`{"id":1,"agent":%q},`, agent)
+	history := "[" + strings.TrimSuffix(strings.Repeat(entry, 4096), ",") + "]"
+	full := `{"nodes":{"owned":{"http":{"current_open":7,"clients":` + history + `},"transport":{"rx_size_in_bytes":20,"tx_size_in_bytes":30},"fs":{"io_stats":{"total":{"read_kilobytes":2,"write_kilobytes":3}}}}}}`
+	limit := 64*(dataset.Config.PayloadBytes+1024) + 64<<10
+	if len(full) <= limit {
+		t.Fatal("regression must reproduce a response exceeding the business workspace")
+	}
+	projected := `{"nodes":{"owned":{"http":{"current_open":7},"transport":{"rx_size_in_bytes":20,"tx_size_in_bytes":30},"fs":{"io_stats":{"total":{"read_kilobytes":2,"write_kilobytes":3}}}}}}`
+	allowed := map[string]bool{
+		"nodes.*.http.current_open":                 true,
+		"nodes.*.transport.rx_size_in_bytes":        true,
+		"nodes.*.transport.tx_size_in_bytes":        true,
+		"nodes.*.fs.io_stats.total.read_kilobytes":  true,
+		"nodes.*.fs.io_stats.total.write_kilobytes": true,
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodGet || request.URL.Path != "/_nodes/stats/fs,transport,http" {
+			t.Error("unexpected monitor request", request.Method, request.URL.Path)
+		}
+		filters := strings.Split(request.URL.Query().Get("filter_path"), ",")
+		valid := len(filters) == len(allowed)
+		seen := make(map[string]bool)
+		for _, filter := range filters {
+			valid = valid && allowed[filter] && !seen[filter]
+			seen[filter] = true
+		}
+		if !valid {
+			fmt.Fprint(writer, full)
+			return
+		}
+		fmt.Fprint(writer, projected)
+	}))
+	defer server.Close()
+	direct := &directPath{dataset: dataset, search: server.Client(), baseURL: server.URL}
+	_, _, err := direct.request(context.Background(), http.MethodGet, "/_nodes/stats/fs,transport,http", nil)
+	if err == nil || !strings.Contains(err.Error(), "bounded document workspace") {
+		t.Fatal("unprojected history must reproduce the original bounded-response failure", err)
+	}
+	paths := &Paths{direct: direct}
+	counters, err := paths.DatabaseCounters(context.Background())
+	if err != nil || counters.Connections == nil || *counters.Connections != 7 || counters.NetworkIn != 20 || counters.NetworkOut != 30 || counters.ReadBytes != 2*1024 || counters.WriteBytes != 3*1024 {
+		t.Fatal("projected counters lost independent statistics or grew with history", counters, err)
+	}
+}
+
+func TestSearchProjectedCountersDistinguishMissingFromObservedZero(t *testing.T) {
+	cases := []struct {
+		name               string
+		body               string
+		valid              bool
+		storageUnavailable bool
+	}{
+		{name: "observed-zero", body: `{"nodes":{"owned":{"http":{"current_open":0},"transport":{"rx_size_in_bytes":0,"tx_size_in_bytes":0},"fs":{"io_stats":{"total":{"read_kilobytes":0,"write_kilobytes":0}}}}}}`, valid: true},
+		{name: "missing-current-open", body: `{"nodes":{"owned":{"http":{},"transport":{"rx_size_in_bytes":0,"tx_size_in_bytes":0},"fs":{"io_stats":{"total":{"read_kilobytes":0,"write_kilobytes":0}}}}}}`},
+		{name: "missing-transport", body: `{"nodes":{"owned":{"http":{"current_open":0},"fs":{"io_stats":{"total":{"read_kilobytes":0,"write_kilobytes":0}}}}}}`},
+		{name: "missing-filesystem-total", body: `{"nodes":{"owned":{"http":{"current_open":0},"transport":{"rx_size_in_bytes":0,"tx_size_in_bytes":0},"fs":{}}}}`, valid: true, storageUnavailable: true},
+		{name: "null-storage-counter", body: `{"nodes":{"owned":{"http":{"current_open":0},"transport":{"rx_size_in_bytes":0,"tx_size_in_bytes":0},"fs":{"io_stats":{"total":{"read_kilobytes":null,"write_kilobytes":0}}}}}}`, valid: true, storageUnavailable: true},
+		{name: "no-node", body: `{"nodes":{}}`},
+		{name: "multiple-nodes", body: `{"nodes":{"first":{},"second":{}}}`},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				if request.URL.Query().Get("filter_path") == "" {
+					t.Error("monitor request omitted scalar projection")
+				}
+				fmt.Fprint(writer, test.body)
+			}))
+			defer server.Close()
+			direct := &directPath{dataset: testDataset(t, "search"), search: server.Client(), baseURL: server.URL}
+			paths := &Paths{direct: direct}
+			counters, err := paths.DatabaseCounters(context.Background())
+			if test.valid {
+				if err != nil || counters.Connections == nil || *counters.Connections != 0 || counters.NetworkIn != 0 || counters.NetworkOut != 0 || counters.ReadBytes != 0 || counters.WriteBytes != 0 {
+					t.Fatal("observed zero counters were rejected", counters, err)
+				}
+				if (counters.StorageUnavailable != "") != test.storageUnavailable {
+					t.Fatal("optional filesystem availability was hidden or confused with observed zero", counters)
+				}
+			} else if err == nil {
+				t.Fatal("missing projected evidence silently became zero", counters)
+			}
+		})
 	}
 }
 

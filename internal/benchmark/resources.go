@@ -20,22 +20,23 @@ import (
 )
 
 type ResourceSample struct {
-	At               string                    `json:"at_utc"`
-	ElapsedNS        int64                     `json:"elapsed_ns"`
-	CPUBudgetPercent *float64                  `json:"database_cpu_budget_percent,omitempty"`
-	CPUTimeNS        *int64                    `json:"database_cpu_time_ns,omitempty"`
-	CPUClockNS       int64                     `json:"database_cpu_counter_clock_unix_ns,omitempty"`
-	MemoryBytes      uint64                    `json:"database_memory_bytes"`
-	BlockReadBytes   uint64                    `json:"container_block_read_bytes"`
-	BlockWriteBytes  uint64                    `json:"container_block_write_bytes"`
-	NetworkInBytes   uint64                    `json:"container_network_in_bytes"`
-	NetworkOutBytes  uint64                    `json:"container_network_out_bytes"`
-	ClientCPUTimeNS  *int64                    `json:"client_cpu_time_ns,omitempty"`
-	WeirCPUTimeNS    *int64                    `json:"weir_cpu_time_ns,omitempty"`
-	WeirMemoryBytes  uint64                    `json:"weir_memory_bytes,omitempty"`
-	ClientProcesses  []ProcessResource         `json:"client_processes,omitempty"`
-	Database         workload.DatabaseCounters `json:"database_counters"`
-	Error            string                    `json:"error,omitempty"`
+	At                   string                    `json:"at_utc"`
+	ElapsedNS            int64                     `json:"elapsed_ns"`
+	CPUBudgetPercent     *float64                  `json:"database_cpu_budget_percent,omitempty"`
+	CPUTimeNS            *int64                    `json:"database_cpu_time_ns,omitempty"`
+	CPUClockNS           int64                     `json:"database_cpu_counter_clock_unix_ns,omitempty"`
+	MemoryBytes          uint64                    `json:"database_memory_bytes"`
+	BlockReadBytes       uint64                    `json:"container_block_read_bytes"`
+	BlockWriteBytes      uint64                    `json:"container_block_write_bytes"`
+	NetworkInBytes       uint64                    `json:"container_network_in_bytes"`
+	NetworkOutBytes      uint64                    `json:"container_network_out_bytes"`
+	ClientCPUTimeNS      *int64                    `json:"client_cpu_time_ns,omitempty"`
+	WeirCPUTimeNS        *int64                    `json:"weir_cpu_time_ns,omitempty"`
+	WeirMemoryBytes      uint64                    `json:"weir_memory_bytes,omitempty"`
+	ClientProcesses      []ProcessResource         `json:"client_processes,omitempty"`
+	Database             workload.DatabaseCounters `json:"database_counters"`
+	DatabaseCounterError string                    `json:"database_counter_error,omitempty"`
+	Error                string                    `json:"error,omitempty"`
 }
 
 type Resources struct {
@@ -167,7 +168,7 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		if err == nil {
 			sample.Database = counters
 		} else {
-			sample.Error = strings.TrimSpace(sample.Error + " database counters: " + err.Error())
+			sample.DatabaseCounterError = err.Error()
 		}
 	}
 	return sample

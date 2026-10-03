@@ -47,6 +47,33 @@ func TestResourceEvidenceRejectsMissingIntervalsAndShortSpikes(t *testing.T) {
 	}
 }
 
+func TestDatabaseCounterFailuresDoNotInvalidateIndependentCPUIntervals(t *testing.T) {
+	resources := Resources{AllocatedCPUs: 1, MeasurementNS: int64(10 * time.Second)}
+	clock := time.Date(2026, time.October, 4, 0, 0, 0, 0, time.UTC)
+	for index := range 11 {
+		cpu := int64(time.Duration(index) * time.Second)
+		sample := ResourceSample{ElapsedNS: int64(time.Duration(index) * time.Second), CPUTimeNS: &cpu, CPUClockNS: clock.Add(time.Duration(index) * time.Second).UnixNano(), DatabaseCounterError: "projected database counters unavailable"}
+		resources.Samples = append(resources.Samples, sample)
+	}
+	resources.qualify(90)
+	if !resources.CPUSaturated || resources.Intervals != 10 || resources.Coverage != 1 || resources.FullCPUFraction != 1 || resources.MeanCPUPercent != 100 {
+		t.Fatal("independent valid cumulative CPU evidence was discarded because another observation failed", resources)
+	}
+	for _, sample := range resources.Samples {
+		if sample.DatabaseCounterError == "" || sample.Error != "" {
+			t.Fatal("counter failure was hidden or classified as a CPU failure", sample)
+		}
+	}
+	failedCPU := Resources{AllocatedCPUs: 1, MeasurementNS: resources.MeasurementNS, Samples: append([]ResourceSample(nil), resources.Samples...)}
+	for index := range failedCPU.Samples {
+		failedCPU.Samples[index].Error = "Docker cumulative CPU sampling failed"
+	}
+	failedCPU.qualify(90)
+	if failedCPU.CPUSaturated || failedCPU.Coverage != 0 {
+		t.Fatal("separating counter failures incorrectly admitted failed CPU samples", failedCPU)
+	}
+}
+
 func TestDockerEvidenceUsesRawCumulativeCPUAndReadClock(t *testing.T) {
 	container := strings.Repeat("a", 64)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
