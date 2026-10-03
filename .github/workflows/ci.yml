@@ -1,0 +1,88 @@
+name: System tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: system-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GOENV: 'off'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - run: python3 scripts/download_modules.py
+      - name: Offline defaults and boundaries
+        env:
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: |
+          python3 scripts/check_dependencies.py
+          go test -race -count=1 -timeout=90s ./...
+          go vet ./...
+          go vet -tags=integration ./...
+          go test -tags=integration -run '^$' ./...
+          python3 -m unittest discover -s scripts -p '*_test.py'
+          python3 -O -m unittest discover -s scripts -p '*_test.py'
+          test -z "$(gofmt -l cmd internal tests)"
+          git diff --exit-code
+  blackbox:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - name: Prepare locked public tools and local images
+        run: |
+          python3 scripts/download_modules.py
+          python3 scripts/prepare_weir.py
+          python3 scripts/prepare_images.py
+      - name: Real multi-node integration
+        env:
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: |
+          mkdir -p results/local
+          WEIR_TEST_BINARY="$PWD/.tools/weir" go test -race -tags=integration -count=1 -timeout=10m -v ./tests/integration 2>&1 | tee results/local/integration.log
+      - name: Verified comparison smoke
+        env:
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: go run ./cmd/weir-lab -weir .tools/weir -operations 128 -warmup 32 -records 64 -rounds 2 -output results/local/smoke
+      - name: Preserve results and owned fixture receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: system-evidence-${{ github.sha }}
+          path: |
+            results/local/
+            /tmp/weir-tests-*/
+          retention-days: 14

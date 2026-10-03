@@ -1,0 +1,20 @@
+=== RUN   TestSystemIntegration
+    system_test.go:53: fixture artifacts: /tmp/weir-tests-3740118584
+=== RUN   TestSystemIntegration/mongo_lifecycle
+    system_test.go:83: Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, finite mixed Execute, Native, and direct database persistence verified
+    system_test.go:84: all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint
+=== RUN   TestSystemIntegration/search_lifecycle
+    system_test.go:83: Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, finite mixed Execute, Native, and direct database persistence verified
+    system_test.go:84: all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint
+=== RUN   TestSystemIntegration/any_node_discovery_and_no_relay
+=== RUN   TestSystemIntegration/cancellation
+=== RUN   TestSystemIntegration/owner_withdrawal_restart_and_seed_loss
+    system_test.go:100: graceful owner withdrawal converged; existing and recreated SDK clients read persisted data; restarted owner recovered; losing the seed did not interrupt direct business reads
+--- PASS: TestSystemIntegration (23.14s)
+    --- PASS: TestSystemIntegration/mongo_lifecycle (0.11s)
+    --- PASS: TestSystemIntegration/search_lifecycle (0.52s)
+    --- PASS: TestSystemIntegration/any_node_discovery_and_no_relay (0.08s)
+    --- PASS: TestSystemIntegration/cancellation (0.00s)
+    --- PASS: TestSystemIntegration/owner_withdrawal_restart_and_seed_loss (0.21s)
+PASS
+ok  	github.com/batchstream/weir-tests/tests/integration	24.156s

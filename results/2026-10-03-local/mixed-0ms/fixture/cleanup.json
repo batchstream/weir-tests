@@ -1,0 +1,25 @@
+{
+  "containers": [
+    {
+      "id": "4b6a4cb02161d3246255641d4a6f48e8dffb5598c5cd9178988588fd8b43f891",
+      "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+      "name": "weir-tests-efab9735d527fda29d73f13d-search",
+      "removed": true
+    }
+  ],
+  "errors": "",
+  "finished_at": "2026-10-03T03:08:31.701021Z",
+  "owner": "efab9735d527fda29d73f13d",
+  "processes": [
+    {
+      "index": 0,
+      "pid": 42117,
+      "stopped": true
+    },
+    {
+      "kind": "native_mongo",
+      "pid": 42108,
+      "stopped": true
+    }
+  ]
+}

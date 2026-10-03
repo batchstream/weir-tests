@@ -1,0 +1,274 @@
+{
+  "schema": 1,
+  "started_utc": "2026-10-03T03:06:09.652984Z",
+  "parameters": {
+    "dataset": {
+      "backend": "mongo",
+      "weir_seed": "127.0.0.1:63551",
+      "store": "mongo",
+      "namespace": "weirtest_fba59f4421c8de26e39a2a52",
+      "records": 1024,
+      "padding_bytes": 1024,
+      "concurrency": 8
+    },
+    "operations_per_path_per_round": 10000,
+    "warmup_operations_per_path": 1000,
+    "requested_write_percent": 0,
+    "actual_planned_reads": 10000,
+    "actual_planned_writes": 0,
+    "paired_rounds": 3,
+    "operation_timeout": "10s"
+  },
+  "provenance": {
+    "client_cpu_count": "8",
+    "client_os_arch": "darwin/arm64",
+    "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+    "fixture_logs": "/var/folders/91/pzs4g26n4_s925wqcxc1xmd40000gn/T/weir-tests-465196205",
+    "go": "go1.27.1",
+    "gomaxprocs": "8",
+    "host_cpus": "8",
+    "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+    "protocol": "v0.1.0",
+    "sdk": "v0.2.0",
+    "test_source": "0ff03786e637d4eca1fba8148328c73b77973aa1",
+    "test_source_dirty": "false",
+    "topology": "native client, Weir and isolated MongoDB on one host; Elasticsearch in a dedicated loopback Docker container",
+    "weir_batch_collect": "0s",
+    "weir_binary_sha256": "a31adaaed9dfee2c66f36a64bdfcd5dd5c4a16f6d212f01ebfaa49b45df915f0",
+    "weir_ingress_max_connections": "64",
+    "weir_ingress_max_sessions": "64",
+    "weir_max_batch_operations": "32",
+    "weir_memory_budget": "8GiB (declared process admission budget; not an OS reservation)",
+    "weir_source": "42749f6d1653682c76ecb6b84ccaf4be0f3f1aa5",
+    "weir_store_concurrency": "8"
+  },
+  "pairs": [
+    {
+      "round": 1,
+      "order": [
+        "direct",
+        "weir"
+      ],
+      "direct": {
+        "path": "direct",
+        "planned": 10000,
+        "attempted": 10000,
+        "succeeded": 10000,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 176016708,
+        "successful_operations_per_second": 56812.78847687573,
+        "logical_request_document_bytes": 0,
+        "logical_response_document_bytes": 11140000,
+        "verified": true,
+        "latency": {
+          "samples": 10000,
+          "p50_upper_bound_ns": 143000,
+          "p95_upper_bound_ns": 239000,
+          "p99_upper_bound_ns": 319000,
+          "max_observed_ns": 502917,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "MongoDB driver OP_MSG",
+          "endpoint": "127.0.0.1:63456",
+          "backend_version": "8.0.32",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency",
+          "retry_policy": "retryReads=false; retryWrites=false; maxAdaptiveRetries=0",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir": {
+        "path": "weir",
+        "planned": 10000,
+        "attempted": 10000,
+        "succeeded": 10000,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 1281175959,
+        "successful_operations_per_second": 7805.32910390024,
+        "logical_request_document_bytes": 0,
+        "logical_response_document_bytes": 11140000,
+        "verified": true,
+        "latency": {
+          "samples": 10000,
+          "p50_upper_bound_ns": 1023000,
+          "p95_upper_bound_ns": 1535000,
+          "p99_upper_bound_ns": 1663000,
+          "max_observed_ns": 3020042,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "gRPC Execute via published Weir SDK",
+          "endpoint": "127.0.0.1:63551",
+          "backend_version": "8.0.32",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency",
+          "retry_policy": "SDK never replays business requests",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir_direct_throughput_ratio": 0.137386833372511,
+      "weir_throughput_delta_percent": -86.2613166627489
+    },
+    {
+      "round": 2,
+      "order": [
+        "weir",
+        "direct"
+      ],
+      "direct": {
+        "path": "direct",
+        "planned": 10000,
+        "attempted": 10000,
+        "succeeded": 10000,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 174333792,
+        "successful_operations_per_second": 57361.225757080996,
+        "logical_request_document_bytes": 0,
+        "logical_response_document_bytes": 11140000,
+        "verified": true,
+        "latency": {
+          "samples": 10000,
+          "p50_upper_bound_ns": 143000,
+          "p95_upper_bound_ns": 223000,
+          "p99_upper_bound_ns": 319000,
+          "max_observed_ns": 781250,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "MongoDB driver OP_MSG",
+          "endpoint": "127.0.0.1:63456",
+          "backend_version": "8.0.32",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency",
+          "retry_policy": "retryReads=false; retryWrites=false; maxAdaptiveRetries=0",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir": {
+        "path": "weir",
+        "planned": 10000,
+        "attempted": 10000,
+        "succeeded": 10000,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 1298857250,
+        "successful_operations_per_second": 7699.075475769181,
+        "logical_request_document_bytes": 0,
+        "logical_response_document_bytes": 11140000,
+        "verified": true,
+        "latency": {
+          "samples": 10000,
+          "p50_upper_bound_ns": 1151000,
+          "p95_upper_bound_ns": 1535000,
+          "p99_upper_bound_ns": 1791000,
+          "max_observed_ns": 2285834,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "gRPC Execute via published Weir SDK",
+          "endpoint": "127.0.0.1:63551",
+          "backend_version": "8.0.32",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency",
+          "retry_policy": "SDK never replays business requests",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir_direct_throughput_ratio": 0.13422090225850453,
+      "weir_throughput_delta_percent": -86.57790977414955
+    },
+    {
+      "round": 3,
+      "order": [
+        "direct",
+        "weir"
+      ],
+      "direct": {
+        "path": "direct",
+        "planned": 10000,
+        "attempted": 10000,
+        "succeeded": 10000,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 176987125,
+        "successful_operations_per_second": 56501.285051101884,
+        "logical_request_document_bytes": 0,
+        "logical_response_document_bytes": 11140000,
+        "verified": true,
+        "latency": {
+          "samples": 10000,
+          "p50_upper_bound_ns": 143000,
+          "p95_upper_bound_ns": 239000,
+          "p99_upper_bound_ns": 319000,
+          "max_observed_ns": 1347292,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "MongoDB driver OP_MSG",
+          "endpoint": "127.0.0.1:63456",
+          "backend_version": "8.0.32",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency",
+          "retry_policy": "retryReads=false; retryWrites=false; maxAdaptiveRetries=0",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir": {
+        "path": "weir",
+        "planned": 10000,
+        "attempted": 10000,
+        "succeeded": 10000,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 1316828709,
+        "successful_operations_per_second": 7594.002114059316,
+        "logical_request_document_bytes": 0,
+        "logical_response_document_bytes": 11140000,
+        "verified": true,
+        "latency": {
+          "samples": 10000,
+          "p50_upper_bound_ns": 1151000,
+          "p95_upper_bound_ns": 1535000,
+          "p99_upper_bound_ns": 1791000,
+          "max_observed_ns": 3039000,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "gRPC Execute via published Weir SDK",
+          "endpoint": "127.0.0.1:63551",
+          "backend_version": "8.0.32",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency",
+          "retry_policy": "SDK never replays business requests",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir_direct_throughput_ratio": 0.13440406014112805,
+      "weir_throughput_delta_percent": -86.55959398588719
+    }
+  ],
+  "aggregate": {
+    "qualified_pairs": 3,
+    "direct_successful_operations_per_second": 56889.549650472974,
+    "weir_successful_operations_per_second": 7698.502187472171,
+    "weir_direct_throughput_ratio": 0.13532366198662932,
+    "weir_throughput_delta_percent": -86.46763380133706
+  },
+  "method": "fixed identical operation plan; partitioned IDs; no client bulk; alternating AB/BA; setup, warmup, reset and independent postflight excluded; elapsed includes worker start barrier and all joins; latency includes payload validation; throughput counts only successful logical operations"
+}
