@@ -1,0 +1,45 @@
+{
+  "binary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+  "binary_sha256": "eb9eeda54442d41ea1d615617ebea9087bff41a6fad386176c3c8eb50f5be5dc",
+  "containers": [
+    {
+      "id": "3d0232f7eb6a21a1acecc954b8e8be2ee2a1460c71b895c17a6cb62dafe6a826",
+      "name": "weir-tests-1c4578d6f30ca43267419a30-mongo",
+      "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+      "backend": "mongo"
+    },
+    {
+      "id": "af63a431e04012763783d61b0e9c42f1e29955638889a2737f545bb7abf8aca4",
+      "name": "weir-tests-1c4578d6f30ca43267419a30-search",
+      "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+      "backend": "search"
+    }
+  ],
+  "created_at": "2026-10-03T03:07:34.340796089Z",
+  "host_arch": "amd64",
+  "host_os": "linux",
+  "mongo_uri": "mongodb://127.0.0.1:32770/?directConnection=true",
+  "nodes": [
+    {
+      "Application": "127.0.0.1:36251",
+      "Peer": "127.0.0.1:34757",
+      "Diagnostics": "127.0.0.1:33905",
+      "Owner": true
+    }
+  ],
+  "options": {
+    "WeirBinary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+    "MongoBinary": "",
+    "Backends": [
+      "mongo",
+      "search"
+    ],
+    "OwnerCount": 1,
+    "DiscoveryOnly": false,
+    "StoreConcurrency": 8,
+    "BatchSize": 32,
+    "BatchCollect": 5000000
+  },
+  "owner": "1c4578d6f30ca43267419a30",
+  "search_url": "http://127.0.0.1:32771"
+}

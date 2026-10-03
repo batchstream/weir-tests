@@ -1,0 +1,15 @@
+{
+  "source": "42749f6d1653682c76ecb6b84ccaf4be0f3f1aa5",
+  "version": "v0.1.1-0.20261003014747-42749f6d1653",
+  "go": "1.27.1",
+  "sha256": "a31adaaed9dfee2c66f36a64bdfcd5dd5c4a16f6d212f01ebfaa49b45df915f0",
+  "identity": {
+    "product": "weir",
+    "version": "local-42749f6d1653682c76ecb6b84ccaf4be0f3f1aa5",
+    "revision": "42749f6d1653682c76ecb6b84ccaf4be0f3f1aa5",
+    "go": "go1.27.1",
+    "target": "darwin/arm64",
+    "state": "clean-commit",
+    "dirty": "false"
+  }
+}

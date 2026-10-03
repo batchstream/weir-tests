@@ -1,0 +1,12 @@
+{
+  "pr_head": "0ff03786e637d4eca1fba8148328c73b77973aa1",
+  "run": "https://github.com/batchstream/weir-tests/actions/runs/37092032915",
+  "status": "success",
+  "checks": [
+    "unit",
+    "blackbox"
+  ],
+  "integration": "integration.log",
+  "platform": "linux/amd64",
+  "scope": "Real multi-node race integration and verified two-backend smoke; smoke throughput is not a performance conclusion"
+}

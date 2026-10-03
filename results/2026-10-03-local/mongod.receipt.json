@@ -1,0 +1,7 @@
+{
+  "version": "8.0.32",
+  "source": "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-8.0.32.tgz",
+  "archive_sha256": "f81cb258434d548dca7244d599c82eb339043d8dedd0b1b807870c9d263117f2",
+  "binary_sha256": "440012d251e0ba135f519e4e8b178e5f406d4ce2c98fdbb15766363187ae57c1",
+  "target": "darwin/arm64"
+}
