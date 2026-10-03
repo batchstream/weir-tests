@@ -1,0 +1,16 @@
+{
+  "workflow": "https://github.com/batchstream/weir-tests/actions/runs/37097083408",
+  "pull_request": "https://github.com/batchstream/weir-tests/pull/2",
+  "pull_request_head": "2c51e8a2eff7ac50f27661991b687c0e0aa0bc68",
+  "ci_merge_ref": "6bd4e2bdb7f10be7a59dfca1d305938d74c917e1",
+  "fixtures": [
+    "weir-tests-2433640304",
+    "weir-tests-2582399687"
+  ],
+  "real_integration_passed": true,
+  "native_reset_and_change_evidence_passed": true,
+  "all_owned_resources_cleaned": true,
+  "smoke_is_capacity_measurement": false,
+  "pr_head_and_ci_merge_tree": "e0829baf476af046e7df546f658f44325d42c5a5",
+  "pr_head_and_ci_merge_tree_identical": true
+}

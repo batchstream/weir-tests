@@ -1,0 +1,185 @@
+{
+  "workflow": "https://github.com/batchstream/weir-tests/actions/runs/37097083479",
+  "source": "2c51e8a2eff7ac50f27661991b687c0e0aa0bc68",
+  "source_dirty": false,
+  "cpu_intervals_independently_recomputed": true,
+  "all_stages_zero_error_and_verified": true,
+  "all_owned_resources_cleaned": true,
+  "result": "database-full-load comparison unavailable: Weir did not demonstrate CPU saturation",
+  "summary": {
+    "mongo": {
+      "points": [
+        {
+          "path": "direct",
+          "concurrency": 8,
+          "batch_size": 32,
+          "successful_operations_per_second": 108287.09813791083,
+          "mean_database_cpu_budget_percent": 99.8944137232452,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        {
+          "path": "weir",
+          "concurrency": 8,
+          "batch_size": 32,
+          "successful_operations_per_second": 5701.060864353208,
+          "mean_database_cpu_budget_percent": 69.404081974253,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "direct",
+          "concurrency": 32,
+          "batch_size": 32,
+          "successful_operations_per_second": 109445.37894816157,
+          "mean_database_cpu_budget_percent": 99.95240806387712,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        {
+          "path": "weir",
+          "concurrency": 32,
+          "batch_size": 32,
+          "successful_operations_per_second": 6021.906677599733,
+          "mean_database_cpu_budget_percent": 73.44601834431997,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "direct",
+          "concurrency": 64,
+          "batch_size": 32,
+          "successful_operations_per_second": 106897.91939417589,
+          "mean_database_cpu_budget_percent": 99.94479340246183,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "weir",
+          "concurrency": 64,
+          "batch_size": 32,
+          "successful_operations_per_second": 5951.323425207836,
+          "mean_database_cpu_budget_percent": 72.90111374319478,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        }
+      ],
+      "comparison": {
+        "batch_size": 32,
+        "direct_database_saturated_point": {
+          "path": "direct",
+          "concurrency": 32,
+          "batch_size": 32,
+          "successful_operations_per_second": 109445.37894816157,
+          "mean_database_cpu_budget_percent": 99.95240806387712,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      },
+      "logical_operations": 20550592,
+      "all_18_stages_verified": true
+    },
+    "search": {
+      "points": [
+        {
+          "path": "direct",
+          "concurrency": 8,
+          "batch_size": 32,
+          "successful_operations_per_second": 41424.12653580863,
+          "mean_database_cpu_budget_percent": 99.69544448461932,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "weir",
+          "concurrency": 8,
+          "batch_size": 32,
+          "successful_operations_per_second": 5738.02696037391,
+          "mean_database_cpu_budget_percent": 78.14458490639161,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "direct",
+          "concurrency": 32,
+          "batch_size": 32,
+          "successful_operations_per_second": 51990.918576530035,
+          "mean_database_cpu_budget_percent": 99.7056416864732,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        {
+          "path": "weir",
+          "concurrency": 32,
+          "batch_size": 32,
+          "successful_operations_per_second": 5816.407297031008,
+          "mean_database_cpu_budget_percent": 76.14291550196783,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "direct",
+          "concurrency": 64,
+          "batch_size": 32,
+          "successful_operations_per_second": 52852.96301977475,
+          "mean_database_cpu_budget_percent": 99.77749590329363,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        {
+          "path": "weir",
+          "concurrency": 64,
+          "batch_size": 32,
+          "successful_operations_per_second": 5894.077369173181,
+          "mean_database_cpu_budget_percent": 75.49753538061663,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        }
+      ],
+      "comparison": {
+        "batch_size": 32,
+        "direct_database_saturated_point": {
+          "path": "direct",
+          "concurrency": 32,
+          "batch_size": 32,
+          "successful_operations_per_second": 51990.918576530035,
+          "mean_database_cpu_budget_percent": 99.7056416864732,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      },
+      "logical_operations": 9835872,
+      "all_18_stages_verified": true
+    }
+  }
+}

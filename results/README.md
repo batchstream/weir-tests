@@ -1,4 +1,91 @@
-# Initial throughput measurements
+# Throughput measurements
+
+## Bulk read sweep with database CPU evidence
+
+The [Linux full-load attempt](https://github.com/batchstream/weir-tests/actions/runs/37097083479)
+uses matched native database bulk and same-Store SDK batches of **32 records**,
+**8, 32 and 64 concurrent clients**, a verified **1 CPU quota per database**,
+2,048 records with 1,024 padding bytes, 10 seconds warmup and 20 seconds measured
+time per path, and three alternating paired rounds. Store concurrency stays 32;
+collection wait is zero. This run is **100% reads**.
+
+**A throughput ratio at demonstrated database full load is unavailable.** Both
+native paths meet the CPU and next-concurrency plateau criteria, but no Weir
+point meets sustained database CPU saturation. A Weir-path plateau with unused
+database CPU cannot establish a comparison where both paths fully load the
+database. It does show a throughput limit somewhere along this deployment's
+Weir path; these measurements do not identify its cause.
+
+For context, these are pooled observations at **32 concurrent clients**:
+
+| Backend | Direct logical reads/s | Direct DB CPU budget | Weir logical reads/s | Weir DB CPU budget |
+| --- | ---: | ---: | ---: | ---: |
+| [MongoDB](2026-10-03-saturation/mongo.md) | 109,445.4 | 100.0% | 6,021.9 | 73.4% |
+| [Elasticsearch](2026-10-03-saturation/search.md) | 51,990.9 | 99.7% | 5,816.4 | 76.1% |
+
+The table is an observation at a fixed concurrency, **not a both-paths-saturated
+capacity ratio**. Increasing to 64 clients does not demonstrate Weir database
+CPU saturation. Every one of the 36 timed stages passed independent persisted
+data validation with zero business errors, indeterminate results or
+applied-with-error outcomes. MongoDB completed 20,550,592 successful logical
+reads across both paths; Elasticsearch completed 9,835,872.
+
+Qualification requires at least five valid CPU intervals covering 80% of the
+measurement, time-weighted mean CPU at least 90% of the inspected quota, CPU at
+or above that threshold during at least 80% of measurement time in every round,
+and at most 10% throughput gain at the next concurrency. Raw cumulative Docker
+CPU and its read timestamps are retained. Memory, network and storage byte
+counters are evidence, not proof of device/link saturation. The last concurrency
+level has no following point and cannot independently prove a plateau.
+
+The runner is Ubuntu 24.04 / linux amd64, with 4 host CPUs and 16,766,410,752
+bytes of memory, Docker 28.0.4 and cgroup v2. Client and one Weir owner share the
+host with both database containers. Each database has a 1 CPU quota and 1,536 MiB
+memory limit; MongoDB has a 0.25 GiB WiredTiger cache, while Elasticsearch has a
+512 MiB heap, one shard and zero replicas. The unmeasured backend remains idle.
+This is a hot indexed working set with loopback traffic. The first Elasticsearch
+8-client native round is visibly slower than later rounds; inspect all raw
+rounds rather than treating this shared runner as a confidence interval.
+
+Sources are test code
+[`2c51e8a2eff7`](https://github.com/batchstream/weir-tests/commit/2c51e8a2eff7ac50f27661991b687c0e0aa0bc68),
+Weir `f49dde0ab66498225e382230a7c2a9414168985e`, SDK **v0.3.0**, protocol
+**v0.1.0**, MongoDB **8.0.32**, Elasticsearch **8.19.22**, and Go **1.27.1**.
+The [measurement receipt](2026-10-03-saturation/measurement.receipt.json) records
+a clean checkout, the client binary digest/build, exact version/checksum locks
+and command. [Raw MongoDB](2026-10-03-saturation/mongo.json) and
+[raw Elasticsearch](2026-10-03-saturation/search.json) include every resource
+sample. [Verification](2026-10-03-saturation/verification.json), fixture
+manifest/configuration and cleanup receipts accompany the reports. The one
+owned Weir process stopped and both containers were removed without errors.
+
+The [real integration run](https://github.com/batchstream/weir-tests/actions/runs/37097083408)
+also passed the 48-item SDK batch, preflight, routing, recovery and native-reset
+regression checks. Offline race tests also verify partial/error accounting. Its
+[log](2026-10-03-saturation/linux-ci/integration.log) and
+[verification record](2026-10-03-saturation/linux-ci/verification.json) retain
+receipts; all owned resources were cleaned. Offline race, vet and dependency
+checks passed. The CI smoke is harness verification rather than capacity evidence.
+
+Reproduce on a compatible Linux Docker host from the recorded test commit:
+
+```sh
+make prepare
+go build -o .tools/weir-lab ./cmd/weir-lab
+.tools/weir-lab -mode saturation -weir .tools/weir -backend all \
+  -database-cpus 1 -store-concurrency 32 -concurrency-levels 8,32,64 \
+  -batch-sizes 32 -records 2048 -payload-bytes 1024 -write-percent 0 \
+  -batch-collect 0ms -rounds 3 -warmup-duration 10s -duration 20s \
+  -output results/local/read-saturation-repeat
+```
+
+Use a new output directory. `make benchmark` selects this methodology;
+`make diagnostic` selects the finite fixed-client diagnostic. Changing CPU
+quotas, host isolation, payloads, write mix or topology requires a new recorded
+measurement. These results cannot establish gains over the earlier single-item
+macOS measurements, nor full-load write, I/O or cross-host capacity.
+
+## Earlier fixed-client diagnostics
 
 These paired measurements compare the same successful logical database load with
 and without Weir. They characterize one local deployment at **8 concurrent
