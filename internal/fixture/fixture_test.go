@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -33,10 +34,9 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, Backends: []string{"redis"}},
 		{WeirBinary: binary, OwnerCount: -1},
 		{WeirBinary: binary, OwnerCount: 9},
-		{WeirBinary: binary, StoreConcurrency: 33},
-		{WeirBinary: binary, BatchSize: 129},
-		{WeirBinary: binary, BatchCollect: -1},
-		{WeirBinary: binary, BatchCollect: 11 * time.Millisecond},
+		{WeirBinary: binary, StoreConcurrency: -1},
+		{WeirBinary: binary, BatchSize: -1},
+		{WeirBinary: binary, ProcessMemoryMiB: -1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},
 	}
 	for _, options := range cases {
@@ -51,8 +51,22 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	backends[0] = "search"
-	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 || validated.BatchCollect != 0 {
+	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 {
 		t.Fatalf("invalid defaults or retained caller slice: %+v", validated)
+	}
+	large := Options{WeirBinary: binary, BatchSize: 513}
+	if _, err := validateOptions(large); err != nil {
+		t.Fatal("valid physical batch greater than 128 rejected:", err)
+	}
+	workspace := map[string]int{"mongo": 384}
+	parallel := Options{WeirBinary: binary, StoreConcurrency: 33, WorkingMemoryMiB: workspace}
+	prepared, err := validateOptions(parallel)
+	if err != nil {
+		t.Fatal("backend concurrency retained an arbitrary cap", err)
+	}
+	workspace["mongo"] = 1024
+	if prepared.WorkingMemoryMiB["mongo"] != 384 {
+		t.Fatal("caller changed the admitted fixture memory envelope")
 	}
 	ctx := context.Background()
 	missing := Options{}
@@ -137,7 +151,7 @@ func TestPublishedPortMustBeOneLoopbackBinding(t *testing.T) {
 }
 
 func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
-	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16, BatchCollect: 3 * time.Millisecond}
+	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true", SearchURL: "http://127.0.0.1:50002"}
 	c.Nodes = []Node{
 		{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true},
@@ -501,5 +515,52 @@ esac
 	log, err := os.ReadFile(filepath.Join(directory, "docker.log"))
 	if err != nil || !bytes.Contains(log, []byte("WARNING: fixture example warning")) || !bytes.Contains(log, []byte("WARNING: fixture inspect warning")) || !bytes.Contains(log, []byte("daemon failure diagnostic")) || !bytes.Contains(log, []byte(id)) {
 		t.Fatal("Docker log lost stdout or stderr", string(log), err)
+	}
+}
+
+func TestSearchStartupWaitsForSlowTemplatePublication(t *testing.T) {
+	templateEntered := make(chan struct{}, 2)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/":
+			_, _ = fmt.Fprintf(writer, `{"version":{"number":%q}}`, SearchVersion)
+		case "/_cluster/health":
+			_, _ = writer.Write([]byte(`{"timed_out":false,"status":"green","number_of_nodes":1}`))
+		case "/_index_template/weir-tests":
+			templateEntered <- struct{}{}
+			select {
+			case <-time.After(3100 * time.Millisecond):
+				_, _ = writer.Write([]byte(`{"acknowledged":true}`))
+			case <-request.Context().Done():
+			}
+		default:
+			writer.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	cluster := &Cluster{SearchURL: server.URL}
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	if err := cluster.readySearch(ctx); err != nil {
+		t.Fatal(err)
+	}
+	<-templateEntered
+	canceled, stop := context.WithCancel(t.Context())
+	defer stop()
+	finished := make(chan error, 1)
+	go func() { finished <- cluster.readySearch(canceled) }()
+	select {
+	case <-templateEntered:
+		stop()
+	case <-time.After(2 * time.Second):
+		t.Fatal("startup did not reach template publication")
+	}
+	select {
+	case err := <-finished:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatal("template publication lost caller cancellation", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("template publication ignored caller cancellation")
 	}
 }

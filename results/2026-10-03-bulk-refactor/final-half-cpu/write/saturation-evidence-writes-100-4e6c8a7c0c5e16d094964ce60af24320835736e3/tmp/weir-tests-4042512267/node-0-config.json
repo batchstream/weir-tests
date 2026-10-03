@@ -1,0 +1,22 @@
+{
+  "diagnostics": {
+    "address": "127.0.0.1:40289"
+  },
+  "discovery": {
+    "advertise": [
+      "127.0.0.1:43361"
+    ],
+    "group": "owners-1a164ab39d0f29af97225683",
+    "peer_address": "127.0.0.1:35757",
+    "seeds": []
+  },
+  "listeners": {
+    "application": "127.0.0.1:43361",
+    "peer": "127.0.0.1:35757"
+  },
+  "memory": "12288MiB",
+  "transport": {
+    "max_connections": 64,
+    "max_sessions": 64
+  }
+}

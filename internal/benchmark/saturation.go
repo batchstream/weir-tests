@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/batchstream/weir-tests/internal/fixture"
+	"github.com/batchstream/weir-tests/internal/observe"
 	"github.com/batchstream/weir-tests/internal/workload"
 )
 
@@ -40,10 +41,11 @@ type SaturationParameters struct {
 
 type SaturationResult struct {
 	Result
-	Reads     uint64    `json:"reads"`
-	Writes    uint64    `json:"writes"`
-	Requests  uint64    `json:"client_batch_requests"`
-	Resources Resources `json:"resources"`
+	Reads         uint64         `json:"reads"`
+	Writes        uint64         `json:"writes"`
+	Requests      uint64         `json:"client_batch_requests"`
+	Resources     Resources      `json:"resources"`
+	ServerMetrics *ServerMetrics `json:"server_metrics,omitempty"`
 }
 
 type SaturationPair struct {
@@ -81,6 +83,7 @@ type SaturationReport struct {
 	Started     string                 `json:"started_utc"`
 	Parameters  SaturationParameters   `json:"parameters"`
 	Provenance  map[string]string      `json:"provenance"`
+	CPUQuota    *DatabaseCPUQuota      `json:"database_cpu_quota,omitempty"`
 	Pairs       []SaturationPair       `json:"pairs"`
 	Points      []SaturationPoint      `json:"points"`
 	Comparisons []SaturationComparison `json:"database_saturated_comparisons"`
@@ -92,7 +95,8 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 	if err := validateSaturation(options); err != nil {
 		return nil, err
 	}
-	if err := verifyResourceBudget(ctx, options.Resources); err != nil {
+	quota, err := verifyResourceBudget(ctx, options.Resources)
+	if err != nil {
 		return nil, err
 	}
 	parameters := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: options.BatchSizes, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, CPUThreshold: options.CPUThreshold}
@@ -101,7 +105,7 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 		provenance[key] = value
 	}
 	provenance["go"], provenance["gomaxprocs"], provenance["client_cpu_count"] = runtime.Version(), fmt.Sprint(runtime.GOMAXPROCS(0)), fmt.Sprint(runtime.NumCPU())
-	report := &SaturationReport{Schema: 2, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: parameters, Provenance: provenance, Method: "duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation"}
+	report := &SaturationReport{Schema: 2, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: parameters, Provenance: provenance, CPUQuota: quota, Method: "duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation"}
 	for _, batch := range options.BatchSizes {
 		for level, workers := range options.Concurrency {
 			for round := range options.Rounds {
@@ -245,6 +249,11 @@ type durationMeasureOptions struct {
 }
 
 func measureDuration(ctx context.Context, options durationMeasureOptions) SaturationResult {
+	var metricsBefore observe.Snapshot
+	measureServer := options.Sample && options.Executor.Name() == "weir"
+	if measureServer {
+		metricsBefore = fetchServerMetrics(ctx, options.Target.Diagnostics)
+	}
 	workers := make([]workerResult, len(options.State.workers))
 	reads, writes, requests := make([]uint64, len(workers)), make([]uint64, len(workers)), make([]uint64, len(workers))
 	start := make(chan struct{})
@@ -354,9 +363,16 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 	elapsed := time.Since(started)
 	close(monitorStop)
 	monitorJoined.Wait()
+	var metricsAfter observe.Snapshot
+	if measureServer {
+		metricsAfter = fetchServerMetrics(ctx, options.Target.Diagnostics)
+	}
 	base := Result{Path: options.Executor.Name(), ElapsedNS: elapsed.Nanoseconds(), Evidence: options.Executor.Evidence()}
 	base.Evidence.ClientBatch = fmt.Sprintf("native database bulk / same-Store SDK batch, %d distinct records per request", options.State.batch)
 	result := SaturationResult{Result: base, Resources: resources}
+	if measureServer {
+		result.ServerMetrics = serverMetricDelta(metricsBefore, metricsAfter, options.State.dataset.Config.StoreName)
+	}
 	result.Resources.MeasurementNS = elapsed.Nanoseconds()
 	var hist histogram
 	for index, worker := range workers {

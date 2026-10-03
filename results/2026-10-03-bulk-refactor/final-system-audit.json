@@ -1,0 +1,1554 @@
+{
+  "schema": 1,
+  "generated_utc": "2026-10-03T12:48:11.300220+00:00",
+  "auditor": "/root/blackbox_integration",
+  "mode": "independent read-only final System artifact and code audit",
+  "status": "PASS",
+  "tests_head": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+  "server_head": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+  "system_run": 37123392364,
+  "artifact_root": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8",
+  "artifact_suffix_note": "Artifact uses PR merge github.sha; metadata/receipts/provenance bind actual tested 4e6c8a7 head.",
+  "check_summary": {
+    "passed": 69,
+    "failed": 0,
+    "not_applicable": 0
+  },
+  "checks": [
+    {
+      "name": "one final System artifact root",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8"
+    },
+    {
+      "name": "exact run/head/all jobs success",
+      "pass": true,
+      "evidence": {
+        "metadata": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system-run.json",
+        "url": "https://github.com/batchstream/weir-tests/actions/runs/37123392364",
+        "jobs": [
+          "unit",
+          "blackbox"
+        ]
+      }
+    },
+    {
+      "name": "current final code and pinned server head",
+      "pass": true,
+      "evidence": {
+        "tests": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+        "server": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+        "pins": {
+          "go": "1.27.1",
+          "sdk": "v0.4.2",
+          "protocol": "v0.2.1",
+          "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+          "mongodb_version": "8.0.32",
+          "elasticsearch_version": "8.19.22",
+          "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+          "weir_version": "v0.1.1-0.20261003121131-b73c83a47791",
+          "weir_sum": "h1:o0Fj32uid7l786F81J4DRAo14cNt9hEECV/vYdBaZBU=",
+          "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "mongodb_darwin_arm64_url": "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-8.0.32.tgz",
+          "mongodb_darwin_arm64_sha256": "f81cb258434d548dca7244d599c82eb339043d8dedd0b1b807870c9d263117f2",
+          "mongodb_darwin_amd64_url": "https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-8.0.32.tgz",
+          "mongodb_darwin_amd64_sha256": "4073d96f1a83ecae289997cb1f9ace5258a740fdb9b8b06ee00098ec342d1bce"
+        }
+      }
+    },
+    {
+      "name": "real blackbox six subtests no skip or failure",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/integration.log",
+        "sha256": "ea326a7b5754aa90549f0e6ed984b009ab755bb926e59149d2c33821265c7134",
+        "subtests": [
+          "native_reset_and_write_change_evidence",
+          "mongo_lifecycle",
+          "search_lifecycle",
+          "any_node_discovery_and_no_relay",
+          "cancellation",
+          "owner_withdrawal_restart_and_seed_loss"
+        ]
+      }
+    },
+    {
+      "name": "513 distinct records and reverse ordering",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/integration.log"
+    },
+    {
+      "name": "ordered duplicate URI and whole-batch late-invalid preflight",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/integration.log"
+    },
+    {
+      "name": "cross-owner scan and failed consumer no checkpoint",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/integration.log"
+    },
+    {
+      "name": "native reset and real write change",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/integration.log"
+    },
+    {
+      "name": "graceful recovery and seed loss",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/integration.log"
+    },
+    {
+      "name": "diagnostic owner/process cleanup complete",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-2875324417/cleanup.json",
+        "owner": "8746ff62d621129f4ada0ab5",
+        "processes": [
+          {
+            "index": 0,
+            "pid": 8139,
+            "stopped": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "diagnostic exact owned container cleanup",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "8869e81b05b96256809c2c2de79da7fa98867d38e1b31cf62a24391b7ebe8745",
+          "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "name": "weir-tests-8746ff62d621129f4ada0ab5-mongo",
+          "removed": true
+        }
+      ]
+    },
+    {
+      "name": "diagnostic immutable database images",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "8869e81b05b96256809c2c2de79da7fa98867d38e1b31cf62a24391b7ebe8745",
+          "name": "weir-tests-8746ff62d621129f4ada0ab5-mongo",
+          "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "backend": "mongo"
+        }
+      ]
+    },
+    {
+      "name": "diagnostic native Linux fixture and engine provenance",
+      "pass": true,
+      "evidence": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "version": "28.0.4",
+        "cpus": 4,
+        "memory_bytes": 16766414848,
+        "cgroup_version": "2"
+      }
+    },
+    {
+      "name": "diagnostic node 0 self-advertised listeners and ingress budget",
+      "pass": true,
+      "evidence": {
+        "diagnostics": {
+          "address": "127.0.0.1:46517"
+        },
+        "discovery": {
+          "advertise": [
+            "127.0.0.1:33573"
+          ],
+          "group": "owners-8746ff62d621129f4ada0ab5",
+          "peer_address": "127.0.0.1:43933",
+          "seeds": []
+        },
+        "listeners": {
+          "application": "127.0.0.1:33573",
+          "peer": "127.0.0.1:43933"
+        },
+        "memory": "9216MiB",
+        "transport": {
+          "max_connections": 64,
+          "max_sessions": 64
+        }
+      }
+    },
+    {
+      "name": "diagnostic node 0 exact local stores and batch/working budgets",
+      "pass": true,
+      "evidence": [
+        {
+          "max_batch_operations": 32,
+          "max_concurrency": 32,
+          "max_read_size": "2MiB",
+          "mongodb": {
+            "uri": "mongodb://127.0.0.1:32772/?directConnection=true"
+          },
+          "name": "mongo",
+          "working_memory": "1312MiB"
+        }
+      ]
+    },
+    {
+      "name": "diagnostic node 0 owned listener startup and log",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-2875324417/node-0-process.log",
+        "expected_listener_announcement": "Weir listening on [127.0.0.1:33573 127.0.0.1:43933]; local execution and peer directory discovery",
+        "expected_diagnostics_announcement": "Diagnostics listening on 127.0.0.1:46517",
+        "fixture_matching_source": "internal/fixture/fixture.go:388"
+      }
+    },
+    {
+      "name": "integration owner/process cleanup complete",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-3139678164/cleanup.json",
+        "owner": "6eebfc9447e92d4367364746",
+        "processes": [
+          {
+            "index": 0,
+            "pid": 6224,
+            "stopped": true
+          },
+          {
+            "index": 1,
+            "pid": 6179,
+            "stopped": true
+          },
+          {
+            "index": 2,
+            "pid": 6190,
+            "stopped": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "integration exact owned container cleanup",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "fb96056b8def9a7c787aed0eae3fc00091bf73258203b807f2b7136294076833",
+          "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "name": "weir-tests-6eebfc9447e92d4367364746-mongo",
+          "removed": true
+        },
+        {
+          "id": "53eb18d88e78e2313e6f531ada4317c8e836fcaf9cbe76684efaeda1ddfd1851",
+          "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+          "name": "weir-tests-6eebfc9447e92d4367364746-search",
+          "removed": true
+        }
+      ]
+    },
+    {
+      "name": "integration immutable database images",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "fb96056b8def9a7c787aed0eae3fc00091bf73258203b807f2b7136294076833",
+          "name": "weir-tests-6eebfc9447e92d4367364746-mongo",
+          "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "backend": "mongo"
+        },
+        {
+          "id": "53eb18d88e78e2313e6f531ada4317c8e836fcaf9cbe76684efaeda1ddfd1851",
+          "name": "weir-tests-6eebfc9447e92d4367364746-search",
+          "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+          "backend": "search"
+        }
+      ]
+    },
+    {
+      "name": "integration native Linux fixture and engine provenance",
+      "pass": true,
+      "evidence": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "version": "28.0.4",
+        "cpus": 4,
+        "memory_bytes": 16766414848,
+        "cgroup_version": "2"
+      }
+    },
+    {
+      "name": "integration node 0 self-advertised listeners and ingress budget",
+      "pass": true,
+      "evidence": {
+        "diagnostics": {
+          "address": "127.0.0.1:36013"
+        },
+        "discovery": {
+          "advertise": [
+            "127.0.0.1:43743"
+          ],
+          "group": "owners-6eebfc9447e92d4367364746",
+          "peer_address": "127.0.0.1:46083",
+          "seeds": [
+            "127.0.0.1:46449",
+            "127.0.0.1:36605"
+          ]
+        },
+        "listeners": {
+          "application": "127.0.0.1:43743",
+          "peer": "127.0.0.1:46083"
+        },
+        "memory": "8192MiB",
+        "transport": {
+          "max_connections": 64,
+          "max_sessions": 64
+        }
+      }
+    },
+    {
+      "name": "integration node 0 exact local stores and batch/working budgets",
+      "pass": true,
+      "evidence": [
+        {
+          "max_batch_operations": 513,
+          "max_concurrency": 2,
+          "max_read_size": "2MiB",
+          "mongodb": {
+            "uri": "mongodb://127.0.0.1:32768/?directConnection=true"
+          },
+          "name": "mongo"
+        },
+        {
+          "max_batch_operations": 513,
+          "max_concurrency": 2,
+          "max_read_size": "2MiB",
+          "name": "search",
+          "search": {
+            "url": "http://127.0.0.1:32769"
+          }
+        }
+      ]
+    },
+    {
+      "name": "integration node 0 owned listener startup and log",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-3139678164/node-0-process.log",
+        "expected_listener_announcement": "Weir listening on [127.0.0.1:43743 127.0.0.1:46083]; local execution and peer directory discovery",
+        "expected_diagnostics_announcement": "Diagnostics listening on 127.0.0.1:36013",
+        "fixture_matching_source": "internal/fixture/fixture.go:388"
+      }
+    },
+    {
+      "name": "integration node 1 self-advertised listeners and ingress budget",
+      "pass": true,
+      "evidence": {
+        "diagnostics": {
+          "address": "127.0.0.1:44225"
+        },
+        "discovery": {
+          "advertise": [
+            "127.0.0.1:46017"
+          ],
+          "group": "owners-6eebfc9447e92d4367364746",
+          "peer_address": "127.0.0.1:46449",
+          "seeds": [
+            "127.0.0.1:46083",
+            "127.0.0.1:36605"
+          ]
+        },
+        "listeners": {
+          "application": "127.0.0.1:46017",
+          "peer": "127.0.0.1:46449"
+        },
+        "memory": "8192MiB",
+        "transport": {
+          "max_connections": 64,
+          "max_sessions": 64
+        }
+      }
+    },
+    {
+      "name": "integration node 1 exact local stores and batch/working budgets",
+      "pass": true,
+      "evidence": [
+        {
+          "max_batch_operations": 513,
+          "max_concurrency": 2,
+          "max_read_size": "2MiB",
+          "mongodb": {
+            "uri": "mongodb://127.0.0.1:32768/?directConnection=true"
+          },
+          "name": "mongo"
+        },
+        {
+          "max_batch_operations": 513,
+          "max_concurrency": 2,
+          "max_read_size": "2MiB",
+          "name": "search",
+          "search": {
+            "url": "http://127.0.0.1:32769"
+          }
+        }
+      ]
+    },
+    {
+      "name": "integration node 1 owned listener startup and log",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-3139678164/node-1-process.log",
+        "expected_listener_announcement": "Weir listening on [127.0.0.1:46017 127.0.0.1:46449]; local execution and peer directory discovery",
+        "expected_diagnostics_announcement": "Diagnostics listening on 127.0.0.1:44225",
+        "fixture_matching_source": "internal/fixture/fixture.go:388"
+      }
+    },
+    {
+      "name": "integration node 2 self-advertised listeners and ingress budget",
+      "pass": true,
+      "evidence": {
+        "diagnostics": {
+          "address": "127.0.0.1:36495"
+        },
+        "discovery": {
+          "advertise": [
+            "127.0.0.1:41171"
+          ],
+          "group": "directory-6eebfc9447e92d4367364746",
+          "peer_address": "127.0.0.1:36605",
+          "seeds": [
+            "127.0.0.1:46083",
+            "127.0.0.1:46449"
+          ]
+        },
+        "listeners": {
+          "application": "127.0.0.1:41171",
+          "peer": "127.0.0.1:36605"
+        },
+        "memory": "8192MiB",
+        "transport": {
+          "max_connections": 64,
+          "max_sessions": 64
+        }
+      }
+    },
+    {
+      "name": "integration node 2 exact local stores and batch/working budgets",
+      "pass": true,
+      "evidence": []
+    },
+    {
+      "name": "integration node 2 owned listener startup and log",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-3139678164/node-2-process.log",
+        "expected_listener_announcement": "Weir listening on [127.0.0.1:41171 127.0.0.1:36605]; local execution and peer directory discovery",
+        "expected_diagnostics_announcement": "Diagnostics listening on 127.0.0.1:36495",
+        "fixture_matching_source": "internal/fixture/fixture.go:388"
+      }
+    },
+    {
+      "name": "smoke owner/process cleanup complete",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-758544643/cleanup.json",
+        "owner": "1ca3038ed96f872a0f249812",
+        "processes": [
+          {
+            "index": 0,
+            "pid": 6996,
+            "stopped": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "smoke exact owned container cleanup",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "c6c68c75f857d29e9dac8baa2b85d14aa46aa752943a1271a8d8d38c64c5adb5",
+          "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "name": "weir-tests-1ca3038ed96f872a0f249812-mongo",
+          "removed": true
+        },
+        {
+          "id": "c2c6c74fcf2168ccbe63cbe9d1e021ed346d4081ad42a24e7b7c488bbcfb313f",
+          "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+          "name": "weir-tests-1ca3038ed96f872a0f249812-search",
+          "removed": true
+        }
+      ]
+    },
+    {
+      "name": "smoke immutable database images",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "c6c68c75f857d29e9dac8baa2b85d14aa46aa752943a1271a8d8d38c64c5adb5",
+          "name": "weir-tests-1ca3038ed96f872a0f249812-mongo",
+          "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "backend": "mongo"
+        },
+        {
+          "id": "c2c6c74fcf2168ccbe63cbe9d1e021ed346d4081ad42a24e7b7c488bbcfb313f",
+          "name": "weir-tests-1ca3038ed96f872a0f249812-search",
+          "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+          "backend": "search"
+        }
+      ]
+    },
+    {
+      "name": "smoke native Linux fixture and engine provenance",
+      "pass": true,
+      "evidence": {
+        "os": "linux",
+        "architecture": "x86_64",
+        "version": "28.0.4",
+        "cpus": 4,
+        "memory_bytes": 16766414848,
+        "cgroup_version": "2"
+      }
+    },
+    {
+      "name": "smoke node 0 self-advertised listeners and ingress budget",
+      "pass": true,
+      "evidence": {
+        "diagnostics": {
+          "address": "127.0.0.1:37613"
+        },
+        "discovery": {
+          "advertise": [
+            "127.0.0.1:46179"
+          ],
+          "group": "owners-1ca3038ed96f872a0f249812",
+          "peer_address": "127.0.0.1:34685",
+          "seeds": []
+        },
+        "listeners": {
+          "application": "127.0.0.1:46179",
+          "peer": "127.0.0.1:34685"
+        },
+        "memory": "9216MiB",
+        "transport": {
+          "max_connections": 64,
+          "max_sessions": 64
+        }
+      }
+    },
+    {
+      "name": "smoke node 0 exact local stores and batch/working budgets",
+      "pass": true,
+      "evidence": [
+        {
+          "max_batch_operations": 32,
+          "max_concurrency": 8,
+          "max_read_size": "2MiB",
+          "mongodb": {
+            "uri": "mongodb://127.0.0.1:32770/?directConnection=true"
+          },
+          "name": "mongo",
+          "working_memory": "384MiB"
+        },
+        {
+          "max_batch_operations": 32,
+          "max_concurrency": 8,
+          "max_read_size": "2MiB",
+          "name": "search",
+          "search": {
+            "url": "http://127.0.0.1:32771"
+          },
+          "working_memory": "768MiB"
+        }
+      ]
+    },
+    {
+      "name": "smoke node 0 owned listener startup and log",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-758544643/node-0-process.log",
+        "expected_listener_announcement": "Weir listening on [127.0.0.1:46179 127.0.0.1:34685]; local execution and peer directory discovery",
+        "expected_diagnostics_announcement": "Diagnostics listening on 127.0.0.1:37613",
+        "fixture_matching_source": "internal/fixture/fixture.go:388"
+      }
+    },
+    {
+      "name": "exact three independently owned fixture runs",
+      "pass": true,
+      "evidence": [
+        "diagnostic",
+        "integration",
+        "smoke"
+      ]
+    },
+    {
+      "name": "normal tests production binary association",
+      "pass": true,
+      "evidence": {
+        "production_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+        "diagnostic_wrapper_sha256": "d531d96680462313c6a49bea52e5879b37da1239116a9318cf471c9630cd63cd",
+        "same_server_prior_production": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d"
+      }
+    },
+    {
+      "name": "integration representative physical 513 configuration",
+      "pass": true,
+      "evidence": {
+        "WeirBinary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+        "MongoBinary": "",
+        "Backends": [
+          "mongo",
+          "search"
+        ],
+        "OwnerCount": 2,
+        "DiscoveryOnly": true,
+        "StoreConcurrency": 2,
+        "BatchSize": 513,
+        "IngressSessions": 64,
+        "DatabaseCPUs": 2,
+        "ProcessMemoryMiB": 8192,
+        "WorkingMemoryMiB": {}
+      }
+    },
+    {
+      "name": "mongo smoke exact clean source/version binding",
+      "pass": true,
+      "evidence": {
+        "client_cpu_count": "4",
+        "client_os_arch": "linux/amd64",
+        "database_docker_cpu_quota": "1",
+        "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+        "fixture_logs": "/tmp/weir-tests-758544643",
+        "go": "go1.27.1",
+        "gomaxprocs": "4",
+        "host_cpus": "4",
+        "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+        "protocol": "v0.2.1",
+        "sdk": "v0.4.2",
+        "test_source": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+        "test_source_dirty": "false",
+        "topology": "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+        "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+        "weir_ingress_max_connections": "64",
+        "weir_ingress_max_sessions": "64",
+        "weir_max_batch_operations": "32",
+        "weir_memory_budget": "9216MiB (declared process admission budget; not an OS reservation)",
+        "weir_mongo_working_memory_mib": "384",
+        "weir_search_working_memory_mib": "768",
+        "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+        "weir_store_concurrency": "8"
+      }
+    },
+    {
+      "name": "mongo verified equal-plan AB/BA complete successful outcomes",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/smoke/mongo.json",
+        "qualified_pairs": 2
+      }
+    },
+    {
+      "name": "mongo fixed workload/public transports/backend versions",
+      "pass": true,
+      "evidence": {
+        "dataset": {
+          "backend": "mongo",
+          "weir_seed": "127.0.0.1:46179",
+          "store": "mongo",
+          "namespace": "weirtest_3b2804606e62d02df32648d8",
+          "records": 64,
+          "padding_bytes": 1024,
+          "concurrency": 8
+        },
+        "operations_per_path_per_round": 128,
+        "warmup_operations_per_path": 32,
+        "requested_write_percent": 10,
+        "actual_planned_reads": 117,
+        "actual_planned_writes": 11,
+        "paired_rounds": 2,
+        "operation_timeout": "10s"
+      }
+    },
+    {
+      "name": "mongo manifest fixture budgets agree with report",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/smoke/mongo.json"
+    },
+    {
+      "name": "search smoke exact clean source/version binding",
+      "pass": true,
+      "evidence": {
+        "client_cpu_count": "4",
+        "client_os_arch": "linux/amd64",
+        "database_docker_cpu_quota": "1",
+        "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+        "fixture_logs": "/tmp/weir-tests-758544643",
+        "go": "go1.27.1",
+        "gomaxprocs": "4",
+        "host_cpus": "4",
+        "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+        "protocol": "v0.2.1",
+        "sdk": "v0.4.2",
+        "test_source": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+        "test_source_dirty": "false",
+        "topology": "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+        "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+        "weir_ingress_max_connections": "64",
+        "weir_ingress_max_sessions": "64",
+        "weir_max_batch_operations": "32",
+        "weir_memory_budget": "9216MiB (declared process admission budget; not an OS reservation)",
+        "weir_mongo_working_memory_mib": "384",
+        "weir_search_working_memory_mib": "768",
+        "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+        "weir_store_concurrency": "8"
+      }
+    },
+    {
+      "name": "search verified equal-plan AB/BA complete successful outcomes",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/smoke/search.json",
+        "qualified_pairs": 2
+      }
+    },
+    {
+      "name": "search fixed workload/public transports/backend versions",
+      "pass": true,
+      "evidence": {
+        "dataset": {
+          "backend": "search",
+          "weir_seed": "127.0.0.1:46179",
+          "store": "search",
+          "namespace": "weirtest_a839f04f3d72ea97b88b5017",
+          "records": 64,
+          "padding_bytes": 1024,
+          "concurrency": 8
+        },
+        "operations_per_path_per_round": 128,
+        "warmup_operations_per_path": 32,
+        "requested_write_percent": 10,
+        "actual_planned_reads": 117,
+        "actual_planned_writes": 11,
+        "paired_rounds": 2,
+        "operation_timeout": "10s"
+      }
+    },
+    {
+      "name": "search manifest fixture budgets agree with report",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/smoke/search.json"
+    },
+    {
+      "name": "profiler explicit diagnostic-only identity",
+      "pass": true,
+      "evidence": {
+        "diagnostic_only": true,
+        "capacity_evidence": false,
+        "identity": {
+          "product": "weir-integration-profiler",
+          "revision": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+          "instrumented": true
+        },
+        "versions": {
+          "go": "1.27.1",
+          "sdk": "v0.4.2",
+          "protocol": "v0.2.1",
+          "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+          "mongodb_version": "8.0.32",
+          "elasticsearch_version": "8.19.22",
+          "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+          "weir_version": "v0.1.1-0.20261003121131-b73c83a47791",
+          "weir_sum": "h1:o0Fj32uid7l786F81J4DRAo14cNt9hEECV/vYdBaZBU=",
+          "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+          "mongodb_darwin_arm64_url": "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-8.0.32.tgz",
+          "mongodb_darwin_arm64_sha256": "f81cb258434d548dca7244d599c82eb339043d8dedd0b1b807870c9d263117f2",
+          "mongodb_darwin_amd64_url": "https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-8.0.32.tgz",
+          "mongodb_darwin_amd64_sha256": "4073d96f1a83ecae289997cb1f9ace5258a740fdb9b8b06ee00098ec342d1bce"
+        },
+        "helper_sha256": "6c84d3dcd97c14857baf6be035636fc845603d5d6e5e92d64354dde558dcb58c",
+        "wrapper_sha256": "d531d96680462313c6a49bea52e5879b37da1239116a9318cf471c9630cd63cd",
+        "helper_build": "/home/runner/work/weir-tests/weir-tests/.tools/weir-profile-node: go1.27.1\n\tpath\tgithub.com/batchstream/weir/internal/testutil/testcapacity\n\tmod\tgithub.com/batchstream/weir\t(devel)\t\n\tdep\tgithub.com/batchstream/weir-go\tv0.4.2\th1:2YyYIXgREc4lOind9xIGAQedleGf10KsxscsZR9rI8w=\n\tdep\tgithub.com/batchstream/weir-protocol\tv0.2.1\th1:fENLtcrDR7sSco2R/Xeq46X6rhJYli8fdmsFWl4iX0Q=\n\tdep\tgithub.com/beorn7/perks\tv1.0.1\th1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=\n\tdep\tgithub.com/cespare/xxhash/v2\tv2.3.0\th1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=\n\tdep\tgithub.com/klauspost/compress\tv1.19.2\th1:hMRETovs/pu/dVWN7zIT1PGG8t509MwT6bO7XSi26R8=\n\tdep\tgithub.com/munnerz/goautoneg\tv0.0.0-20191010083416-a7dc8b61c822\th1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=\n\tdep\tgithub.com/prometheus/client_golang\tv1.23.2\th1:Je96obch5RDVy3FDMndoUsjAhG5Edi49h0RJWRi/o0o=\n\tdep\tgithub.com/prometheus/client_model\tv0.6.2\th1:oBsgwpGs7iVziMvrGhE53c/GrLUsZdHnqNwqPLxwZyk=\n\tdep\tgithub.com/prometheus/common\tv0.66.1\th1:h5E0h5/Y8niHc5DlaLlWLArTQI7tMrsfQjHV+d9ZoGs=\n\tdep\tgithub.com/prometheus/procfs\tv0.16.1\th1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzMyRg=\n\tdep\tgithub.com/xdg-go/scram\tv1.2.0\th1:bYKF2AEwG5rqd1BumT4gAnvwU/M9nBp2pTSxeZw7Wvs=\n\tdep\tgithub.com/xdg-go/stringprep\tv1.0.4\th1:XLI/Ng3O1Atzq0oBs3TWm+5ZVgkq2aqdlvP9JtoZ6c8=\n\tdep\tgithub.com/youmark/pkcs8\tv0.0.0-20240726163527-a2c0da244d78\th1:ilQV1hzziu+LLM3zUTJ0trRztfwgjqKnBWNtSRkbmwM=\n\tdep\tgithub.com/yuin/gopher-lua\tv1.1.1\th1:kYKnWBjvbNP4XLT3+bPEwAXJx262OhaHDWDVOPjL46M=\n\tdep\tgo.mongodb.org/mongo-driver/v2\tv2.9.1\th1:jewiFs2m1/VOQp8qhFshX6hWZ+EAXDhZHXExAUMcOgQ=\n\tdep\tgo.yaml.in/yaml/v2\tv2.4.2\th1:DzmwEr2rDGHl7lsFgAHxmNz/1NlQ7xLIrlN2h5d1eGI=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.4\th1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=\n\tdep\tgolang.org/x/crypto\tv0.55.0\th1:+KWHjbgOaAQ66dh/YlkZKHlz9ZUlq61AFirAR9ntP8M=\n\tdep\tgolang.org/x/net\tv0.58.0\th1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=\n\tdep\tgolang.org/x/sync\tv0.22.0\th1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=\n\tdep\tgolang.org/x/sys\tv0.47.0\th1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=\n\tdep\tgolang.org/x/text\tv0.41.0\th1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=\n\tdep\tgoogle.golang.org/genproto/googleapis/rpc\tv0.0.0-20260526163538-3dc84a4a5aaa\th1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=\n\tdep\tgoogle.golang.org/grpc\tv1.83.2\th1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=\n\tdep\tgoogle.golang.org/protobuf\tv1.36.11\th1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-tags=integration\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n",
+        "source": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+        "source_dirty": false,
+        "command": [
+          "/home/runner/work/weir-tests/weir-tests/.tools/weir-profile-lab",
+          "-mode",
+          "saturation",
+          "-weir",
+          "/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/weir-profile",
+          "-backend",
+          "mongo",
+          "-database-cpus",
+          "1",
+          "-store-concurrency",
+          "32",
+          "-concurrency-levels",
+          "8,32",
+          "-batch-sizes",
+          "32",
+          "-records",
+          "2048",
+          "-payload-bytes",
+          "1024",
+          "-write-percent",
+          "0",
+          "-rounds",
+          "1",
+          "-warmup-duration",
+          "3s",
+          "-duration",
+          "10s",
+          "-output",
+          "/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/workload"
+        ]
+      }
+    },
+    {
+      "name": "profiler independently hash uploaded wrapper and distinguish production",
+      "pass": true,
+      "evidence": {
+        "production": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+        "wrapper": "d531d96680462313c6a49bea52e5879b37da1239116a9318cf471c9630cd63cd",
+        "helper": "6c84d3dcd97c14857baf6be035636fc845603d5d6e5e92d64354dde558dcb58c"
+      }
+    },
+    {
+      "name": "profiler same pinned helper as prior sample",
+      "pass": true,
+      "evidence": "6c84d3dcd97c14857baf6be035636fc845603d5d6e5e92d64354dde558dcb58c"
+    },
+    {
+      "name": "helper integration build/public fixed dependencies/target",
+      "pass": true,
+      "evidence": "/home/runner/work/weir-tests/weir-tests/.tools/weir-profile-node: go1.27.1\n\tpath\tgithub.com/batchstream/weir/internal/testutil/testcapacity\n\tmod\tgithub.com/batchstream/weir\t(devel)\t\n\tdep\tgithub.com/batchstream/weir-go\tv0.4.2\th1:2YyYIXgREc4lOind9xIGAQedleGf10KsxscsZR9rI8w=\n\tdep\tgithub.com/batchstream/weir-protocol\tv0.2.1\th1:fENLtcrDR7sSco2R/Xeq46X6rhJYli8fdmsFWl4iX0Q=\n\tdep\tgithub.com/beorn7/perks\tv1.0.1\th1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=\n\tdep\tgithub.com/cespare/xxhash/v2\tv2.3.0\th1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=\n\tdep\tgithub.com/klauspost/compress\tv1.19.2\th1:hMRETovs/pu/dVWN7zIT1PGG8t509MwT6bO7XSi26R8=\n\tdep\tgithub.com/munnerz/goautoneg\tv0.0.0-20191010083416-a7dc8b61c822\th1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=\n\tdep\tgithub.com/prometheus/client_golang\tv1.23.2\th1:Je96obch5RDVy3FDMndoUsjAhG5Edi49h0RJWRi/o0o=\n\tdep\tgithub.com/prometheus/client_model\tv0.6.2\th1:oBsgwpGs7iVziMvrGhE53c/GrLUsZdHnqNwqPLxwZyk=\n\tdep\tgithub.com/prometheus/common\tv0.66.1\th1:h5E0h5/Y8niHc5DlaLlWLArTQI7tMrsfQjHV+d9ZoGs=\n\tdep\tgithub.com/prometheus/procfs\tv0.16.1\th1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzMyRg=\n\tdep\tgithub.com/xdg-go/scram\tv1.2.0\th1:bYKF2AEwG5rqd1BumT4gAnvwU/M9nBp2pTSxeZw7Wvs=\n\tdep\tgithub.com/xdg-go/stringprep\tv1.0.4\th1:XLI/Ng3O1Atzq0oBs3TWm+5ZVgkq2aqdlvP9JtoZ6c8=\n\tdep\tgithub.com/youmark/pkcs8\tv0.0.0-20240726163527-a2c0da244d78\th1:ilQV1hzziu+LLM3zUTJ0trRztfwgjqKnBWNtSRkbmwM=\n\tdep\tgithub.com/yuin/gopher-lua\tv1.1.1\th1:kYKnWBjvbNP4XLT3+bPEwAXJx262OhaHDWDVOPjL46M=\n\tdep\tgo.mongodb.org/mongo-driver/v2\tv2.9.1\th1:jewiFs2m1/VOQp8qhFshX6hWZ+EAXDhZHXExAUMcOgQ=\n\tdep\tgo.yaml.in/yaml/v2\tv2.4.2\th1:DzmwEr2rDGHl7lsFgAHxmNz/1NlQ7xLIrlN2h5d1eGI=\n\tdep\tgo.yaml.in/yaml/v3\tv3.0.4\th1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=\n\tdep\tgolang.org/x/crypto\tv0.55.0\th1:+KWHjbgOaAQ66dh/YlkZKHlz9ZUlq61AFirAR9ntP8M=\n\tdep\tgolang.org/x/net\tv0.58.0\th1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=\n\tdep\tgolang.org/x/sync\tv0.22.0\th1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=\n\tdep\tgolang.org/x/sys\tv0.47.0\th1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=\n\tdep\tgolang.org/x/text\tv0.41.0\th1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=\n\tdep\tgoogle.golang.org/genproto/googleapis/rpc\tv0.0.0-20260526163538-3dc84a4a5aaa\th1:mZHHdPZl0dbGHCflZgAq/Q468DWVFcU2whhB2KAo8fk=\n\tdep\tgoogle.golang.org/grpc\tv1.83.2\th1:EManeRomTObA0BU7I8vXgg/78uE5MJ9M8B39EX2WscU=\n\tdep\tgoogle.golang.org/protobuf\tv1.36.11\th1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-tags=integration\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=0\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n"
+    },
+    {
+      "name": "diagnostic copied receipts exactly original fixture",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic"
+    },
+    {
+      "name": "diagnostic source/provenance/configuration bound",
+      "pass": true,
+      "evidence": {
+        "client_cpu_count": "4",
+        "database_docker_cpu_quota": "1",
+        "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+        "fixture_logs": "/tmp/weir-tests-2875324417",
+        "go": "go1.27.1",
+        "gomaxprocs": "4",
+        "host_cpus": "4",
+        "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+        "protocol": "v0.2.1",
+        "sdk": "v0.4.2",
+        "test_source": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+        "test_source_dirty": "false",
+        "topology": "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+        "weir_binary_sha256": "d531d96680462313c6a49bea52e5879b37da1239116a9318cf471c9630cd63cd",
+        "weir_ingress_max_connections": "64",
+        "weir_ingress_max_sessions": "64",
+        "weir_max_batch_operations": "32",
+        "weir_memory_budget": "9216MiB (declared process admission budget; not an OS reservation)",
+        "weir_mongo_working_memory_mib": "1312",
+        "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+        "weir_store_concurrency": "32"
+      }
+    },
+    {
+      "name": "diagnostic four verified paths zero failures",
+      "pass": true,
+      "evidence": [
+        {
+          "concurrency": 8,
+          "direct": 1068608,
+          "weir": 587776
+        },
+        {
+          "concurrency": 32,
+          "direct": 1037792,
+          "weir": 669696
+        }
+      ]
+    },
+    {
+      "name": "diagnostic actual timed adapter metrics match successes",
+      "pass": true,
+      "evidence": [
+        {
+          "weir_rpc_completions_total:mutate": 0,
+          "weir_rpc_completions_total:read": 18368,
+          "weir_store_batch_operations_count": 18368,
+          "weir_store_batch_operations_sum": 587776,
+          "weir_store_execution_seconds_count": 18368,
+          "weir_store_execution_seconds_sum": 27.120946738999873,
+          "weir_store_executions_total": 18368,
+          "weir_store_queue_wait_seconds_count": 18368,
+          "weir_store_queue_wait_seconds_sum": 0.706981535000008,
+          "weir_store_records_total": 587776,
+          "weir_store_rejections_total": 0
+        },
+        {
+          "weir_rpc_completions_total:mutate": 0,
+          "weir_rpc_completions_total:read": 20928,
+          "weir_store_batch_operations_count": 20928,
+          "weir_store_batch_operations_sum": 669696,
+          "weir_store_execution_seconds_count": 20928,
+          "weir_store_execution_seconds_sum": 85.33394513099972,
+          "weir_store_executions_total": 20928,
+          "weir_store_queue_wait_seconds_count": 20928,
+          "weir_store_queue_wait_seconds_sum": 8.330585115999936,
+          "weir_store_records_total": 669696,
+          "weir_store_rejections_total": 0
+        }
+      ]
+    },
+    {
+      "name": "diagnostic CPU quota independently recorded",
+      "pass": true,
+      "evidence": {
+        "container_id": "8869e81b05b96256809c2c2de79da7fa98867d38e1b31cf62a24391b7ebe8745",
+        "host_config_nano_cpus": 1000000000,
+        "requested_cpus": 1,
+        "observed_cpus": 1
+      }
+    },
+    {
+      "name": "diagnostic no unsupported comparative saturation ratio",
+      "pass": true,
+      "evidence": [
+        {
+          "batch_size": 32,
+          "direct_database_saturated_point": {
+            "path": "direct",
+            "concurrency": 8,
+            "batch_size": 32,
+            "successful_operations_per_second": 106855.47450480498,
+            "mean_database_cpu_budget_percent": 99.7918448764375,
+            "all_rounds_successful_verified": true,
+            "all_rounds_cpu_saturated": true,
+            "throughput_plateau_at_next_concurrency": true,
+            "database_saturation_demonstrated": true
+          },
+          "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+        }
+      ]
+    },
+    {
+      "name": "cpu raw profile present and decoded",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof",
+        "sha256": "e227660e5ee33f7028090dac4f140635c7f98e1b10f65a0e0831debee3f43d06",
+        "bytes": 120875,
+        "independent_decode": "/tmp/weir-4e-final-cpu-cum.txt"
+      }
+    },
+    {
+      "name": "mutex raw profile present and decoded",
+      "pass": true,
+      "evidence": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof.mutex.pprof",
+        "sha256": "ffef0d898bc1fbd8ff691ee87a851880198c9c55612d359a5e50c1b81017b06d",
+        "bytes": 26901,
+        "independent_decode": "/tmp/weir-4e-final-mutex-cum.txt"
+      }
+    },
+    {
+      "name": "CPU/mutex same executable build ID",
+      "pass": true,
+      "evidence": "c7dcf2a1c1d589b478cd89f9e960cfa0436442e8"
+    },
+    {
+      "name": "default-safe explicitly tagged blackbox package",
+      "pass": true,
+      "evidence": [
+        "/Users/liran/Projects/liran/go/weir-tests/tests/integration/backends_test.go",
+        "/Users/liran/Projects/liran/go/weir-tests/tests/integration/batch_test.go",
+        "/Users/liran/Projects/liran/go/weir-tests/tests/integration/benchmark_test.go",
+        "/Users/liran/Projects/liran/go/weir-tests/tests/integration/lifecycle_test.go",
+        "/Users/liran/Projects/liran/go/weir-tests/tests/integration/system_test.go"
+      ]
+    },
+    {
+      "name": "SDK/protocol modules pinned and no server cycle or main dependency",
+      "pass": true,
+      "evidence": "/Users/liran/Projects/liran/go/weir-tests/go.mod"
+    },
+    {
+      "name": "final template readiness wait remains bounded and tested",
+      "pass": true,
+      "evidence": {
+        "source": "/Users/liran/Projects/liran/go/weir-tests/internal/fixture/backends.go",
+        "regression_test": "/Users/liran/Projects/liran/go/weir-tests/internal/fixture/fixture_test.go",
+        "unit_job": "successful final System unit step"
+      }
+    },
+    {
+      "name": "prior audit unchanged",
+      "pass": true,
+      "evidence": {
+        "path": "/tmp/weir-blackbox-final-audit.json",
+        "sha256": "b26f0176534fd06dedfcd6faa3e7e3e2f210080c696a16be7631fde92c7e6d58"
+      }
+    },
+    {
+      "name": "diagnostic node 0 zero retained backend connections at close",
+      "pass": true,
+      "evidence": [
+        {
+          "backend": "mongo",
+          "store": "mongo",
+          "owned": "0",
+          "peak": "29",
+          "limit": "33",
+          "dialing": "0",
+          "closing": "0",
+          "acquired": "29",
+          "released": "29"
+        }
+      ]
+    },
+    {
+      "name": "integration node 0 zero retained backend connections at close",
+      "pass": true,
+      "evidence": [
+        {
+          "backend": "search",
+          "store": "search",
+          "owned": "0",
+          "peak": "2",
+          "limit": "3",
+          "acquired": "2",
+          "released": "2"
+        },
+        {
+          "backend": "mongo",
+          "store": "mongo",
+          "owned": "0",
+          "peak": "2",
+          "limit": "3",
+          "dialing": "0",
+          "closing": "0",
+          "acquired": "2",
+          "released": "2"
+        },
+        {
+          "backend": "search",
+          "store": "search",
+          "owned": "0",
+          "peak": "1",
+          "limit": "3",
+          "acquired": "1",
+          "released": "1"
+        },
+        {
+          "backend": "mongo",
+          "store": "mongo",
+          "owned": "0",
+          "peak": "2",
+          "limit": "3",
+          "dialing": "0",
+          "closing": "0",
+          "acquired": "2",
+          "released": "2"
+        }
+      ]
+    },
+    {
+      "name": "integration node 1 zero retained backend connections at close",
+      "pass": true,
+      "evidence": [
+        {
+          "backend": "search",
+          "store": "search",
+          "owned": "0",
+          "peak": "1",
+          "limit": "3",
+          "acquired": "1",
+          "released": "1"
+        },
+        {
+          "backend": "mongo",
+          "store": "mongo",
+          "owned": "0",
+          "peak": "2",
+          "limit": "3",
+          "dialing": "0",
+          "closing": "0",
+          "acquired": "2",
+          "released": "2"
+        }
+      ]
+    },
+    {
+      "name": "integration node 2 zero retained backend connections at close",
+      "pass": true,
+      "evidence": []
+    },
+    {
+      "name": "smoke node 0 zero retained backend connections at close",
+      "pass": true,
+      "evidence": [
+        {
+          "backend": "search",
+          "store": "search",
+          "owned": "0",
+          "peak": "8",
+          "limit": "9",
+          "acquired": "8",
+          "released": "8"
+        },
+        {
+          "backend": "mongo",
+          "store": "mongo",
+          "owned": "0",
+          "peak": "9",
+          "limit": "9",
+          "dialing": "0",
+          "closing": "0",
+          "acquired": "9",
+          "released": "9"
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "fixtures": {
+    "diagnostic": {
+      "directory": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-2875324417",
+      "remote_directory": "/tmp/weir-tests-2875324417",
+      "manifest": {
+        "binary": "/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/weir-profile",
+        "binary_sha256": "d531d96680462313c6a49bea52e5879b37da1239116a9318cf471c9630cd63cd",
+        "containers": [
+          {
+            "id": "8869e81b05b96256809c2c2de79da7fa98867d38e1b31cf62a24391b7ebe8745",
+            "name": "weir-tests-8746ff62d621129f4ada0ab5-mongo",
+            "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+            "backend": "mongo"
+          }
+        ],
+        "created_at": "2026-10-03T12:38:45.79702315Z",
+        "host_arch": "amd64",
+        "host_os": "linux",
+        "mongo_uri": "mongodb://127.0.0.1:32772/?directConnection=true",
+        "nodes": [
+          {
+            "Application": "127.0.0.1:33573",
+            "Peer": "127.0.0.1:43933",
+            "Diagnostics": "127.0.0.1:46517",
+            "Owner": true
+          }
+        ],
+        "options": {
+          "WeirBinary": "/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/weir-profile",
+          "MongoBinary": "",
+          "Backends": [
+            "mongo"
+          ],
+          "OwnerCount": 1,
+          "DiscoveryOnly": false,
+          "StoreConcurrency": 32,
+          "BatchSize": 32,
+          "IngressSessions": 64,
+          "DatabaseCPUs": 1,
+          "ProcessMemoryMiB": 9216,
+          "WorkingMemoryMiB": {
+            "mongo": 1312
+          }
+        },
+        "owner": "8746ff62d621129f4ada0ab5",
+        "search_url": ""
+      },
+      "cleanup": {
+        "containers": [
+          {
+            "id": "8869e81b05b96256809c2c2de79da7fa98867d38e1b31cf62a24391b7ebe8745",
+            "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+            "name": "weir-tests-8746ff62d621129f4ada0ab5-mongo",
+            "removed": true
+          }
+        ],
+        "errors": "",
+        "finished_at": "2026-10-03T12:39:38.672771749Z",
+        "owner": "8746ff62d621129f4ada0ab5",
+        "processes": [
+          {
+            "index": 0,
+            "pid": 8139,
+            "stopped": true
+          }
+        ]
+      },
+      "manifest_sha256": "a8adf685e49ea0c47e9b8838083807c713551f67be97eba3b78bf22e2397350d",
+      "cleanup_sha256": "c77828e4d08da7a671bf4e7f7964ca667348ae60cf0d5f11acf07c6e4ab92844"
+    },
+    "integration": {
+      "directory": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-3139678164",
+      "remote_directory": "/tmp/weir-tests-3139678164",
+      "manifest": {
+        "binary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+        "binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+        "containers": [
+          {
+            "id": "fb96056b8def9a7c787aed0eae3fc00091bf73258203b807f2b7136294076833",
+            "name": "weir-tests-6eebfc9447e92d4367364746-mongo",
+            "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+            "backend": "mongo"
+          },
+          {
+            "id": "53eb18d88e78e2313e6f531ada4317c8e836fcaf9cbe76684efaeda1ddfd1851",
+            "name": "weir-tests-6eebfc9447e92d4367364746-search",
+            "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+            "backend": "search"
+          }
+        ],
+        "created_at": "2026-10-03T12:37:37.5704989Z",
+        "host_arch": "amd64",
+        "host_os": "linux",
+        "mongo_uri": "mongodb://127.0.0.1:32768/?directConnection=true",
+        "nodes": [
+          {
+            "Application": "127.0.0.1:43743",
+            "Peer": "127.0.0.1:46083",
+            "Diagnostics": "127.0.0.1:36013",
+            "Owner": true
+          },
+          {
+            "Application": "127.0.0.1:46017",
+            "Peer": "127.0.0.1:46449",
+            "Diagnostics": "127.0.0.1:44225",
+            "Owner": true
+          },
+          {
+            "Application": "127.0.0.1:41171",
+            "Peer": "127.0.0.1:36605",
+            "Diagnostics": "127.0.0.1:36495",
+            "Owner": false
+          }
+        ],
+        "options": {
+          "WeirBinary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+          "MongoBinary": "",
+          "Backends": [
+            "mongo",
+            "search"
+          ],
+          "OwnerCount": 2,
+          "DiscoveryOnly": true,
+          "StoreConcurrency": 2,
+          "BatchSize": 513,
+          "IngressSessions": 64,
+          "DatabaseCPUs": 2,
+          "ProcessMemoryMiB": 8192,
+          "WorkingMemoryMiB": {}
+        },
+        "owner": "6eebfc9447e92d4367364746",
+        "search_url": "http://127.0.0.1:32769"
+      },
+      "cleanup": {
+        "containers": [
+          {
+            "id": "fb96056b8def9a7c787aed0eae3fc00091bf73258203b807f2b7136294076833",
+            "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+            "name": "weir-tests-6eebfc9447e92d4367364746-mongo",
+            "removed": true
+          },
+          {
+            "id": "53eb18d88e78e2313e6f531ada4317c8e836fcaf9cbe76684efaeda1ddfd1851",
+            "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+            "name": "weir-tests-6eebfc9447e92d4367364746-search",
+            "removed": true
+          }
+        ],
+        "errors": "",
+        "finished_at": "2026-10-03T12:37:44.334380666Z",
+        "owner": "6eebfc9447e92d4367364746",
+        "processes": [
+          {
+            "index": 0,
+            "pid": 6224,
+            "stopped": true
+          },
+          {
+            "index": 1,
+            "pid": 6179,
+            "stopped": true
+          },
+          {
+            "index": 2,
+            "pid": 6190,
+            "stopped": true
+          }
+        ]
+      },
+      "manifest_sha256": "281b84afa28443e2148db7dddc4e8f6763d88a8f17db88a17a55cb36d2535ecf",
+      "cleanup_sha256": "c4437b70da0c8f2aa1def49048a9a955359311b05bcf5073f75aaa53e3a1442b"
+    },
+    "smoke": {
+      "directory": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/tmp/weir-tests-758544643",
+      "remote_directory": "/tmp/weir-tests-758544643",
+      "manifest": {
+        "binary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+        "binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+        "containers": [
+          {
+            "id": "c6c68c75f857d29e9dac8baa2b85d14aa46aa752943a1271a8d8d38c64c5adb5",
+            "name": "weir-tests-1ca3038ed96f872a0f249812-mongo",
+            "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+            "backend": "mongo"
+          },
+          {
+            "id": "c2c6c74fcf2168ccbe63cbe9d1e021ed346d4081ad42a24e7b7c488bbcfb313f",
+            "name": "weir-tests-1ca3038ed96f872a0f249812-search",
+            "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+            "backend": "search"
+          }
+        ],
+        "created_at": "2026-10-03T12:38:21.657759382Z",
+        "host_arch": "amd64",
+        "host_os": "linux",
+        "mongo_uri": "mongodb://127.0.0.1:32770/?directConnection=true",
+        "nodes": [
+          {
+            "Application": "127.0.0.1:46179",
+            "Peer": "127.0.0.1:34685",
+            "Diagnostics": "127.0.0.1:37613",
+            "Owner": true
+          }
+        ],
+        "options": {
+          "WeirBinary": "/home/runner/work/weir-tests/weir-tests/.tools/weir",
+          "MongoBinary": "",
+          "Backends": [
+            "mongo",
+            "search"
+          ],
+          "OwnerCount": 1,
+          "DiscoveryOnly": false,
+          "StoreConcurrency": 8,
+          "BatchSize": 32,
+          "IngressSessions": 64,
+          "DatabaseCPUs": 1,
+          "ProcessMemoryMiB": 9216,
+          "WorkingMemoryMiB": {
+            "mongo": 384,
+            "search": 768
+          }
+        },
+        "owner": "1ca3038ed96f872a0f249812",
+        "search_url": "http://127.0.0.1:32771"
+      },
+      "cleanup": {
+        "containers": [
+          {
+            "id": "c6c68c75f857d29e9dac8baa2b85d14aa46aa752943a1271a8d8d38c64c5adb5",
+            "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+            "name": "weir-tests-1ca3038ed96f872a0f249812-mongo",
+            "removed": true
+          },
+          {
+            "id": "c2c6c74fcf2168ccbe63cbe9d1e021ed346d4081ad42a24e7b7c488bbcfb313f",
+            "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+            "name": "weir-tests-1ca3038ed96f872a0f249812-search",
+            "removed": true
+          }
+        ],
+        "errors": "",
+        "finished_at": "2026-10-03T12:38:34.02975568Z",
+        "owner": "1ca3038ed96f872a0f249812",
+        "processes": [
+          {
+            "index": 0,
+            "pid": 6996,
+            "stopped": true
+          }
+        ]
+      },
+      "manifest_sha256": "d144c95ed3f8fbdcbb278a621504e15e762958e257f6298df0f779e164f543b9",
+      "cleanup_sha256": "613c612bb127521c203dc89a3388279a13749f4e59af089d181888e2f9a0c815"
+    }
+  },
+  "smoke": {
+    "mongo": {
+      "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/smoke/mongo.json",
+      "sha256": "e475b9e82ce20d5f527a300fed38e4bac7e5d7742411c7c523fa3d6b48f9cead",
+      "verified_paths": 4,
+      "purpose": "functional comparison smoke only; throughput ratio is not capacity evidence"
+    },
+    "search": {
+      "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/smoke/search.json",
+      "sha256": "9435ba7b1b046a88192e8c25c2021590cdc8eb067ecf79c6698ffeea7b9840b8",
+      "verified_paths": 4,
+      "purpose": "functional comparison smoke only; throughput ratio is not capacity evidence"
+    }
+  },
+  "diagnostic": {
+    "receipt_sha256": "71734181d783c6c1631a3a9045ec604536229919e531dfad2d9e60fcd7827016",
+    "profile_files": {
+      "cpu": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof",
+        "sha256": "e227660e5ee33f7028090dac4f140635c7f98e1b10f65a0e0831debee3f43d06",
+        "bytes": 120875,
+        "independent_decode": "/tmp/weir-4e-final-cpu-cum.txt"
+      },
+      "mutex": {
+        "path": "/Users/liran/Projects/liran/go/weir-tests/results/2026-10-03-bulk-refactor/final-system/system-evidence-63d9b91ed6cf853985ea72c4a78fdf694108dda8/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof.mutex.pprof",
+        "sha256": "ffef0d898bc1fbd8ff691ee87a851880198c9c55612d359a5e50c1b81017b06d",
+        "bytes": 26901,
+        "independent_decode": "/tmp/weir-4e-final-mutex-cum.txt"
+      }
+    },
+    "sample": {
+      "server": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+      "tests": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+      "cpu_header": [
+        "Duration: 52.71s, Total samples = 40.41s (76.66%)"
+      ],
+      "mutex_header": [
+        "Showing nodes accounting for 21.18s, 99.63% of 21.26s total"
+      ],
+      "cpu_selected": {
+        "github.com/batchstream/weir/internal/server.(*Server).Read": {
+          "flat": "0.01s",
+          "flat_percent": "0.025%",
+          "cumulative": "8.23s",
+          "cumulative_percent": "20.37%"
+        },
+        "github.com/batchstream/weir/internal/store.(*Runtime).PrepareBatch": {
+          "flat": "0.05s",
+          "flat_percent": "0.12%",
+          "cumulative": "0.80s",
+          "cumulative_percent": "1.98%"
+        },
+        "github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).PrepareRecord": {
+          "flat": "0.01s",
+          "flat_percent": "0.025%",
+          "cumulative": "0.75s",
+          "cumulative_percent": "1.86%"
+        },
+        "github.com/batchstream/weir/internal/execution.NewReadRecords": {
+          "flat": "0.03s",
+          "flat_percent": "0.074%",
+          "cumulative": "3.66s",
+          "cumulative_percent": "9.06%"
+        },
+        "regexp.(*Regexp).doOnePass": {
+          "flat": "0.61s",
+          "flat_percent": "1.51%",
+          "cumulative": "1.43s",
+          "cumulative_percent": "3.54%"
+        },
+        "runtime.mallocgc": {
+          "flat": "0.40s",
+          "flat_percent": "0.99%",
+          "cumulative": "5.73s",
+          "cumulative_percent": "14.18%"
+        },
+        "runtime.gcBgMarkWorker": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "4.09s",
+          "cumulative_percent": "10.12%"
+        },
+        "runtime.gcAssistAlloc": {
+          "flat": "0.01s",
+          "flat_percent": "0.025%",
+          "cumulative": "2.20s",
+          "cumulative_percent": "5.44%"
+        },
+        "github.com/batchstream/weir-protocol/api/protocol.ValidateReadBatchResponse": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "3.20s",
+          "cumulative_percent": "7.92%"
+        },
+        "github.com/batchstream/weir-protocol/api/protocol.ValidateReadBatchRequest": {
+          "flat": "0.02s",
+          "flat_percent": "0.049%",
+          "cumulative": "2s",
+          "cumulative_percent": "4.95%"
+        },
+        "github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads": {
+          "flat": "0.21s",
+          "flat_percent": "0.52%",
+          "cumulative": "11.89s",
+          "cumulative_percent": "29.42%"
+        }
+      },
+      "mutex_selected": {
+        "github.com/batchstream/weir/internal/execution.(*ResultBudget).Reserve": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "2.66s",
+          "cumulative_percent": "12.52%"
+        },
+        "github.com/batchstream/weir/internal/store.(*Runtime).loop": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "3.59s",
+          "cumulative_percent": "16.91%"
+        },
+        "github.com/batchstream/weir/internal/server.(*rpcState).finish": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "2.97s",
+          "cumulative_percent": "13.95%"
+        },
+        "github.com/batchstream/weir/internal/server.(*rpcState).finishLocked": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "1.14s",
+          "cumulative_percent": "5.37%"
+        },
+        "github.com/batchstream/weir/internal/store.(*Ticket).WaitBatch": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "0.60s",
+          "cumulative_percent": "2.84%"
+        },
+        "github.com/batchstream/weir/internal/store.(*Ticket).Ack": {
+          "flat": "0",
+          "flat_percent": "0%",
+          "cumulative": "1.14s",
+          "cumulative_percent": "5.37%"
+        }
+      },
+      "measured_workload": [
+        {
+          "concurrency": 8,
+          "weir_ops_s": 58767.502949631955,
+          "weir_database_cpu_percent": 59.366445419485544,
+          "queue_mean_s": 3.848984837761368e-05,
+          "adapter_mean_s": 0.0014765323790831813
+        },
+        {
+          "concurrency": 32,
+          "weir_ops_s": 66908.75765867197,
+          "weir_database_cpu_percent": 67.43729810520833,
+          "queue_mean_s": 0.000398059304090211,
+          "adapter_mean_s": 0.004077501200831409
+        }
+      ],
+      "scope": "separate single diagnostic sample, startup/warmup/direct-stage idle/Weir stages/drain included; cumulative call trees overlap and must never be summed; no causal change or capacity inference from this sample",
+      "prior_same_server_sample": {
+        "system_run": 37122170339,
+        "cpu_samples_s": 39.76,
+        "mutex_sampled_delay_s": 17.41
+      },
+      "current_sample_totals": {
+        "cpu_samples_s": 40.41,
+        "mutex_sampled_delay_s": 21.26
+      },
+      "conclusion": "Preparation remains small (~0.80s cumulative). Allocation/GC, response validation, driver/adapter execution and scheduling/result/transport mutex costs remain visible. Same-helper run-to-run mutex variation is not proof of a new code regression, full-lock improvement, or a causal throughput bottleneck."
+    }
+  },
+  "limitations": [
+    "No Linux production/helper executables are uploaded; their recorded hashes are associated by pinned build step, manifest, provenance and diagnostic receipt, rather than independent rehash of absent executables. Uploaded wrapper and profiles are independently hashed.",
+    "Graceful owner withdrawal/restart and discovery seed loss are verified; hard-kill lease convergence and replayed writes are not claimed.",
+    "513-record metric assertion proves one adapter invocation per unary batch, not a universal one-database-wire-command guarantee.",
+    "Smoke is functional comparison; profiler capacity_evidence=false; no capacity result is inferred or combined across diagnostic samples.",
+    "Declared process admission memory envelope is not an OS reservation.",
+    "Resource release is verified from owner-labelled lifecycle records, manifests, exact cleanup IDs/names/images and successful cleanup, without operating any existing services."
+  ],
+  "prior_audit_retained": {
+    "path": "/tmp/weir-blackbox-final-audit.json",
+    "sha256": "b26f0176534fd06dedfcd6faa3e7e3e2f210080c696a16be7631fde92c7e6d58"
+  }
+}

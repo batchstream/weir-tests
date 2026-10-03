@@ -1,0 +1,87 @@
+{
+  "conclusion": "success",
+  "createdAt": "2026-10-03T09:56:45Z",
+  "databaseId": 37114740993,
+  "event": "pull_request",
+  "headSha": "00e307f56f5b707ce0130d0e9a9e9047426ae19f",
+  "jobs": [
+    {
+      "completedAt": "2026-10-03T10:01:33Z",
+      "conclusion": "success",
+      "databaseId": 111179250980,
+      "name": "test",
+      "startedAt": "2026-10-03T09:56:48Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-03T09:56:49Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-03T09:56:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T09:56:51Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 2,
+          "startedAt": "2026-10-03T09:56:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T09:56:59Z",
+          "conclusion": "success",
+          "name": "Prepare fixed native SDK and public modules",
+          "number": 3,
+          "startedAt": "2026-10-03T09:56:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T09:57:54Z",
+          "conclusion": "success",
+          "name": "Native CGO0 default tests",
+          "number": 4,
+          "startedAt": "2026-10-03T09:56:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T09:59:11Z",
+          "conclusion": "success",
+          "name": "Native CGO1 race tests",
+          "number": 5,
+          "startedAt": "2026-10-03T09:57:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T10:01:32Z",
+          "conclusion": "success",
+          "name": "Static vet and isolated helper regressions",
+          "number": 6,
+          "startedAt": "2026-10-03T09:59:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T10:01:32Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 12,
+          "startedAt": "2026-10-03T10:01:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-03T10:01:32Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-10-03T10:01:32Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/batchstream/weir/actions/runs/37114740993/job/111179250980"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-10-03T10:01:34Z",
+  "url": "https://github.com/batchstream/weir/actions/runs/37114740993"
+}

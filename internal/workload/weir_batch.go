@@ -10,7 +10,8 @@ import (
 
 func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []Outcome {
 	if len(operations) == 1 {
-		return []Outcome{p.Execute(ctx, operations[0])}
+		outcomes := []Outcome{p.Execute(ctx, operations[0])}
+		return outcomes
 	}
 	if err := validateBatch(operations); err != nil {
 		return batchFailure(operations, err)
@@ -63,9 +64,9 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 	return outcomes
 }
 
-// APPLIED remains authoritative even with a post-write failure or a later lost
-// RPC status. Such calls invalidate throughput, while preserving applied bytes
-// and the applied-with-error count in the report.
+// A confirmed APPLIED item can also contain a post-write business failure.
+// Preserve that evidence, but exclude it from successful throughput. A failed
+// unary RPC supplies no item acknowledgements; all its writes remain unknown.
 func mutationOutcome(result *weir.MutationResult, requestBytes int, rpcErr error) Outcome {
 	if result != nil && result.GetOutcome() == weir.MutationApplied {
 		outcome := Outcome{Status: Success, Applied: true, RequestBytes: uint64(requestBytes)}

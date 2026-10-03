@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "started_utc": "2026-10-03T12:38:23.451004766Z",
+  "parameters": {
+    "dataset": {
+      "backend": "search",
+      "weir_seed": "127.0.0.1:46179",
+      "store": "search",
+      "namespace": "weirtest_a839f04f3d72ea97b88b5017",
+      "records": 64,
+      "padding_bytes": 1024,
+      "concurrency": 8
+    },
+    "operations_per_path_per_round": 128,
+    "warmup_operations_per_path": 32,
+    "requested_write_percent": 10,
+    "actual_planned_reads": 117,
+    "actual_planned_writes": 11,
+    "paired_rounds": 2,
+    "operation_timeout": "10s"
+  },
+  "provenance": {
+    "client_cpu_count": "4",
+    "client_os_arch": "linux/amd64",
+    "database_docker_cpu_quota": "1",
+    "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+    "fixture_logs": "/tmp/weir-tests-758544643",
+    "go": "go1.27.1",
+    "gomaxprocs": "4",
+    "host_cpus": "4",
+    "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+    "protocol": "v0.2.1",
+    "sdk": "v0.4.2",
+    "test_source": "4e6c8a7c0c5e16d094964ce60af24320835736e3",
+    "test_source_dirty": "false",
+    "topology": "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+    "weir_binary_sha256": "703db8d26c31c8932f0e614a42944a6bd41cc3c3c8a7e93129569e113f7ade5d",
+    "weir_ingress_max_connections": "64",
+    "weir_ingress_max_sessions": "64",
+    "weir_max_batch_operations": "32",
+    "weir_memory_budget": "9216MiB (declared process admission budget; not an OS reservation)",
+    "weir_mongo_working_memory_mib": "384",
+    "weir_search_working_memory_mib": "768",
+    "weir_source": "b73c83a47791ac97bb5533b5b290c96d966a2e43",
+    "weir_store_concurrency": "8"
+  },
+  "pairs": [
+    {
+      "round": 1,
+      "order": [
+        "direct",
+        "weir"
+      ],
+      "direct": {
+        "path": "direct",
+        "planned": 128,
+        "attempted": 128,
+        "succeeded": 128,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 366118975,
+        "successful_operations_per_second": 349.6131278090681,
+        "logical_request_document_bytes": 11902,
+        "logical_response_document_bytes": 126594,
+        "verified": true,
+        "latency": {
+          "samples": 128,
+          "p50_upper_bound_ns": 5119000,
+          "p95_upper_bound_ns": 81919000,
+          "p99_upper_bound_ns": 81919000,
+          "max_observed_ns": 78078091,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "Elasticsearch HTTP/1.1 JSON",
+          "endpoint": "127.0.0.1:32771",
+          "backend_version": "8.19.22",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "PUT _doc; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; POST _mget?realtime=true with one ID; no compression; connections=worker concurrency",
+          "retry_policy": "no application retries; business POST/PUT have no idempotency key and are not transparently replayed by http.Transport",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir": {
+        "path": "weir",
+        "planned": 128,
+        "attempted": 128,
+        "succeeded": 128,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 223783651,
+        "successful_operations_per_second": 571.981015717721,
+        "logical_request_document_bytes": 11902,
+        "logical_response_document_bytes": 126594,
+        "verified": true,
+        "latency": {
+          "samples": 128,
+          "p50_upper_bound_ns": 6143000,
+          "p95_upper_bound_ns": 73727000,
+          "p99_upper_bound_ns": 73727000,
+          "max_observed_ns": 73810687,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "gRPC unary Read/Mutate batches via published Weir SDK",
+          "endpoint": "127.0.0.1:46179",
+          "backend_version": "8.19.22",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "PUT _doc; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; POST _mget?realtime=true with one ID; no compression; connections=worker concurrency",
+          "retry_policy": "SDK never replays business requests",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir_direct_throughput_ratio": 1.6360398687033664,
+      "weir_throughput_delta_percent": 63.60398687033664
+    },
+    {
+      "round": 2,
+      "order": [
+        "weir",
+        "direct"
+      ],
+      "direct": {
+        "path": "direct",
+        "planned": 128,
+        "attempted": 128,
+        "succeeded": 128,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 124045257,
+        "successful_operations_per_second": 1031.8814527507488,
+        "logical_request_document_bytes": 11902,
+        "logical_response_document_bytes": 126594,
+        "verified": true,
+        "latency": {
+          "samples": 128,
+          "p50_upper_bound_ns": 3071000,
+          "p95_upper_bound_ns": 73727000,
+          "p99_upper_bound_ns": 81919000,
+          "max_observed_ns": 78309870,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "Elasticsearch HTTP/1.1 JSON",
+          "endpoint": "127.0.0.1:32771",
+          "backend_version": "8.19.22",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "PUT _doc; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; POST _mget?realtime=true with one ID; no compression; connections=worker concurrency",
+          "retry_policy": "no application retries; business POST/PUT have no idempotency key and are not transparently replayed by http.Transport",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir": {
+        "path": "weir",
+        "planned": 128,
+        "attempted": 128,
+        "succeeded": 128,
+        "errors": 0,
+        "indeterminate": 0,
+        "not_attempted": 0,
+        "applied_with_error": 0,
+        "elapsed_ns": 214171722,
+        "successful_operations_per_second": 597.6512622894259,
+        "logical_request_document_bytes": 11902,
+        "logical_response_document_bytes": 126594,
+        "verified": true,
+        "latency": {
+          "samples": 128,
+          "p50_upper_bound_ns": 6143000,
+          "p95_upper_bound_ns": 65535000,
+          "p99_upper_bound_ns": 73727000,
+          "max_observed_ns": 72594145,
+          "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (\u003c=12.5% plus 1us); final overflow bucket uses observed maximum"
+        },
+        "evidence": {
+          "protocol": "gRPC unary Read/Mutate batches via published Weir SDK",
+          "endpoint": "127.0.0.1:46179",
+          "backend_version": "8.19.22",
+          "byte_scope": "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero",
+          "write_policy": "PUT _doc; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; POST _mget?realtime=true with one ID; no compression; connections=worker concurrency",
+          "retry_policy": "SDK never replays business requests",
+          "client_batch": "one logical operation per client call; no client bulk API"
+        }
+      },
+      "weir_direct_throughput_ratio": 0.579185972086455,
+      "weir_throughput_delta_percent": -42.081402791354506
+    }
+  ],
+  "aggregate": {
+    "qualified_pairs": 2,
+    "direct_successful_operations_per_second": 522.2739304242011,
+    "weir_successful_operations_per_second": 584.5344429648087,
+    "weir_direct_throughput_ratio": 1.1192104543491925,
+    "weir_throughput_delta_percent": 11.921045434919254
+  },
+  "method": "fixed identical operation plan; partitioned IDs; no client bulk; alternating AB/BA; setup, warmup, reset and independent postflight excluded; elapsed includes worker start barrier and all joins; latency includes payload validation; throughput counts only successful logical operations"
+}
