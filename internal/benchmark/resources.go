@@ -50,22 +50,37 @@ type Resources struct {
 	Missing         string           `json:"unavailable,omitempty"`
 }
 
-func verifyResourceBudget(ctx context.Context, target fixture.ResourceTarget) error {
+type DatabaseCPUQuota struct {
+	ContainerID   string  `json:"container_id"`
+	NanoCPUs      int64   `json:"host_config_nano_cpus"`
+	RequestedCPUs float64 `json:"requested_cpus"`
+	ObservedCPUs  float64 `json:"observed_cpus"`
+}
+
+func verifyResourceBudget(ctx context.Context, target fixture.ResourceTarget) (*DatabaseCPUQuota, error) {
 	if target.Container == "" {
-		return nil
+		return nil, nil
 	}
-	args := []string{"--config", target.DockerConfig, "--host", target.DockerHost, "inspect", "--format", "{{.HostConfig.NanoCpus}}", target.Container}
+	if target.AllocatedCPUs <= 0 || math.IsNaN(target.AllocatedCPUs) || math.IsInf(target.AllocatedCPUs, 0) {
+		return nil, errors.New("invalid requested database CPU quota")
+	}
+	args := []string{"--config", target.DockerConfig, "--host", target.DockerHost, "inspect", "--format", "{{.Id}} {{.HostConfig.NanoCpus}}", target.Container}
 	commandCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	raw, err := exec.CommandContext(commandCtx, "docker", args...).Output()
 	if err != nil {
-		return fmt.Errorf("cannot verify owned database CPU quota: %w", err)
+		return nil, fmt.Errorf("cannot verify owned database CPU quota: %w", err)
 	}
-	nanoCPUs, err := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
+	fields := strings.Fields(string(raw))
+	if len(fields) != 2 || fields[0] != target.Container {
+		return nil, errors.New("owned database Docker inspection identity differs from benchmark target")
+	}
+	nanoCPUs, err := strconv.ParseInt(fields[1], 10, 64)
 	if err != nil || nanoCPUs <= 0 || math.Abs(float64(nanoCPUs)/1e9-target.AllocatedCPUs) > 1e-6 {
-		return errors.New("owned database Docker CPU quota differs from benchmark CPU denominator")
+		return nil, errors.New("owned database Docker CPU quota differs from benchmark CPU denominator")
 	}
-	return nil
+	quota := &DatabaseCPUQuota{ContainerID: fields[0], NanoCPUs: nanoCPUs, RequestedCPUs: target.AllocatedCPUs, ObservedCPUs: float64(nanoCPUs) / 1e9}
+	return quota, nil
 }
 
 func resourceHTTPClient(target fixture.ResourceTarget) (*http.Client, error) {

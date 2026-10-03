@@ -83,6 +83,7 @@ type SaturationReport struct {
 	Started     string                 `json:"started_utc"`
 	Parameters  SaturationParameters   `json:"parameters"`
 	Provenance  map[string]string      `json:"provenance"`
+	CPUQuota    *DatabaseCPUQuota      `json:"database_cpu_quota,omitempty"`
 	Pairs       []SaturationPair       `json:"pairs"`
 	Points      []SaturationPoint      `json:"points"`
 	Comparisons []SaturationComparison `json:"database_saturated_comparisons"`
@@ -94,7 +95,8 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 	if err := validateSaturation(options); err != nil {
 		return nil, err
 	}
-	if err := verifyResourceBudget(ctx, options.Resources); err != nil {
+	quota, err := verifyResourceBudget(ctx, options.Resources)
+	if err != nil {
 		return nil, err
 	}
 	parameters := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: options.BatchSizes, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, CPUThreshold: options.CPUThreshold}
@@ -103,7 +105,7 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 		provenance[key] = value
 	}
 	provenance["go"], provenance["gomaxprocs"], provenance["client_cpu_count"] = runtime.Version(), fmt.Sprint(runtime.GOMAXPROCS(0)), fmt.Sprint(runtime.NumCPU())
-	report := &SaturationReport{Schema: 2, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: parameters, Provenance: provenance, Method: "duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation"}
+	report := &SaturationReport{Schema: 2, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: parameters, Provenance: provenance, CPUQuota: quota, Method: "duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation"}
 	for _, batch := range options.BatchSizes {
 		for level, workers := range options.Concurrency {
 			for round := range options.Rounds {

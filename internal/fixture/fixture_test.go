@@ -32,8 +32,9 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, Backends: []string{"redis"}},
 		{WeirBinary: binary, OwnerCount: -1},
 		{WeirBinary: binary, OwnerCount: 9},
-		{WeirBinary: binary, StoreConcurrency: 33},
+		{WeirBinary: binary, StoreConcurrency: -1},
 		{WeirBinary: binary, BatchSize: -1},
+		{WeirBinary: binary, ProcessMemoryMiB: -1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},
 	}
 	for _, options := range cases {
@@ -54,6 +55,16 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 	large := Options{WeirBinary: binary, BatchSize: 513}
 	if _, err := validateOptions(large); err != nil {
 		t.Fatal("valid physical batch greater than 128 rejected:", err)
+	}
+	workspace := map[string]int{"mongo": 384}
+	parallel := Options{WeirBinary: binary, StoreConcurrency: 33, WorkingMemoryMiB: workspace}
+	prepared, err := validateOptions(parallel)
+	if err != nil {
+		t.Fatal("backend concurrency retained an arbitrary cap", err)
+	}
+	workspace["mongo"] = 1024
+	if prepared.WorkingMemoryMiB["mongo"] != 384 {
+		t.Fatal("caller changed the admitted fixture memory envelope")
 	}
 	ctx := context.Background()
 	missing := Options{}

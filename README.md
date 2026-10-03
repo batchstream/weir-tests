@@ -147,7 +147,20 @@ to 64), record count (at least
 max-workers times batch size), or duration when a run lacks sufficient evidence.
 No noisy performance ratio is used as a CI pass/fail threshold; workload errors
 and failed persistence checks do fail the job. `saturation.yml` runs read,
-mixed (10% writes) and write matrices on PRs; dispatch selects a workload.
+mixed (10% writes) and write matrices on PRs, with a one-CPU database quota.
+Dispatch can select a workload and database CPU quota (0.5, 1 or 2). Each run keeps
+the quota identical for direct and Weir paths and records the inspected denominator.
+Reports from different quotas are separate experiments; a lower-quota saturation
+result cannot establish the capacity of a one-CPU database.
+
+The lab sizes `working_memory` for the selected backend concurrency: at least
+41MiB per MongoDB batch and 96MiB per Search batch for its declared 2MiB read limit.
+It also sizes process admission memory for ingress, both Store workspaces and
+framing; the default 32-concurrency two-backend fixture declares 12GiB. These are
+admission budgets, not allocated memory or OS reservations; resource samples show
+actual consumption. `-store-working-memory-mib 384` reproduces the previous 8GiB
+fixture's smaller workspace, which permits only 9 MongoDB or 4 Search read batches
+at once despite configured concurrency 32. Each report records both budgets.
 
 ## Finite single-operation comparison
 
