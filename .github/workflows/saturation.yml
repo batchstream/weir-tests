@@ -10,6 +10,8 @@ on:
         type: choice
         options: ['0', '10', '100']
   pull_request:
+    paths-ignore:
+      - 'results/**'
 
 permissions:
   contents: read
