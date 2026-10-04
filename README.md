@@ -55,7 +55,7 @@ confirmed record outcomes; unconfirmed mutations remain indeterminate.
 Each Execute request carries one record and its consecutive index. The client
 streams records as they are produced; server aggregation stays within the Store.
 Later invalid records stop the stream while preserving earlier acknowledged writes.
-Documents use explicit `ContentType` fields. Native selects either a BSON MongoDB command or a typed Search HTTP request; SDK consumers receive chunks with validated response metadata.
+Documents use explicit `ContentType` fields. Native carries an opaque request Document and optional response metadata; adapters own the formats. HTTP fixtures use standard messages through SDK helpers. Tests verify unknown content types reach adapter classification, while adapter-specific projection rules do not constrain other Stores.
 
 Services bind to loopback and own exclusive namespaces. Cleanup verifies exact
 process and container ownership. Fixture logs, manifests and cleanup receipts
