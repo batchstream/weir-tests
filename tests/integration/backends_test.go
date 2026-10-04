@@ -252,10 +252,10 @@ func (b *backendData) assertRead(t *testing.T, ctx context.Context, client *weir
 
 func (b *backendData) assertReadResult(t *testing.T, result *weir.ReadResult, err error, want int64) {
 	t.Helper()
-	if err != nil || result.GetFailure() != nil || result.GetMissing() {
+	if err != nil || result == nil || result.Failure != nil || result.Missing {
 		t.Fatalf("Read result=%v err=%v", result, err)
 	}
-	got, decodeError := b.number(result.GetDocument())
+	got, decodeError := b.number(result.Document)
 	if decodeError != nil || got != want {
 		t.Fatalf("Read n=%d err=%v; want %d", got, decodeError, want)
 	}
@@ -270,10 +270,10 @@ func (b *backendData) waitRead(t *testing.T, ctx context.Context, client *weir.C
 		if err != nil {
 			return err
 		}
-		if result.GetFailure() != nil || result.GetMissing() {
+		if result == nil || result.Failure != nil || result.Missing {
 			return fmt.Errorf("business result: %v", result)
 		}
-		got, err := b.number(result.GetDocument())
+		got, err := b.number(result.Document)
 		if err != nil || got != want.n {
 			return fmt.Errorf("n=%d err=%v; want %d", got, err, want.n)
 		}

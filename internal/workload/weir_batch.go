@@ -58,7 +58,7 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 			outcomes[index] = failed(err, false)
 			continue
 		}
-		if reply == nil || reply.GetDocument() == nil || reply.GetFailure() != nil || reply.GetMissing() || reply.Document.MediaType != p.dataset.MediaType() {
+		if reply == nil || reply.Document == nil || reply.Failure != nil || reply.Missing || reply.Document.MediaType != p.dataset.MediaType() {
 			outcomes[index] = failed(errors.New("Weir batch read lacks matching successful document"), false)
 			continue
 		}

@@ -1,3 +1,0 @@
-Weir listening on [127.0.0.1:45469 127.0.0.1:46717]; local execution and peer directory discovery
-Diagnostics listening on 127.0.0.1:42521
-2026/10/03 22:25:06 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=32 limit=33 dialing=0 closing=0 acquired=32 released=32

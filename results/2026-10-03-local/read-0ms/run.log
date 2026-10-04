@@ -1,3 +1,0 @@
-Owned fixture logs: /var/folders/91/pzs4g26n4_s925wqcxc1xmd40000gn/T/weir-tests-465196205
-mongo direct=56889.5 ops/s weir=7698.5 ops/s ratio=0.135
-search direct=9006.7 ops/s weir=3691.8 ops/s ratio=0.410

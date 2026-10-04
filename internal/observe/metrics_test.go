@@ -10,7 +10,7 @@ import (
 )
 
 func TestMetricSnapshotSelectsStoreAndRejectsUnavailableEvidence(t *testing.T) {
-	raw := "# TYPE operations counter\noperations{store=\"mongo\",kind=\"route\"} 112\noperations{kind=\"route\",store=\"search\"} 8\nescaped{label=\"a\\\"b\\\\c\\nd\"} 1\n"
+	raw := "# TYPE operations counter\noperations{store=\"mongo\",kind=\"execution\"} 112\noperations{kind=\"execution\",store=\"search\"} 8\nescaped{label=\"a\\\"b\\\\c\\nd\"} 1\n"
 	metrics, err := Parse(raw)
 	if err != nil {
 		t.Fatal(err)

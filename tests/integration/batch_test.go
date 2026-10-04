@@ -65,7 +65,7 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	for index, result := range readResults {
 		input := count - 1 - index
 		if index == count || input == 24 {
-			if result == nil || !result.GetMissing() || result.GetFailure() != nil {
+			if result == nil || !result.Missing || result.Failure != nil {
 				t.Fatalf("missing result moved or failed at index %d: %v", index, result)
 			}
 			continue
@@ -184,7 +184,7 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 		case 0:
 			backend.assertReadResult(t, result, nil, 205)
 		case 1:
-			if result == nil || !result.GetMissing() || result.GetFailure() != nil {
+			if result == nil || !result.Missing || result.Failure != nil {
 				t.Fatalf("missing input %d moved: %v", index, result)
 			}
 		case 2:

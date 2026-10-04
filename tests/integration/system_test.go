@@ -36,7 +36,7 @@ type system struct {
 func TestSystemIntegration(t *testing.T) {
 	binary := os.Getenv("WEIR_TEST_BINARY")
 	if binary == "" {
-		t.Fatal("integration tests require WEIR_TEST_BINARY pointing to a built Weir binary; run the repository integration script")
+		t.Fatal("integration tests require WEIR_TEST_BINARY pointing to a built Weir binary; run make prepare, then make integration")
 	}
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Minute)
 	defer cancel()

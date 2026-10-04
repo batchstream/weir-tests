@@ -19,7 +19,7 @@ func TestFixtureMemoryCoversActualBackendConcurrency(t *testing.T) {
 	opts.workingMemoryMiB = 384
 	workspace, processMiB, err = fixtureMemoryBudget(opts, backends, 32)
 	if err != nil || workspace["mongo"] != 384 || workspace["search"] != 384 || processMiB != 8192 {
-		t.Fatal("could not reproduce the previous resource-limited experiment", workspace, processMiB, err)
+		t.Fatal("explicit workspace budget was not honored", workspace, processMiB, err)
 	}
 	opts.workingMemoryMiB = 0
 	opts.concurrency = 512
