@@ -1,0 +1,44 @@
+File: weir-profile-node
+Build ID: c8f0f1dbf6ccc082686966e4b9f700a793deb583
+Type: cpu
+Time: 2026-10-04 02:58:49 UTC
+Duration: 54.68s, Total samples = 35.59s (65.08%)
+Showing nodes accounting for 16.04s, 45.07% of 35.59s total
+Dropped 1042 nodes (cum <= 0.18s)
+Showing top 35 nodes out of 330
+      flat  flat%   sum%        cum   cum%
+     6.59s 18.52% 18.52%      6.59s 18.52%  internal/runtime/syscall/linux.Syscall6
+     0.72s  2.02% 20.54%      1.28s  3.60%  runtime.tryDeferToSpanScan
+     0.71s  1.99% 22.53%      0.91s  2.56%  runtime.step
+     0.59s  1.66% 24.19%      0.59s  1.66%  runtime.memmove
+     0.57s  1.60% 25.79%      0.57s  1.60%  runtime.futex
+     0.50s  1.40% 27.20%      1.52s  4.27%  runtime.pcvalue
+     0.36s  1.01% 28.21%      0.41s  1.15%  runtime.findfunc
+     0.31s  0.87% 29.08%      0.31s  0.87%  runtime.memclrNoHeapPointers
+     0.30s  0.84% 29.92%      0.30s  0.84%  time.runtimeNow
+     0.28s  0.79% 30.71%      0.28s  0.79%  runtime.nanotime (inline)
+     0.25s   0.7% 31.41%      1.14s  3.20%  runtime.mallocgcSmallScanNoHeaderSC5
+     0.25s   0.7% 32.12%      1.08s  3.03%  runtime.scanObject
+     0.24s  0.67% 32.79%      0.85s  2.39%  runtime.(*unwinder).resolveInternal
+     0.23s  0.65% 33.44%      7.48s 21.02%  go.mongodb.org/mongo-driver/v2/x/mongo/driver.Operation.Execute
+     0.23s  0.65% 34.08%      3.10s  8.71%  runtime.mallocgc
+     0.23s  0.65% 34.73%      0.23s  0.65%  runtime.procyieldAsm
+     0.23s  0.65% 35.38%      0.31s  0.87%  runtime.typePointers.next
+     0.22s  0.62% 35.99%      1.53s  4.30%  runtime.adjustframe
+     0.22s  0.62% 36.61%      0.22s  0.62%  runtime.adjustpointers
+     0.22s  0.62% 37.23%      0.25s   0.7%  runtime.heapArenaOf (inline)
+     0.22s  0.62% 37.85%      0.41s  1.15%  runtime.scanblock
+     0.21s  0.59% 38.44%      0.21s  0.59%  runtime.(*moduledata).textAddr
+     0.21s  0.59% 39.03%      1.49s  4.19%  runtime.mallocgcSmallScanSlowPath
+     0.21s  0.59% 39.62%      0.21s  0.59%  runtime.spanClass.sizeclass (inline)
+     0.20s  0.56% 40.18%      0.34s  0.96%  runtime.findObject
+     0.20s  0.56% 40.74%      0.20s  0.56%  runtime.readvarint (inline)
+     0.19s  0.53% 41.28%      1.15s  3.23%  runtime.(*stkframe).getStackMap
+     0.18s  0.51% 41.78%      0.20s  0.56%  internal/runtime/gc/scan.scanSpanPackedAVX512
+     0.18s  0.51% 42.29%      0.27s  0.76%  internal/runtime/maps.(*Iter).Next
+     0.18s  0.51% 42.79%      0.18s  0.51%  runtime.nextFreeFast (inline)
+     0.18s  0.51% 43.30%      0.18s  0.51%  runtime.osyield
+     0.16s  0.45% 43.75%      0.24s  0.67%  runtime.casgstatus
+     0.16s  0.45% 44.20%      0.43s  1.21%  runtime.mallocgcSmallScanNoHeaderSC2
+     0.16s  0.45% 44.65%      0.48s  1.35%  runtime.selectgo
+     0.15s  0.42% 45.07%      0.36s  1.01%  runtime.lock2

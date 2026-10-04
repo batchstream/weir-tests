@@ -1,5 +1,15 @@
 # Throughput measurements
 
+## Lua single-request read-modify-write aggregation
+
+The [2026-10-04 Lua comparison](2026-10-04-lua-rmw/README.md) measures four
+independent client processes sending one URI per request. At 128 workers,
+Weir aggregation observes MongoDB 2,202 vs. direct 1,236 mutations/s and Search
+3,061 vs. direct 1,455, with database CPU saturation demonstrated in every
+round. The highest level lacks a subsequent plateau measurement, so maximum
+capacity ratios remain unavailable. Raw 1/32 grouping controls, independent
+verification and cleanup evidence are retained.
+
 ## Bulk read sweep with database CPU evidence
 
 The [Linux full-load attempt](https://github.com/batchstream/weir-tests/actions/runs/37097083479)

@@ -1,0 +1,1168 @@
+=== RUN   TestJSONBoundsAndExactNumbers
+--- PASS: TestJSONBoundsAndExactNumbers (0.00s)
+=== RUN   TestSearchPrepareRejectsUnsupportedInputs
+--- PASS: TestSearchPrepareRejectsUnsupportedInputs (0.00s)
+=== RUN   TestResponseAndRequestLimits
+=== RUN   TestResponseAndRequestLimits/large_body
+=== RUN   TestResponseAndRequestLimits/large_header
+=== RUN   TestResponseAndRequestLimits/malformed
+=== RUN   TestResponseAndRequestLimits/deep
+=== RUN   TestResponseAndRequestLimits/encoding
+--- PASS: TestResponseAndRequestLimits (0.01s)
+    --- PASS: TestResponseAndRequestLimits/large_body (0.00s)
+    --- PASS: TestResponseAndRequestLimits/large_header (0.00s)
+    --- PASS: TestResponseAndRequestLimits/malformed (0.00s)
+    --- PASS: TestResponseAndRequestLimits/deep (0.00s)
+    --- PASS: TestResponseAndRequestLimits/encoding (0.00s)
+=== RUN   TestBulkEvidenceIsNotHTTPStatus
+--- PASS: TestBulkEvidenceIsNotHTTPStatus (0.00s)
+=== RUN   TestNativeErrorStatusAndPositiveAcknowledgement
+--- PASS: TestNativeErrorStatusAndPositiveAcknowledgement (0.00s)
+=== RUN   TestFiniteCongestionProducts
+--- PASS: TestFiniteCongestionProducts (0.00s)
+=== RUN   TestSearchEveryRecordActionSharesNativeBatch
+    batch_integration_test.go:20: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    batch_integration_test.go:136: elasticsearch ten mixed operations -> one qualification, one realtime _mget, one mixed _bulk; persisted Lua/Replace/update/noop and isolated missing update verified
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchEveryRecordActionSharesNativeBatch (0.15s)
+=== RUN   TestSearchMixedLuaConflictRereadsOnlyConditionalItem
+    batch_integration_test.go:140: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    batch_integration_test.go:208: elasticsearch Lua OCC conflict -> only Lua reread and rewritten, peer Put remained version 1
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchMixedLuaConflictRereadsOnlyConditionalItem (0.11s)
+=== RUN   TestMixedRecordBatchMergesReadsAndEveryMutation
+--- PASS: TestMixedRecordBatchMergesReadsAndEveryMutation (0.00s)
+=== RUN   TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors
+=== RUN   TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors/reordered
+=== RUN   TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors/missing
+=== RUN   TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors/item_error
+--- PASS: TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors (0.00s)
+    --- PASS: TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors/reordered (0.00s)
+    --- PASS: TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors/missing (0.00s)
+    --- PASS: TestMgetRequiresCompleteIDCorrespondenceAndIsolatesItemErrors/item_error (0.00s)
+=== RUN   TestMixedLuaCreateConflictRetriesOnlyConfirmedItem
+=== RUN   TestMixedLuaCreateConflictRetriesOnlyConfirmedItem/conflict
+=== RUN   TestMixedLuaCreateConflictRetriesOnlyConfirmedItem/unknown
+=== RUN   TestMixedLuaCreateConflictRetriesOnlyConfirmedItem/exhausted
+--- PASS: TestMixedLuaCreateConflictRetriesOnlyConfirmedItem (0.01s)
+    --- PASS: TestMixedLuaCreateConflictRetriesOnlyConfirmedItem/conflict (0.00s)
+    --- PASS: TestMixedLuaCreateConflictRetriesOnlyConfirmedItem/unknown (0.00s)
+    --- PASS: TestMixedLuaCreateConflictRetriesOnlyConfirmedItem/exhausted (0.01s)
+=== RUN   TestCanceledCallerSkippedAfterBatchReadWithoutCancelingPeer
+--- PASS: TestCanceledCallerSkippedAfterBatchReadWithoutCancelingPeer (0.00s)
+=== RUN   TestOpenSearchComponentEvidence
+    component_evidence_integration_test.go:22: component evidence requires WEIR_SEARCH_COMPONENT_EVIDENCE=1
+--- SKIP: TestOpenSearchComponentEvidence (0.00s)
+=== RUN   TestSearchRealBackendCongestion
+    congestion_integration_test.go:17: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    congestion_integration_test.go:83: physical congestion samples 3 applied 128 definite native rejections 384
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=4 limit=5 acquired=4 released=4
+--- PASS: TestSearchRealBackendCongestion (0.15s)
+=== RUN   TestSearchConnectionValidation
+=== RUN   TestSearchConnectionValidation/http-auth
+=== RUN   TestSearchConnectionValidation/missing-user
+=== RUN   TestSearchConnectionValidation/missing-password
+=== RUN   TestSearchConnectionValidation/long-user
+=== RUN   TestSearchConnectionValidation/long-pass
+=== RUN   TestSearchConnectionValidation/colon
+=== RUN   TestSearchConnectionValidation/control
+=== RUN   TestSearchConnectionValidation/ca-http
+=== RUN   TestSearchConnectionValidation/long-ca
+=== RUN   TestSearchConnectionValidation/empty
+--- PASS: TestSearchConnectionValidation (0.00s)
+    --- PASS: TestSearchConnectionValidation/http-auth (0.00s)
+    --- PASS: TestSearchConnectionValidation/missing-user (0.00s)
+    --- PASS: TestSearchConnectionValidation/missing-password (0.00s)
+    --- PASS: TestSearchConnectionValidation/long-user (0.00s)
+    --- PASS: TestSearchConnectionValidation/long-pass (0.00s)
+    --- PASS: TestSearchConnectionValidation/colon (0.00s)
+    --- PASS: TestSearchConnectionValidation/control (0.00s)
+    --- PASS: TestSearchConnectionValidation/ca-http (0.00s)
+    --- PASS: TestSearchConnectionValidation/long-ca (0.00s)
+    --- PASS: TestSearchConnectionValidation/empty (0.00s)
+=== RUN   TestSearchTLSBothPathsAndTransportPolicy
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=3 released=3
+--- PASS: TestSearchTLSBothPathsAndTransportPolicy (0.02s)
+=== RUN   TestSearchTLSValidationAndCAErrors
+=== RUN   TestSearchTLSValidationAndCAErrors/wrong-ca
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchTLSValidationAndCAErrors/expired
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchTLSValidationAndCAErrors/missing-ca
+=== RUN   TestSearchTLSValidationAndCAErrors/oversize-ca
+=== RUN   TestSearchTLSValidationAndCAErrors/malformed-ca
+=== RUN   TestSearchTLSValidationAndCAErrors/directory-ca
+=== RUN   TestSearchTLSValidationAndCAErrors/system-roots
+2026/10/04 10:28:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+--- PASS: TestSearchTLSValidationAndCAErrors (0.03s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/wrong-ca (0.00s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/expired (0.00s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/missing-ca (0.00s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/oversize-ca (0.00s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/malformed-ca (0.00s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/directory-ca (0.00s)
+    --- PASS: TestSearchTLSValidationAndCAErrors/system-roots (0.02s)
+=== RUN   TestSearchDNSNameSNIAddressChangeAndBounds
+2026/10/04 10:28:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchDNSNameSNIAddressChangeAndBounds/too-many
+2026/10/04 10:28:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=4 released=4
+=== RUN   TestSearchDNSNameSNIAddressChangeAndBounds/excessive-message
+2026/10/04 10:28:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=2 released=2
+=== RUN   TestSearchDNSNameSNIAddressChangeAndBounds/timeout
+2026/10/04 10:28:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=2 released=2
+=== RUN   TestSearchDNSNameSNIAddressChangeAndBounds/nxdomain
+2026/10/04 10:28:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=2 released=2
+2026/10/04 10:28:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== NAME  TestSearchDNSNameSNIAddressChangeAndBounds
+    connection_test.go:313: DNS ordinary A/AAAA=19/13 TCP=5; hostname/SNI retained; new calls re-resolve; Close joins I/O
+--- PASS: TestSearchDNSNameSNIAddressChangeAndBounds (2.13s)
+    --- PASS: TestSearchDNSNameSNIAddressChangeAndBounds/too-many (0.01s)
+    --- PASS: TestSearchDNSNameSNIAddressChangeAndBounds/excessive-message (0.01s)
+    --- PASS: TestSearchDNSNameSNIAddressChangeAndBounds/timeout (0.09s)
+    --- PASS: TestSearchDNSNameSNIAddressChangeAndBounds/nxdomain (0.01s)
+=== RUN   TestSearchTLSHandshakePoolCloseBound
+    connection_test.go:390: silent TLS peer with no caller deadline: handshake terminated in 2.0017135s
+    connection_test.go:395: 8 rounds x 16 attempts: max 3 concurrent handshakes; Close <1s; goroutines before=3 after=3
+--- PASS: TestSearchTLSHandshakePoolCloseBound (2.06s)
+=== RUN   TestSearchTLSNoRedirectCredentialLeak
+2026/10/04 10:28:54 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=3 released=3
+--- PASS: TestSearchTLSNoRedirectCredentialLeak (0.02s)
+=== RUN   TestSearchTLSWithoutCredentialsAndCertificateCount
+2026/10/04 10:28:54 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:28:54 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+--- PASS: TestSearchTLSWithoutCredentialsAndCertificateCount (0.01s)
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:28:57 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 10:28:57 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:28:59 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 10:28:59 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:00 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 10:29:00 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:01 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 10:29:01 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestRealSearchBackendDeadlineAcknowledgements (6.87s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds (2.28s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds (2.32s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline (1.14s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline (1.12s)
+=== RUN   TestConfiguredBackendDeadlineAcceptsAcknowledgementAfterTwoSeconds
+=== RUN   TestConfiguredBackendDeadlineAcceptsAcknowledgementAfterTwoSeconds/headers
+2026/10/04 10:29:03 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestConfiguredBackendDeadlineAcceptsAcknowledgementAfterTwoSeconds/body
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+--- PASS: TestConfiguredBackendDeadlineAcceptsAcknowledgementAfterTwoSeconds (4.31s)
+    --- PASS: TestConfiguredBackendDeadlineAcceptsAcknowledgementAfterTwoSeconds/headers (2.16s)
+    --- PASS: TestConfiguredBackendDeadlineAcceptsAcknowledgementAfterTwoSeconds/body (2.15s)
+=== RUN   TestConnectedBackendDeadlineIsUnknownAndReleasesOwnership
+=== RUN   TestConnectedBackendDeadlineIsUnknownAndReleasesOwnership/headers
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestConnectedBackendDeadlineIsUnknownAndReleasesOwnership/body
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+--- PASS: TestConnectedBackendDeadlineIsUnknownAndReleasesOwnership (0.17s)
+    --- PASS: TestConnectedBackendDeadlineIsUnknownAndReleasesOwnership/headers (0.08s)
+    --- PASS: TestConnectedBackendDeadlineIsUnknownAndReleasesOwnership/body (0.09s)
+=== RUN   TestBackendDeadlineIsCumulativeAcrossQualificationReadAndWrite
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+--- PASS: TestBackendDeadlineIsCumulativeAcrossQualificationReadAndWrite (0.16s)
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/deadline
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/canceled
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/transport
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/body_limit
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/invalid_response
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/http_status
+=== RUN   TestBulkUnknownRetainsSanitizedFailureCause/invalid_ack
+--- PASS: TestBulkUnknownRetainsSanitizedFailureCause (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/deadline (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/canceled (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/transport (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/body_limit (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/invalid_response (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/http_status (0.00s)
+    --- PASS: TestBulkUnknownRetainsSanitizedFailureCause/invalid_ack (0.00s)
+=== RUN   TestSearchExpressionMergeMissingAndNoop
+    expression_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchExpressionMergeMissingAndNoop (0.14s)
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/drop
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/truncate
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/missing
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/redirect
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:06 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/update
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/replace
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/delete
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionRealReplyFaultsAndNativeCompetition/recreate
+    expression_integration_test.go:60: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition (0.99s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/drop (0.12s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/truncate (0.12s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/missing (0.12s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/redirect (0.13s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/update (0.12s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/replace (0.14s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/delete (0.11s)
+    --- PASS: TestSearchExpressionRealReplyFaultsAndNativeCompetition/recreate (0.13s)
+=== RUN   TestSearchExpressionPipelineAndSourceQualification
+    expression_integration_test.go:183: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+=== RUN   TestSearchExpressionPipelineAndSourceQualification/default
+    expression_integration_test.go:220: elasticsearch default native Update pipeline marker=true; pipeline=_none rejected
+=== RUN   TestSearchExpressionPipelineAndSourceQualification/final
+    expression_integration_test.go:220: elasticsearch final native Update pipeline marker=true; pipeline=_none rejected
+=== RUN   TestSearchExpressionPipelineAndSourceQualification/disabled
+=== RUN   TestSearchExpressionPipelineAndSourceQualification/pruned
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchExpressionPipelineAndSourceQualification (0.27s)
+    --- PASS: TestSearchExpressionPipelineAndSourceQualification/default (0.05s)
+    --- PASS: TestSearchExpressionPipelineAndSourceQualification/final (0.02s)
+    --- PASS: TestSearchExpressionPipelineAndSourceQualification/disabled (0.06s)
+    --- PASS: TestSearchExpressionPipelineAndSourceQualification/pruned (0.05s)
+=== RUN   TestSearchExpressionRealCapacity
+    expression_integration_test.go:241: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    expression_integration_test.go:277: real Update contention applied=1 conflict=0 congestion=7
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=4 limit=5 acquired=4 released=4
+--- PASS: TestSearchExpressionRealCapacity (0.12s)
+=== RUN   TestSearchExpressionRealConflictEvidence
+    expression_integration_test.go:284: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:07 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchExpressionRealConflictEvidence (0.08s)
+=== RUN   TestSearchExpressionValidation
+--- PASS: TestSearchExpressionValidation (0.00s)
+=== RUN   TestSearchExpressionEvidence
+--- PASS: TestSearchExpressionEvidence (0.00s)
+=== RUN   TestSearchCommittedReplyLossAndIncompleteBulk
+=== RUN   TestSearchCommittedReplyLossAndIncompleteBulk/drop
+    fault_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchCommittedReplyLossAndIncompleteBulk/truncate
+    fault_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchCommittedReplyLossAndIncompleteBulk/missing_item
+    fault_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchCommittedReplyLossAndIncompleteBulk/reordered
+    fault_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchCommittedReplyLossAndIncompleteBulk/redirect
+    fault_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchCommittedReplyLossAndIncompleteBulk (0.50s)
+    --- PASS: TestSearchCommittedReplyLossAndIncompleteBulk/drop (0.11s)
+    --- PASS: TestSearchCommittedReplyLossAndIncompleteBulk/truncate (0.10s)
+    --- PASS: TestSearchCommittedReplyLossAndIncompleteBulk/missing_item (0.10s)
+    --- PASS: TestSearchCommittedReplyLossAndIncompleteBulk/reordered (0.10s)
+    --- PASS: TestSearchCommittedReplyLossAndIncompleteBulk/redirect (0.09s)
+=== RUN   TestSearchReplaceNativeCompetition
+=== RUN   TestSearchReplaceNativeCompetition/update
+    fault_integration_test.go:143: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchReplaceNativeCompetition/delete
+    fault_integration_test.go:143: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchReplaceNativeCompetition/delete_recreate
+    fault_integration_test.go:143: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchReplaceNativeCompetition (0.34s)
+    --- PASS: TestSearchReplaceNativeCompetition/update (0.12s)
+    --- PASS: TestSearchReplaceNativeCompetition/delete (0.11s)
+    --- PASS: TestSearchReplaceNativeCompetition/delete_recreate (0.11s)
+=== RUN   TestSearchIngestAndQualification
+    fault_integration_test.go:212: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:08 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchIngestAndQualification/source
+=== RUN   TestSearchIngestAndQualification/pruned
+=== RUN   TestSearchIngestAndQualification/routing
+=== RUN   TestSearchIngestAndQualification/shards
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchIngestAndQualification (0.47s)
+    --- PASS: TestSearchIngestAndQualification/source (0.05s)
+    --- PASS: TestSearchIngestAndQualification/pruned (0.05s)
+    --- PASS: TestSearchIngestAndQualification/routing (0.05s)
+    --- PASS: TestSearchIngestAndQualification/shards (0.06s)
+=== RUN   TestSearchCRUD
+    integration_test.go:16: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+=== RUN   TestSearchCRUD/plain
+=== RUN   TestSearchCRUD/a/b%_space
+=== RUN   TestSearchCRUD/中文
+=== RUN   TestSearchCRUD/?query#fragment
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchCRUD (0.15s)
+    --- PASS: TestSearchCRUD/plain (0.03s)
+    --- PASS: TestSearchCRUD/a/b%_space (0.01s)
+    --- PASS: TestSearchCRUD/中文 (0.01s)
+    --- PASS: TestSearchCRUD/?query#fragment (0.01s)
+=== RUN   TestSearchMixedBulk
+    integration_test.go:57: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchMixedBulk (0.09s)
+=== RUN   TestSearchTLSOrdinaryNativeSocketCloseBound
+=== RUN   TestSearchTLSOrdinaryNativeSocketCloseBound/header
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=3 released=3
+    lifecycle_test.go:66: normal=2 Native=1 total=3; header stall Close and call join=156.625µs, retained sockets=0
+=== RUN   TestSearchTLSOrdinaryNativeSocketCloseBound/body
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=3 released=3
+    lifecycle_test.go:66: normal=2 Native=1 total=3; body stall Close and call join=112.708µs, retained sockets=0
+--- PASS: TestSearchTLSOrdinaryNativeSocketCloseBound (0.03s)
+    --- PASS: TestSearchTLSOrdinaryNativeSocketCloseBound/header (0.01s)
+    --- PASS: TestSearchTLSOrdinaryNativeSocketCloseBound/body (0.02s)
+=== RUN   TestSearchTLSNativeSlowConsumerAndUploadLedger
+=== RUN   TestSearchTLSNativeSlowConsumerAndUploadLedger/consumer
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=3 released=3
+    lifecycle_test.go:133: consumer: Close+join=53.667µs; retained sockets=0
+=== RUN   TestSearchTLSNativeSlowConsumerAndUploadLedger/upload
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=2 released=2
+    lifecycle_test.go:133: upload: Close+join=92.25µs; retained sockets=0
+--- PASS: TestSearchTLSNativeSlowConsumerAndUploadLedger (0.06s)
+    --- PASS: TestSearchTLSNativeSlowConsumerAndUploadLedger/consumer (0.02s)
+    --- PASS: TestSearchTLSNativeSlowConsumerAndUploadLedger/upload (0.04s)
+=== RUN   TestSearchDNSRepeatedCancelledOpenJoins
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+2026/10/04 10:29:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+    lifecycle_test.go:157: 24 cancelled Open attempts: each <1s; goroutines before=4 after=4
+--- PASS: TestSearchDNSRepeatedCancelledOpenJoins (0.34s)
+=== RUN   TestSearchTLSResponseHardDeadline
+2026/10/04 10:29:11 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+    lifecycle_test.go:183: TLS body=false no caller deadline: call terminated in 2.001876208s
+2026/10/04 10:29:13 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+    lifecycle_test.go:183: TLS body=true no caller deadline: call terminated in 2.002264959s
+--- PASS: TestSearchTLSResponseHardDeadline (4.04s)
+=== RUN   TestSearchDNSRequestCancellationEndsDetachedDial
+    lifecycle_test.go:219: 16 request cancellations: detached HTTP dial/DNS slots returned to zero within 300ms without Adapter.Close
+2026/10/04 10:29:14 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=17 released=17
+--- PASS: TestSearchDNSRequestCancellationEndsDetachedDial (0.23s)
+=== RUN   TestSearchDNSPinsActiveNativeStream
+    lifecycle_test.go:287: active Native HTTP/1 stream stayed on original socket across address change; new calls resolved the update
+2026/10/04 10:29:14 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=5 released=5
+--- PASS: TestSearchDNSPinsActiveNativeStream (0.08s)
+=== RUN   TestSearchLuaBatchUsesNativeOCCWithoutBusinessMetadataOrReplay
+=== RUN   TestSearchLuaBatchUsesNativeOCCWithoutBusinessMetadataOrReplay/conflict
+    lua_batch_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    lua_batch_integration_test.go:152: elasticsearch mode=conflict: two Lua items shared _mget and native conditional _bulk; only confirmed conflicting item retried; business source stayed unchanged in shape
+2026/10/04 10:29:14 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:14 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchLuaBatchUsesNativeOCCWithoutBusinessMetadataOrReplay/lost_acknowledgement
+    lua_batch_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    lua_batch_integration_test.go:152: elasticsearch mode=lost_acknowledgement: two Lua items shared _mget and native conditional _bulk; only confirmed conflicting item retried; business source stayed unchanged in shape
+2026/10/04 10:29:14 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:14 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchLuaBatchUsesNativeOCCWithoutBusinessMetadataOrReplay (0.27s)
+    --- PASS: TestSearchLuaBatchUsesNativeOCCWithoutBusinessMetadataOrReplay/conflict (0.15s)
+    --- PASS: TestSearchLuaBatchUsesNativeOCCWithoutBusinessMetadataOrReplay/lost_acknowledgement (0.12s)
+=== RUN   TestLuaRecordBatchIsolatesActionsAndPreservesBusinessSources
+--- PASS: TestLuaRecordBatchIsolatesActionsAndPreservesBusinessSources (0.00s)
+=== RUN   TestLuaBatchCallerCancellationAndDeadlineKeepPeers
+=== RUN   TestLuaBatchCallerCancellationAndDeadlineKeepPeers/cancel
+=== RUN   TestLuaBatchCallerCancellationAndDeadlineKeepPeers/deadline
+--- PASS: TestLuaBatchCallerCancellationAndDeadlineKeepPeers (0.26s)
+    --- PASS: TestLuaBatchCallerCancellationAndDeadlineKeepPeers/cancel (0.00s)
+    --- PASS: TestLuaBatchCallerCancellationAndDeadlineKeepPeers/deadline (0.25s)
+=== RUN   TestLuaBatchChunksLargeLegalSourcesBeforeEvaluation
+--- PASS: TestLuaBatchChunksLargeLegalSourcesBeforeEvaluation (6.96s)
+=== RUN   TestLuaBatchUsesAbsoluteBackendDeadlineBeyondFiveSeconds
+--- PASS: TestLuaBatchUsesAbsoluteBackendDeadlineBeyondFiveSeconds (5.11s)
+=== RUN   TestSearchNativeRealMixedAndReplyLoss
+=== RUN   TestSearchNativeRealMixedAndReplyLoss/mixed
+    native_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:26 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=2 acquired=3 released=3
+=== RUN   TestSearchNativeRealMixedAndReplyLoss/multiframe
+    native_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    native_integration_test.go:104: multiframe native bulk calls=1 independent GET status=200
+2026/10/04 10:29:27 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=2 acquired=4 released=4
+=== RUN   TestSearchNativeRealMixedAndReplyLoss/drop
+    native_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    native_integration_test.go:104: drop native bulk calls=1 independent GET status=200
+2026/10/04 10:29:27 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=2 acquired=3 released=3
+=== RUN   TestSearchNativeRealMixedAndReplyLoss/later_invalid
+    native_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    native_integration_test.go:104: later_invalid native bulk calls=0 independent GET status=404
+2026/10/04 10:29:27 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=2 acquired=3 released=3
+=== RUN   TestSearchNativeRealMixedAndReplyLoss/pipeline
+    native_integration_test.go:23: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:27 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=2 acquired=2 released=2
+--- PASS: TestSearchNativeRealMixedAndReplyLoss (0.96s)
+    --- PASS: TestSearchNativeRealMixedAndReplyLoss/mixed (0.10s)
+    --- PASS: TestSearchNativeRealMixedAndReplyLoss/multiframe (0.10s)
+    --- PASS: TestSearchNativeRealMixedAndReplyLoss/drop (0.07s)
+    --- PASS: TestSearchNativeRealMixedAndReplyLoss/later_invalid (0.60s)
+    --- PASS: TestSearchNativeRealMixedAndReplyLoss/pipeline (0.09s)
+=== RUN   TestSearchNativeLaterInvalidAfterRealPrefixApplied
+    native_integration_test.go:121: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    native_integration_test.go:212: fault proxy finalized one validated prefix; native write persisted; later foreign target rejected; no replay
+2026/10/04 10:29:27 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=2 acquired=3 released=3
+--- PASS: TestSearchNativeLaterInvalidAfterRealPrefixApplied (0.09s)
+=== RUN   TestNativeHTTPDescriptorScope
+--- PASS: TestNativeHTTPDescriptorScope (0.00s)
+=== RUN   TestNativeBulkItemAndBodyBounds
+--- PASS: TestNativeBulkItemAndBodyBounds (0.59s)
+=== RUN   TestNativeHTTPSyntheticFraming
+=== RUN   TestNativeHTTPSyntheticFraming/empty
+=== RUN   TestNativeHTTPSyntheticFraming/headers
+=== RUN   TestNativeHTTPSyntheticFraming/redirect
+=== RUN   TestNativeHTTPSyntheticFraming/multiframe
+=== RUN   TestNativeHTTPSyntheticFraming/large
+=== RUN   TestNativeHTTPSyntheticFraming/truncated
+=== RUN   TestNativeHTTPSyntheticFraming/length
+=== RUN   TestNativeHTTPSyntheticFraming/drop
+=== RUN   TestNativeHTTPSyntheticFraming/trailers
+=== RUN   TestNativeHTTPSyntheticFraming/upgrade
+=== RUN   TestNativeHTTPSyntheticFraming/boundary
+=== RUN   TestNativeHTTPSyntheticFraming/large_chunked
+--- PASS: TestNativeHTTPSyntheticFraming (0.11s)
+    --- PASS: TestNativeHTTPSyntheticFraming/empty (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/headers (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/redirect (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/multiframe (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/large (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/truncated (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/length (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/drop (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/trailers (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/upgrade (0.00s)
+    --- PASS: TestNativeHTTPSyntheticFraming/boundary (0.05s)
+    --- PASS: TestNativeHTTPSyntheticFraming/large_chunked (0.05s)
+=== RUN   TestNativeHTTPExplicitCongestion
+=== RUN   TestNativeHTTPExplicitCongestion/complete_get
+=== RUN   TestNativeHTTPExplicitCongestion/empty_get
+=== RUN   TestNativeHTTPExplicitCongestion/complete_bulk
+=== RUN   TestNativeHTTPExplicitCongestion/capacity
+=== RUN   TestNativeHTTPExplicitCongestion/unavailable
+=== RUN   TestNativeHTTPExplicitCongestion/native_bad_request
+=== RUN   TestNativeHTTPExplicitCongestion/mixed_bulk
+=== RUN   TestNativeHTTPExplicitCongestion/unknown_http_error
+=== RUN   TestNativeHTTPExplicitCongestion/redirect
+=== RUN   TestNativeHTTPExplicitCongestion/canceled_get
+=== RUN   TestNativeHTTPExplicitCongestion/truncated_capacity
+=== RUN   TestNativeHTTPExplicitCongestion/oversized_capacity
+=== RUN   TestNativeHTTPExplicitCongestion/head_failure
+=== RUN   TestNativeHTTPExplicitCongestion/chunk_failure
+--- PASS: TestNativeHTTPExplicitCongestion (0.01s)
+    --- PASS: TestNativeHTTPExplicitCongestion/complete_get (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/empty_get (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/complete_bulk (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/capacity (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/unavailable (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/native_bad_request (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/mixed_bulk (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/unknown_http_error (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/redirect (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/canceled_get (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/truncated_capacity (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/oversized_capacity (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/head_failure (0.00s)
+    --- PASS: TestNativeHTTPExplicitCongestion/chunk_failure (0.00s)
+=== RUN   TestNativeHTTPQualificationCongestion
+=== RUN   TestNativeHTTPQualificationCongestion/429
+=== RUN   TestNativeHTTPQualificationCongestion/503
+--- PASS: TestNativeHTTPQualificationCongestion (0.00s)
+    --- PASS: TestNativeHTTPQualificationCongestion/429 (0.00s)
+    --- PASS: TestNativeHTTPQualificationCongestion/503 (0.00s)
+=== RUN   TestSearchProductDetection
+=== RUN   TestSearchProductDetection/es-missing-number
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/os-missing-number
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/es-unparsed-number
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/os-unparsed-number
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/missing-version
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/empty-version
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/null-version
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/number-only
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/wrong-es-flavor
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/wrong-es-distribution
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/unknown-distribution
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/wrong-os-distribution
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/wrong-flavor-type
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/wrong-distribution-type
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/wrong-version-type
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/malformed
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/unauthorized
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/unavailable
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-1.0.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-2.19.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-7.17.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-8.19.22
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-8.19.23
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-9.0.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-12.3.4
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-99.2.1-preview+build.7
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/elasticsearch-
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-1.0.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-2.19.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-7.17.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-8.19.22
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-8.19.23
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-9.0.0
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-12.3.4
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-99.2.1-preview+build.7
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+=== RUN   TestSearchProductDetection/opensearch-
+2026/10/04 10:29:28 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+--- PASS: TestSearchProductDetection (0.02s)
+    --- PASS: TestSearchProductDetection/es-missing-number (0.00s)
+    --- PASS: TestSearchProductDetection/os-missing-number (0.00s)
+    --- PASS: TestSearchProductDetection/es-unparsed-number (0.00s)
+    --- PASS: TestSearchProductDetection/os-unparsed-number (0.00s)
+    --- PASS: TestSearchProductDetection/missing-version (0.00s)
+    --- PASS: TestSearchProductDetection/empty-version (0.00s)
+    --- PASS: TestSearchProductDetection/null-version (0.00s)
+    --- PASS: TestSearchProductDetection/number-only (0.00s)
+    --- PASS: TestSearchProductDetection/wrong-es-flavor (0.00s)
+    --- PASS: TestSearchProductDetection/wrong-es-distribution (0.00s)
+    --- PASS: TestSearchProductDetection/unknown-distribution (0.00s)
+    --- PASS: TestSearchProductDetection/wrong-os-distribution (0.00s)
+    --- PASS: TestSearchProductDetection/wrong-flavor-type (0.00s)
+    --- PASS: TestSearchProductDetection/wrong-distribution-type (0.00s)
+    --- PASS: TestSearchProductDetection/wrong-version-type (0.00s)
+    --- PASS: TestSearchProductDetection/malformed (0.00s)
+    --- PASS: TestSearchProductDetection/unauthorized (0.00s)
+    --- PASS: TestSearchProductDetection/unavailable (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-1.0.0 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-2.19.0 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-7.17.0 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-8.19.22 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-8.19.23 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-9.0.0 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-12.3.4 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch-99.2.1-preview+build.7 (0.00s)
+    --- PASS: TestSearchProductDetection/elasticsearch- (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-1.0.0 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-2.19.0 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-7.17.0 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-8.19.22 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-8.19.23 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-9.0.0 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-12.3.4 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch-99.2.1-preview+build.7 (0.00s)
+    --- PASS: TestSearchProductDetection/opensearch- (0.00s)
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/mapper_parsing_exception
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/document_parsing_exception
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/index_not_found_exception
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/version_conflict_engine_exception
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/es_rejected_execution_exception
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/opensearch/rejected_execution_exception
+=== RUN   TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/unavailable_shards_exception
+--- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/mapper_parsing_exception (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/document_parsing_exception (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/index_not_found_exception (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/version_conflict_engine_exception (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/es_rejected_execution_exception (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/opensearch/rejected_execution_exception (0.00s)
+    --- PASS: TestProgramWriteReplyRecognizesRejectionEnvelopes/elasticsearch/unavailable_shards_exception (0.00s)
+=== RUN   TestProgramWriteReplyRequiresCompleteSuccessEvidence
+--- PASS: TestProgramWriteReplyRequiresCompleteSuccessEvidence (0.00s)
+=== RUN   TestProgramWriteReplyRejectsContradictoryErrorEvidence
+--- PASS: TestProgramWriteReplyRejectsContradictoryErrorEvidence (0.00s)
+=== RUN   TestProgramTransformReevaluatesAfterSearchVersionConflict
+--- PASS: TestProgramTransformReevaluatesAfterSearchVersionConflict (0.00s)
+=== RUN   TestProgramTransformRejectsUnqualifiedPipelines
+=== RUN   TestProgramTransformRejectsUnqualifiedPipelines/default
+=== RUN   TestProgramTransformRejectsUnqualifiedPipelines/final
+--- PASS: TestProgramTransformRejectsUnqualifiedPipelines (0.00s)
+    --- PASS: TestProgramTransformRejectsUnqualifiedPipelines/default (0.00s)
+    --- PASS: TestProgramTransformRejectsUnqualifiedPipelines/final (0.00s)
+=== RUN   TestSearchReadSizeConfigurationAndBudgets
+--- PASS: TestSearchReadSizeConfigurationAndBudgets (0.00s)
+=== RUN   TestSearchSmallReadProfileBatches128Records
+--- PASS: TestSearchSmallReadProfileBatches128Records (0.01s)
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=1024/size=1024
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=1024/size=1025
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=1024/size=71680
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=0/size=16384
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=0/size=16385
+=== RUN   TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=2097152/size=16385
+--- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites (0.03s)
+    --- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=1024/size=1024 (0.00s)
+    --- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=1024/size=1025 (0.00s)
+    --- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=1024/size=71680 (0.02s)
+    --- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=0/size=16384 (0.00s)
+    --- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=0/size=16385 (0.00s)
+    --- PASS: TestSearchReadSizeLimitDoesNotConstrainOrMisreportWrites/limit=2097152/size=16385 (0.00s)
+=== RUN   TestSearchCompleteBatchPreflightBeforeAnyCommand
+=== RUN   TestSearchCompleteBatchPreflightBeforeAnyCommand/records/i:1
+=== RUN   TestSearchCompleteBatchPreflightBeforeAnyCommand/_records/s:bad
+=== RUN   TestSearchCompleteBatchPreflightBeforeAnyCommand/Records/s:bad
+=== RUN   TestSearchCompleteBatchPreflightBeforeAnyCommand/records
+--- PASS: TestSearchCompleteBatchPreflightBeforeAnyCommand (0.00s)
+    --- PASS: TestSearchCompleteBatchPreflightBeforeAnyCommand/records/i:1 (0.00s)
+    --- PASS: TestSearchCompleteBatchPreflightBeforeAnyCommand/_records/s:bad (0.00s)
+    --- PASS: TestSearchCompleteBatchPreflightBeforeAnyCommand/Records/s:bad (0.00s)
+    --- PASS: TestSearchCompleteBatchPreflightBeforeAnyCommand/records (0.00s)
+=== RUN   TestSearchIndexBytePolicy
+--- PASS: TestSearchIndexBytePolicy (0.00s)
+=== RUN   TestRouteCallRelativeTargetAndLargeRead
+--- PASS: TestRouteCallRelativeTargetAndLargeRead (0.40s)
+=== RUN   TestRouteLuaParticipatesInNativeRecordBatch
+--- PASS: TestRouteLuaParticipatesInNativeRecordBatch (0.00s)
+=== RUN   TestRouteNativeBackendIOBudgetAndOutputBackpressure
+=== RUN   TestRouteNativeBackendIOBudgetAndOutputBackpressure/qualification
+=== RUN   TestRouteNativeBackendIOBudgetAndOutputBackpressure/headers
+=== RUN   TestRouteNativeBackendIOBudgetAndOutputBackpressure/body
+=== RUN   TestRouteNativeBackendIOBudgetAndOutputBackpressure/cumulative_body
+=== RUN   TestRouteNativeBackendIOBudgetAndOutputBackpressure/slow_output
+--- PASS: TestRouteNativeBackendIOBudgetAndOutputBackpressure (0.72s)
+    --- PASS: TestRouteNativeBackendIOBudgetAndOutputBackpressure/qualification (0.10s)
+    --- PASS: TestRouteNativeBackendIOBudgetAndOutputBackpressure/headers (0.10s)
+    --- PASS: TestRouteNativeBackendIOBudgetAndOutputBackpressure/body (0.10s)
+    --- PASS: TestRouteNativeBackendIOBudgetAndOutputBackpressure/cumulative_body (0.10s)
+    --- PASS: TestRouteNativeBackendIOBudgetAndOutputBackpressure/slow_output (0.31s)
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:29 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:29 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/drain
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/cancel_all
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchSharedDeadlineCancellationAndDrain (0.40s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires (0.18s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/drain (0.12s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/cancel_all (0.11s)
+=== RUN   TestSearchExpressionCancellationAndDrain
+=== RUN   TestSearchExpressionCancellationAndDrain/one_caller_expires
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionCancellationAndDrain/drain
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchExpressionCancellationAndDrain/cancel_all
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchExpressionCancellationAndDrain (0.38s)
+    --- PASS: TestSearchExpressionCancellationAndDrain/one_caller_expires (0.17s)
+    --- PASS: TestSearchExpressionCancellationAndDrain/drain (0.11s)
+    --- PASS: TestSearchExpressionCancellationAndDrain/cancel_all (0.09s)
+=== RUN   TestSearchScanTraversal
+=== RUN   TestSearchScanTraversal/0
+    scan_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    scan_integration_test.go:83: elasticsearch: complete native hit traversal 0 records
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanTraversal/1
+    scan_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    scan_integration_test.go:83: elasticsearch: complete native hit traversal 1 records
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanTraversal/8
+    scan_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    scan_integration_test.go:83: elasticsearch: complete native hit traversal 8 records
+2026/10/04 10:29:30 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanTraversal/35
+    scan_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    scan_integration_test.go:83: elasticsearch: complete native hit traversal 35 records
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchScanTraversal (0.53s)
+    --- PASS: TestSearchScanTraversal/0 (0.11s)
+    --- PASS: TestSearchScanTraversal/1 (0.11s)
+    --- PASS: TestSearchScanTraversal/8 (0.11s)
+    --- PASS: TestSearchScanTraversal/35 (0.20s)
+=== RUN   TestSearchScanFaultPages
+=== RUN   TestSearchScanFaultPages/open_1_timeout
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/open_1_early
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/open_1_shards
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/open_1_missing
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/open_1_error_tail
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/open_1_truncate
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/open_1_drop
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_timeout
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_early
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:31 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_shards
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_missing
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_hits_missing
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_error_tail
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_truncate
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_1_drop
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=2 released=2
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_timeout
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_early
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_shards
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_missing
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:32 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_hits_missing
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_error_tail
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_truncate
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanFaultPages/fetch_2_drop
+    scan_integration_test.go:182: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=2 released=2
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchScanFaultPages (2.19s)
+    --- PASS: TestSearchScanFaultPages/open_1_timeout (0.10s)
+    --- PASS: TestSearchScanFaultPages/open_1_early (0.09s)
+    --- PASS: TestSearchScanFaultPages/open_1_shards (0.09s)
+    --- PASS: TestSearchScanFaultPages/open_1_missing (0.10s)
+    --- PASS: TestSearchScanFaultPages/open_1_error_tail (0.10s)
+    --- PASS: TestSearchScanFaultPages/open_1_truncate (0.10s)
+    --- PASS: TestSearchScanFaultPages/open_1_drop (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_timeout (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_early (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_shards (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_missing (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_hits_missing (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_error_tail (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_truncate (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_1_drop (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_timeout (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_early (0.11s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_shards (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_missing (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_hits_missing (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_error_tail (0.09s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_truncate (0.10s)
+    --- PASS: TestSearchScanFaultPages/fetch_2_drop (0.09s)
+=== RUN   TestSearchScanPITInvalidationAndCancellation
+    scan_integration_test.go:229: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchScanPITInvalidationAndCancellation (0.23s)
+=== RUN   TestSearchScanNativeQueryWithFinalPipeline
+    scan_integration_test.go:278: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchScanNativeQueryWithFinalPipeline (0.11s)
+=== RUN   TestSearchScanCancelInFlight
+=== RUN   TestSearchScanCancelInFlight/open
+    scan_integration_test.go:333: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanCancelInFlight/fetch
+    scan_integration_test.go:333: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=2 released=2
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchScanCancelInFlight (0.21s)
+    --- PASS: TestSearchScanCancelInFlight/open (0.11s)
+    --- PASS: TestSearchScanCancelInFlight/fetch (0.10s)
+=== RUN   TestSearchScanCheckpointSurvivesLostReplyAndTerminalReplay
+=== RUN   TestSearchScanCheckpointSurvivesLostReplyAndTerminalReplay/drop
+    scan_resume_integration_test.go:51: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:33 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchScanCheckpointSurvivesLostReplyAndTerminalReplay/timeout
+    scan_resume_integration_test.go:51: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 10:29:34 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchScanCheckpointSurvivesLostReplyAndTerminalReplay (0.34s)
+    --- PASS: TestSearchScanCheckpointSurvivesLostReplyAndTerminalReplay/drop (0.18s)
+    --- PASS: TestSearchScanCheckpointSurvivesLostReplyAndTerminalReplay/timeout (0.17s)
+=== RUN   TestScanEnvelopeAndLatestPIT
+=== RUN   TestScanEnvelopeAndLatestPIT/valid
+=== RUN   TestScanEnvelopeAndLatestPIT/skipped
+=== RUN   TestScanEnvelopeAndLatestPIT/timeout
+=== RUN   TestScanEnvelopeAndLatestPIT/early
+=== RUN   TestScanEnvelopeAndLatestPIT/shard_failure
+=== RUN   TestScanEnvelopeAndLatestPIT/missing_shards
+=== RUN   TestScanEnvelopeAndLatestPIT/missing_timed_out
+=== RUN   TestScanEnvelopeAndLatestPIT/missing_took
+=== RUN   TestScanEnvelopeAndLatestPIT/missing_hits
+=== RUN   TestScanEnvelopeAndLatestPIT/null_hits
+=== RUN   TestScanEnvelopeAndLatestPIT/missing_pit
+=== RUN   TestScanEnvelopeAndLatestPIT/error_tail
+=== RUN   TestScanEnvelopeAndLatestPIT/failed_tail
+=== RUN   TestScanEnvelopeAndLatestPIT/duplicate_sort
+=== RUN   TestScanEnvelopeAndLatestPIT/bad_score
+=== RUN   TestScanEnvelopeAndLatestPIT/bad_max_score
+=== RUN   TestScanEnvelopeAndLatestPIT/wrong_index
+=== RUN   TestScanEnvelopeAndLatestPIT/big_hit
+=== RUN   TestScanEnvelopeAndLatestPIT/too_many
+--- PASS: TestScanEnvelopeAndLatestPIT (0.28s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/valid (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/skipped (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/timeout (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/early (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/shard_failure (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/missing_shards (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/missing_timed_out (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/missing_took (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/missing_hits (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/null_hits (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/missing_pit (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/error_tail (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/failed_tail (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/duplicate_sort (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/bad_score (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/bad_max_score (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/wrong_index (0.00s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/big_hit (0.27s)
+    --- PASS: TestScanEnvelopeAndLatestPIT/too_many (0.00s)
+=== RUN   TestScanSelectorControlsAndBounds
+--- PASS: TestScanSelectorControlsAndBounds (0.00s)
+=== RUN   TestScanResponseFramingBoundBeforeDecode
+=== RUN   TestScanResponseFramingBoundBeforeDecode/truncated
+=== RUN   TestScanResponseFramingBoundBeforeDecode/duplicate
+=== RUN   TestScanResponseFramingBoundBeforeDecode/tail
+=== RUN   TestScanResponseFramingBoundBeforeDecode/oversized_chunked
+=== RUN   TestScanResponseFramingBoundBeforeDecode/oversized_length
+--- PASS: TestScanResponseFramingBoundBeforeDecode (0.03s)
+    --- PASS: TestScanResponseFramingBoundBeforeDecode/truncated (0.00s)
+    --- PASS: TestScanResponseFramingBoundBeforeDecode/duplicate (0.00s)
+    --- PASS: TestScanResponseFramingBoundBeforeDecode/tail (0.00s)
+    --- PASS: TestScanResponseFramingBoundBeforeDecode/oversized_chunked (0.03s)
+    --- PASS: TestScanResponseFramingBoundBeforeDecode/oversized_length (0.00s)
+=== RUN   TestScanHitByteBoundary
+--- PASS: TestScanHitByteBoundary (0.60s)
+=== RUN   TestSecureSearchProductionOpen
+    secure_integration_test.go:41: native HTTPS/Basic requires WEIR_SEARCH_SECURE_INTEGRATION=elasticsearch|opensearch
+--- SKIP: TestSecureSearchProductionOpen (0.00s)
+=== RUN   TestSecureSearchQualification
+    secure_integration_test.go:51: native HTTPS/Basic requires WEIR_SEARCH_SECURE_INTEGRATION=elasticsearch|opensearch
+--- SKIP: TestSecureSearchQualification (0.00s)
+=== RUN   TestSearchSecurityInputBoundary
+    security_integration_test.go:14: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    security_integration_test.go:21: new native ES min_hash cap rejects 10001 before filter construction; no OOM input
+--- PASS: TestSearchSecurityInputBoundary (0.07s)
+=== RUN   TestSearchHotRecordsDoNotRepeatMetadataIO
+--- PASS: TestSearchHotRecordsDoNotRepeatMetadataIO (0.00s)
+=== RUN   TestSearchConcurrentTargetInspectionUsesOneRequest
+--- PASS: TestSearchConcurrentTargetInspectionUsesOneRequest (0.01s)
+=== RUN   TestSearchFailedInspectionIsRetriedAndCapabilitiesAreIsolated
+--- PASS: TestSearchFailedInspectionIsRetriedAndCapabilitiesAreIsolated (0.00s)
+=== RUN   TestSearchCanceledInspectionDoesNotPoisonRetry
+--- PASS: TestSearchCanceledInspectionDoesNotPoisonRetry (0.00s)
+=== RUN   TestSearchMetadataCacheRechecksEvictedTargets
+--- PASS: TestSearchMetadataCacheRechecksEvictedTargets (0.02s)
+=== RUN   TestSearchCachedTargetStillChecksBusinessPermissions
+--- PASS: TestSearchCachedTargetStillChecksBusinessPermissions (0.00s)
+=== RUN   TestSearchMultipleRequestTargets
+    targets_integration_test.go:20: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+    targets_integration_test.go:100: target=weir_m2_79828_79 action=replace attempt=1 confirmed not applied; submitting one item after capacity rejection
+    targets_integration_test.go:100: target=weir_m2_79828_79 action=expression attempt=1 confirmed not applied; submitting one item after capacity rejection
+    targets_integration_test.go:100: target=weir_m2_79828_79 action=index attempt=1 confirmed not applied; submitting one item after capacity rejection
+    targets_integration_test.go:100: target=weir_m2_79828_79 action=create attempt=1 confirmed not applied; submitting one item after capacity rejection
+    targets_integration_test.go:100: target=weir_m2_79828_79 action=delete attempt=1 confirmed not applied; submitting one item after capacity rejection
+2026/10/04 10:29:35 INFO backend_connections_closed backend=search store=search owned=0 peak=5 limit=5 acquired=8 released=8
+--- PASS: TestSearchMultipleRequestTargets (0.52s)
+=== RUN   TestSearchScanAndNativeRequestTargets
+=== RUN   TestSearchScanAndNativeRequestTargets/elasticsearch
+2026/10/04 10:29:35 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=4 acquired=6 released=6
+=== RUN   TestSearchScanAndNativeRequestTargets/opensearch
+2026/10/04 10:29:35 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=4 acquired=6 released=6
+--- PASS: TestSearchScanAndNativeRequestTargets (0.02s)
+    --- PASS: TestSearchScanAndNativeRequestTargets/elasticsearch (0.01s)
+    --- PASS: TestSearchScanAndNativeRequestTargets/opensearch (0.01s)
+=== RUN   TestSearchMixedRequestTargets
+--- PASS: TestSearchMixedRequestTargets (0.01s)
+=== RUN   TestSearchInvalidRequestTargetsArePure
+--- PASS: TestSearchInvalidRequestTargetsArePure (0.00s)
+=== RUN   TestSearchPlansRetainRequestTargets
+--- PASS: TestSearchPlansRetainRequestTargets (0.00s)
+=== RUN   TestSearchCrossIndexRepliesAreNotTrusted
+=== RUN   TestSearchCrossIndexRepliesAreNotTrusted/read
+=== RUN   TestSearchCrossIndexRepliesAreNotTrusted/put
+--- PASS: TestSearchCrossIndexRepliesAreNotTrusted (0.00s)
+    --- PASS: TestSearchCrossIndexRepliesAreNotTrusted/read (0.00s)
+    --- PASS: TestSearchCrossIndexRepliesAreNotTrusted/put (0.00s)
+=== RUN   TestSearchQualificationRechecksCancelledCallers
+=== RUN   TestSearchQualificationRechecksCancelledCallers/skip_cancelled_target
+=== RUN   TestSearchQualificationRechecksCancelledCallers/keep_live_caller_on_same_target
+--- PASS: TestSearchQualificationRechecksCancelledCallers (0.00s)
+    --- PASS: TestSearchQualificationRechecksCancelledCallers/skip_cancelled_target (0.00s)
+    --- PASS: TestSearchQualificationRechecksCancelledCallers/keep_live_caller_on_same_target (0.00s)
+=== RUN   TestBulkCanceledWhileWaitingForConnectionWasNotApplied
+--- PASS: TestBulkCanceledWhileWaitingForConnectionWasNotApplied (0.00s)
+=== RUN   TestBulkCustomTransportCannotProveAnUnsentWrite
+--- PASS: TestBulkCustomTransportCannotProveAnUnsentWrite (0.00s)
+=== RUN   TestBulkConnectionAcquiredBeforeWriteFailureRemainsUnknown
+--- PASS: TestBulkConnectionAcquiredBeforeWriteFailureRemainsUnknown (0.00s)
+=== RUN   TestBulkBeforeConnectionFailureWasNotApplied
+=== RUN   TestBulkBeforeConnectionFailureWasNotApplied/cancel_before_do
+=== RUN   TestBulkBeforeConnectionFailureWasNotApplied/dial_failure
+--- PASS: TestBulkBeforeConnectionFailureWasNotApplied (0.00s)
+    --- PASS: TestBulkBeforeConnectionFailureWasNotApplied/cancel_before_do (0.00s)
+    --- PASS: TestBulkBeforeConnectionFailureWasNotApplied/dial_failure (0.00s)
+=== RUN   TestBulkCommittedReplyLossRemainsUnknownWithoutReplay
+--- PASS: TestBulkCommittedReplyLossRemainsUnknownWithoutReplay (0.00s)
+=== RUN   FuzzSearchExpression
+=== RUN   FuzzSearchExpression/seed#0
+--- PASS: FuzzSearchExpression (0.00s)
+    --- PASS: FuzzSearchExpression/seed#0 (0.00s)
+=== RUN   FuzzJSONValidationMatchesTokenDecoder
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#0
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#1
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#2
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#3
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#4
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#5
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#6
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#7
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#8
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#9
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#10
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#11
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#12
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#13
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#14
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#15
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#16
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#17
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#18
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#19
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#20
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#21
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#22
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#23
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#24
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#25
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#26
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#27
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#28
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#29
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#30
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#31
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#32
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#33
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#34
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#35
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#36
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#37
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#38
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#39
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#40
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#41
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#42
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#43
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#44
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#45
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#46
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#47
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#48
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#49
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#50
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#51
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#52
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#53
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#54
+=== RUN   FuzzJSONValidationMatchesTokenDecoder/seed#55
+--- PASS: FuzzJSONValidationMatchesTokenDecoder (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#0 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#1 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#2 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#3 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#4 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#5 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#6 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#7 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#8 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#9 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#10 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#11 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#12 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#13 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#14 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#15 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#16 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#17 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#18 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#19 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#20 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#21 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#22 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#23 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#24 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#25 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#26 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#27 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#28 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#29 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#30 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#31 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#32 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#33 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#34 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#35 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#36 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#37 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#38 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#39 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#40 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#41 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#42 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#43 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#44 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#45 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#46 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#47 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#48 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#49 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#50 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#51 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#52 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#53 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#54 (0.00s)
+    --- PASS: FuzzJSONValidationMatchesTokenDecoder/seed#55 (0.00s)
+PASS
+ok  	github.com/batchstream/weir/internal/backend/search	47.396s

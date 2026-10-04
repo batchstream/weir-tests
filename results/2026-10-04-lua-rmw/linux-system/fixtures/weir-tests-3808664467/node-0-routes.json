@@ -1,0 +1,24 @@
+{
+  "stores": [
+    {
+      "backend_timeout": "2s",
+      "max_batch_operations": 513,
+      "max_concurrency": 2,
+      "max_read_size": "2MiB",
+      "mongodb": {
+        "uri": "mongodb://127.0.0.1:32770/?directConnection=true"
+      },
+      "name": "mongo"
+    },
+    {
+      "backend_timeout": "2s",
+      "max_batch_operations": 513,
+      "max_concurrency": 2,
+      "max_read_size": "2MiB",
+      "name": "search",
+      "search": {
+        "url": "http://127.0.0.1:32771"
+      }
+    }
+  ]
+}

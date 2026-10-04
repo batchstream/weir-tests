@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "run": 37172465003,
+  "source": "9d9e4ce1610881330049b69c4a0de7d872003af5",
+  "timed_stages": 108,
+  "successful_operations": 10985328,
+  "write_percent": [
+    0,
+    10,
+    100
+  ],
+  "cleanup_fixtures": 3,
+  "scope": "ordinary single-record read/write regression; not Lua RMW capacity evidence"
+}

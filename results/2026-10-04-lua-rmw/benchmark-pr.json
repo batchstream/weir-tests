@@ -1,0 +1,1 @@
+{"headRefOid":"9d9e4ce1610881330049b69c4a0de7d872003af5","mergeCommit":{"oid":"8dc13f57efe9c1c6fc7b706e84a2bba9cfffe021"},"mergedAt":"2026-10-04T03:44:52Z","state":"MERGED","title":"Measure single-request native and server-batched Lua mutations","url":"https://github.com/batchstream/weir-tests/pull/7"}

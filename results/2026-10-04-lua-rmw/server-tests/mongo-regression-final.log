@@ -1,0 +1,540 @@
+=== RUN   TestMongoMixedBatchRetainsQualificationAcrossExecutions
+--- PASS: TestMongoMixedBatchRetainsQualificationAcrossExecutions (0.00s)
+=== RUN   TestMongoMixedBatchRejectsUnqualifiedTargetBeforeReadingOrWriting
+--- PASS: TestMongoMixedBatchRejectsUnqualifiedTargetBeforeReadingOrWriting (0.00s)
+=== RUN   TestMongoMixedBatchRechecksWriteCallerAfterRead
+--- PASS: TestMongoMixedBatchRechecksWriteCallerAfterRead (0.00s)
+=== RUN   TestMongoMixedRecordBatchUsesPointReadAndVerboseBulkWrite
+    batch_integration_test.go:97: 12 mixed records: point read requests=2 physical bulk writes=2 Lua transaction commits=1
+2026/10/04 10:31:13 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoMixedRecordBatchUsesPointReadAndVerboseBulkWrite (0.20s)
+=== RUN   TestMongoCallerCancellationBeforeWritePhaseDoesNotAffectPeers
+2026/10/04 10:31:13 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoCallerCancellationBeforeWritePhaseDoesNotAffectPeers (0.17s)
+=== RUN   TestMongoMixedWriteLostReplyDoesNotReplayExpression
+2026/10/04 10:31:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoMixedWriteLostReplyDoesNotReplayExpression (0.28s)
+=== RUN   TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation
+=== RUN   TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation/first_exhausted
+2026/10/04 10:31:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation/both_retained
+2026/10/04 10:31:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation/first_canceled
+2026/10/04 10:31:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation (0.50s)
+    --- PASS: TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation/first_exhausted (0.17s)
+    --- PASS: TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation/both_retained (0.16s)
+    --- PASS: TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation/first_canceled (0.17s)
+=== RUN   TestMongoExpressionAtomicAndNumeric
+    expression_integration_test.go:79: native promotion: int32 overflow -> 64-bit integer; int64 overflow rejected; decimal=2.50
+2026/10/04 10:31:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=5 limit=5 dialing=0 closing=0 acquired=5 released=5
+--- PASS: TestMongoExpressionAtomicAndNumeric (0.27s)
+=== RUN   TestMongoExpressionNativeCompetition
+=== RUN   TestMongoExpressionNativeCompetition/update
+    expression_integration_test.go:147: native update reply: {"cursor": {"id": {"$numberLong":"0"},"firstBatch": [{"ok": {"$numberDouble":"1.0"},"idx": {"$numberInt":"0"},"n": {"$numberInt":"1"},"nModified": {"$numberInt":"1"}}],"ns": "admin.$cmd.bulkWrite"},"nErrors": {"$numberInt":"0"},"nInserted": {"$numberInt":"0"},"nMatched": {"$numberInt":"1"},"nModified": {"$numberInt":"1"},"nUpserted": {"$numberInt":"0"},"nDeleted": {"$numberInt":"0"},"electionId": {"$oid":"7fffffff0000000000000001"},"opTime": {"ts": {"$timestamp":{"t":1791081075,"i":5}},"t": {"$numberLong":"1"}},"ok": {"$numberDouble":"1.0"},"$clusterTime": {"clusterTime": {"$timestamp":{"t":1791081075,"i":5}},"signature": {"hash": {"$binary":{"base64":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","subType":"00"}},"keyId": {"$numberLong":"0"}}},"operationTime": {"$timestamp":{"t":1791081075,"i":5}}}
+2026/10/04 10:31:15 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoExpressionNativeCompetition/replace
+    expression_integration_test.go:147: native update reply: {"cursor": {"id": {"$numberLong":"0"},"firstBatch": [{"ok": {"$numberDouble":"1.0"},"idx": {"$numberInt":"0"},"n": {"$numberInt":"1"},"nModified": {"$numberInt":"1"}}],"ns": "admin.$cmd.bulkWrite"},"nErrors": {"$numberInt":"0"},"nInserted": {"$numberInt":"0"},"nMatched": {"$numberInt":"1"},"nModified": {"$numberInt":"1"},"nUpserted": {"$numberInt":"0"},"nDeleted": {"$numberInt":"0"},"electionId": {"$oid":"7fffffff0000000000000001"},"opTime": {"ts": {"$timestamp":{"t":1791081075,"i":11}},"t": {"$numberLong":"1"}},"ok": {"$numberDouble":"1.0"},"$clusterTime": {"clusterTime": {"$timestamp":{"t":1791081075,"i":11}},"signature": {"hash": {"$binary":{"base64":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","subType":"00"}},"keyId": {"$numberLong":"0"}}},"operationTime": {"$timestamp":{"t":1791081075,"i":11}}}
+2026/10/04 10:31:15 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoExpressionNativeCompetition/delete
+    expression_integration_test.go:147: native update reply: {"cursor": {"id": {"$numberLong":"0"},"firstBatch": [{"ok": {"$numberDouble":"1.0"},"idx": {"$numberInt":"0"},"n": {"$numberInt":"0"},"nModified": {"$numberInt":"0"}}],"ns": "admin.$cmd.bulkWrite"},"nErrors": {"$numberInt":"0"},"nInserted": {"$numberInt":"0"},"nMatched": {"$numberInt":"0"},"nModified": {"$numberInt":"0"},"nUpserted": {"$numberInt":"0"},"nDeleted": {"$numberInt":"0"},"electionId": {"$oid":"7fffffff0000000000000001"},"opTime": {"ts": {"$timestamp":{"t":1791081075,"i":16}},"t": {"$numberLong":"1"}},"ok": {"$numberDouble":"1.0"},"$clusterTime": {"clusterTime": {"$timestamp":{"t":1791081075,"i":16}},"signature": {"hash": {"$binary":{"base64":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","subType":"00"}},"keyId": {"$numberLong":"0"}}},"operationTime": {"$timestamp":{"t":1791081075,"i":16}}}
+2026/10/04 10:31:15 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoExpressionNativeCompetition/recreate
+    expression_integration_test.go:147: native update reply: {"cursor": {"id": {"$numberLong":"0"},"firstBatch": [{"ok": {"$numberDouble":"1.0"},"idx": {"$numberInt":"0"},"n": {"$numberInt":"1"},"nModified": {"$numberInt":"1"}}],"ns": "admin.$cmd.bulkWrite"},"nErrors": {"$numberInt":"0"},"nInserted": {"$numberInt":"0"},"nMatched": {"$numberInt":"1"},"nModified": {"$numberInt":"1"},"nUpserted": {"$numberInt":"0"},"nDeleted": {"$numberInt":"0"},"electionId": {"$oid":"7fffffff0000000000000001"},"opTime": {"ts": {"$timestamp":{"t":1791081075,"i":23}},"t": {"$numberLong":"1"}},"ok": {"$numberDouble":"1.0"},"$clusterTime": {"clusterTime": {"$timestamp":{"t":1791081075,"i":23}},"signature": {"hash": {"$binary":{"base64":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","subType":"00"}},"keyId": {"$numberLong":"0"}}},"operationTime": {"$timestamp":{"t":1791081075,"i":23}}}
+2026/10/04 10:31:15 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoExpressionNativeCompetition (0.75s)
+    --- PASS: TestMongoExpressionNativeCompetition/update (0.18s)
+    --- PASS: TestMongoExpressionNativeCompetition/replace (0.19s)
+    --- PASS: TestMongoExpressionNativeCompetition/delete (0.18s)
+    --- PASS: TestMongoExpressionNativeCompetition/recreate (0.19s)
+=== RUN   TestMongoExpressionReplyLossAndConcern
+=== RUN   TestMongoExpressionReplyLossAndConcern/drop
+    expression_integration_test.go:218: post-loss production Read recovered; SASL continuation commands=0 (excluded from business counts)
+2026/10/04 10:31:16 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestMongoExpressionReplyLossAndConcern/truncate
+2026/10/04 10:31:16 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoExpressionReplyLossAndConcern/missing_n
+2026/10/04 10:31:16 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoExpressionReplyLossAndConcern/concern
+2026/10/04 10:31:16 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoExpressionReplyLossAndConcern/conflict
+2026/10/04 10:31:17 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoExpressionReplyLossAndConcern (1.39s)
+    --- PASS: TestMongoExpressionReplyLossAndConcern/drop (0.60s)
+    --- PASS: TestMongoExpressionReplyLossAndConcern/truncate (0.28s)
+    --- PASS: TestMongoExpressionReplyLossAndConcern/missing_n (0.19s)
+    --- PASS: TestMongoExpressionReplyLossAndConcern/concern (0.16s)
+    --- PASS: TestMongoExpressionReplyLossAndConcern/conflict (0.16s)
+=== RUN   TestMongoExpressionCancellationLedgerAndDrain
+=== RUN   TestMongoExpressionCancellationLedgerAndDrain/cancel
+2026/10/04 10:31:17 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestMongoExpressionCancellationLedgerAndDrain/deadline
+2026/10/04 10:31:17 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestMongoExpressionCancellationLedgerAndDrain/drain
+2026/10/04 10:31:17 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestMongoExpressionCancellationLedgerAndDrain (0.63s)
+    --- PASS: TestMongoExpressionCancellationLedgerAndDrain/cancel (0.17s)
+    --- PASS: TestMongoExpressionCancellationLedgerAndDrain/deadline (0.27s)
+    --- PASS: TestMongoExpressionCancellationLedgerAndDrain/drain (0.18s)
+=== RUN   TestMongoExpressionValidation
+=== RUN   TestMongoExpressionValidation/set
+=== RUN   TestMongoExpressionValidation/empty_operand
+=== RUN   TestMongoExpressionValidation/unset
+=== RUN   TestMongoExpressionValidation/numbers
+=== RUN   TestMongoExpressionValidation/empty
+=== RUN   TestMongoExpressionValidation/decimal_infinity
+=== RUN   TestMongoExpressionValidation/invalid_UTF8
+=== RUN   TestMongoExpressionValidation/invalid_regex_UTF8
+=== RUN   TestMongoExpressionValidation/identity
+=== RUN   TestMongoExpressionValidation/duplicate_operator
+=== RUN   TestMongoExpressionValidation/duplicate_data
+=== RUN   TestMongoExpressionValidation/conflict
+=== RUN   TestMongoExpressionValidation/same_path
+=== RUN   TestMongoExpressionValidation/operator
+=== RUN   TestMongoExpressionValidation/wrong_operand
+=== RUN   TestMongoExpressionValidation/nan
+=== RUN   TestMongoExpressionValidation/infinity
+--- PASS: TestMongoExpressionValidation (0.01s)
+    --- PASS: TestMongoExpressionValidation/set (0.00s)
+    --- PASS: TestMongoExpressionValidation/empty_operand (0.00s)
+    --- PASS: TestMongoExpressionValidation/unset (0.00s)
+    --- PASS: TestMongoExpressionValidation/numbers (0.00s)
+    --- PASS: TestMongoExpressionValidation/empty (0.00s)
+    --- PASS: TestMongoExpressionValidation/decimal_infinity (0.00s)
+    --- PASS: TestMongoExpressionValidation/invalid_UTF8 (0.00s)
+    --- PASS: TestMongoExpressionValidation/invalid_regex_UTF8 (0.00s)
+    --- PASS: TestMongoExpressionValidation/identity (0.00s)
+    --- PASS: TestMongoExpressionValidation/duplicate_operator (0.00s)
+    --- PASS: TestMongoExpressionValidation/duplicate_data (0.00s)
+    --- PASS: TestMongoExpressionValidation/conflict (0.00s)
+    --- PASS: TestMongoExpressionValidation/same_path (0.00s)
+    --- PASS: TestMongoExpressionValidation/operator (0.00s)
+    --- PASS: TestMongoExpressionValidation/wrong_operand (0.00s)
+    --- PASS: TestMongoExpressionValidation/nan (0.00s)
+    --- PASS: TestMongoExpressionValidation/infinity (0.00s)
+=== RUN   TestMongoExpressionEvidence
+=== RUN   TestMongoExpressionEvidence/matched
+=== RUN   TestMongoExpressionEvidence/noop
+=== RUN   TestMongoExpressionEvidence/missing
+=== RUN   TestMongoExpressionEvidence/missing_n
+=== RUN   TestMongoExpressionEvidence/bad_ok
+=== RUN   TestMongoExpressionEvidence/contradictory
+=== RUN   TestMongoExpressionEvidence/impossible
+=== RUN   TestMongoExpressionEvidence/concern
+=== RUN   TestMongoExpressionEvidence/conflict
+--- PASS: TestMongoExpressionEvidence (0.00s)
+    --- PASS: TestMongoExpressionEvidence/matched (0.00s)
+    --- PASS: TestMongoExpressionEvidence/noop (0.00s)
+    --- PASS: TestMongoExpressionEvidence/missing (0.00s)
+    --- PASS: TestMongoExpressionEvidence/missing_n (0.00s)
+    --- PASS: TestMongoExpressionEvidence/bad_ok (0.00s)
+    --- PASS: TestMongoExpressionEvidence/contradictory (0.00s)
+    --- PASS: TestMongoExpressionEvidence/impossible (0.00s)
+    --- PASS: TestMongoExpressionEvidence/concern (0.00s)
+    --- PASS: TestMongoExpressionEvidence/conflict (0.00s)
+=== RUN   TestNativeRMWConflicts
+=== RUN   TestNativeRMWConflicts/update
+    integration_test.go:88: update: attempts=2 evaluations=2 commits=1 n=12 fields=2
+2026/10/04 10:31:17 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestNativeRMWConflicts/replace
+    integration_test.go:88: replace: attempts=2 evaluations=2 commits=1 n=21 fields=3
+2026/10/04 10:31:18 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestNativeRMWConflicts/delete
+    integration_test.go:88: delete: attempts=2 evaluations=2 commits=1 n=1 fields=2
+2026/10/04 10:31:18 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestNativeRMWConflicts/recreate
+    integration_test.go:88: recreate: attempts=2 evaluations=2 commits=1 n=21 fields=3
+2026/10/04 10:31:18 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestNativeRMWConflicts/missing_insert
+    integration_test.go:88: missing_insert: attempts=2 evaluations=2 commits=1 n=21 fields=3
+2026/10/04 10:31:18 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestNativeRMWConflicts (1.01s)
+    --- PASS: TestNativeRMWConflicts/update (0.20s)
+    --- PASS: TestNativeRMWConflicts/replace (0.20s)
+    --- PASS: TestNativeRMWConflicts/delete (0.20s)
+    --- PASS: TestNativeRMWConflicts/recreate (0.21s)
+    --- PASS: TestNativeRMWConflicts/missing_insert (0.20s)
+=== RUN   TestCommitReplyLostAfterRealCommit
+=== RUN   TestCommitReplyLostAfterRealCommit/once
+    integration_test.go:150: once: outcome=APPLIED evaluations=1 attempts=1 wire_commits=2 dropped_successful_replies=1 same_session_txn=true elapsed=506.928ms
+2026/10/04 10:31:19 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestCommitReplyLostAfterRealCommit/all
+    integration_test.go:150: all: outcome=UNKNOWN evaluations=1 attempts=1 wire_commits=2 dropped_successful_replies=2 same_session_txn=true elapsed=703.622209ms
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestCommitReplyLostAfterRealCommit (1.45s)
+    --- PASS: TestCommitReplyLostAfterRealCommit/once (0.67s)
+    --- PASS: TestCommitReplyLostAfterRealCommit/all (0.78s)
+=== RUN   TestRMWAttemptAndDeadlineBounds
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestRMWAttemptAndDeadlineBounds (0.27s)
+=== RUN   TestPartialInitializationAndClose
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:20 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestPartialInitializationAndClose (0.16s)
+=== RUN   TestCommitCancellationRetainsOriginalDeadline
+    integration_test.go:259: commit cancellation elapsed 62.500833ms outcome UNKNOWN
+2026/10/04 10:31:21 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestCommitCancellationRetainsOriginalDeadline (0.43s)
+=== RUN   TestUnrelatedUniqueConflictDoesNotRetry
+2026/10/04 10:31:21 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestUnrelatedUniqueConflictDoesNotRetry (0.20s)
+=== RUN   TestAcknowledgedOrdinaryBatchReplyLostIsNotReplayed
+    integration_test.go:316: post-loss production Read recovered; SASL continuation commands=0 (excluded from business counts)
+2026/10/04 10:31:21 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestAcknowledgedOrdinaryBatchReplyLostIsNotReplayed (0.59s)
+=== RUN   TestAmbiguitySurvivesLaterDefiniteError
+2026/10/04 10:31:22 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestAmbiguitySurvivesLaterDefiniteError (0.70s)
+=== RUN   TestMissingDeleteBatchAcknowledgedWithoutRead
+2026/10/04 10:31:22 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMissingDeleteBatchAcknowledgedWithoutRead (0.17s)
+=== RUN   TestCloseDuringCommit
+2026/10/04 10:31:22 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestCloseDuringCommit (0.44s)
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/query
+2026/10/04 10:31:23 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/write
+    native_integration_test.go:137: one findAndModify; independent native read n=2 RESPONSE_COMPLETE
+2026/10/04 10:31:23 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/native_error
+2026/10/04 10:31:23 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/multiframe
+2026/10/04 10:31:23 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/oversized
+2026/10/04 10:31:24 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/drop
+    native_integration_test.go:96: post-loss production Read recovered; SASL continuation commands=0 (excluded from business counts)
+    native_integration_test.go:137: one findAndModify; independent native read n=2 RESPONSE_INCOMPLETE
+2026/10/04 10:31:24 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/reauth
+2026/10/04 10:31:24 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/overload
+2026/10/04 10:31:24 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoNativeRealErrorsBoundsAndReplyLoss/response_limit
+2026/10/04 10:31:25 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss (2.03s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/query (0.18s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/write (0.18s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/native_error (0.18s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/multiframe (0.18s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/oversized (0.17s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/drop (0.59s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/reauth (0.18s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/overload (0.16s)
+    --- PASS: TestMongoNativeRealErrorsBoundsAndReplyLoss/response_limit (0.20s)
+=== RUN   TestMongoNativeExplicitCongestion
+=== RUN   TestMongoNativeExplicitCongestion/shutdown
+=== RUN   TestMongoNativeExplicitCongestion/stepdown
+=== RUN   TestMongoNativeExplicitCongestion/capacity
+=== RUN   TestMongoNativeExplicitCongestion/deterministic_error
+=== RUN   TestMongoNativeExplicitCongestion/success
+=== RUN   TestMongoNativeExplicitCongestion/canceled_after_reply
+=== RUN   TestMongoNativeExplicitCongestion/invalid_ok
+=== RUN   TestMongoNativeExplicitCongestion/success_head_failure
+=== RUN   TestMongoNativeExplicitCongestion/success_chunk_failure
+=== RUN   TestMongoNativeExplicitCongestion/head_failure
+=== RUN   TestMongoNativeExplicitCongestion/chunk_failure
+=== RUN   TestMongoNativeExplicitCongestion/oversized
+--- PASS: TestMongoNativeExplicitCongestion (0.03s)
+    --- PASS: TestMongoNativeExplicitCongestion/shutdown (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/stepdown (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/capacity (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/deterministic_error (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/success (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/canceled_after_reply (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/invalid_ok (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/success_head_failure (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/success_chunk_failure (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/head_failure (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/chunk_failure (0.00s)
+    --- PASS: TestMongoNativeExplicitCongestion/oversized (0.02s)
+=== RUN   TestMongoNativeCommandScope
+--- PASS: TestMongoNativeCommandScope (0.00s)
+=== RUN   TestMongoNativeRejectsCode
+--- PASS: TestMongoNativeRejectsCode (0.00s)
+=== RUN   TestMongoNativeExactCommandBound
+--- PASS: TestMongoNativeExactCommandBound (0.02s)
+=== RUN   TestMongoLuaBatchUsesOneReadWriteCommitAndPreservesDocuments
+    program_batch_integration_test.go:113: 9 independent Lua items: one snapshot find, five mixed writes in one bulkWrite, one commit, unchanged identity types and business fields
+2026/10/04 10:31:25 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchUsesOneReadWriteCommitAndPreservesDocuments (0.19s)
+=== RUN   TestMongoLuaBatchNativeConflictRecomputesPeers
+=== RUN   TestMongoLuaBatchNativeConflictRecomputesPeers/update
+2026/10/04 10:31:25 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoLuaBatchNativeConflictRecomputesPeers/missing_insert
+2026/10/04 10:31:25 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchNativeConflictRecomputesPeers (0.41s)
+    --- PASS: TestMongoLuaBatchNativeConflictRecomputesPeers/update (0.21s)
+    --- PASS: TestMongoLuaBatchNativeConflictRecomputesPeers/missing_insert (0.20s)
+=== RUN   TestMongoLuaBatchCommitReplyLossNeverReapplies
+=== RUN   TestMongoLuaBatchCommitReplyLossNeverReapplies/once
+    program_batch_integration_test.go:254: once: find=1 bulkWrite=1 same-transaction commits=2 persisted increments=1 outcome=APPLIED
+2026/10/04 10:31:26 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestMongoLuaBatchCommitReplyLossNeverReapplies/all
+    program_batch_integration_test.go:254: all: find=1 bulkWrite=1 same-transaction commits=3 persisted increments=1 outcome=UNKNOWN
+2026/10/04 10:31:27 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=4 released=4
+--- PASS: TestMongoLuaBatchCommitReplyLossNeverReapplies (1.86s)
+    --- PASS: TestMongoLuaBatchCommitReplyLossNeverReapplies/once (0.68s)
+    --- PASS: TestMongoLuaBatchCommitReplyLossNeverReapplies/all (1.17s)
+=== RUN   TestMongoLuaBatchSchemaRejectionRollsBackThenIsolatesItem
+2026/10/04 10:31:27 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchSchemaRejectionRollsBackThenIsolatesItem (0.22s)
+=== RUN   TestMongoLuaBatchLostAbortAcknowledgementNeverRebuilds
+    program_batch_integration_test.go:369: actual abort reply dropped: one read, one attempted bulkWrite, one same-transaction abort, zero commits, zero replays, all documents unchanged
+2026/10/04 10:31:28 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchLostAbortAcknowledgementNeverRebuilds (0.20s)
+=== RUN   TestMongoLuaBatchRetainedBoundSplitsWithoutChangingEffects
+2026/10/04 10:31:28 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchRetainedBoundSplitsWithoutChangingEffects (0.68s)
+=== RUN   TestMongoLuaBatchCallerCancellationDoesNotCancelPeers
+=== RUN   TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/read
+=== RUN   TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/write
+--- PASS: TestMongoLuaBatchCallerCancellationDoesNotCancelPeers (0.00s)
+    --- PASS: TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/read (0.00s)
+    --- PASS: TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/write (0.00s)
+=== RUN   TestMongoLuaBatchMalformedWriteAcknowledgementNeverCommits
+--- PASS: TestMongoLuaBatchMalformedWriteAcknowledgementNeverCommits (0.00s)
+=== RUN   TestMongoLuaBatchCursorContinuationsKeepTransactionIdentity
+--- PASS: TestMongoLuaBatchCursorContinuationsKeepTransactionIdentity (0.00s)
+=== RUN   TestMongoLuaBatchMissingWriteItemAcknowledgementAborts
+--- PASS: TestMongoLuaBatchMissingWriteItemAcknowledgementAborts (0.00s)
+=== RUN   TestMongoLuaBatchUnconfirmedAbortNeverRebuilds
+=== RUN   TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/lost_reply
+=== RUN   TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/rejected_abort
+--- PASS: TestMongoLuaBatchUnconfirmedAbortNeverRebuilds (0.00s)
+    --- PASS: TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/lost_reply (0.00s)
+    --- PASS: TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/rejected_abort (0.00s)
+=== RUN   TestMongoOpenDoesNotQueryServerVersion
+2026/10/04 10:31:28 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoOpenDoesNotQueryServerVersion (0.15s)
+=== RUN   TestMongoScanTraversal
+=== RUN   TestMongoScanTraversal/0
+2026/10/04 10:31:29 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanTraversal/1
+2026/10/04 10:31:29 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanTraversal/8
+2026/10/04 10:31:29 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanTraversal/35
+2026/10/04 10:31:29 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoScanTraversal (0.94s)
+    --- PASS: TestMongoScanTraversal/0 (0.16s)
+    --- PASS: TestMongoScanTraversal/1 (0.16s)
+    --- PASS: TestMongoScanTraversal/8 (0.22s)
+    --- PASS: TestMongoScanTraversal/35 (0.39s)
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/first_partial
+2026/10/04 10:31:30 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/first_partial_top
+2026/10/04 10:31:30 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/first_missing_batch
+2026/10/04 10:31:30 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/first_truncate
+2026/10/04 10:31:30 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/first_drop
+2026/10/04 10:31:30 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/next_partial
+2026/10/04 10:31:30 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/next_partial_top
+2026/10/04 10:31:31 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/next_missing_batch
+2026/10/04 10:31:31 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/next_truncate
+2026/10/04 10:31:31 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFaultPagesAndNoAutomaticRetry/next_drop
+2026/10/04 10:31:31 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry (1.82s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/first_partial (0.18s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/first_partial_top (0.18s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/first_missing_batch (0.18s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/first_truncate (0.19s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/first_drop (0.18s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/next_partial (0.19s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/next_partial_top (0.18s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/next_missing_batch (0.18s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/next_truncate (0.19s)
+    --- PASS: TestMongoScanFaultPagesAndNoAutomaticRetry/next_drop (0.18s)
+=== RUN   TestMongoScanFetchCancellation
+=== RUN   TestMongoScanFetchCancellation/cancel_first
+2026/10/04 10:31:31 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanFetchCancellation/cancel_next
+2026/10/04 10:31:32 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoScanFetchCancellation (0.81s)
+    --- PASS: TestMongoScanFetchCancellation/cancel_first (0.40s)
+    --- PASS: TestMongoScanFetchCancellation/cancel_next (0.40s)
+=== RUN   TestMongoScanNativeBatchBudgetAndOutputBoundary
+=== RUN   TestMongoScanNativeBatchBudgetAndOutputBoundary/boundary
+    scan_integration_test.go:282: complete scan records=1 outputBytes=2097152 largestNativeReply=2097374 wireLimit=16842752 reservedWorking=25165824
+2026/10/04 10:31:32 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoScanNativeBatchBudgetAndOutputBoundary/large_total_scan
+    scan_integration_test.go:282: complete scan records=32 outputBytes=9831168 largestNativeReply=307446 wireLimit=16842752 reservedWorking=25165824
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoScanNativeBatchBudgetAndOutputBoundary (0.55s)
+    --- PASS: TestMongoScanNativeBatchBudgetAndOutputBoundary/boundary (0.16s)
+    --- PASS: TestMongoScanNativeBatchBudgetAndOutputBoundary/large_total_scan (0.39s)
+=== RUN   TestMongoScanResumesMixedIDsWithoutSessionOrPreviousRecord
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+    scan_resume_integration_test.go:132: 10 mixed BSON IDs, every page on a new Adapter, preceding ID deleted, replay exact
+--- PASS: TestMongoScanResumesMixedIDsWithoutSessionOrPreviousRecord (0.21s)
+=== RUN   TestMongoScanBSONExtremesWithFilterAndProjection
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+    scan_resume_integration_test.go:211: 12 native BSON extremes match Find byte for byte across new instances with filter/projection
+--- PASS: TestMongoScanBSONExtremesWithFilterAndProjection (0.23s)
+=== RUN   TestMongoScanDeepKeysetUsesIDIndexAndIncludesMaxKey
+    scan_resume_integration_test.go:294: deep page after 999 earlier keys: documents examined=1, keys examined=1
+2026/10/04 10:31:33 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoScanDeepKeysetUsesIDIndexAndIncludesMaxKey (0.16s)
+=== RUN   TestMongoScanEnvelopeIntegrity
+=== RUN   TestMongoScanEnvelopeIntegrity/valid_more
+=== RUN   TestMongoScanEnvelopeIntegrity/empty_live_more
+=== RUN   TestMongoScanEnvelopeIntegrity/exhausted_more
+=== RUN   TestMongoScanEnvelopeIntegrity/partial_more
+=== RUN   TestMongoScanEnvelopeIntegrity/partial_top_more
+=== RUN   TestMongoScanEnvelopeIntegrity/partial_type_more
+=== RUN   TestMongoScanEnvelopeIntegrity/missing_id_more
+=== RUN   TestMongoScanEnvelopeIntegrity/missing_ns_more
+=== RUN   TestMongoScanEnvelopeIntegrity/wrong_ns_more
+=== RUN   TestMongoScanEnvelopeIntegrity/missing_batch_more
+=== RUN   TestMongoScanEnvelopeIntegrity/wrong_batch_more
+=== RUN   TestMongoScanEnvelopeIntegrity/error_tail_more
+=== RUN   TestMongoScanEnvelopeIntegrity/oversized_more
+=== RUN   TestMongoScanEnvelopeIntegrity/too_many_more
+=== RUN   TestMongoScanEnvelopeIntegrity/truncated_more
+=== RUN   TestMongoScanEnvelopeIntegrity/duplicate_more
+=== RUN   TestMongoScanEnvelopeIntegrity/valid_first
+=== RUN   TestMongoScanEnvelopeIntegrity/empty_live_first
+=== RUN   TestMongoScanEnvelopeIntegrity/exhausted_first
+=== RUN   TestMongoScanEnvelopeIntegrity/partial_first
+=== RUN   TestMongoScanEnvelopeIntegrity/partial_top_first
+=== RUN   TestMongoScanEnvelopeIntegrity/partial_type_first
+=== RUN   TestMongoScanEnvelopeIntegrity/missing_id_first
+=== RUN   TestMongoScanEnvelopeIntegrity/missing_ns_first
+=== RUN   TestMongoScanEnvelopeIntegrity/wrong_ns_first
+=== RUN   TestMongoScanEnvelopeIntegrity/missing_batch_first
+=== RUN   TestMongoScanEnvelopeIntegrity/wrong_batch_first
+=== RUN   TestMongoScanEnvelopeIntegrity/error_tail_first
+=== RUN   TestMongoScanEnvelopeIntegrity/oversized_first
+=== RUN   TestMongoScanEnvelopeIntegrity/too_many_first
+=== RUN   TestMongoScanEnvelopeIntegrity/truncated_first
+=== RUN   TestMongoScanEnvelopeIntegrity/duplicate_first
+--- PASS: TestMongoScanEnvelopeIntegrity (0.02s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/valid_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/empty_live_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/exhausted_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/partial_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/partial_top_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/partial_type_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/missing_id_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/missing_ns_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/wrong_ns_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/missing_batch_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/wrong_batch_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/error_tail_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/oversized_more (0.01s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/too_many_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/truncated_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/duplicate_more (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/valid_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/empty_live_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/exhausted_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/partial_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/partial_top_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/partial_type_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/missing_id_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/missing_ns_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/wrong_ns_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/missing_batch_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/wrong_batch_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/error_tail_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/oversized_first (0.01s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/too_many_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/truncated_first (0.00s)
+    --- PASS: TestMongoScanEnvelopeIntegrity/duplicate_first (0.00s)
+=== RUN   TestMongoScanSelectorControls
+--- PASS: TestMongoScanSelectorControls (0.00s)
+=== RUN   TestMongoScanRejectsUnstableIdentitySelectorsAndTokens
+--- PASS: TestMongoScanRejectsUnstableIdentitySelectorsAndTokens (0.00s)
+=== RUN   TestMongoResourceTargetsBulkLuaScanNative
+    target_integration_test.go:233: one client/pool: 2 databases, 2 collections each, same id isolated across Bulk, Lua, Scan and Native
+2026/10/04 10:31:34 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoResourceTargetsBulkLuaScanNative (0.49s)
+=== RUN   TestMongoResourceTargetsConcurrent
+2026/10/04 10:31:34 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=5 limit=5 dialing=0 closing=0 acquired=5 released=5
+--- PASS: TestMongoResourceTargetsConcurrent (0.47s)
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/missing/read
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/missing/put
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/missing/program
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/missing/scan
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/missing/native
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/view/read
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/view/put
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/view/program
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/view/scan
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/view/native
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/capped/read
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/capped/put
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/capped/program
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/capped/scan
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/capped/native
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/collation/read
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/collation/put
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/collation/program
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/collation/scan
+=== RUN   TestMongoResourceTargetsRejectUnqualifiedCollections/collation/native
+2026/10/04 10:31:34 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections (0.47s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/missing/read (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/missing/put (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/missing/program (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/missing/scan (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/missing/native (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/view/read (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/view/put (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/view/program (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/view/scan (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/view/native (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/capped/read (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/capped/put (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/capped/program (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/capped/scan (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/capped/native (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/collation/read (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/collation/put (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/collation/program (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/collation/scan (0.00s)
+    --- PASS: TestMongoResourceTargetsRejectUnqualifiedCollections/collation/native (0.00s)
+=== RUN   TestMongoResourceTargetsPrepareWithoutIO
+--- PASS: TestMongoResourceTargetsPrepareWithoutIO (0.00s)
+=== RUN   TestMongoNativeTargetMismatchDoesNotAccessClient
+--- PASS: TestMongoNativeTargetMismatchDoesNotAccessClient (0.00s)
+=== RUN   TestMongoCallerCanceledDuringQualificationIsNotDispatched
+=== RUN   TestMongoCallerCanceledDuringQualificationIsNotDispatched/read
+=== RUN   TestMongoCallerCanceledDuringQualificationIsNotDispatched/put
+--- PASS: TestMongoCallerCanceledDuringQualificationIsNotDispatched (0.00s)
+    --- PASS: TestMongoCallerCanceledDuringQualificationIsNotDispatched/read (0.00s)
+    --- PASS: TestMongoCallerCanceledDuringQualificationIsNotDispatched/put (0.00s)
+PASS
+ok  	github.com/batchstream/weir/internal/backend/mongodb	23.312s
