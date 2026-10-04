@@ -28,8 +28,6 @@ type Config struct {
 }
 
 type Operation struct {
-	Worker   int
-	Sequence int
 	Record   int
 	Write    bool
 	Revision int
@@ -161,7 +159,7 @@ func (d *Dataset) Plan(options PlanOptions) (*Plan, error) {
 			} else {
 				plan.Reads++
 			}
-			operation := Operation{Worker: worker, Sequence: sequence, Record: record, Write: write, Revision: plan.Expected[record]}
+			operation := Operation{Record: record, Write: write, Revision: plan.Expected[record]}
 			operations[sequence] = operation
 		}
 		plan.Workers[worker] = operations

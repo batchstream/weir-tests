@@ -149,7 +149,7 @@ func testCrossOwnerScan(t *testing.T, ctx context.Context, cluster *fixture.Clus
 	for i, owner := range owners {
 		transports[i] = transport(t, cluster.Nodes[owner].Application)
 	}
-	seen := make(map[string]bool)
+	seen := make(map[int64]bool)
 	var token []byte
 	exhausted := false
 	for page := 0; page < 5; page++ {
@@ -157,14 +157,14 @@ func testCrossOwnerScan(t *testing.T, ctx context.Context, cluster *fixture.Clus
 		count := uint64(0)
 		scan := weir.ScanOptions{StoreName: backend.name, Request: request}
 		scan.Consume = func(_ context.Context, document *weir.Document) error {
-			id, err := backend.scanID(document)
+			number, err := backend.number(document)
 			if err != nil {
 				return err
 			}
-			if seen[id] {
-				return fmt.Errorf("cross-owner continuation repeated %q", id)
+			if seen[number] {
+				return fmt.Errorf("cross-owner continuation repeated %d", number)
 			}
-			seen[id] = true
+			seen[number] = true
 			count++
 			return nil
 		}
@@ -187,12 +187,12 @@ func testCrossOwnerScan(t *testing.T, ctx context.Context, cluster *fixture.Clus
 		}
 		token = bytes.Clone(next)
 	}
-	got := make([]string, 0, len(seen))
-	for id := range seen {
-		got = append(got, id)
+	got := make([]int64, 0, len(seen))
+	for number := range seen {
+		got = append(got, number)
 	}
 	slices.Sort(got)
-	want := []string{"page1", "page2", "primary"}
+	want := []int64{5, 11, 12}
 	if !exhausted || !slices.Equal(got, want) {
 		t.Fatalf("cross-owner complete Scan set: exhausted=%v got=%v want=%v", exhausted, got, want)
 	}
@@ -209,33 +209,6 @@ func testCrossOwnerScan(t *testing.T, ctx context.Context, cluster *fixture.Clus
 	t.Log("all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint")
 }
 
-func (b *backendData) scanID(document *weir.Document) (string, error) {
-	if document == nil {
-		return "", errors.New("Scan omitted document")
-	}
-	if b.name == "mongo" {
-		if document.GetContentType() != "application/bson" {
-			return "", errors.New("MongoDB Scan changed native content type")
-		}
-		raw := bson.Raw(document.GetData())
-		if err := raw.Validate(); err != nil {
-			return "", err
-		}
-		id, ok := raw.Lookup("_id").StringValueOK()
-		if !ok {
-			return "", errors.New("MongoDB Scan omitted _id")
-		}
-		return id, nil
-	}
-	var hit struct {
-		ID string `json:"_id"`
-	}
-	if document.GetContentType() != "application/json" || json.Unmarshal(document.GetData(), &hit) != nil || hit.ID == "" {
-		return "", errors.New("Search Scan omitted native hit _id")
-	}
-	return hit.ID, nil
-}
-
 func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
 	t.Helper()
 	request := &weir.NativeRequest{Resource: backend.collection}
@@ -243,38 +216,28 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 		parts := strings.Split(backend.collection, "/")
 		filter := bson.D{{Key: "_id", Value: "primary"}}
 		command := bson.D{{Key: "count", Value: parts[len(parts)-1]}, {Key: "query", Value: filter}}
-		request.Body = bsonDocument(t, command).Data
-		request.BodyContentType = "application/bson"
-		descriptor := &weir.Document{ContentType: weir.MongoCommandContentType}
-		request.Descriptor = descriptor
+		request.MongoDBCommand = bsonDocument(t, command).Data
 	} else {
-		descriptor := &weir.SearchHTTPRequest{Method: http.MethodGet, Path: "/_doc/primary"}
-		encoded, err := weir.SearchHTTPDescriptor(descriptor)
-		if err != nil {
-			t.Fatal(err)
-		}
-		request.Descriptor = encoded
+		request.SearchHTTP = &weir.SearchHTTPRequest{Method: http.MethodGet, Path: "/_doc/primary"}
 	}
-	var head *weir.NativeHead
+	var head *weir.NativeResponse
 	var body []byte
 	options := weir.NativeOptions{StoreName: backend.name, Request: request}
-	options.Consume = func(_ context.Context, event *weir.Event) error {
-		if event.Head != nil {
-			if head != nil {
-				return errors.New("duplicate Native head")
-			}
-			head = event.Head
+	options.Consume = func(_ context.Context, response *weir.NativeResponse, chunk []byte) error {
+		if response == nil || head != nil && head != response {
+			return errors.New("Native response metadata changed between chunks")
 		}
-		if len(body)+len(event.Chunk) > 1<<20 {
+		head = response
+		if len(body)+len(chunk) > 1<<20 {
 			return errors.New("Native fixture response exceeded bound")
 		}
-		body = append(body, event.Chunk...)
+		body = append(body, chunk...)
 		return nil
 	}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
 	end, err := client.Native(rpc, options)
 	cancel()
-	if err != nil || head == nil || end == nil || end.GetFailure() != nil || end.GetCompletion() != weir.NativeResponseComplete {
+	if err != nil || head == nil || end == nil || end.Response != head || end.Failure != nil || end.Completion != weir.NativeResponseComplete {
 		t.Fatalf("Native evidence: head=%v end=%v err=%v", head, end, err)
 	}
 	if backend.name == "mongo" {
@@ -284,14 +247,14 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 		}
 		return
 	}
-	metadata, err := weir.DecodeSearchHTTPResponse(head.GetMetadata())
+	metadata := head.GetHttp()
 	var response struct {
 		Found  bool `json:"found"`
 		Source struct {
 			N int64 `json:"n"`
 		} `json:"_source"`
 	}
-	if err != nil || metadata.StatusCode != http.StatusOK || json.Unmarshal(body, &response) != nil || !response.Found || response.Source.N != 5 {
+	if metadata == nil || metadata.StatusCode != http.StatusOK || json.Unmarshal(body, &response) != nil || !response.Found || response.Source.N != 5 {
 		t.Fatalf("Native Search response: metadata=%v body=%s err=%v", metadata, body, err)
 	}
 }

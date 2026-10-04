@@ -205,6 +205,9 @@ func measure(ctx context.Context, executor workload.Executor, plan *workload.Pla
 				began := time.Now()
 				outcome := executor.Execute(operationCtx, operation)
 				worker.hist.add(time.Since(began))
+				if outcome.Status != workload.Success && errors.Is(operationCtx.Err(), context.DeadlineExceeded) {
+					worker.result.Timeouts++
+				}
 				cancel()
 				worker.result.Attempted++
 				worker.result.RequestBytes += outcome.RequestBytes
@@ -236,6 +239,7 @@ func measure(ctx context.Context, executor workload.Executor, plan *workload.Pla
 	result := Result{Path: executor.Name(), Planned: uint64(plan.Count), ElapsedNS: elapsed.Nanoseconds(), Evidence: executor.Evidence()}
 	var hist histogram
 	for _, worker := range workers {
+		result.Timeouts += worker.result.Timeouts
 		result.Attempted += worker.result.Attempted
 		result.Succeeded += worker.result.Succeeded
 		result.Errors += worker.result.Errors

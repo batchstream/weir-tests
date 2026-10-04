@@ -45,17 +45,17 @@ The opt-in `integration` build tag starts MongoDB, Elasticsearch, two Store
 owners and a discovery node. Tagged tests require a prepared `WEIR_TEST_BINARY`.
 Coverage includes discovery through every node, direct owner connections, typed
 CRUD and Lua transformations, independent persistence checks, same-Store calls
-containing many records, slice preflight and per-record validation, finite Scan continuation, Native response evidence,
+containing many records, slice preflight and per-record validation, typed Scan filters and include/exclude projections, cross-owner continuation, Native response evidence,
 cancellation, owner restart, directory convergence and persistent client recovery.
-Separate multi-process tests verify independent single-record callers.
-One-RPC reads deliver 64 MiB and 256 MiB across 1024 distinct documents while
+Lua tests cover missing and existing documents, explicit and implicit decisions, first creation, and concurrent read-modify-write through both owners. Missing records and missing backend targets have distinct outcomes; empty scans succeed and complete HTTP 404 responses retain Native completion evidence. Separate multi-process tests verify independent single-record callers.
+One-RPC reads deliver 64 MiB and 256 MiB across 1024 and 4096 distinct documents while
 checking bounded result credits and sampled owner RSS. Interrupted streams retain
 confirmed record outcomes; unconfirmed mutations remain indeterminate.
 
 Each Execute request carries one record and its consecutive index. The client
 streams records as they are produced; server aggregation stays within the Store.
 Later invalid records stop the stream while preserving earlier acknowledged writes.
-Document and Native body formats use the public `ContentType` fields.
+Documents use explicit `ContentType` fields. Native selects either a BSON MongoDB command or a typed Search HTTP request; SDK consumers receive chunks with validated response metadata.
 
 Services bind to loopback and own exclusive namespaces. Cleanup verifies exact
 process and container ownership. Fixture logs, manifests and cleanup receipts
@@ -111,6 +111,9 @@ adapter time, rejections and operations per adapter invocation. MongoDB also
 records physical command deltas. Adapter invocations can split by namespace,
 action and byte limits; their counts are distinct from database wire commands.
 Missing samples and reset counters are reported as unavailable.
+`business_operation_timeouts` counts failed logical operations whose request context
+expired before the call returned; an expired bulk context counts every failed operation
+in that batch. This diagnostic does not override confirmed mutation evidence.
 
 A database-saturated comparison requires both paths to qualify independently:
 at least five CPU intervals cover 80% of measurement time, mean CPU reaches 90%

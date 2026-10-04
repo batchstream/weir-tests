@@ -19,7 +19,7 @@ import (
 )
 
 func (d *Dataset) luaSource() string {
-	// The fixture stores BSON int32 and JSON 0/1, both read as lua.v1 int32.
+	// The fixture stores BSON int32 and JSON 0/1, both read as Lua int32.
 	return `return weir.replace(weir.set(current, "revision", weir.sub(weir.i32("1"), weir.get(current, "revision"))))`
 }
 
