@@ -36,6 +36,8 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, OwnerCount: 9},
 		{WeirBinary: binary, StoreConcurrency: -1},
 		{WeirBinary: binary, BatchSize: -1},
+		{WeirBinary: binary, MaxReadSizeBytes: 1023},
+		{WeirBinary: binary, MaxReadSizeBytes: (2 << 20) + 1},
 		{WeirBinary: binary, BackendTimeout: -time.Second},
 		{WeirBinary: binary, ProcessMemoryMiB: -1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},

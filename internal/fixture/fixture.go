@@ -38,6 +38,7 @@ type Options struct {
 	DiscoveryOnly    bool
 	StoreConcurrency int
 	BatchSize        int
+	MaxReadSizeBytes int
 	BackendTimeout   time.Duration
 	IngressSessions  int
 	DatabaseCPUs     float64
@@ -46,6 +47,7 @@ type Options struct {
 }
 
 type Node struct {
+	ProcessID   int
 	Application string
 	Peer        string
 	Diagnostics string
@@ -173,6 +175,12 @@ func validateOptions(options Options) (Options, error) {
 	if options.StoreConcurrency == 0 {
 		options.StoreConcurrency = 2
 	}
+	if options.MaxReadSizeBytes == 0 {
+		options.MaxReadSizeBytes = 2 << 20
+	}
+	if options.MaxReadSizeBytes < 1024 || options.MaxReadSizeBytes > 2<<20 {
+		return options, errors.New("invalid maximum read document size")
+	}
 	if options.BatchSize == 0 {
 		options.BatchSize = 32
 	}
@@ -285,7 +293,7 @@ func (c *Cluster) writeConfiguration(index int) error {
 	stores := make([]map[string]any, 0, len(c.options.Backends))
 	if node.Owner {
 		for _, backend := range c.options.Backends {
-			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "max_read_size": "2MiB", "backend_timeout": c.options.BackendTimeout.String()}
+			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "max_read_size": fmt.Sprintf("%dB", c.options.MaxReadSizeBytes), "backend_timeout": c.options.BackendTimeout.String()}
 			if memory, configured := c.options.WorkingMemoryMiB[backend]; configured {
 				store["working_memory"] = fmt.Sprintf("%dMiB", memory)
 			}
@@ -336,6 +344,7 @@ func (c *Cluster) startNode(ctx context.Context, index int) error {
 	}
 	p := &process{cmd: cmd, done: make(chan struct{}), logPath: logPath}
 	c.processes[index] = p
+	c.Nodes[index].ProcessID = cmd.Process.Pid
 	go func() {
 		p.err = cmd.Wait()
 		_ = log.Close()

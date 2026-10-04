@@ -87,6 +87,7 @@ func TestSystemIntegration(t *testing.T) {
 			testCrossOwnerScan(t, ctx, cluster, backend)
 			testPublicBatch(t, ctx, client, backend)
 			suite.testLargeDistinctBatch(t, backend)
+			suite.testStreamMemory(t, backend)
 		}) {
 			return
 		}
@@ -161,12 +162,25 @@ func (s *system) testDiscovery(t *testing.T) {
 		s.testServerPreflight(t, backend)
 		s.testBatchOwnerRouting(t, backend)
 		read := &pb.ReadRequest{Resource: backend.resource("primary")}
-		request := &pb.ReadBatchRequest{StoreName: backend.name, Requests: []*pb.ReadRequest{read}}
+		batch := &pb.ReadBatch{Requests: []*pb.ReadRequest{read}}
+		operation := &pb.Command_Read{Read: batch}
+		command := &pb.Command{Operation: operation}
+		request := &pb.ExecuteRequest{StoreName: backend.name, Index: 1, Command: command}
 		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		response, err := wire.Read(rpc, request)
+		stream, err := wire.Execute(rpc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := stream.Send(request); err != nil {
+			t.Fatal(err)
+		}
+		if err := stream.CloseSend(); err != nil {
+			t.Fatal(err)
+		}
+		response, err := stream.Recv()
 		cancel()
 		if response != nil || status.Code(err) != codes.Unavailable {
-			t.Fatalf("non-owner %s unary Read: want Unavailable and no business response, got response=%v err=%v", backend.name, response, err)
+			t.Fatalf("non-owner %s streamed Read: want Unavailable and no business response, got response=%v err=%v", backend.name, response, err)
 		}
 	}
 }
@@ -327,20 +341,19 @@ func (s *system) nodeMetrics(t *testing.T) []observe.Snapshot {
 	return snapshots
 }
 
-type unaryBatchEvidence struct {
-	Before, After    []observe.Snapshot
-	Store, Method    string
-	Records          int
-	SingleInvocation bool
+type streamBatchEvidence struct {
+	Before, After []observe.Snapshot
+	Store, Method string
+	Records       int
 }
 
-func assertUnaryBatchMetrics(t *testing.T, evidence unaryBatchEvidence) {
+func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 	t.Helper()
 	var owners int
 	var rpcCount float64
 	labels := map[string]string{"store": evidence.Store, "operation": evidence.Method}
 	storeLabels := map[string]string{"store": evidence.Store}
-	methodLabels := map[string]string{"method": evidence.Method}
+	methodLabels := map[string]string{"method": "execute"}
 	for index, before := range evidence.Before {
 		after := evidence.After[index]
 		left, beforeFound := before.Sum("weir_store_records_total", labels)
@@ -360,21 +373,19 @@ func assertUnaryBatchMetrics(t *testing.T, evidence unaryBatchEvidence) {
 				t.Fatalf("whole batch relayed or split across owners: node=%d delta=%v", index, delta)
 			}
 			owners++
-			if evidence.SingleInvocation {
-				count, err := observe.Delta(before, after, "weir_store_batch_operations_count", storeLabels)
-				if err != nil || count != 1 {
-					t.Fatalf("physical adapter invocations=%v error=%v", count, err)
-				}
-				operations, err := observe.Delta(before, after, "weir_store_batch_operations_sum", storeLabels)
-				if err != nil || operations != float64(evidence.Records) {
-					t.Fatalf("physical adapter batch operations=%v error=%v", operations, err)
-				}
+			count, err := observe.Delta(before, after, "weir_store_batch_operations_count", storeLabels)
+			if err != nil || count < 1 {
+				t.Fatalf("window adapter invocations=%v error=%v", count, err)
+			}
+			operations, err := observe.Delta(before, after, "weir_store_batch_operations_sum", storeLabels)
+			if err != nil || operations != float64(evidence.Records) {
+				t.Fatalf("window adapter operations=%v error=%v", operations, err)
 			}
 		}
 		left, beforeFound = before.Sum("weir_rpc_completions_total", methodLabels)
 		right, afterFound = after.Sum("weir_rpc_completions_total", methodLabels)
 		if !beforeFound || !afterFound {
-			t.Fatalf("node %d unary completion observation unavailable", index)
+			t.Fatalf("node %d streamed completion observation unavailable", index)
 		}
 		if right < left {
 			t.Fatal("RPC completion metrics reset")
@@ -382,7 +393,7 @@ func assertUnaryBatchMetrics(t *testing.T, evidence unaryBatchEvidence) {
 		rpcCount += right - left
 	}
 	if owners != 1 || rpcCount != 1 {
-		t.Fatalf("single owner unary batch: owners=%d completed RPCs=%v", owners, rpcCount)
+		t.Fatalf("single owner streamed batch: owners=%d completed RPCs=%v", owners, rpcCount)
 	}
 }
 
@@ -399,11 +410,11 @@ func (s *system) testBatchOwnerRouting(t *testing.T, backend *backendData) {
 	results, err := s.client.Read(rpc, opts)
 	cancel()
 	if err != nil || len(results) != len(reads) {
-		t.Fatalf("routed unary batch: results=%d err=%v", len(results), err)
+		t.Fatalf("routed streamed batch: results=%d err=%v", len(results), err)
 	}
 	for _, result := range results {
 		backend.assertReadResult(t, result, nil, 5)
 	}
-	evidence := unaryBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "read", Records: len(reads)}
-	assertUnaryBatchMetrics(t, evidence)
+	evidence := streamBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "read", Records: len(reads)}
+	assertStreamBatchMetrics(t, evidence)
 }

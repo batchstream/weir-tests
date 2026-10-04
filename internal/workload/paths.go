@@ -101,7 +101,7 @@ func Open(ctx context.Context, dataset *Dataset) (*Paths, error) {
 	}
 	paths.client = client
 	info := direct.info
-	info.Protocol = "gRPC unary Read/Mutate batches via published Weir SDK"
+	info.Protocol = "bidirectional gRPC Execute streams via published Weir SDK"
 	info.Endpoint = dataset.Config.WeirSeed
 	info.RetryPolicy = "SDK never replays business requests"
 	if dataset.Config.LuaMutations {
@@ -497,8 +497,12 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 	request := &weir.ReadRequest{Resource: p.dataset.Resource(operation.Record)}
 	opts := weir.ReadOneOptions{StoreName: p.dataset.Config.StoreName, Request: request}
 	result, err := p.client.ReadOne(ctx, opts)
-	if err != nil {
-		return failed(err, false)
+	return p.readOutcome(result, operation, err)
+}
+
+func (p *weirPath) readOutcome(result *weir.ReadResult, operation Operation, rpcErr error) Outcome {
+	if result == nil && rpcErr != nil {
+		return failed(rpcErr, false)
 	}
 	if result == nil || result.Document == nil || result.Failure != nil || result.Missing {
 		return failed(errors.New("Weir Read lacks a successful document"), false)

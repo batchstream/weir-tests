@@ -45,9 +45,12 @@ The opt-in `integration` build tag starts MongoDB, Elasticsearch, two Store
 owners and a discovery node. Tagged tests require a prepared `WEIR_TEST_BINARY`.
 Coverage includes discovery through every node, direct owner connections, typed
 CRUD and Lua transformations, independent persistence checks, same-Store batches,
-whole-request validation, finite Scan continuation, Native response evidence,
+slice preflight and per-frame validation, finite Scan continuation, Native response evidence,
 cancellation, owner restart, directory convergence and persistent client recovery.
 Separate multi-process tests verify independent single-record callers.
+One-RPC reads deliver 64 MiB and 256 MiB across 1024 distinct documents while
+checking bounded result credits and sampled owner RSS. Interrupted streams retain
+confirmed record outcomes; unconfirmed mutations remain indeterminate.
 
 Services bind to loopback and own exclusive namespaces. Cleanup verifies exact
 process and container ownership. Fixture logs, manifests and cleanup receipts
@@ -98,7 +101,7 @@ distributions and the RPC/adapter ratio show whether aggregation occurred.
 
 Reports retain per-round throughput, pooled latency histograms, client process
 identities, start lag, CPU/RSS, database CPU/memory/I/O/network samples and raw
-Weir metrics. Metrics report unary completions, terminal records, queue wait,
+Weir metrics. Metrics report stream completions, terminal records, queue wait,
 adapter time, rejections and operations per adapter invocation. MongoDB also
 records physical command deltas. Adapter invocations can split by namespace,
 action and byte limits; their counts are distinct from database wire commands.
@@ -112,6 +115,9 @@ concurrency alone cannot prove a plateau. A plateau with low database CPU leaves
 maximum-capacity comparison unavailable. Reports still show observed throughput
 and latency at each matched concurrency. No performance ratio is a CI threshold.
 
+The lab records `weir_max_read_size_bytes`: the payload plus 4 KiB metadata
+headroom, rounded up to 4 KiB and capped at 2 MiB. This prevents reserving 2 MiB
+for every 1 KiB benchmark read; large-document integration still uses 2 MiB.
 Weir working-memory and process-admission budgets scale with backend concurrency
 and ingress sessions. Reports record declared budgets and observed usage.
 `-store-working-memory-mib` allows explicit workspace experiments.

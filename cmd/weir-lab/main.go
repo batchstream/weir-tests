@@ -245,8 +245,10 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	for backend, memory := range workspace {
 		provenance["weir_"+backend+"_working_memory_mib"] = fmt.Sprint(memory)
 	}
+	maxReadBytes := min(2<<20, ((opts.payload+4096+4095)/4096)*4096)
+	provenance["weir_max_read_size_bytes"] = fmt.Sprint(maxReadBytes)
 	provenance["weir_memory_budget"] = fmt.Sprintf("%dMiB (declared process admission budget; not an OS reservation)", memoryMiB)
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: opts.backendBatchLimit, BackendTimeout: businessTimeout, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: opts.backendBatchLimit, MaxReadSizeBytes: maxReadBytes, BackendTimeout: businessTimeout, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
 		return err
@@ -303,8 +305,8 @@ func fixtureMemoryBudget(opts labOptions, backends []string, workers int) (map[s
 	workspace := make(map[string]int, len(backends))
 	// The pinned adapters bound one 2MiB-read batch by at most 41MiB for
 	// MongoDB (native reply, guard and scratch) and 96MiB for Search.
-	// Add ingress envelopes and 1GiB for Store input/results and other framing.
-	memoryMiB := max(64, opts.concurrency)*96 + 1024
+	// Streaming ingress uses 32MiB per admitted stream. Add 1GiB for Store input/results and other framing.
+	memoryMiB := max(64, opts.concurrency)*32 + 1024
 	for _, backend := range backends {
 		perBatchMiB := 41
 		if opts.luaMutations {

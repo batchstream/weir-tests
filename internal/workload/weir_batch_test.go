@@ -2,6 +2,7 @@ package workload
 
 import (
 	"context"
+	"io"
 	"net"
 	"sync/atomic"
 	"testing"
@@ -19,30 +20,82 @@ import (
 
 type acknowledgementPeer struct {
 	pb.UnimplementedStoreServiceServer
-	mode    string
-	calls   atomic.Int64
-	applied atomic.Int64
+	mode     string
+	calls    atomic.Int64
+	applied  atomic.Int64
+	document []byte
 }
 
-func (p *acknowledgementPeer) Mutate(ctx context.Context, request *pb.MutateBatchRequest) (*pb.MutateBatchResponse, error) {
+func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.ExecuteRequest, pb.ExecuteResponse]) error {
 	p.calls.Add(1)
-	// Simulate durable writes before acknowledgement is lost. Neither the SDK
-	// nor the benchmark adapter can infer these outcomes from an RPC error.
-	p.applied.Add(int64(len(request.Requests)))
-	switch p.mode {
-	case "lost_after_apply":
-		return nil, status.Error(codes.Unavailable, "entire batch acknowledgement lost")
-	case "deadline_after_apply", "canceled_after_apply":
-		<-ctx.Done()
-		return nil, status.FromContextError(ctx.Err()).Err()
+	for {
+		request, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if request.Command.GetRead() != nil {
+			document := &pb.Document{MediaType: "application/json", Data: p.document}
+			payload := &pb.ReadResult_Document{Document: document}
+			result := &pb.ReadResult{Result: payload}
+			value := &pb.Event_ReadResult{ReadResult: result}
+			event := &pb.Event{Value: value}
+			response := &pb.ExecuteResponse{Index: request.Index, Event: event}
+			if err := stream.Send(response); err != nil {
+				return err
+			}
+			return status.Error(codes.Unavailable, "later read result lost")
+		}
+		mutations := request.Command.GetMutate().Requests
+		// Durable writes can precede lost acknowledgements; never infer replay safety.
+		p.applied.Add(int64(len(mutations)))
+		switch p.mode {
+		case "lost_after_apply":
+			return status.Error(codes.Unavailable, "window acknowledgement lost")
+		case "deadline_after_apply", "canceled_after_apply":
+			<-stream.Context().Done()
+			return status.FromContextError(stream.Context().Err()).Err()
+		}
+		for index := range mutations {
+			var failure *pb.Failure
+			if p.mode == "applied_failure" {
+				failure = protocol.Fail(pb.FailureCode_UNAVAILABLE, "write applied but replica confirmation failed")
+			}
+			result := protocol.Mutation(pb.MutationOutcome_APPLIED, failure)
+			payload := &pb.Event_MutationResult{MutationResult: result}
+			event := &pb.Event{Value: payload}
+			response := &pb.ExecuteResponse{Index: request.Index + uint64(index), Event: event}
+			if err := stream.Send(response); err != nil {
+				return err
+			}
+			if p.mode == "partial_after_apply" {
+				return status.Error(codes.Unavailable, "later acknowledgement lost")
+			}
+		}
 	}
-	results := make([]*pb.MutationResult, len(request.Requests))
-	for index := range results {
-		failure := protocol.Fail(pb.FailureCode_UNAVAILABLE, "write applied but replica confirmation failed")
-		results[index] = protocol.Mutation(pb.MutationOutcome_APPLIED, failure)
+}
+
+func TestSDKStreamReadPreservesConfirmedPrefixThroughLaterFailure(t *testing.T) {
+	dataset := testDataset(t, "search")
+	first := Operation{Record: 0}
+	second := Operation{Record: 1}
+	peer := &acknowledgementPeer{document: dataset.Document(first)}
+	client := mutationTransport(t, peer)
+	firstRequest := &weir.ReadRequest{Resource: dataset.Resource(first.Record)}
+	secondRequest := &weir.ReadRequest{Resource: dataset.Resource(second.Record)}
+	options := weir.ReadOptions{StoreName: "search", Requests: []*weir.ReadRequest{firstRequest, secondRequest}}
+	replies, err := weir.Read(t.Context(), client, options)
+	if err == nil || len(replies) != 2 || replies[0] == nil || replies[1] != nil || peer.calls.Load() != 1 {
+		t.Fatal("unexpected partial read evidence", replies, err)
 	}
-	response := &pb.MutateBatchResponse{Results: results}
-	return response, nil
+	path := &weirPath{dataset: dataset}
+	confirmed := path.readOutcome(replies[0], first, err)
+	unknown := path.readOutcome(replies[1], second, err)
+	if confirmed.Status != Success || confirmed.ResponseBytes == 0 || unknown.Status != Failed || unknown.ResponseBytes != 0 {
+		t.Fatal("later stream error changed confirmed read accounting", confirmed, unknown)
+	}
 }
 
 func mutationTransport(t *testing.T, peer *acknowledgementPeer) pb.StoreServiceClient {
@@ -66,8 +119,8 @@ func mutationTransport(t *testing.T, peer *acknowledgementPeer) pb.StoreServiceC
 	return pb.NewStoreServiceClient(connection)
 }
 
-func TestSDKUnaryMutationAcknowledgementAndNoReplay(t *testing.T) {
-	for _, mode := range []string{"applied_failure", "lost_after_apply", "deadline_after_apply", "canceled_after_apply"} {
+func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
+	for _, mode := range []string{"applied_failure", "partial_after_apply", "lost_after_apply", "deadline_after_apply", "canceled_after_apply"} {
 		t.Run(mode, func(t *testing.T) {
 			peer := &acknowledgementPeer{mode: mode}
 			client := mutationTransport(t, peer)
@@ -92,21 +145,25 @@ func TestSDKUnaryMutationAcknowledgementAndNoReplay(t *testing.T) {
 			if mode == "applied_failure" && rpcErr != nil || mode != "applied_failure" && rpcErr == nil {
 				t.Fatal("unexpected final status", rpcErr)
 			}
-			for _, reply := range replies {
+			for index, reply := range replies {
 				outcome := mutationOutcome(reply, len(document.Data), rpcErr)
 				if mode == "applied_failure" {
 					if outcome.Status != Failed || !outcome.Applied || outcome.RequestBytes != uint64(len(document.Data)) || outcome.Error == "" {
 						t.Fatal("confirmed APPLIED business failure lost evidence", reply, outcome)
 					}
+				} else if mode == "partial_after_apply" && index == 0 {
+					if outcome.Status != Success || !outcome.Applied || outcome.RequestBytes != uint64(len(document.Data)) || outcome.Error != "" {
+						t.Fatal("later stream failure revoked a successful acknowledgement", reply, outcome)
+					}
 				} else if reply != nil || outcome.Status != Indeterminate || outcome.Applied || outcome.RequestBytes != 0 || outcome.Error == "" {
-					t.Fatal("failed unary RPC invented a partial acknowledgement", reply, outcome)
+					t.Fatal("failed stream invented a partial acknowledgement", reply, outcome)
 				}
 			}
 		})
 	}
 }
 
-func TestSDKUnaryMutationPreflightSendsNoBatch(t *testing.T) {
+func TestSDKStreamMutationPreflightSendsNoBatch(t *testing.T) {
 	peer := &acknowledgementPeer{mode: "applied_failure"}
 	client := mutationTransport(t, peer)
 	document := &weir.Document{MediaType: "application/json", Data: []byte(`{"n":1}`)}

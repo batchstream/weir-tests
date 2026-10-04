@@ -93,7 +93,7 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 		targets[index%len(targets)].assertMissing(t, ctx, fmt.Sprintf("late_invalid_%03d", index))
 	}
 	testDuplicateURIOrder(t, ctx, client, backend)
-	t.Log("48 independent unary SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified")
+	t.Log("48 independent streamed SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified")
 }
 
 func provisionBatchTarget(t *testing.T, ctx context.Context, base *backendData) *backendData {
@@ -205,10 +205,23 @@ func (s *system) testServerPreflight(t *testing.T, backend *backendData) {
 		requests[index] = request
 	}
 	requests[count-1].Action = nil
-	request := &pb.MutateBatchRequest{StoreName: backend.name, Requests: requests}
+	batch := &pb.MutationBatch{Requests: requests}
+	operation := &pb.Command_Mutate{Mutate: batch}
+	command := &pb.Command{Operation: operation}
+	request := &pb.ExecuteRequest{StoreName: backend.name, Index: 1, Command: command}
 	wire := transport(t, s.cluster.Nodes[0].Application)
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	response, err := wire.Mutate(rpc, request)
+	stream, err := wire.Execute(rpc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Send(request); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.CloseSend(); err != nil {
+		t.Fatal(err)
+	}
+	response, err := stream.Recv()
 	cancel()
 	if status.Code(err) != codes.InvalidArgument || response != nil {
 		t.Fatalf("server late-invalid preflight: response=%v err=%v", response, err)
@@ -241,8 +254,8 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	for _, result := range results {
 		assertApplied(t, result, nil)
 	}
-	evidence := unaryBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "mutate", Records: count, SingleInvocation: true}
-	assertUnaryBatchMetrics(t, evidence)
+	evidence := streamBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "mutate", Records: count}
+	assertStreamBatchMetrics(t, evidence)
 	for index := range mutations {
 		backend.assertPersisted(t, s.ctx, fmt.Sprintf("large_distinct_%03d", index), int64(10000+index))
 	}
@@ -258,6 +271,6 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 		backend.assertReadResult(t, result, nil, int64(10000+count-1-index))
 	}
 	evidence.Before, evidence.After, evidence.Method = before, s.nodeMetrics(t), "read"
-	assertUnaryBatchMetrics(t, evidence)
-	t.Log("513 distinct native documents Put and Read in one physical adapter batch per unary call; every value independently persisted and reverse-order results verified")
+	assertStreamBatchMetrics(t, evidence)
+	t.Log("513 distinct native documents Put and Read in bounded adapter windows on one streamed call; every value independently persisted and reverse-order results verified")
 }
