@@ -221,6 +221,56 @@ func (s *system) testProjectionAndFailures(t *testing.T, backend *backendData) {
 		t.Fatalf("exclude projection: %v %v", end, err)
 	}
 	s.testMissingTargets(t, target)
+	s.testAdapterOwnedEnvelopes(t, target)
+}
+
+func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
+	t.Helper()
+	payload := &weir.Document{ContentType: "application/vnd.example.operation", Data: []byte("opaque request")}
+	native := &weir.NativeRequest{Resource: target.collection, Request: payload}
+	options := weir.NativeOptions{StoreName: target.name, Request: native, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
+	result, err := s.client.Native(s.ctx, options)
+	if err != nil || result == nil || result.Response != nil || result.Completion != weir.NativeNotStarted || result.Failure.GetCode() != weir.FailureUnsupported {
+		t.Fatalf("unknown format must reach adapter classification: %v %v", result, err)
+	}
+
+	projection := &weir.Projection{Mode: weir.ProjectionInclude, Fields: []string{"$literal"}}
+	request := &weir.ScanRequest{Resource: target.collection, Projection: projection, PageSize: 1}
+	scan := weir.ScanOptions{StoreName: target.name, Request: request, Consume: func(context.Context, *weir.Document) error { return nil }}
+	if target.name == "mongo" {
+		end, err := s.client.Scan(s.ctx, scan)
+		if err != nil || end.GetDocumentCount() != 0 || end.GetFailure().GetCode() != weir.FailureUnsupported {
+			t.Fatalf("Mongo field rule must be enforced by adapter: %v %v", end, err)
+		}
+		return
+	}
+
+	literal := target.provisionTarget(t, s.ctx, "literal.fields")
+	document := &weir.Document{ContentType: "application/json", Data: []byte(`{"$literal":42,"n":1}`)}
+	write := &weir.WriteRequest{Resource: literal.resource("literal"), Document: document}
+	writeOptions := weir.WriteOptions{StoreName: literal.name, Request: write}
+	mutation, err := s.client.Create(s.ctx, writeOptions)
+	assertApplied(t, mutation, err)
+	refresh := httpRequest{method: http.MethodPost, path: "/" + literal.collection + "/_refresh"}
+	code, body := literal.httpDo(t, s.ctx, refresh)
+	if code != http.StatusOK {
+		t.Fatalf("refresh literal field: %d %s", code, body)
+	}
+	request.Resource = literal.collection
+	scan.Consume = func(_ context.Context, value *weir.Document) error {
+		var fields map[string]int
+		if err := json.Unmarshal(value.Data, &fields); err != nil {
+			return err
+		}
+		if len(fields) != 1 || fields["$literal"] != 42 {
+			return fmt.Errorf("literal field projection mismatch: %s", value.Data)
+		}
+		return nil
+	}
+	end, err := s.client.Scan(s.ctx, scan)
+	if err != nil || end.GetFailure() != nil || end.GetDocumentCount() != 1 {
+		t.Fatalf("store-neutral literal field: %v %v", end, err)
+	}
 }
 
 func (s *system) testMissingTargets(t *testing.T, target *backendData) {
@@ -258,9 +308,9 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 	nativeMissing := &weir.NativeRequest{Resource: missing.collection}
 	if target.name == "mongo" {
 		command := bson.D{{Key: "count", Value: target.mongo.Name() + ".never_created"}}
-		nativeMissing.MongoDBCommand = bsonDocument(t, command).Data
+		nativeMissing.Request = bsonDocument(t, command)
 	} else {
-		nativeMissing.SearchHTTP = &weir.SearchHTTPRequest{Method: http.MethodGet, Path: "/_doc/absent"}
+		nativeMissing = nativeHTTPGet(t, missing.collection, "/_doc/absent")
 	}
 	nativeMissingOptions := weir.NativeOptions{StoreName: target.name, Request: nativeMissing, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
 	missingResult, err := s.client.Native(s.ctx, nativeMissingOptions)
@@ -268,12 +318,15 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 		t.Fatalf("missing Native target: %v %v", missingResult, err)
 	}
 	if target.name == "search" {
-		httpRequest := &weir.SearchHTTPRequest{Method: http.MethodGet, Path: "/_doc/absent"}
-		native := &weir.NativeRequest{Resource: target.collection, SearchHTTP: httpRequest}
+		native := nativeHTTPGet(t, target.collection, "/_doc/absent")
 		nativeOpts := weir.NativeOptions{StoreName: target.name, Request: native, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
 		result, err := s.client.Native(s.ctx, nativeOpts)
-		if err != nil || result == nil || result.Completion != weir.NativeResponseComplete || result.Failure != nil || result.Response.GetHttp().GetStatusCode() != http.StatusNotFound {
+		if err != nil || result == nil || result.Completion != weir.NativeResponseComplete || result.Failure != nil {
 			t.Fatalf("complete HTTP 404 native response: %v %v", result, err)
+		}
+		response, err := weir.ParseHTTPNativeResponse(result.Response)
+		if err != nil || response.StatusCode != http.StatusNotFound {
+			t.Fatalf("HTTP 404 metadata: %v %v", response, err)
 		}
 	}
 }

@@ -216,9 +216,9 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 		parts := strings.Split(backend.collection, "/")
 		filter := bson.D{{Key: "_id", Value: "primary"}}
 		command := bson.D{{Key: "count", Value: parts[len(parts)-1]}, {Key: "query", Value: filter}}
-		request.MongoDBCommand = bsonDocument(t, command).Data
+		request.Request = bsonDocument(t, command)
 	} else {
-		request.SearchHTTP = &weir.SearchHTTPRequest{Method: http.MethodGet, Path: "/_doc/primary"}
+		request = nativeHTTPGet(t, backend.collection, "/_doc/primary")
 	}
 	var head *weir.NativeResponse
 	var body []byte
@@ -247,7 +247,10 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 		}
 		return
 	}
-	metadata := head.GetHttp()
+	metadata, err := weir.ParseHTTPNativeResponse(head)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var response struct {
 		Found  bool `json:"found"`
 		Source struct {
@@ -257,4 +260,17 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 	if metadata == nil || metadata.StatusCode != http.StatusOK || json.Unmarshal(body, &response) != nil || !response.Found || response.Source.N != 5 {
 		t.Fatalf("Native Search response: metadata=%v body=%s err=%v", metadata, body, err)
 	}
+}
+
+func nativeHTTPGet(t *testing.T, resource, path string) *weir.NativeRequest {
+	t.Helper()
+	request, err := http.NewRequest(http.MethodGet, "http://weir.invalid"+path, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	native, err := weir.NewHTTPNativeRequest(resource, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return native
 }
