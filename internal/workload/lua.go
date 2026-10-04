@@ -19,11 +19,8 @@ import (
 )
 
 func (d *Dataset) luaSource() string {
-	constructor := "i64"
-	if d.Config.Backend == "mongo" {
-		constructor = "i32"
-	}
-	return fmt.Sprintf(`return weir.replace(weir.set(current, "revision", weir.sub(weir.%s("1"), weir.get(current, "revision"))))`, constructor)
+	// The fixture stores BSON int32 and JSON 0/1, both read as lua.v1 int32.
+	return `return weir.replace(weir.set(current, "revision", weir.sub(weir.i32("1"), weir.get(current, "revision"))))`
 }
 
 // The native path performs the same single-record read-modify-write, without
