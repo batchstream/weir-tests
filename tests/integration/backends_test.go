@@ -103,7 +103,7 @@ func (b *backendData) resource(id string) string {
 
 func (b *backendData) write(t *testing.T, id string, n int64) *weir.WriteRequest {
 	t.Helper()
-	document := &weir.Document{MediaType: "application/json", Data: []byte(fmt.Sprintf("{\"n\":%d}", n))}
+	document := &weir.Document{ContentType: "application/json", Data: []byte(fmt.Sprintf("{\"n\":%d}", n))}
 	if b.name == "mongo" {
 		value := bson.D{{Key: "_id", Value: id}, {Key: "n", Value: n}}
 		document = bsonDocument(t, value)
@@ -115,14 +115,14 @@ func (b *backendData) write(t *testing.T, id string, n int64) *weir.WriteRequest
 func (b *backendData) transform(t *testing.T, id string) *weir.AtomicTransformRequest {
 	t.Helper()
 	expression := &weir.Document{
-		MediaType: "application/vnd.weir.search-update.v1+json",
-		Data:      []byte("{\"doc\":{\"n\":4}}"),
+		ContentType: "application/vnd.weir.search-update.v1+json",
+		Data:        []byte("{\"doc\":{\"n\":4}}"),
 	}
 	if b.name == "mongo" {
 		fields := bson.D{{Key: "n", Value: int64(1)}}
 		update := bson.D{{Key: "$inc", Value: fields}}
 		expression = bsonDocument(t, update)
-		expression.MediaType = "application/vnd.weir.mongodb-update.v1+bson"
+		expression.ContentType = "application/vnd.weir.mongodb-update.v1+bson"
 	}
 	request := &weir.AtomicTransformRequest{Resource: b.resource(id), BackendExpression: expression}
 	return request
@@ -134,7 +134,7 @@ func bsonDocument(t *testing.T, value bson.D) *weir.Document {
 	if err != nil {
 		t.Fatal(err)
 	}
-	document := &weir.Document{MediaType: "application/bson", Data: data}
+	document := &weir.Document{ContentType: "application/bson", Data: data}
 	return document
 }
 
@@ -143,8 +143,8 @@ func (b *backendData) number(document *weir.Document) (int64, error) {
 		return 0, errors.New("missing document")
 	}
 	if b.name == "mongo" {
-		if document.GetMediaType() != "application/bson" {
-			return 0, fmt.Errorf("MongoDB document media type %q", document.GetMediaType())
+		if document.GetContentType() != "application/bson" {
+			return 0, fmt.Errorf("MongoDB document content type %q", document.GetContentType())
 		}
 		raw := bson.Raw(document.GetData())
 		if err := raw.Validate(); err != nil {
@@ -159,8 +159,8 @@ func (b *backendData) number(document *weir.Document) (int64, error) {
 	var value struct {
 		N int64 `json:"n"`
 	}
-	if document.GetMediaType() != "application/json" {
-		return 0, fmt.Errorf("Search document media type %q", document.GetMediaType())
+	if document.GetContentType() != "application/json" {
+		return 0, fmt.Errorf("Search document content type %q", document.GetContentType())
 	}
 	if err := json.Unmarshal(document.GetData(), &value); err != nil {
 		return 0, err

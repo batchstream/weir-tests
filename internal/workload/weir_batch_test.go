@@ -20,10 +20,11 @@ import (
 
 type acknowledgementPeer struct {
 	pb.UnimplementedStoreServiceServer
-	mode     string
-	calls    atomic.Int64
-	applied  atomic.Int64
-	document []byte
+	mode          string
+	calls         atomic.Int64
+	applied       atomic.Int64
+	document      []byte
+	firstMutation chan struct{}
 }
 
 func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.ExecuteRequest, pb.ExecuteResponse]) error {
@@ -37,7 +38,7 @@ func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.Execute
 			return err
 		}
 		if request.Command.GetRead() != nil {
-			document := &pb.Document{MediaType: "application/json", Data: p.document}
+			document := &pb.Document{ContentType: "application/json", Data: p.document}
 			payload := &pb.ReadResult_Document{Document: document}
 			result := &pb.ReadResult{Result: payload}
 			value := &pb.Event_ReadResult{ReadResult: result}
@@ -48,31 +49,33 @@ func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.Execute
 			}
 			return status.Error(codes.Unavailable, "later read result lost")
 		}
-		mutations := request.Command.GetMutate().Requests
+		if request.Command.GetMutate() == nil {
+			return status.Error(codes.InvalidArgument, "mutation required")
+		}
 		// Durable writes can precede lost acknowledgements; never infer replay safety.
-		p.applied.Add(int64(len(mutations)))
+		if p.applied.Add(1) == 1 && p.firstMutation != nil {
+			close(p.firstMutation)
+		}
 		switch p.mode {
 		case "lost_after_apply":
-			return status.Error(codes.Unavailable, "window acknowledgement lost")
+			return status.Error(codes.Unavailable, "record acknowledgement lost")
 		case "deadline_after_apply", "canceled_after_apply":
 			<-stream.Context().Done()
 			return status.FromContextError(stream.Context().Err()).Err()
 		}
-		for index := range mutations {
-			var failure *pb.Failure
-			if p.mode == "applied_failure" {
-				failure = protocol.Fail(pb.FailureCode_UNAVAILABLE, "write applied but replica confirmation failed")
-			}
-			result := protocol.Mutation(pb.MutationOutcome_APPLIED, failure)
-			payload := &pb.Event_MutationResult{MutationResult: result}
-			event := &pb.Event{Value: payload}
-			response := &pb.ExecuteResponse{Index: request.Index + uint64(index), Event: event}
-			if err := stream.Send(response); err != nil {
-				return err
-			}
-			if p.mode == "partial_after_apply" {
-				return status.Error(codes.Unavailable, "later acknowledgement lost")
-			}
+		var failure *pb.Failure
+		if p.mode == "applied_failure" {
+			failure = protocol.Fail(pb.FailureCode_UNAVAILABLE, "write applied but replica confirmation failed")
+		}
+		result := protocol.Mutation(pb.MutationOutcome_APPLIED, failure)
+		payload := &pb.Event_MutationResult{MutationResult: result}
+		event := &pb.Event{Value: payload}
+		response := &pb.ExecuteResponse{Index: request.Index, Event: event}
+		if err := stream.Send(response); err != nil {
+			return err
+		}
+		if p.mode == "partial_after_apply" {
+			return status.Error(codes.Unavailable, "later acknowledgement lost")
 		}
 	}
 }
@@ -123,8 +126,11 @@ func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
 	for _, mode := range []string{"applied_failure", "partial_after_apply", "lost_after_apply", "deadline_after_apply", "canceled_after_apply"} {
 		t.Run(mode, func(t *testing.T) {
 			peer := &acknowledgementPeer{mode: mode}
+			if mode == "canceled_after_apply" {
+				peer.firstMutation = make(chan struct{})
+			}
 			client := mutationTransport(t, peer)
-			document := &weir.Document{MediaType: "application/json", Data: []byte(`{"n":1}`)}
+			document := &weir.Document{ContentType: "application/json", Data: []byte(`{"n":1}`)}
 			first := &weir.MutateRequest{Resource: "records/s:first", Action: weir.MutationPut, Document: document}
 			second := &weir.MutateRequest{Resource: "records/s:second", Action: weir.MutationPut, Document: document}
 			opts := weir.MutateOptions{StoreName: "search", Requests: []*weir.MutateRequest{first, second}}
@@ -132,15 +138,20 @@ func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
 			defer cancel()
 			if mode == "canceled_after_apply" {
 				go func() {
-					for peer.applied.Load() == 0 && ctx.Err() == nil {
-						time.Sleep(time.Millisecond)
+					select {
+					case <-peer.firstMutation:
+						cancel()
+					case <-ctx.Done():
 					}
-					cancel()
 				}()
 			}
 			replies, rpcErr := weir.Mutate(ctx, client, opts)
-			if len(replies) != 2 || peer.calls.Load() != 1 || peer.applied.Load() != 2 {
-				t.Fatalf("whole batch lost accounting or replayed: replies=%v calls=%d applied=%d err=%v", replies, peer.calls.Load(), peer.applied.Load(), rpcErr)
+			applied := int64(1)
+			if mode == "applied_failure" {
+				applied = 2
+			}
+			if len(replies) != 2 || peer.calls.Load() != 1 || peer.applied.Load() != applied {
+				t.Fatalf("stream lost accounting or replayed: replies=%v calls=%d applied=%d err=%v", replies, peer.calls.Load(), peer.applied.Load(), rpcErr)
 			}
 			if mode == "applied_failure" && rpcErr != nil || mode != "applied_failure" && rpcErr == nil {
 				t.Fatal("unexpected final status", rpcErr)
@@ -163,10 +174,10 @@ func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
 	}
 }
 
-func TestSDKStreamMutationPreflightSendsNoBatch(t *testing.T) {
+func TestSDKStreamMutationPreflightSendsNoRecord(t *testing.T) {
 	peer := &acknowledgementPeer{mode: "applied_failure"}
 	client := mutationTransport(t, peer)
-	document := &weir.Document{MediaType: "application/json", Data: []byte(`{"n":1}`)}
+	document := &weir.Document{ContentType: "application/json", Data: []byte(`{"n":1}`)}
 	first := &weir.MutateRequest{Resource: "records/s:first", Action: weir.MutationPut, Document: document}
 	invalid := &weir.MutateRequest{Resource: "records/s:second", Action: 0, Document: document}
 	opts := weir.MutateOptions{StoreName: "search", Requests: []*weir.MutateRequest{first, invalid}}

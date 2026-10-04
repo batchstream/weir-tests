@@ -214,8 +214,8 @@ func (b *backendData) scanID(document *weir.Document) (string, error) {
 		return "", errors.New("Scan omitted document")
 	}
 	if b.name == "mongo" {
-		if document.GetMediaType() != "application/bson" {
-			return "", errors.New("MongoDB Scan changed native media type")
+		if document.GetContentType() != "application/bson" {
+			return "", errors.New("MongoDB Scan changed native content type")
 		}
 		raw := bson.Raw(document.GetData())
 		if err := raw.Validate(); err != nil {
@@ -230,7 +230,7 @@ func (b *backendData) scanID(document *weir.Document) (string, error) {
 	var hit struct {
 		ID string `json:"_id"`
 	}
-	if document.GetMediaType() != "application/json" || json.Unmarshal(document.GetData(), &hit) != nil || hit.ID == "" {
+	if document.GetContentType() != "application/json" || json.Unmarshal(document.GetData(), &hit) != nil || hit.ID == "" {
 		return "", errors.New("Search Scan omitted native hit _id")
 	}
 	return hit.ID, nil
@@ -244,8 +244,9 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 		filter := bson.D{{Key: "_id", Value: "primary"}}
 		command := bson.D{{Key: "count", Value: parts[len(parts)-1]}, {Key: "query", Value: filter}}
 		request.Body = bsonDocument(t, command).Data
-		request.BodyMediaType = "application/bson"
-		request.Descriptor = &weir.Document{MediaType: "application/vnd.weir.mongodb-command.v1+protobuf"}
+		request.BodyContentType = "application/bson"
+		descriptor := &weir.Document{ContentType: weir.MongoCommandContentType}
+		request.Descriptor = descriptor
 	} else {
 		descriptor := &weir.SearchHTTPRequest{Method: http.MethodGet, Path: "/_doc/primary"}
 		encoded, err := weir.SearchHTTPDescriptor(descriptor)

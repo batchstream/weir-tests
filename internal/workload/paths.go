@@ -163,7 +163,7 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 	direct.baseURL = strings.TrimSuffix(address.String(), "/")
 	status, body, err := direct.request(ctx, http.MethodGet, "/", nil)
 	if err != nil || status != http.StatusOK {
-		_ = direct.close()
+		_ = direct.Close()
 		return nil, errors.New("direct Search version query failed")
 	}
 	var root struct {
@@ -172,7 +172,7 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 		} `json:"version"`
 	}
 	if err := json.Unmarshal(body, &root); err != nil || root.Version.Number == "" {
-		_ = direct.close()
+		_ = direct.Close()
 		return nil, errors.New("invalid Search version evidence")
 	}
 	direct.info.Protocol = "Elasticsearch HTTP/1.1 JSON"
@@ -322,10 +322,10 @@ func (p *Paths) Close() error {
 	if p.client != nil {
 		sdkErr = p.client.Close()
 	}
-	return errors.Join(sdkErr, p.direct.close())
+	return errors.Join(sdkErr, p.direct.Close())
 }
 
-func (p *directPath) close() error {
+func (p *directPath) Close() error {
 	if p.search != nil {
 		p.search.CloseIdleConnections()
 	}
@@ -488,7 +488,7 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 			result, err := p.client.AtomicTransform(ctx, opts)
 			return mutationOutcome(result, len(program.Source), err)
 		}
-		document := &weir.Document{MediaType: p.dataset.MediaType(), Data: p.dataset.Document(operation)}
+		document := &weir.Document{ContentType: p.dataset.ContentType(), Data: p.dataset.Document(operation)}
 		request := &weir.WriteRequest{Resource: p.dataset.Resource(operation.Record), Document: document}
 		opts := weir.WriteOptions{StoreName: p.dataset.Config.StoreName, Request: request}
 		result, err := p.client.Put(ctx, opts)
@@ -507,8 +507,8 @@ func (p *weirPath) readOutcome(result *weir.ReadResult, operation Operation, rpc
 	if result == nil || result.Document == nil || result.Failure != nil || result.Missing {
 		return failed(errors.New("Weir Read lacks a successful document"), false)
 	}
-	if result.Document.MediaType != p.dataset.MediaType() {
-		return failed(errors.New("Weir document media type mismatch"), false)
+	if result.Document.ContentType != p.dataset.ContentType() {
+		return failed(errors.New("Weir document content type mismatch"), false)
 	}
 	if err := p.dataset.Validate(result.Document.Data, operation); err != nil {
 		return failed(err, false)

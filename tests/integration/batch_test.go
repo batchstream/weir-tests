@@ -72,8 +72,7 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 		}
 		targets[input%len(targets)].assertReadResult(t, result, nil, int64(100+input))
 	}
-	// Invalid input at the end must be rejected before any earlier mutation
-	// reaches either target. The SDK preflight and server preflight are tested separately.
+	// The slice API validates every item before it sends the first record.
 	rejected := make([]*weir.MutateRequest, count)
 	for index := range count {
 		target := targets[index%len(targets)]
@@ -87,13 +86,13 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	invalidResults, err := client.Mutate(rpc, invalidOptions)
 	cancel()
 	if err == nil || invalidResults != nil {
-		t.Fatalf("invalid whole batch accepted: length=%d error=%v", len(invalidResults), err)
+		t.Fatalf("invalid request slice accepted: length=%d error=%v", len(invalidResults), err)
 	}
 	for index := range count {
 		targets[index%len(targets)].assertMissing(t, ctx, fmt.Sprintf("late_invalid_%03d", index))
 	}
 	testDuplicateURIOrder(t, ctx, client, backend)
-	t.Log("48 independent streamed SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified")
+	t.Log("48 streamed SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI order, and slice preflight verified")
 }
 
 func provisionBatchTarget(t *testing.T, ctx context.Context, base *backendData) *backendData {
@@ -159,8 +158,7 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 	first := &weir.ReadRequest{Resource: backend.resource(id)}
 	missing := &weir.ReadRequest{Resource: backend.resource("ordered_missing")}
 	primary := &weir.ReadRequest{Resource: backend.resource("primary")}
-	// Exceeds the removed 128-item cap, with duplicates and missing records
-	// interleaved. These are small documents inside the encoded byte bound.
+	// Repeated URIs and missing records cross multiple server aggregation groups.
 	reads := make([]*weir.ReadRequest, 513)
 	for index := range reads {
 		switch index % 3 {
@@ -195,39 +193,54 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 
 func (s *system) testServerPreflight(t *testing.T, backend *backendData) {
 	t.Helper()
-	const count = 17
-	requests := make([]*pb.MutateRequest, count)
-	for index := range requests {
-		write := backend.write(t, fmt.Sprintf("wire_invalid_%03d", index), int64(index))
-		document := &pb.Document{MediaType: write.Document.MediaType, Data: write.Document.Data}
-		action := &pb.MutateRequest_Put{Put: document}
-		request := &pb.MutateRequest{Resource: write.Resource, Action: action}
-		requests[index] = request
-	}
-	requests[count-1].Action = nil
-	batch := &pb.MutationBatch{Requests: requests}
-	operation := &pb.Command_Mutate{Mutate: batch}
-	command := &pb.Command{Operation: operation}
-	request := &pb.ExecuteRequest{StoreName: backend.name, Index: 1, Command: command}
-	wire := transport(t, s.cluster.Nodes[0].Application)
-	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	stream, err := wire.Execute(rpc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := stream.Send(request); err != nil {
-		t.Fatal(err)
-	}
-	if err := stream.CloseSend(); err != nil {
-		t.Fatal(err)
-	}
-	response, err := stream.Recv()
-	cancel()
-	if status.Code(err) != codes.InvalidArgument || response != nil {
-		t.Fatalf("server late-invalid preflight: response=%v err=%v", response, err)
-	}
-	for index := range requests {
-		backend.assertMissing(t, s.ctx, fmt.Sprintf("wire_invalid_%03d", index))
+	for _, phase := range []string{"first_record", "after_confirmed_record"} {
+		t.Run(backend.name+"/invalid_"+phase, func(t *testing.T) {
+			wire := transport(t, s.cluster.Nodes[0].Application)
+			rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
+			defer cancel()
+			stream, err := wire.Execute(rpc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			index := uint64(1)
+			if phase == "after_confirmed_record" {
+				write := backend.write(t, "wire_confirmed_prefix", 7)
+				document := &pb.Document{ContentType: write.Document.ContentType, Data: write.Document.Data}
+				action := &pb.MutateRequest_Put{Put: document}
+				mutation := &pb.MutateRequest{Resource: write.Resource, Action: action}
+				operation := &pb.Command_Mutate{Mutate: mutation}
+				command := &pb.Command{Operation: operation}
+				request := &pb.ExecuteRequest{StoreName: backend.name, Index: index, Command: command}
+				if err := stream.Send(request); err != nil {
+					t.Fatal(err)
+				}
+				response, err := stream.Recv()
+				result := response.GetEvent().GetMutationResult()
+				if err != nil || response.GetIndex() != index || result.GetOutcome() != pb.MutationOutcome_APPLIED || result.GetFailure() != nil {
+					t.Fatal("valid prefix lacks successful acknowledgement", response, err)
+				}
+				index++
+			}
+			id := "wire_invalid_" + phase
+			mutation := &pb.MutateRequest{Resource: backend.resource(id)}
+			operation := &pb.Command_Mutate{Mutate: mutation}
+			command := &pb.Command{Operation: operation}
+			request := &pb.ExecuteRequest{StoreName: backend.name, Index: index, Command: command}
+			if err := stream.Send(request); err != nil {
+				t.Fatal(err)
+			}
+			if err := stream.CloseSend(); err != nil {
+				t.Fatal(err)
+			}
+			response, err := stream.Recv()
+			if status.Code(err) != codes.InvalidArgument || response != nil {
+				t.Fatalf("invalid record was accepted: response=%v err=%v", response, err)
+			}
+			backend.assertMissing(t, s.ctx, id)
+			if phase == "after_confirmed_record" {
+				backend.assertPersisted(t, s.ctx, "wire_confirmed_prefix", 7)
+			}
+		})
 	}
 }
 
@@ -272,5 +285,5 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	}
 	evidence.Before, evidence.After, evidence.Method = before, s.nodeMetrics(t), "read"
 	assertStreamBatchMetrics(t, evidence)
-	t.Log("513 distinct native documents Put and Read in bounded adapter windows on one streamed call; every value independently persisted and reverse-order results verified")
+	t.Log("513 distinct native documents Put and Read in aggregation groups on one streamed call; every value independently persisted and reverse-order results verified")
 }

@@ -27,7 +27,7 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 	if operations[0].Write {
 		requests := make([]*weir.MutateRequest, len(operations))
 		for index, operation := range operations {
-			document := &weir.Document{MediaType: p.dataset.MediaType(), Data: p.dataset.Document(operation)}
+			document := &weir.Document{ContentType: p.dataset.ContentType(), Data: p.dataset.Document(operation)}
 			request := &weir.MutateRequest{Resource: p.dataset.Resource(operation.Record), Action: weir.MutationPut, Document: document}
 			requests[index] = request
 		}

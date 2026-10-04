@@ -44,13 +44,18 @@ make integration
 The opt-in `integration` build tag starts MongoDB, Elasticsearch, two Store
 owners and a discovery node. Tagged tests require a prepared `WEIR_TEST_BINARY`.
 Coverage includes discovery through every node, direct owner connections, typed
-CRUD and Lua transformations, independent persistence checks, same-Store batches,
-slice preflight and per-frame validation, finite Scan continuation, Native response evidence,
+CRUD and Lua transformations, independent persistence checks, same-Store calls
+containing many records, slice preflight and per-record validation, finite Scan continuation, Native response evidence,
 cancellation, owner restart, directory convergence and persistent client recovery.
 Separate multi-process tests verify independent single-record callers.
 One-RPC reads deliver 64 MiB and 256 MiB across 1024 distinct documents while
 checking bounded result credits and sampled owner RSS. Interrupted streams retain
 confirmed record outcomes; unconfirmed mutations remain indeterminate.
+
+Each Execute request carries one record and its consecutive index. The client
+streams records as they are produced; server aggregation stays within the Store.
+Later invalid records stop the stream while preserving earlier acknowledged writes.
+Document and Native body formats use the public `ContentType` fields.
 
 Services bind to loopback and own exclusive namespaces. Cleanup verifies exact
 process and container ownership. Fixture logs, manifests and cleanup receipts

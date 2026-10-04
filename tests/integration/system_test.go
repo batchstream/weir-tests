@@ -162,8 +162,7 @@ func (s *system) testDiscovery(t *testing.T) {
 		s.testServerPreflight(t, backend)
 		s.testBatchOwnerRouting(t, backend)
 		read := &pb.ReadRequest{Resource: backend.resource("primary")}
-		batch := &pb.ReadBatch{Requests: []*pb.ReadRequest{read}}
-		operation := &pb.Command_Read{Read: batch}
+		operation := &pb.Command_Read{Read: read}
 		command := &pb.Command{Operation: operation}
 		request := &pb.ExecuteRequest{StoreName: backend.name, Index: 1, Command: command}
 		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
@@ -370,16 +369,16 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 		delta := right - left
 		if delta != 0 {
 			if index == len(evidence.Before)-1 || delta != float64(evidence.Records) {
-				t.Fatalf("whole batch relayed or split across owners: node=%d delta=%v", index, delta)
+				t.Fatalf("record stream relayed or split across owners: node=%d delta=%v", index, delta)
 			}
 			owners++
 			count, err := observe.Delta(before, after, "weir_store_batch_operations_count", storeLabels)
 			if err != nil || count < 1 {
-				t.Fatalf("window adapter invocations=%v error=%v", count, err)
+				t.Fatalf("aggregation invocations=%v error=%v", count, err)
 			}
 			operations, err := observe.Delta(before, after, "weir_store_batch_operations_sum", storeLabels)
 			if err != nil || operations != float64(evidence.Records) {
-				t.Fatalf("window adapter operations=%v error=%v", operations, err)
+				t.Fatalf("aggregated operations=%v error=%v", operations, err)
 			}
 		}
 		left, beforeFound = before.Sum("weir_rpc_completions_total", methodLabels)

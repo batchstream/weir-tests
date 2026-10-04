@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -184,10 +185,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		"topology":                     "native client and Weir on one host; dedicated database Docker containers with loopback ports",
 		"client_operation_timeout":     businessTimeout.String(),
 		"weir_backend_timeout":         businessTimeout.String(),
-		"weir_store_concurrency":       fmt.Sprint(opts.concurrency),
 		"weir_max_batch_operations":    fmt.Sprint(opts.backendBatchLimit),
-		"weir_memory_budget":           "8GiB (declared process admission budget; not an OS reservation)",
-		"weir_ingress_max_sessions":    "64",
 		"weir_ingress_max_connections": "64",
 		"host_cpus":                    fmt.Sprint(runtime.NumCPU()),
 	}
@@ -202,7 +200,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		return err
 	}
 	provenance["weir_source"] = identity.Revision
-	if opts.mongoBinary != "" {
+	if opts.mongoBinary != "" && slices.Contains(backends, "mongo") {
 		provenance["topology"] = "native client, Weir and isolated MongoDB on one host; Elasticsearch in a dedicated loopback Docker container"
 	}
 	if pinsRaw, err := os.ReadFile("versions.json"); err == nil {
