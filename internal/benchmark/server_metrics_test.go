@@ -77,3 +77,20 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 		t.Fatal("changing concurrency configuration produced comparable evidence", metrics)
 	}
 }
+
+func TestSingleRequestRPCProofRequiresActiveMethodCounts(t *testing.T) {
+	before, after := metricsSnapshot(t, false), metricsSnapshot(t, true)
+	metrics := serverMetricDelta(before, after, "mongo")
+	metrics.qualifySingleRequests(100, 0)
+	if metrics.RPCsPerAdapter == nil || *metrics.RPCsPerAdapter != 1 {
+		t.Fatal("unused mutation series hid verified read-only aggregation evidence")
+	}
+	metrics.qualifySingleRequests(100, 1)
+	if metrics.RPCsPerAdapter != nil {
+		t.Fatal("missing active mutation count became zero")
+	}
+	metrics.qualifySingleRequests(99, 0)
+	if metrics.RPCsPerAdapter != nil || metrics.RPCUnavailable["read"] == "" {
+		t.Fatal("extra timed unary completions were treated as single-request proof")
+	}
+}

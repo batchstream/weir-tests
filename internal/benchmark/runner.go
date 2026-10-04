@@ -46,6 +46,7 @@ type Latency struct {
 }
 
 type Result struct {
+	Timeouts          uint64            `json:"business_operation_timeouts"`
 	Path              string            `json:"path"`
 	Planned           uint64            `json:"planned"`
 	Attempted         uint64            `json:"attempted"`

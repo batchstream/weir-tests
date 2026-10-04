@@ -36,6 +36,7 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, OwnerCount: 9},
 		{WeirBinary: binary, StoreConcurrency: -1},
 		{WeirBinary: binary, BatchSize: -1},
+		{WeirBinary: binary, BackendTimeout: -time.Second},
 		{WeirBinary: binary, ProcessMemoryMiB: -1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},
 	}
@@ -51,7 +52,7 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	backends[0] = "search"
-	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 {
+	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 || validated.BackendTimeout != 2*time.Second {
 		t.Fatalf("invalid defaults or retained caller slice: %+v", validated)
 	}
 	large := Options{WeirBinary: binary, BatchSize: 513}
@@ -151,7 +152,7 @@ func TestPublishedPortMustBeOneLoopbackBinding(t *testing.T) {
 }
 
 func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
-	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16}
+	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16, BackendTimeout: 10 * time.Second}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true", SearchURL: "http://127.0.0.1:50002"}
 	c.Nodes = []Node{
 		{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true},
@@ -185,12 +186,22 @@ func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		var routing struct{ Stores []json.RawMessage }
+		var routing struct {
+			Stores []struct {
+				Name           string `json:"name"`
+				BackendTimeout string `json:"backend_timeout"`
+			}
+		}
 		if err := json.Unmarshal(routes, &routing); err != nil {
 			t.Fatal(err)
 		}
 		if node.Owner && len(routing.Stores) != 2 || !node.Owner && len(routing.Stores) != 0 {
 			t.Fatal("wrong Store ownership", string(routes))
+		}
+		for position, store := range routing.Stores {
+			if store.Name != options.Backends[position] || store.BackendTimeout != "10s" {
+				t.Fatal("owner backend did not receive the explicit business timeout", string(routes))
+			}
 		}
 	}
 	if groups[0] != groups[1] || groups[0] == groups[2] || c.Seed() != c.Nodes[2].Application {
@@ -368,7 +379,11 @@ func TestStoppedProcessFailureIsPreservedInCloseAndReceipt(t *testing.T) {
 }
 
 func TestSingleOwnerConfigurationUsesAnEmptySeedList(t *testing.T) {
-	options := Options{Backends: []string{"mongo"}, OwnerCount: 1, StoreConcurrency: 2, BatchSize: 32}
+	input := Options{WeirBinary: executableFile(t), Backends: []string{"mongo"}, OwnerCount: 1, StoreConcurrency: 2, BatchSize: 32}
+	options, err := validateOptions(input)
+	if err != nil {
+		t.Fatal(err)
+	}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true"}
 	node := Node{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true}
 	c.Nodes = []Node{node}
@@ -378,6 +393,10 @@ func TestSingleOwnerConfigurationUsesAnEmptySeedList(t *testing.T) {
 	data, err := os.ReadFile(c.nodeFile(0, "config.json"))
 	if err != nil || bytes.Contains(data, []byte(`"seeds": null`)) || !bytes.Contains(data, []byte(`"seeds": []`)) {
 		t.Fatal("single-owner config emits unsupported null seeds", string(data), err)
+	}
+	routes, err := os.ReadFile(c.nodeFile(0, "routes.json"))
+	if err != nil || !bytes.Contains(routes, []byte(`"backend_timeout": "2s"`)) {
+		t.Fatal("ordinary fixture lost the production backend timeout default", string(routes), err)
 	}
 }
 

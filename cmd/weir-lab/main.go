@@ -24,29 +24,43 @@ import (
 	"github.com/batchstream/weir-tests/internal/workload"
 )
 
+// Both paths use the same complete business-request budget.
+const businessTimeout = 10 * time.Second
+
 type labOptions struct {
-	binary           string
-	mongoBinary      string
-	output           string
-	backend          string
-	operations       int
-	warmup           int
-	records          int
-	payload          int
-	concurrency      int
-	rounds           int
-	writePercent     int
-	mode             string
-	levels           string
-	batches          string
-	warmupDuration   time.Duration
-	duration         time.Duration
-	databaseCPUs     float64
-	storeConcurrency int
-	workingMemoryMiB int
+	binary            string
+	mongoBinary       string
+	output            string
+	backend           string
+	operations        int
+	warmup            int
+	records           int
+	payload           int
+	concurrency       int
+	rounds            int
+	writePercent      int
+	mode              string
+	levels            string
+	batches           string
+	warmupDuration    time.Duration
+	duration          time.Duration
+	databaseCPUs      float64
+	storeConcurrency  int
+	workingMemoryMiB  int
+	clientProcesses   int
+	backendBatchLimit int
 }
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "client-worker" {
+		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
+		if err := benchmark.RunClientWorker(ctx, os.Stdin, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	var opts labOptions
 	flag.StringVar(&opts.binary, "weir", ".tools/weir", "locked Weir executable from scripts/prepare_weir.py")
 	flag.StringVar(&opts.mongoBinary, "mongod", os.Getenv("WEIR_TEST_MONGODB_BINARY"), "optional locked native MongoDB executable; empty uses Docker")
@@ -59,9 +73,11 @@ func main() {
 	flag.IntVar(&opts.concurrency, "concurrency", 8, "matched client workers and Weir Store concurrency")
 	flag.IntVar(&opts.rounds, "rounds", 3, "alternating paired rounds")
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
-	flag.StringVar(&opts.mode, "mode", "fixed", "fixed or saturation; saturation requires resource evidence before full-load conclusions")
-	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,64", "ascending client worker ladder for saturation mode, at most 64 for the owned single-owner fixture")
-	flag.StringVar(&opts.batches, "batch-sizes", "32", "native and SDK logical records per bulk request in saturation mode")
+	flag.StringVar(&opts.mode, "mode", "saturation", "saturation sends independent single requests from OS client processes; bulk-saturation measures bulk overhead; fixed is a finite diagnostic")
+	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 512 in single-request mode")
+	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
+	flag.IntVar(&opts.clientProcesses, "client-processes", 4, "independent client OS processes; each level is evenly divided into concurrent workers and its own connection pool")
+	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 32, "server adapter aggregation limit, independent of one-record client requests; 1 disables cross-request aggregation")
 	flag.DurationVar(&opts.warmupDuration, "warmup-duration", 10*time.Second, "untimed warmup per saturation stage")
 	flag.DurationVar(&opts.duration, "duration", 20*time.Second, "timed duration per saturation stage, including completion joins")
 	flag.Float64Var(&opts.databaseCPUs, "database-cpus", 1, "enforced CPU quota for each owned Docker database; native Mongo uses all host CPUs")
@@ -77,11 +93,11 @@ func main() {
 }
 
 func runLab(ctx context.Context, opts labOptions) (resultErr error) {
-	if opts.mode != "fixed" && opts.mode != "saturation" {
-		return errors.New("mode must be fixed or saturation")
+	if opts.mode != "fixed" && opts.mode != "saturation" && opts.mode != "bulk-saturation" {
+		return errors.New("mode must be fixed, saturation or bulk-saturation")
 	}
 	levels, batches := []int{opts.concurrency}, []int{1}
-	if opts.mode == "saturation" {
+	if opts.mode != "fixed" {
 		var err error
 		levels, err = parsePositiveList(opts.levels)
 		if err != nil {
@@ -95,11 +111,25 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 			return errors.New("invalid saturation matrix or durations")
 		}
 		previous := 0
+		maxLevel := 64
+		if opts.mode == "saturation" {
+			maxLevel = 512
+		}
 		for _, workers := range levels {
-			if workers <= previous || workers > 64 {
-				return errors.New("owned single-owner concurrency levels must strictly increase through 64")
+			if workers <= previous || workers > maxLevel {
+				return fmt.Errorf("owned single-owner concurrency levels must strictly increase through %d", maxLevel)
 			}
 			previous = workers
+		}
+		if opts.mode == "saturation" {
+			if opts.clientProcesses < 1 || opts.clientProcesses > 32 || len(batches) != 1 || batches[0] != 1 {
+				return errors.New("single-request saturation requires 1 through 32 client processes and batch-sizes 1")
+			}
+			for _, level := range levels {
+				if level%opts.clientProcesses != 0 {
+					return errors.New("concurrency levels must divide evenly into client processes")
+				}
+			}
 		}
 		for _, batch := range batches {
 			if batch > 64 || opts.records < previous*batch {
@@ -111,9 +141,15 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.databaseCPUs <= 0 || opts.databaseCPUs > float64(runtime.NumCPU()) {
 		return errors.New("database CPU quota exceeds host budget")
 	}
+	if opts.backendBatchLimit < 1 || opts.backendBatchLimit > 1024 {
+		return errors.New("backend-batch-limit must be 1 through 1024")
+	}
 	maxWorkers := 32
-	if opts.mode == "saturation" {
+	if opts.mode != "fixed" {
 		maxWorkers = 64
+		if opts.mode == "saturation" {
+			maxWorkers = 512
+		}
 	}
 	if opts.operations < 1 || opts.operations > 10000000 || opts.warmup < 0 || opts.warmup > 10000000 || opts.rounds < 1 || opts.rounds > 100 || opts.writePercent < 0 || opts.writePercent > 100 || opts.concurrency < 1 || opts.concurrency > maxWorkers || opts.records < opts.concurrency || opts.payload < 1 {
 		return errors.New("invalid bounded workload parameters")
@@ -136,8 +172,10 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	provenance := map[string]string{
 		"weir_binary_sha256":           hex.EncodeToString(digest[:]),
 		"topology":                     "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+		"client_operation_timeout":     businessTimeout.String(),
+		"weir_backend_timeout":         businessTimeout.String(),
 		"weir_store_concurrency":       fmt.Sprint(opts.concurrency),
-		"weir_max_batch_operations":    "32",
+		"weir_max_batch_operations":    fmt.Sprint(opts.backendBatchLimit),
 		"weir_memory_budget":           "8GiB (declared process admission budget; not an OS reservation)",
 		"weir_ingress_max_sessions":    "64",
 		"weir_ingress_max_connections": "64",
@@ -184,7 +222,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		return fmt.Errorf("requires a new output directory; preserving existing reports: %w", err)
 	}
 	storeWorkers := opts.concurrency
-	if opts.mode == "saturation" {
+	if opts.mode != "fixed" {
 		storeWorkers = opts.storeConcurrency
 	}
 	provenance["weir_store_concurrency"] = fmt.Sprint(storeWorkers)
@@ -198,7 +236,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		provenance["weir_"+backend+"_working_memory_mib"] = fmt.Sprint(memory)
 	}
 	provenance["weir_memory_budget"] = fmt.Sprintf("%dMiB (declared process admission budget; not an OS reservation)", memoryMiB)
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: 32, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: opts.backendBatchLimit, BackendTimeout: businessTimeout, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
 		return err
@@ -224,10 +262,18 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if err != nil {
 			return err
 		}
-		benchOptions := benchmark.Options{Dataset: dataset, Paths: paths, Operations: opts.operations, WarmupOperations: opts.warmup, WritePercent: opts.writePercent, Rounds: opts.rounds, OperationTimeout: 10 * time.Second, Provenance: provenance}
+		benchOptions := benchmark.Options{Dataset: dataset, Paths: paths, Operations: opts.operations, WarmupOperations: opts.warmup, WritePercent: opts.writePercent, Rounds: opts.rounds, OperationTimeout: businessTimeout, Provenance: provenance}
 		var caseErr error
-		if opts.mode == "saturation" {
-			saturation := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: levels, BatchSizes: batches, Warmup: opts.warmupDuration, Duration: opts.duration, Rounds: opts.rounds, WritePercent: opts.writePercent, OperationTimeout: 10 * time.Second, Resources: cluster.Resources(backend), CPUThreshold: 90, Provenance: provenance}
+		if opts.mode != "fixed" {
+			saturation := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: levels, BatchSizes: batches, Warmup: opts.warmupDuration, Duration: opts.duration, Rounds: opts.rounds, WritePercent: opts.writePercent, OperationTimeout: businessTimeout, Resources: cluster.Resources(backend), CPUThreshold: 90, Provenance: provenance}
+			if opts.mode == "saturation" {
+				executable, err := os.Executable()
+				if err != nil {
+					return err
+				}
+				saturation.ClientExecutable = executable
+				saturation.ClientProcesses = opts.clientProcesses
+			}
 			caseErr = runSaturationCase(ctx, saturation, opts.output)
 		} else {
 			caseErr = runCase(ctx, paths, benchOptions, opts.output)

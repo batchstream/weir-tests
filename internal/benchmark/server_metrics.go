@@ -3,12 +3,15 @@ package benchmark
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/batchstream/weir-tests/internal/observe"
 )
 
 type ServerMetrics struct {
+	BatchBuckets         map[string]float64 `json:"timed_adapter_batch_cumulative_buckets,omitempty"`
+	RPCsPerAdapter       *float64           `json:"timed_business_rpcs_per_adapter_invocation,omitempty"`
 	Before               observe.Snapshot   `json:"before"`
 	After                observe.Snapshot   `json:"after"`
 	Deltas               map[string]float64 `json:"timed_counter_deltas,omitempty"`
@@ -62,8 +65,27 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 	if count := metrics.Deltas["weir_store_batch_operations_count"]; count > 0 {
 		average := metrics.Deltas["weir_store_batch_operations_sum"] / count
 		metrics.AdapterBatchAverage = &average
+		read, readFound := metrics.Deltas["weir_rpc_completions_total:read"]
+		mutate, mutateFound := metrics.Deltas["weir_rpc_completions_total:mutate"]
+		if readFound && mutateFound {
+			ratio := (read + mutate) / count
+			metrics.RPCsPerAdapter = &ratio
+		}
 	} else {
 		metrics.Unavailable = "no adapter invocation was observed during the measured Weir stage"
+	}
+	metrics.BatchBuckets = make(map[string]float64)
+	for _, metric := range after.Metrics {
+		if metric.Name != "weir_store_batch_operations_bucket" || metric.Labels["store"] != store {
+			continue
+		}
+		bucketLabels := map[string]string{"store": store, "le": metric.Labels["le"]}
+		value, err := observe.Delta(before, after, metric.Name, bucketLabels)
+		if err != nil {
+			metrics.Unavailable = fmt.Sprintf("%s; %v", metrics.Unavailable, err)
+			continue
+		}
+		metrics.BatchBuckets[metric.Labels["le"]] = value
 	}
 	if count := metrics.Deltas["weir_store_queue_wait_seconds_count"]; count > 0 {
 		average := metrics.Deltas["weir_store_queue_wait_seconds_sum"] / count
@@ -74,4 +96,32 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 		metrics.ExecutionMeanSeconds = &average
 	}
 	return metrics
+}
+
+// Single-request aggregation evidence must match the measured business calls.
+// An unused RPC method need not have an exported series; an active one must.
+func (m *ServerMetrics) qualifySingleRequests(reads, writes uint64) {
+	m.RPCsPerAdapter = nil
+	if m.Unavailable != "" || m.AdapterBatchAverage == nil {
+		return
+	}
+	count := m.Deltas["weir_store_batch_operations_count"]
+	var observed float64
+	for method, calls := range map[string]uint64{"read": reads, "mutate": writes} {
+		value, found := m.Deltas["weir_rpc_completions_total:"+method]
+		if calls > 0 && !found {
+			return
+		}
+		if found && value != float64(calls) {
+			m.RPCUnavailable[method] = "timed unary completion count differs from measured single-request calls"
+			return
+		}
+		if found {
+			observed += value
+		}
+	}
+	if count > 0 {
+		ratio := observed / count
+		m.RPCsPerAdapter = &ratio
+	}
 }

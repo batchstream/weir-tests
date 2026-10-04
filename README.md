@@ -3,7 +3,7 @@
 Independent blackbox integration tests and reproducible database throughput
 comparisons for [Weir](https://github.com/batchstream/weir). The first benchmark
 compares native MongoDB/Elasticsearch clients with the published Weir Go SDK
-under matched native/SDK bulk workloads with database saturation evidence. The finite single-operation profile remains available for latency diagnosis.
+under independent single-record requests from multiple OS client processes. The primary benchmark tests server aggregation across RPCs; bulk-versus-bulk runs are supplemental overhead measurements.
 
 The test module depends on **SDK v0.4.2** and **protocol v0.2.1**. It imports no
 Weir server packages. The server executable is prepared separately from an
@@ -77,6 +77,9 @@ The suite covers:
   failed-page checkpoint suppression and Native response evidence.
 - Cancellation, graceful owner withdrawal/restart, directory convergence,
   persistent clients and reads after losing the discovery node.
+- A separate opt-in multi-process workload starts two real client processes per
+  path, sends only single-record calls, and verifies process ownership, request
+  accounting, pooled latency and persisted data on both databases.
 
 All services bind to loopback, use random ports and own exclusive data namespaces.
 Cleanup targets exact process handles/container IDs after ownership verification.
@@ -85,8 +88,8 @@ preserved in the printed fixture directory.
 
 ## Database-full-load comparison
 
-The capacity benchmark raises client concurrency until the database, rather than
-an eight-worker request loop, limits throughput. Run on Linux with Docker so each
+The primary benchmark sweeps independent single-request client concurrency and
+checks whether the database limits throughput. Run on Linux with Docker so each
 owned database has an enforced, inspected CPU quota and the client/Weir retain
 CPU capacity:
 
@@ -95,23 +98,46 @@ make benchmark
 
 # Equivalent explicit command with a fresh output directory:
 go run ./cmd/weir-lab -mode saturation \
-  -weir .tools/weir -backend all -database-cpus 1 -store-concurrency 32 \
-  -concurrency-levels 8,32,64 -batch-sizes 32 \
+  -weir .tools/weir -backend all -database-cpus 1 -store-concurrency 32 -backend-batch-limit 32 \
+  -client-processes 4 -concurrency-levels 8,32,128 -batch-sizes 1 \
   -records 2048 -payload-bytes 1024 -write-percent 0 \
   -rounds 3 -warmup-duration 10s -duration 20s \
   -output results/local/saturation-read
 ```
 
-Every stage uses real native bulk reads/writes and same-Store SDK Read/Mutate
-batches of distinct worker-owned IDs. Both paths use the same batch size, document
-bodies, write policy and deterministic read/write generator. Actual read/write
-counts are reported because a timed capacity run completes different amounts of
-work on each path. Warmup continues into measurement without a cache-disturbing
-reset. Every mutation changes its document revision; all final records and counts
-are independently verified. AB/BA order alternates across stages and rounds.
+Every timed worker makes one native database call or one SDK `ReadOne`/`Put`
+RPC containing exactly one record. The coordinator launches four real client OS
+processes. At primary concurrency 8/32/128, each has 2/8/32 concurrent
+sequential workers, its own driver or SDK pool, and a disjoint ID partition.
+MongoDB uses `FindOne`/`ReplaceOne`, never `BulkWrite` for a timed single write.
+Search uses one-ID `POST _mget` and single-document `PUT _doc`; the read POST keeps
+connection reuse without an implicit HTTP GET retry. There is no client batching.
+Native pool limits equal each process's worker count; Weir's configured backend
+concurrency is independently fixed at 32. Actual database connection gauges are
+sampled, so changing the database request/connection ratio remains visible.
+
+Both paths use identical bodies, read/write policies and deterministic request
+generators. Each business call has a complete 10s client budget; the fixture
+explicitly sets every Weir Store `backend_timeout` to 10s. Weir also honors the
+active caller deadline, so queueing cannot grant an extra 10s after dispatch.
+Native Search retains its 10s response-header limit within that request context.
+The Search write query `timeout=1s` is identical on both paths and governs server
+prerequisites, not the complete HTTP acknowledgement budget. JSON parameters,
+provenance, the measurement receipt and generated routes retain the timeout
+policy. Timeout and UNKNOWN acknowledgements invalidate the stage without retry.
+The production default remains 2s when `backend_timeout` is omitted.
+
+The same clients, connection pools and worker-owned revision state continue from warmup into measurement. Actual read/write counts are reported,
+since timed runs complete different amounts of work. Every acknowledged mutation
+changes its revision. The coordinator merges each child's final revision ranges
+and independently verifies all documents and the record count. AB/BA order
+alternates across stages and rounds. Child PIDs, pool sizes, common-barrier start
+lag and successful process exits are retained. p50/p95/p99 are pooled single-call
+histograms, not averages of client percentiles.
 
 JSON reports retain database CPU, memory, cumulative I/O/network bytes and
-client/Weir CPU samples. CPU is normalized by the **inspected Docker quota**;
+each business-client PID CPU/RSS and Weir CPU/RSS samples. The coordinator is
+excluded from business-client CPU. CPU is normalized by the **inspected Docker quota**;
 native Mongo uses all host cores and shares them with the load generator and
 Weir. At least five valid intervals must cover at least 80% of the measurement,
 mean CPU must reach 90% of the budget, and at least 80% of the complete measured
@@ -128,8 +154,12 @@ uses that fixed limit and the bounded working-memory budget. Missing scrapes,
 absent metrics and counter resets are explicitly unavailable. These measurements
 exclude fixture startup. Adapter invocations can split by
 namespace, action or byte bounds, so their counts are not a universal claim about
-physical database wire commands. A normal same-namespace 32-item workload should
-show an adapter batch of 32; larger documents can require splits. CPU and these
+physical database wire commands. The primary run has exactly one record per RPC;
+an average adapter batch greater than one, its full histogram and the RPC/adapter
+invocation ratio show cross-RPC aggregation. MongoDB also records physical
+find/update/bulkWrite/getMore/killCursors command deltas from owned `serverStatus`
+at the timed boundaries; missing fields remain unavailable. Elasticsearch has no
+equivalent reliable physical HTTP-command counter. CPU and these
 counters are collected without enabling a profiler during the timed comparison.
 Use a separate diagnostic run to collect a CPU profile; never mix profiled data
 into the capacity report.
@@ -142,25 +172,53 @@ capacity evidence. It owns and verifies cleanup of its temporary services.
 A plateau while database CPU remains low produces **comparison unavailable**:
 client/Weir limits or storage/network bottlenecks require more evidence. Byte
 counters alone do not establish disk/link saturation. Increase the concurrency
-ladder (up to 64 workers in the owned single-owner fixture), batch sizes (up
-to 64), record count (at least
-max-workers times batch size), or duration when a run lacks sufficient evidence.
+ladder (up to 512 workers in the owned single-owner fixture), record count (at least
+max-workers), or duration when a run lacks sufficient evidence. The report also
+compares measured steady business QPS and p50/p95/p99 at each matched concurrency.
+These observations can show a throughput benefit or regression even when database
+maximum capacity remains unavailable; neither outcome is assumed.
 No noisy performance ratio is used as a CI pass/fail threshold; workload errors
 and failed persistence checks do fail the job. `saturation.yml` runs read,
 mixed (10% writes) and write matrices on PRs, with a one-CPU database quota.
-Dispatch can select a workload and database CPU quota (0.5, 1 or 2). Each run keeps
+The CLI, Makefile and PRs use the primary 8/32/128 ladder. Dispatch can select
+that ladder or 8/32/128/512, a workload, database CPU quota (0.5, 1 or 2), and backend grouping
+limit (32 or 1). Each run keeps
 the quota identical for direct and Weir paths and records the inspected denominator.
+The primary ladder describes observed performance through 128 workers; it does
+not assume that 128 workers reach maximum capacity. The optional 512-worker stage
+is a separate stress extension: each process has 128 workers. The archived 512-worker direct-path warmup failures remain failed
+stress evidence; they do not produce a paired capacity comparison. Earlier
+results with Weir's implicit 2s backend deadline and a 10s client deadline remain
+separate from this matched-budget recipe.
 Reports from different quotas are separate experiments; a lower-quota saturation
 result cannot establish the capacity of a one-CPU database.
 
 The lab sizes `working_memory` for the selected backend concurrency: at least
 41MiB per MongoDB batch and 96MiB per Search batch for its declared 2MiB read limit.
 It also sizes process admission memory for ingress, both Store workspaces and
-framing; the default 32-concurrency two-backend fixture declares 12GiB. These are
+framing and the configured ingress sessions. The 128-worker two-backend sweep
+declares 18GiB; the full 512-worker sweep declares 54GiB. These are
 admission budgets, not allocated memory or OS reservations; resource samples show
-actual consumption. `-store-working-memory-mib 384` reproduces the previous 8GiB
-fixture's smaller workspace, which permits only 9 MongoDB or 4 Search read batches
-at once despite configured concurrency 32. Each report records both budgets.
+actual consumption. `-store-working-memory-mib 384` reproduces the previous
+smaller backend workspace, allowing only 9 MongoDB or 4 Search read batches at
+once despite configured concurrency 32. The process envelope still adapts to
+the ingress sessions. Each report records both budgets.
+
+For supplemental bulk-versus-bulk overhead measurements, explicitly use
+`-mode bulk-saturation -concurrency-levels 8,32,64 -batch-sizes 32`. Historical
+bulk reports remain archived; they do not measure the value of aggregating
+independent single-record business requests.
+
+For an independent aggregation control, repeat the single-request command with
+`-backend-batch-limit 1` and a fresh output directory, then compare with the default
+`-backend-batch-limit 32`. This changes only the server adapter grouping limit;
+client calls remain one record, backend concurrency stays 32 and the same
+conservative workspace budget applies. The control is manual, not another path
+in every CI matrix. Dispatch with `backend-batch-limit=1,32` runs both settings
+sequentially on the same runner, with a fresh report directory and complete
+receipt for each. Batch distribution and RPC/adapter ratio verify whether
+aggregation actually occurred. Keep the quota, ladder and other workload
+settings identical when evaluating this control.
 
 ## Finite single-operation comparison
 
@@ -180,12 +238,13 @@ go run ./cmd/weir-lab -mode fixed \
 equivalent explicit option. Choose a new output directory for each run. Use
 `-write-percent 0`, `10` or `100` for read, 90/10 mixed and write-only workloads.
 `make diagnostic` explicitly runs this finite single-operation profile. The lab
-CLI retains `fixed` mode as its default; `make benchmark` selects saturation.
+CLI and `make benchmark` default to the independent single-request saturation benchmark.
 
 The local profile runs one Weir owner, matches Store concurrency to client
-concurrency, and records physical batch size 32. Each unary batch dispatches
-immediately; there is no collection wait. These are benchmark parameters, not a
-claim about every production deployment.
+concurrency, and configures an adapter grouping limit of 32. The server may merge
+compatible queued requests into one adapter invocation; the recorded server
+version determines that behavior. These are benchmark parameters, not a claim
+about every production deployment.
 
 Each paired round executes the exact same deterministic IDs, payloads and
 read/write schedule through both paths, alternating direct/Weir and Weir/direct.

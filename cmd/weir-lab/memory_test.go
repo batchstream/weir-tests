@@ -22,6 +22,11 @@ func TestFixtureMemoryCoversActualBackendConcurrency(t *testing.T) {
 		t.Fatal("could not reproduce the previous resource-limited experiment", workspace, processMiB, err)
 	}
 	opts.workingMemoryMiB = 0
+	opts.concurrency = 512
+	workspace, processMiB, err = fixtureMemoryBudget(opts, backends, 32)
+	if err != nil || workspace["mongo"] != 1312 || workspace["search"] != 3072 || processMiB != 55296 {
+		t.Fatal("512 independent requests do not fit the explicitly declared ingress envelope", workspace, processMiB, err)
+	}
 	if _, _, err := fixtureMemoryBudget(opts, backends, int(^uint(0)>>1)); err == nil {
 		t.Fatal("overflowing execution envelope accepted")
 	}

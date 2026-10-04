@@ -26,26 +26,36 @@ type SaturationOptions struct {
 	Resources        fixture.ResourceTarget
 	CPUThreshold     float64
 	Provenance       map[string]string
+	ClientProcesses  int
+	ClientExecutable string
 }
 
 type SaturationParameters struct {
-	Dataset      workload.Config `json:"dataset"`
-	Concurrency  []int           `json:"concurrency_levels"`
-	BatchSizes   []int           `json:"batch_sizes"`
-	Warmup       string          `json:"warmup_duration"`
-	Duration     string          `json:"measurement_duration"`
-	Rounds       int             `json:"paired_rounds"`
-	WritePercent int             `json:"requested_write_percent"`
-	CPUThreshold float64         `json:"database_cpu_budget_threshold_percent"`
+	Dataset              workload.Config `json:"dataset"`
+	Concurrency          []int           `json:"concurrency_levels"`
+	BatchSizes           []int           `json:"batch_sizes"`
+	Warmup               string          `json:"warmup_duration"`
+	Duration             string          `json:"measurement_duration"`
+	Rounds               int             `json:"paired_rounds"`
+	WritePercent         int             `json:"requested_write_percent"`
+	OperationTimeout     string          `json:"operation_timeout"`
+	CPUThreshold         float64         `json:"database_cpu_budget_threshold_percent"`
+	ClientProcesses      int             `json:"client_process_count,omitempty"`
+	ClientRequestRecords int             `json:"records_per_business_request,omitempty"`
 }
 
 type SaturationResult struct {
+	DatabaseBefore             *workload.DatabaseCounters `json:"timed_database_counters_before,omitempty"`
+	DatabaseAfter              *workload.DatabaseCounters `json:"timed_database_counters_after,omitempty"`
+	PhysicalCommands           map[string]uint64          `json:"timed_physical_database_command_deltas,omitempty"`
+	PhysicalCommandUnavailable string                     `json:"physical_database_command_observation_unavailable,omitempty"`
 	Result
-	Reads         uint64         `json:"reads"`
-	Writes        uint64         `json:"writes"`
-	Requests      uint64         `json:"client_batch_requests"`
-	Resources     Resources      `json:"resources"`
-	ServerMetrics *ServerMetrics `json:"server_metrics,omitempty"`
+	Reads           uint64                `json:"reads"`
+	Writes          uint64                `json:"writes"`
+	Requests        uint64                `json:"client_requests"`
+	Resources       Resources             `json:"resources"`
+	ServerMetrics   *ServerMetrics        `json:"server_metrics,omitempty"`
+	ClientProcesses []ClientProcessResult `json:"client_processes,omitempty"`
 }
 
 type SaturationPair struct {
@@ -79,19 +89,24 @@ type SaturationComparison struct {
 }
 
 type SaturationReport struct {
-	Schema      int                    `json:"schema"`
-	Started     string                 `json:"started_utc"`
-	Parameters  SaturationParameters   `json:"parameters"`
-	Provenance  map[string]string      `json:"provenance"`
-	CPUQuota    *DatabaseCPUQuota      `json:"database_cpu_quota,omitempty"`
-	Pairs       []SaturationPair       `json:"pairs"`
-	Points      []SaturationPoint      `json:"points"`
-	Comparisons []SaturationComparison `json:"database_saturated_comparisons"`
-	Method      string                 `json:"method"`
-	Incomplete  string                 `json:"incomplete,omitempty"`
+	BusinessPeaks       *BusinessPeaks         `json:"observed_business_peak_comparison,omitempty"`
+	BusinessComparisons []BusinessComparison   `json:"observed_business_comparisons,omitempty"`
+	Schema              int                    `json:"schema"`
+	Started             string                 `json:"started_utc"`
+	Parameters          SaturationParameters   `json:"parameters"`
+	Provenance          map[string]string      `json:"provenance"`
+	CPUQuota            *DatabaseCPUQuota      `json:"database_cpu_quota,omitempty"`
+	Pairs               []SaturationPair       `json:"pairs"`
+	Points              []SaturationPoint      `json:"points"`
+	Comparisons         []SaturationComparison `json:"database_saturated_comparisons"`
+	Method              string                 `json:"method"`
+	Incomplete          string                 `json:"incomplete,omitempty"`
 }
 
 func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationReport, error) {
+	if options.ClientProcesses > 0 {
+		return runSingleSaturation(ctx, options)
+	}
 	if err := validateSaturation(options); err != nil {
 		return nil, err
 	}
@@ -99,7 +114,7 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 	if err != nil {
 		return nil, err
 	}
-	parameters := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: options.BatchSizes, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, CPUThreshold: options.CPUThreshold}
+	parameters := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: options.BatchSizes, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, OperationTimeout: options.OperationTimeout.String(), CPUThreshold: options.CPUThreshold}
 	provenance := make(map[string]string, len(options.Provenance)+3)
 	for key, value := range options.Provenance {
 		provenance[key] = value

@@ -15,6 +15,18 @@ on:
         required: true
         type: choice
         options: ['1', '0.5', '2']
+      client-levels:
+        description: Total concurrency across four independent client processes
+        default: '8,32,128'
+        required: true
+        type: choice
+        options: ['8,32,128', '8,32,128,512']
+      backend-batch-limit:
+        description: Server adapter grouping limit (1 disables cross-RPC aggregation)
+        default: '32'
+        required: true
+        type: choice
+        options: ['32', '1', '1,32']
   pull_request:
     paths-ignore:
       - 'results/**'
@@ -23,7 +35,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: saturation-${{ github.ref }}-${{ inputs.write-percent || 'matrix' }}-${{ inputs.database-cpus || '1' }}
+  group: saturation-${{ github.ref }}-${{ inputs.write-percent || 'matrix' }}-${{ inputs.database-cpus || '1' }}-${{ inputs.client-levels || '8,32,128' }}-${{ inputs.backend-batch-limit || '32' }}
   cancel-in-progress: true
 
 defaults:
@@ -44,7 +56,7 @@ jobs:
       matrix:
         write-percent: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{0}]', inputs.write-percent) || '[0,10,100]') }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -58,25 +70,33 @@ jobs:
           python3 scripts/download_modules.py
           python3 scripts/prepare_weir.py
           python3 scripts/prepare_images.py
-      - name: Matched native and SDK bulk saturation sweep
+      - name: Independent single-request native and SDK clients
         env:
           GOPROXY: 'off'
           GOSUMDB: 'off'
           WRITE_PERCENT: ${{ matrix.write-percent }}
           DATABASE_CPUS: ${{ inputs.database-cpus || '1' }}
+          CLIENT_LEVELS: ${{ inputs.client-levels || '8,32,128' }}
+          BACKEND_BATCH_LIMITS: ${{ inputs.backend-batch-limit || '32' }}
         run: |
           mkdir -p results/local
           go build -o .tools/weir-lab ./cmd/weir-lab
-          python3 - <<'PY'
+          IFS=',' read -r -a batch_limits <<< "$BACKEND_BATCH_LIMITS"
+          for backend_limit in "${batch_limits[@]}"; do
+            export BACKEND_BATCH_LIMIT="$backend_limit"
+            export MEASUREMENT_OUTPUT="results/local/saturation-batch-$backend_limit"
+            export MEASUREMENT_RECEIPT="results/local/measurement-batch-$backend_limit.receipt.json"
+            python3 - <<'PY'
           import hashlib, json, os, pathlib, subprocess
           binary = pathlib.Path('.tools/weir-lab')
-          command = [str(binary), '-mode', 'saturation', '-weir', '.tools/weir', '-backend', 'all', '-database-cpus', os.environ['DATABASE_CPUS'], '-store-concurrency', '32', '-concurrency-levels', '8,32,64', '-batch-sizes', '32', '-records', '2048', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', 'results/local/saturation']
-          receipt = {'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'])), 'client_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'client_build': subprocess.check_output(['go', 'version', '-m', str(binary)], text=True), 'versions': json.loads(pathlib.Path('versions.json').read_text()), 'command': command}
+          command = [str(binary), '-mode', 'saturation', '-weir', '.tools/weir', '-backend', 'all', '-database-cpus', os.environ['DATABASE_CPUS'], '-store-concurrency', '32', '-backend-batch-limit', os.environ['BACKEND_BATCH_LIMIT'], '-client-processes', '4', '-concurrency-levels', os.environ['CLIENT_LEVELS'], '-batch-sizes', '1', '-records', '2048', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', os.environ['MEASUREMENT_OUTPUT']]
+          receipt = {'client_operation_timeout': '10s', 'weir_backend_timeout': '10s', 'host_memory_bytes': int(next(line for line in pathlib.Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemTotal:')).split()[1]) * 1024, 'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'])), 'client_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'client_build': subprocess.check_output(['go', 'version', '-m', str(binary)], text=True), 'versions': json.loads(pathlib.Path('versions.json').read_text()), 'command': command}
           if receipt['source_dirty']:
               raise SystemExit('measurement requires a clean source checkout')
-          pathlib.Path('results/local/measurement.receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          pathlib.Path(os.environ['MEASUREMENT_RECEIPT']).write_text(json.dumps(receipt, indent=2) + '\n')
           PY
-          .tools/weir-lab -mode saturation -weir .tools/weir -backend all -database-cpus "$DATABASE_CPUS" -store-concurrency 32 -concurrency-levels 8,32,64 -batch-sizes 32 -records 2048 -payload-bytes 1024 -write-percent "$WRITE_PERCENT" -rounds 3 -warmup-duration 10s -duration 20s -output results/local/saturation 2>&1 | tee results/local/saturation.log
+            .tools/weir-lab -mode saturation -weir .tools/weir -backend all -database-cpus "$DATABASE_CPUS" -store-concurrency 32 -backend-batch-limit "$BACKEND_BATCH_LIMIT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS" -batch-sizes 1 -records 2048 -payload-bytes 1024 -write-percent "$WRITE_PERCENT" -rounds 3 -warmup-duration 10s -duration 20s -output "$MEASUREMENT_OUTPUT" 2>&1 | tee "results/local/saturation-batch-$backend_limit.log"
+          done
           git diff --exit-code
       - name: Preserve raw resource samples, workload validation and cleanup
         if: always()
