@@ -27,6 +27,11 @@ on:
         required: true
         type: choice
         options: ['32', '1', '1,32']
+      lua-mutations:
+        description: Compare native single-record RMW with server-batched Lua mutations
+        default: false
+        required: true
+        type: boolean
   pull_request:
     paths-ignore:
       - 'results/**'
@@ -35,7 +40,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: saturation-${{ github.ref }}-${{ inputs.write-percent || 'matrix' }}-${{ inputs.database-cpus || '1' }}-${{ inputs.client-levels || '8,32,128' }}-${{ inputs.backend-batch-limit || '32' }}
+  group: saturation-${{ github.ref }}-${{ inputs.write-percent || 'matrix' }}-${{ inputs.database-cpus || '1' }}-${{ inputs.client-levels || '8,32,128' }}-${{ inputs.backend-batch-limit || '32' }}-${{ inputs.lua-mutations || false }}
   cancel-in-progress: true
 
 defaults:
@@ -78,10 +83,15 @@ jobs:
           DATABASE_CPUS: ${{ inputs.database-cpus || '1' }}
           CLIENT_LEVELS: ${{ inputs.client-levels || '8,32,128' }}
           BACKEND_BATCH_LIMITS: ${{ inputs.backend-batch-limit || '32' }}
+          LUA_MUTATIONS: ${{ inputs.lua-mutations || false }}
         run: |
           mkdir -p results/local
           go build -o .tools/weir-lab ./cmd/weir-lab
           IFS=',' read -r -a batch_limits <<< "$BACKEND_BATCH_LIMITS"
+          lua_flags=()
+          if [ "$LUA_MUTATIONS" = true ]; then
+            lua_flags=(-lua-mutations)
+          fi
           for backend_limit in "${batch_limits[@]}"; do
             export BACKEND_BATCH_LIMIT="$backend_limit"
             export MEASUREMENT_OUTPUT="results/local/saturation-batch-$backend_limit"
@@ -90,12 +100,14 @@ jobs:
           import hashlib, json, os, pathlib, subprocess
           binary = pathlib.Path('.tools/weir-lab')
           command = [str(binary), '-mode', 'saturation', '-weir', '.tools/weir', '-backend', 'all', '-database-cpus', os.environ['DATABASE_CPUS'], '-store-concurrency', '32', '-backend-batch-limit', os.environ['BACKEND_BATCH_LIMIT'], '-client-processes', '4', '-concurrency-levels', os.environ['CLIENT_LEVELS'], '-batch-sizes', '1', '-records', '2048', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', os.environ['MEASUREMENT_OUTPUT']]
+          if os.environ['LUA_MUTATIONS'] == 'true':
+              command.append('-lua-mutations')
           receipt = {'client_operation_timeout': '10s', 'weir_backend_timeout': '10s', 'host_memory_bytes': int(next(line for line in pathlib.Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemTotal:')).split()[1]) * 1024, 'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'])), 'client_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'client_build': subprocess.check_output(['go', 'version', '-m', str(binary)], text=True), 'versions': json.loads(pathlib.Path('versions.json').read_text()), 'command': command}
           if receipt['source_dirty']:
               raise SystemExit('measurement requires a clean source checkout')
           pathlib.Path(os.environ['MEASUREMENT_RECEIPT']).write_text(json.dumps(receipt, indent=2) + '\n')
           PY
-            .tools/weir-lab -mode saturation -weir .tools/weir -backend all -database-cpus "$DATABASE_CPUS" -store-concurrency 32 -backend-batch-limit "$BACKEND_BATCH_LIMIT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS" -batch-sizes 1 -records 2048 -payload-bytes 1024 -write-percent "$WRITE_PERCENT" -rounds 3 -warmup-duration 10s -duration 20s -output "$MEASUREMENT_OUTPUT" 2>&1 | tee "results/local/saturation-batch-$backend_limit.log"
+            .tools/weir-lab -mode saturation -weir .tools/weir -backend all -database-cpus "$DATABASE_CPUS" -store-concurrency 32 -backend-batch-limit "$BACKEND_BATCH_LIMIT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS" -batch-sizes 1 -records 2048 -payload-bytes 1024 -write-percent "$WRITE_PERCENT" -rounds 3 -warmup-duration 10s -duration 20s -output "$MEASUREMENT_OUTPUT" "${lua_flags[@]}" 2>&1 | tee "results/local/saturation-batch-$backend_limit.log"
           done
           git diff --exit-code
       - name: Preserve raw resource samples, workload validation and cleanup

@@ -79,6 +79,11 @@ jobs:
           GOPROXY: 'off'
           GOSUMDB: 'off'
         run: go run ./cmd/weir-lab -mode fixed -weir .tools/weir -operations 128 -warmup 32 -records 64 -rounds 2 -output results/local/smoke
+      - name: Verified single-record Lua RMW comparison smoke
+        env:
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: go run ./cmd/weir-lab -mode fixed -lua-mutations -write-percent 100 -concurrency 16 -weir .tools/weir -operations 256 -warmup 64 -records 64 -rounds 2 -output results/local/lua-smoke
       - name: Separate opt-in server CPU diagnostic
         env:
           GOPROXY: 'off'

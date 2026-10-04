@@ -49,6 +49,7 @@ type labOptions struct {
 	workingMemoryMiB  int
 	clientProcesses   int
 	backendBatchLimit int
+	luaMutations      bool
 }
 
 func main() {
@@ -73,6 +74,7 @@ func main() {
 	flag.IntVar(&opts.concurrency, "concurrency", 8, "matched client workers and Weir Store concurrency")
 	flag.IntVar(&opts.rounds, "rounds", 3, "alternating paired rounds")
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
+	flag.BoolVar(&opts.luaMutations, "lua-mutations", false, "single-record read-modify-write: native transaction/OCC versus Weir Lua; no client batching")
 	flag.StringVar(&opts.mode, "mode", "saturation", "saturation sends independent single requests from OS client processes; bulk-saturation measures bulk overhead; fixed is a finite diagnostic")
 	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 512 in single-request mode")
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
@@ -95,6 +97,14 @@ func main() {
 func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.mode != "fixed" && opts.mode != "saturation" && opts.mode != "bulk-saturation" {
 		return errors.New("mode must be fixed, saturation or bulk-saturation")
+	}
+	if opts.luaMutations && (opts.mode == "bulk-saturation" || opts.writePercent == 0) {
+		return errors.New("Lua mutation comparison requires single-record calls and a positive write percentage")
+	}
+	// lua.v1 values are bounded to 256 KiB. Reserve 128 bytes for the fixed
+	// fixture fields so an oversized comparison fails before services start.
+	if opts.luaMutations && opts.payload > (256<<10)-128 {
+		return errors.New("Lua fixture padding plus its fields exceeds the 256 KiB value budget")
 	}
 	levels, batches := []int{opts.concurrency}, []int{1}
 	if opts.mode != "fixed" {
@@ -254,6 +264,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 			return err
 		}
 		config := workload.Config{Backend: backend, MongoURI: cluster.MongoURI, SearchURL: cluster.SearchURL, WeirSeed: cluster.Seed(), StoreName: backend, Namespace: namespace, Records: opts.records, PayloadBytes: opts.payload, Concurrency: opts.concurrency}
+		config.LuaMutations = opts.luaMutations
 		dataset, err := workload.New(config)
 		if err != nil {
 			return err
@@ -296,6 +307,9 @@ func fixtureMemoryBudget(opts labOptions, backends []string, workers int) (map[s
 	memoryMiB := max(64, opts.concurrency)*96 + 1024
 	for _, backend := range backends {
 		perBatchMiB := 41
+		if opts.luaMutations {
+			perBatchMiB = 64
+		}
 		if backend == "search" {
 			perBatchMiB = 96
 		}

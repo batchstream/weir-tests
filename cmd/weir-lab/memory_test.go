@@ -30,4 +30,9 @@ func TestFixtureMemoryCoversActualBackendConcurrency(t *testing.T) {
 	if _, _, err := fixtureMemoryBudget(opts, backends, int(^uint(0)>>1)); err == nil {
 		t.Fatal("overflowing execution envelope accepted")
 	}
+	opts.luaMutations = true
+	workspace, _, err = fixtureMemoryBudget(opts, backends, 32)
+	if err != nil || workspace["mongo"] != 32*64 || workspace["search"] != 32*96 {
+		t.Fatal("Lua transaction scratch silently reduced requested backend capacity", workspace, err)
+	}
 }

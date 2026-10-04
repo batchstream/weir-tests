@@ -20,6 +20,8 @@ func TestMongoCommandCountersIgnoreHeterogeneousUnknownAndPreserveMissing(t *tes
 		{Key: "update", Value: bson.D{}},
 		{Key: "bulkWrite", Value: positive},
 		{Key: "killCursors", Value: zero},
+		{Key: "commitTransaction", Value: positive},
+		{Key: "abortTransaction", Value: zero},
 	}
 	metrics := bson.D{{Key: "commands", Value: commands}}
 	connections := bson.D{{Key: "current", Value: int32(9)}}
@@ -36,7 +38,7 @@ func TestMongoCommandCountersIgnoreHeterogeneousUnknownAndPreserveMissing(t *tes
 		t.Fatal("the real scalar <UNKNOWN> command must not invalidate known counters", err)
 	}
 	counters := reply.counters()
-	for _, name := range []string{"find", "killCursors"} {
+	for _, name := range []string{"find", "killCursors", "abortTransaction"} {
 		value, found := counters.Commands[name]
 		if !found || value != 0 {
 			t.Fatal("observed zero was mistaken for missing", name, counters)
@@ -47,7 +49,7 @@ func TestMongoCommandCountersIgnoreHeterogeneousUnknownAndPreserveMissing(t *tes
 			t.Fatal("absent total or absent command silently became zero", name, counters)
 		}
 	}
-	if len(counters.Commands) != 3 || counters.Commands["bulkWrite"] != 71 || counters.Connections == nil || *counters.Connections != 9 || counters.NetworkIn != 12 || counters.NetworkOut != 34 || counters.ReadBytes != 56 || counters.WriteBytes != 78 {
+	if len(counters.Commands) != 5 || counters.Commands["bulkWrite"] != 71 || counters.Commands["commitTransaction"] != 71 || counters.Connections == nil || *counters.Connections != 9 || counters.NetworkIn != 12 || counters.NetworkOut != 34 || counters.ReadBytes != 56 || counters.WriteBytes != 78 {
 		t.Fatal("known physical command, connection or storage evidence lost", counters)
 	}
 }
