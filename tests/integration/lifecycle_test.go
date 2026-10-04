@@ -76,7 +76,7 @@ func testLifecycle(t *testing.T, ctx context.Context, client *weir.Client, backe
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
 	missing, err := client.ReadOne(rpc, readOptions)
 	cancel()
-	if err != nil || !missing.GetMissing() || missing.GetFailure() != nil {
+	if err != nil || missing == nil || !missing.Missing || missing.Failure != nil {
 		t.Fatalf("Read after Delete: result=%v err=%v", missing, err)
 	}
 	backend.assertMissing(t, ctx, "disposable")
@@ -258,16 +258,16 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 	var body []byte
 	options := weir.NativeOptions{StoreName: backend.name, Request: request}
 	options.Consume = func(_ context.Context, event *weir.Event) error {
-		if event.GetHead() != nil {
+		if event.Head != nil {
 			if head != nil {
 				return errors.New("duplicate Native head")
 			}
-			head = event.GetHead()
+			head = event.Head
 		}
-		if len(body)+len(event.GetChunk()) > 1<<20 {
+		if len(body)+len(event.Chunk) > 1<<20 {
 			return errors.New("Native fixture response exceeded bound")
 		}
-		body = append(body, event.GetChunk()...)
+		body = append(body, event.Chunk...)
 		return nil
 	}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)

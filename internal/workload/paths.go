@@ -500,7 +500,7 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 	if err != nil {
 		return failed(err, false)
 	}
-	if result == nil || result.GetDocument() == nil || result.GetFailure() != nil || result.GetMissing() {
+	if result == nil || result.Document == nil || result.Failure != nil || result.Missing {
 		return failed(errors.New("Weir Read lacks a successful document"), false)
 	}
 	if result.Document.MediaType != p.dataset.MediaType() {

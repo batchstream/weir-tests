@@ -21,9 +21,9 @@ make test
 GOWORK=off GOPROXY=off GOSUMDB=off python3 scripts/check_dependencies.py
 ```
 
-Default Go tests, including race tests, launch no services. They validate request
-accounting, mutation evidence without replay, scheduling, resource sampling,
-capacity qualification, fixture ownership and dependency boundaries.
+Default Go tests, including race tests, launch no databases or Weir processes.
+They validate request accounting, mutation evidence without replay, scheduling,
+resource sampling, capacity qualification, fixture ownership and dependency boundaries.
 
 On macOS, an isolated native MongoDB fixture is also available:
 
