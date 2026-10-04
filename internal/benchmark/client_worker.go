@@ -229,7 +229,7 @@ func (s *durationState) nextSingle(index int) workload.Operation {
 	if write {
 		worker.revisions[worker.cursor] = 1 - worker.revisions[worker.cursor]
 	}
-	operation := workload.Operation{Worker: index, Sequence: worker.sequence, Record: record, Write: write, Revision: worker.revisions[worker.cursor]}
+	operation := workload.Operation{Record: record, Write: write, Revision: worker.revisions[worker.cursor]}
 	worker.cursor = (worker.cursor + 1) % (worker.end - worker.start)
 	worker.sequence++
 	return operation

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -14,8 +15,9 @@ import (
 )
 
 type fakeExecutor struct {
-	mode  string
-	delay time.Duration
+	mode     string
+	delay    time.Duration
+	sequence atomic.Uint64
 }
 
 func (f *fakeExecutor) Name() string { return "direct" }
@@ -30,8 +32,10 @@ func (f *fakeExecutor) Execute(ctx context.Context, operation workload.Operation
 		select {
 		case <-timer.C:
 		case <-ctx.Done():
-			outcome := workload.Outcome{Status: workload.Indeterminate, Error: ctx.Err().Error()}
-			return outcome
+			if f.mode != "success_after_deadline" {
+				outcome := workload.Outcome{Status: workload.Indeterminate, Error: ctx.Err().Error()}
+				return outcome
+			}
 		}
 	}
 	outcome := workload.Outcome{Status: workload.Success, RequestBytes: 3, ResponseBytes: 7}
@@ -41,7 +45,7 @@ func (f *fakeExecutor) Execute(ctx context.Context, operation workload.Operation
 		outcome.Error = "post-write acknowledgement failure"
 	}
 	if f.mode == "mixed" {
-		switch operation.Sequence % 3 {
+		switch (f.sequence.Add(1) - 1) % 3 {
 		case 1:
 			outcome.Status, outcome.Error = workload.Failed, "known failure"
 		case 2:
@@ -211,5 +215,21 @@ func TestWriteReportPreservesRawEvidenceAndNoInvalidRatio(t *testing.T) {
 	}
 	if err := report.Write(jsonPath, jsonPath); err == nil {
 		t.Fatal("accepted report path collision")
+	}
+}
+
+func TestMeasureCountsOperationDeadlines(t *testing.T) {
+	executor := &fakeExecutor{delay: time.Second}
+	result := measure(t.Context(), executor, testPlan(t, 8), time.Millisecond)
+	if result.Timeouts != 8 || result.Attempted != 8 || result.Indeterminate != 8 {
+		t.Fatalf("deadline accounting: %+v", result)
+	}
+}
+
+func TestExpiredContextDoesNotEraseConfirmedSuccess(t *testing.T) {
+	executor := &fakeExecutor{mode: "success_after_deadline", delay: time.Second}
+	result := measure(t.Context(), executor, testPlan(t, 8), time.Millisecond)
+	if result.Timeouts != 0 || result.Succeeded != 8 || !result.complete() {
+		t.Fatalf("confirmed success was counted as timeout: %+v", result)
 	}
 }

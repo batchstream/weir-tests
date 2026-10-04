@@ -236,7 +236,7 @@ func (s *durationState) next(workerIndex int) []workload.Operation {
 		if write {
 			worker.revisions[worker.cursor] = 1 - worker.revisions[worker.cursor]
 		}
-		operation := workload.Operation{Worker: workerIndex, Sequence: worker.sequence, Record: record, Write: write, Revision: worker.revisions[worker.cursor]}
+		operation := workload.Operation{Record: record, Write: write, Revision: worker.revisions[worker.cursor]}
 		operations[index] = operation
 		worker.cursor = (worker.cursor + 1) % (worker.end - worker.start)
 		worker.sequence++
@@ -288,6 +288,7 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 				began := time.Now()
 				outcomes := options.Executor.ExecuteBatch(operationCtx, operations)
 				elapsed := time.Since(began)
+				timedOut := errors.Is(operationCtx.Err(), context.DeadlineExceeded)
 				cancel()
 				requests[index]++
 				if len(outcomes) != len(operations) {
@@ -298,6 +299,9 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 					}
 				}
 				for operationIndex, outcome := range outcomes {
+					if timedOut && outcome.Status != workload.Success {
+						worker.result.Timeouts++
+					}
 					worker.hist.add(elapsed)
 					worker.result.Attempted++
 					if operations[operationIndex].Write {
@@ -391,6 +395,7 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 	result.Resources.MeasurementNS = elapsed.Nanoseconds()
 	var hist histogram
 	for index, worker := range workers {
+		result.Timeouts += worker.result.Timeouts
 		result.Attempted += worker.result.Attempted
 		result.Succeeded += worker.result.Succeeded
 		result.Errors += worker.result.Errors

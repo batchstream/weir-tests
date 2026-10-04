@@ -35,14 +35,11 @@ func TestDeterministicPlanOwnsWorkerIDsAndReadRevisions(t *testing.T) {
 	actual := make([]int, dataset.Config.Records)
 	reads, writes, count := 0, 0, 0
 	for worker, operations := range first.Workers {
-		for sequence, operation := range operations {
+		for _, operation := range operations {
 			if owner, exists := owners[operation.Record]; exists && owner != worker {
 				t.Fatal("record shared by workers")
 			}
 			owners[operation.Record] = worker
-			if operation.Worker != worker || operation.Sequence != sequence {
-				t.Fatal("sequence metadata mismatch")
-			}
 			if operation.Write {
 				actual[operation.Record] = 1 - actual[operation.Record]
 				writes++

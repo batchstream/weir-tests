@@ -234,3 +234,17 @@ func TestSaturationReportRecordsClientAndBackendRequestBudgets(t *testing.T) {
 		t.Fatal("human-readable report hid the request budgets", markdown)
 	}
 }
+
+func TestBulkDurationCountsLogicalOperationsInExpiredBatches(t *testing.T) {
+	config := workload.Config{Backend: "search", StoreName: "search", Namespace: "weirtest_0123456789abcdef01234567", Records: 8, Concurrency: 2}
+	dataset, err := workload.New(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	executor := &fakeExecutor{delay: time.Second}
+	opts := durationMeasureOptions{Executor: executor, State: newDurationState(dataset, 2, 4, 0), Duration: time.Second, Timeout: time.Millisecond}
+	result := measureDuration(t.Context(), opts)
+	if result.Timeouts != 8 || result.Attempted != 8 || result.Indeterminate != 8 || result.Requests != 2 {
+		t.Fatalf("expired batches must count logical operations: %+v", result)
+	}
+}
