@@ -1,2 +1,0 @@
-da0118621160e61dc88077b82c6f44a5ee6dfd943bde5948d5885e2ba8e3e75d
-{"cluster_name": "weir-m17-elasticsearch", "cluster_uuid": "qcRVNJqZRz6DsgEdBUF-Ng", "name": "da0118621160", "tagline": "You Know, for Search", "version": {"build_date": "2026-09-18T10:10:07.018982263Z", "build_flavor": "default", "build_hash": "3b2a41103de35e0af4064d647974032fcc1bcde9", "build_snapshot": false, "build_type": "docker", "lucene_version": "9.12.2", "minimum_index_compatibility_version": "7.0.0", "minimum_wire_compatibility_version": "7.17.0", "number": "8.19.22"}}
