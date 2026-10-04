@@ -122,7 +122,7 @@ func (d *Dataset) Document(operation Operation) []byte {
 	return d.docs[operation.Record][operation.Revision]
 }
 
-func (d *Dataset) MediaType() string {
+func (d *Dataset) ContentType() string {
 	if d.Config.Backend == "mongo" {
 		return "application/bson"
 	}
