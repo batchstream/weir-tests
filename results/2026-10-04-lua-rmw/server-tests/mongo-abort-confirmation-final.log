@@ -1,0 +1,52 @@
+=== RUN   TestMongoLuaBatchUsesOneReadWriteCommitAndPreservesDocuments
+    program_batch_integration_test.go:113: 9 independent Lua items: one snapshot find, five mixed writes in one bulkWrite, one commit, unchanged identity types and business fields
+2026/10/04 10:28:54 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchUsesOneReadWriteCommitAndPreservesDocuments (0.22s)
+=== RUN   TestMongoLuaBatchNativeConflictRecomputesPeers
+=== RUN   TestMongoLuaBatchNativeConflictRecomputesPeers/update
+2026/10/04 10:28:54 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestMongoLuaBatchNativeConflictRecomputesPeers/missing_insert
+2026/10/04 10:28:54 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchNativeConflictRecomputesPeers (0.39s)
+    --- PASS: TestMongoLuaBatchNativeConflictRecomputesPeers/update (0.20s)
+    --- PASS: TestMongoLuaBatchNativeConflictRecomputesPeers/missing_insert (0.19s)
+=== RUN   TestMongoLuaBatchCommitReplyLossNeverReapplies
+=== RUN   TestMongoLuaBatchCommitReplyLossNeverReapplies/once
+    program_batch_integration_test.go:254: once: find=1 bulkWrite=1 same-transaction commits=2 persisted increments=1 outcome=APPLIED
+2026/10/04 10:28:55 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestMongoLuaBatchCommitReplyLossNeverReapplies/all
+    program_batch_integration_test.go:254: all: find=1 bulkWrite=1 same-transaction commits=2 persisted increments=1 outcome=UNKNOWN
+2026/10/04 10:28:56 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=4 released=4
+--- PASS: TestMongoLuaBatchCommitReplyLossNeverReapplies (1.78s)
+    --- PASS: TestMongoLuaBatchCommitReplyLossNeverReapplies/once (0.67s)
+    --- PASS: TestMongoLuaBatchCommitReplyLossNeverReapplies/all (1.10s)
+=== RUN   TestMongoLuaBatchSchemaRejectionRollsBackThenIsolatesItem
+2026/10/04 10:28:56 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchSchemaRejectionRollsBackThenIsolatesItem (0.22s)
+=== RUN   TestMongoLuaBatchLostAbortAcknowledgementNeverRebuilds
+    program_batch_integration_test.go:369: actual abort reply dropped: one read, one attempted bulkWrite, one same-transaction abort, zero commits, zero replays, all documents unchanged
+2026/10/04 10:28:56 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchLostAbortAcknowledgementNeverRebuilds (0.20s)
+=== RUN   TestMongoLuaBatchRetainedBoundSplitsWithoutChangingEffects
+2026/10/04 10:28:57 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=5 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestMongoLuaBatchRetainedBoundSplitsWithoutChangingEffects (0.67s)
+=== RUN   TestMongoLuaBatchCallerCancellationDoesNotCancelPeers
+=== RUN   TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/read
+=== RUN   TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/write
+--- PASS: TestMongoLuaBatchCallerCancellationDoesNotCancelPeers (0.03s)
+    --- PASS: TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/read (0.00s)
+    --- PASS: TestMongoLuaBatchCallerCancellationDoesNotCancelPeers/write (0.03s)
+=== RUN   TestMongoLuaBatchMalformedWriteAcknowledgementNeverCommits
+--- PASS: TestMongoLuaBatchMalformedWriteAcknowledgementNeverCommits (0.01s)
+=== RUN   TestMongoLuaBatchCursorContinuationsKeepTransactionIdentity
+--- PASS: TestMongoLuaBatchCursorContinuationsKeepTransactionIdentity (0.00s)
+=== RUN   TestMongoLuaBatchMissingWriteItemAcknowledgementAborts
+--- PASS: TestMongoLuaBatchMissingWriteItemAcknowledgementAborts (0.00s)
+=== RUN   TestMongoLuaBatchUnconfirmedAbortNeverRebuilds
+=== RUN   TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/lost_reply
+=== RUN   TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/rejected_abort
+--- PASS: TestMongoLuaBatchUnconfirmedAbortNeverRebuilds (0.00s)
+    --- PASS: TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/lost_reply (0.00s)
+    --- PASS: TestMongoLuaBatchUnconfirmedAbortNeverRebuilds/rejected_abort (0.00s)
+PASS
+ok  	github.com/batchstream/weir/internal/backend/mongodb	5.268s

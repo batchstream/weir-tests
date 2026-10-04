@@ -1,0 +1,318 @@
+{
+  "control/fixtures/weir-tests-2810661657/node-0-config.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-2810661657/node-0-config.json",
+    "sha256": "7d5a800c1d71cb86fee7dedd7135907b13318f8f040542ffc73a6f53daba725d"
+  },
+  "control/fixtures/weir-tests-2810661657/docker-engine.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-2810661657/docker-engine.json",
+    "sha256": "01c0349c1e04f85f1fa311ccf111ce230719ba9385864ef2f97ca85cd80dfe64"
+  },
+  "control/fixtures/weir-tests-2810661657/node-0-process.log": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-2810661657/node-0-process.log",
+    "sha256": "5808e3430787729a4a38a3a19edd6945f18fa7881f2ac5225cee0e0a06d5f933"
+  },
+  "control/fixtures/weir-tests-2810661657/cleanup.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-2810661657/cleanup.json",
+    "sha256": "30019cdf6af01b0f981e65fe25b2d06fd0b4c9b37d6b1842f5658e9b28a42c10"
+  },
+  "control/fixtures/weir-tests-2810661657/manifest.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-2810661657/manifest.json",
+    "sha256": "83f20db68374efe97704c5e99d3db68bb1d83fa8636c0cfa2b10f29c477be7cb"
+  },
+  "control/fixtures/weir-tests-2810661657/node-0-routes.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-2810661657/node-0-routes.json",
+    "sha256": "ef0cd1038f31bd16e3abdec0266b787dd24b2f0617f017ea8cd6e3fc1169fee9"
+  },
+  "control/fixtures/weir-tests-21641158/node-0-config.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-21641158/node-0-config.json",
+    "sha256": "088002cbac7ed09c501ab83fb65c626052d8ebc8d976aa975627152a8abe2cb7"
+  },
+  "control/fixtures/weir-tests-21641158/docker-engine.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-21641158/docker-engine.json",
+    "sha256": "01c0349c1e04f85f1fa311ccf111ce230719ba9385864ef2f97ca85cd80dfe64"
+  },
+  "control/fixtures/weir-tests-21641158/node-0-process.log": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-21641158/node-0-process.log",
+    "sha256": "908c853b2b2a5778f29083f45daebcb6fbb9eca390bde3d8feada73515233705"
+  },
+  "control/fixtures/weir-tests-21641158/cleanup.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-21641158/cleanup.json",
+    "sha256": "ad3c5d866d672a3144b293b5dfd1d0149ce37c991e9ba1cda1b3c038c567c93e"
+  },
+  "control/fixtures/weir-tests-21641158/manifest.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-21641158/manifest.json",
+    "sha256": "b3c46afa499bc2bea83a7acce5217fe7fcb9d8ab5728dfb567957f0f28e3d6e7"
+  },
+  "control/fixtures/weir-tests-21641158/node-0-routes.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/tmp/weir-tests-21641158/node-0-routes.json",
+    "sha256": "687afc60c8dbc5879842ca46442afb0228aff42f7147922e5cf03640d6cce7bb"
+  },
+  "control/measurement-batch-1.receipt.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/measurement-batch-1.receipt.json",
+    "sha256": "17079c4adbbea77b6720cd83ed0720a38e8bd149da52d4c192fbeeb9be063303"
+  },
+  "control/measurement-batch-32.receipt.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/measurement-batch-32.receipt.json",
+    "sha256": "0a70ec79adcdaf88d0216628d370db3cc8c1c085fb5a21ac30306188b51bfdd0"
+  },
+  "control/saturation-batch-32.log": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32.log",
+    "sha256": "3f3e2209982357b30225198fa8ba5c1a61c9b42e968a2558af9865a61d989c4f"
+  },
+  "control/saturation-batch-1.log": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-1.log",
+    "sha256": "764de37c8113cddee6326115b1a7de5bebd89ddf453d40f15a7442c09b4c7790"
+  },
+  "control/saturation-batch-32/search.md": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.md",
+    "sha256": "37d03568447fbf64fdba0bc5715cf8f418c9f8f4897687ca2e987d8b2b1676ad"
+  },
+  "control/saturation-batch-32/search.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+    "sha256": "421c12b7815fe6a0d51e93d8ae7a895d13e8e463cc438387a63c7c1572fad846"
+  },
+  "control/saturation-batch-32/mongo.md": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.md",
+    "sha256": "aa2ab714dba63c40a8d2b0599a5ec66cb708861a7a4fa87fb7d6e85a297c85e3"
+  },
+  "control/saturation-batch-32/mongo.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+    "sha256": "3f83bc58c93d689bf84438e64b330f012cefc4639cbcccd3d1dbf36a06fa7a03"
+  },
+  "control/saturation-batch-1/search.md": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-1/search.md",
+    "sha256": "f86e369d52f2f74d30c7f515d7e9e233d017cfe26d463c22b250b3ca79dae7bf"
+  },
+  "control/saturation-batch-1/search.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-1/search.json",
+    "sha256": "a82d51f75eace9e3a0152201bb6cbea4bf25c04065633bb45c945037a3f5d764"
+  },
+  "control/saturation-batch-1/mongo.md": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-1/mongo.md",
+    "sha256": "eeb02f026b1af1ca9b3202aa4f5b721e5f8b002fc92875036444486d8aa44a9b"
+  },
+  "control/saturation-batch-1/mongo.json": {
+    "artifact_relative_path": "saturation-evidence-writes-100-9d9e4ce1610881330049b69c4a0de7d872003af5/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-1/mongo.json",
+    "sha256": "b1f7bf9e512c34a79a60d03cb410a157452bb7fcbb286fa0b3b0770441503242"
+  },
+  "linux-system/fixtures/weir-tests-2479009951/node-0-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-2479009951/node-0-config.json",
+    "sha256": "9c842a8a3e1602b06cf690d43c40df1893a8089c85a2b6694b53253a99f51cd5"
+  },
+  "linux-system/fixtures/weir-tests-2479009951/docker-engine.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-2479009951/docker-engine.json",
+    "sha256": "11fc7610a989da3656f433f8ef86f4d7d789f39a1e89cf77c1042ca989373e14"
+  },
+  "linux-system/fixtures/weir-tests-2479009951/node-0-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-2479009951/node-0-process.log",
+    "sha256": "c353c80165e3f7f98787a120956d05b27443f0fc4cd679496852f442974d526f"
+  },
+  "linux-system/fixtures/weir-tests-2479009951/cleanup.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-2479009951/cleanup.json",
+    "sha256": "c6a585a74a1c1fe94a44beb14588eb19d34681a7cd8c906773cf844433ed9cfd"
+  },
+  "linux-system/fixtures/weir-tests-2479009951/manifest.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-2479009951/manifest.json",
+    "sha256": "c199e668b8f2a7692e188324456de21b98318e52e319c0068133fb3c23e218c5"
+  },
+  "linux-system/fixtures/weir-tests-2479009951/node-0-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-2479009951/node-0-routes.json",
+    "sha256": "210cc53347284febac60abc1802368ee693c730116bf37a1a30436cb24900654"
+  },
+  "linux-system/fixtures/weir-tests-1513216177/node-0-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1513216177/node-0-config.json",
+    "sha256": "7ae249ca65fbd212d0de487621632ca97ec19b9da0af8f2c190cedf7068afa36"
+  },
+  "linux-system/fixtures/weir-tests-1513216177/docker-engine.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1513216177/docker-engine.json",
+    "sha256": "11fc7610a989da3656f433f8ef86f4d7d789f39a1e89cf77c1042ca989373e14"
+  },
+  "linux-system/fixtures/weir-tests-1513216177/node-0-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1513216177/node-0-process.log",
+    "sha256": "64ef474de8aeca51e9e691ec6f2dfcf2a1cfd7cfffabb3c2788835f8e098e494"
+  },
+  "linux-system/fixtures/weir-tests-1513216177/cleanup.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1513216177/cleanup.json",
+    "sha256": "ce6222ac7fa8fbc15c1257b2e05628bc0f9c21726e476fadde998b51d1df1437"
+  },
+  "linux-system/fixtures/weir-tests-1513216177/manifest.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1513216177/manifest.json",
+    "sha256": "db37edf811ae2d5493eac232ab7a53885774931f698e798754d2dd75ded8bad9"
+  },
+  "linux-system/fixtures/weir-tests-1513216177/node-0-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1513216177/node-0-routes.json",
+    "sha256": "71dcfeaa4fae0e5cacc67db79fe6b47a7727439c21047d1004e3b28ec6c0c391"
+  },
+  "linux-system/fixtures/weir-tests-4215804102/node-0-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-4215804102/node-0-config.json",
+    "sha256": "23b9087ae3a3cb53d9e3f2cc5a951f7e9d00d6bc1ae4f27c24b2697bea874831"
+  },
+  "linux-system/fixtures/weir-tests-4215804102/docker-engine.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-4215804102/docker-engine.json",
+    "sha256": "11fc7610a989da3656f433f8ef86f4d7d789f39a1e89cf77c1042ca989373e14"
+  },
+  "linux-system/fixtures/weir-tests-4215804102/node-0-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-4215804102/node-0-process.log",
+    "sha256": "4ac8a827a4e0018794e41a772f39ac1c84bd8fc47bf62e07b9253a678ebdc03c"
+  },
+  "linux-system/fixtures/weir-tests-4215804102/cleanup.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-4215804102/cleanup.json",
+    "sha256": "0b2997c21176f55c602af72d4de9c6a901f39bef209c00c7b19c8b8e22b1a279"
+  },
+  "linux-system/fixtures/weir-tests-4215804102/manifest.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-4215804102/manifest.json",
+    "sha256": "97e784fcfaca6601a9db4ecc1f5efd24590aae0fa1112ffb3ae3ac4adb9ec337"
+  },
+  "linux-system/fixtures/weir-tests-4215804102/node-0-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-4215804102/node-0-routes.json",
+    "sha256": "86d17836676565cfb41d5cb3ce17e4acfb5516e437eb06e0bce95753ab817260"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-1-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-1-routes.json",
+    "sha256": "d5842bf1d27b08f0535d1121a99b4d892f817bbcb2d754bc73ae79084e52ab79"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-0-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-0-config.json",
+    "sha256": "97b6dc997ca5aac6a0205b410567afd9a15ed49f5e8c35f6d29b4862489d9536"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/docker-engine.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/docker-engine.json",
+    "sha256": "11fc7610a989da3656f433f8ef86f4d7d789f39a1e89cf77c1042ca989373e14"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-0-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-0-process.log",
+    "sha256": "f186b439e9eb954bed62d9a75edb4b0ae16e0c531405099294b3c7fb4158885b"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-2-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-2-routes.json",
+    "sha256": "8fd9ffacd2708441a76bd02f6262c5a5dcfc24c4489c5105f8ad4968eddb278c"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/cleanup.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/cleanup.json",
+    "sha256": "6240ffa7d8e93b34dca9fb5a102b80a79c9f51dd2b0d34aa627bf5785bb89f0b"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-2-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-2-process.log",
+    "sha256": "29a3dbcde98968752e2ce2db4a86acc902003bfa6b6cd061cbe24180a52cff36"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/manifest.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/manifest.json",
+    "sha256": "a4526c502156e7b0671ddd484a8424982f8f4d0396e44a5a266d0e8c3a162d5d"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-0-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-0-routes.json",
+    "sha256": "d5842bf1d27b08f0535d1121a99b4d892f817bbcb2d754bc73ae79084e52ab79"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-1-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-1-config.json",
+    "sha256": "44e1cf1dee60efcc43fbcf5c9a7bf9adac8137acc38bc9f0c1735005a764143b"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-2-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-2-config.json",
+    "sha256": "2d71082277befd48dc75d71ae42341a4ca2e761f9241ed38021c8a519dd47f53"
+  },
+  "linux-system/fixtures/weir-tests-3808664467/node-1-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-3808664467/node-1-process.log",
+    "sha256": "05f4cc9d5a8685bee2474320952550110e507f7517ea1960135a552fc3639fde"
+  },
+  "linux-system/fixtures/weir-tests-1640616646/node-0-config.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1640616646/node-0-config.json",
+    "sha256": "585f9144baff422627462c503288c845d8c10dc6e607f3d5fabc9f1ce7bfb350"
+  },
+  "linux-system/fixtures/weir-tests-1640616646/docker-engine.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1640616646/docker-engine.json",
+    "sha256": "11fc7610a989da3656f433f8ef86f4d7d789f39a1e89cf77c1042ca989373e14"
+  },
+  "linux-system/fixtures/weir-tests-1640616646/node-0-process.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1640616646/node-0-process.log",
+    "sha256": "91949123cc7830c404152a3047b2717c4383a6a1955f50872f69451fe17652c4"
+  },
+  "linux-system/fixtures/weir-tests-1640616646/cleanup.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1640616646/cleanup.json",
+    "sha256": "cf186fa4836b0eee4c39d0fa2369301a4e4c99c469afa89eaa50cde12bfa025a"
+  },
+  "linux-system/fixtures/weir-tests-1640616646/manifest.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1640616646/manifest.json",
+    "sha256": "d7191eb13d4c2ff4b8d846017ac58a3e25daee7b3370e5b0efa46540ccdb879e"
+  },
+  "linux-system/fixtures/weir-tests-1640616646/node-0-routes.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/tmp/weir-tests-1640616646/node-0-routes.json",
+    "sha256": "cf967e9879b69814098f70eebfca9b23f564a91a5dadf5e7825075a23565c30a"
+  },
+  "linux-system/integration.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/integration.log",
+    "sha256": "a1dca00ef178011a7f01941066637144270ccba463f6438a66389d8e069ffeb3"
+  },
+  "linux-system/smoke/search.md": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/smoke/search.md",
+    "sha256": "025818ebb9b6e271a88e379fee377c77d105043f728ebaf6754c003d558ba934"
+  },
+  "linux-system/smoke/search.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/smoke/search.json",
+    "sha256": "9c3784dcadda3508e60c3e322d8126ac22508486203c3f1d48a41e01d3bc04c5"
+  },
+  "linux-system/smoke/mongo.md": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/smoke/mongo.md",
+    "sha256": "f76e9faa0b78a51d4303aea9da335ae6314a4ea09119bbe116d0f258b5d8adef"
+  },
+  "linux-system/smoke/mongo.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/smoke/mongo.json",
+    "sha256": "4087099501120280e9e2c87122ca42a309efec86de2ef6620ec303cf6444da16"
+  },
+  "linux-system/lua-smoke/search.md": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/lua-smoke/search.md",
+    "sha256": "ea7c5d8d2d81d77ba3d26768eaaec5b15226619abd80afda2633fae9977973c2"
+  },
+  "linux-system/lua-smoke/search.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/lua-smoke/search.json",
+    "sha256": "ecef78b11ebd569cebaded3ab63feca5e39948f3f728de51634dd35e6bc2e79d"
+  },
+  "linux-system/lua-smoke/mongo.md": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/lua-smoke/mongo.md",
+    "sha256": "a939365b36a8ee24218746b50d23a8ef21414835f1d4ea828a1517adb27b2991"
+  },
+  "linux-system/lua-smoke/mongo.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/lua-smoke/mongo.json",
+    "sha256": "66cf1923a89753b07920d749bc3de742bfd43d8734aa3a6edaefdd190d657a93"
+  },
+  "linux-system/cpu-diagnostic/node-0-config.cpu.pprof.mutex.top.txt": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof.mutex.top.txt",
+    "sha256": "9026cb7c33ddd1e517ea0fe54703214deeaee02cd9d6abbdcc93dcddf7006bda"
+  },
+  "linux-system/cpu-diagnostic/node-0-config.cpu.pprof.mutex.pprof": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof.mutex.pprof",
+    "sha256": "33aa99a8b7c550e5fc41cfc301e847d7b0a38ba0db8a0660f53005ca83cb0c46"
+  },
+  "linux-system/cpu-diagnostic/cleanup.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/cleanup.json",
+    "sha256": "0b2997c21176f55c602af72d4de9c6a901f39bef209c00c7b19c8b8e22b1a279"
+  },
+  "linux-system/cpu-diagnostic/node-0-config.cpu.pprof": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.pprof",
+    "sha256": "ddae11ed016316200fd3b60ea44a74cf60c4c0624618ba0de54057cb16d45d48"
+  },
+  "linux-system/cpu-diagnostic/manifest.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/manifest.json",
+    "sha256": "97e784fcfaca6601a9db4ecc1f5efd24590aae0fa1112ffb3ae3ac4adb9ec337"
+  },
+  "linux-system/cpu-diagnostic/workload.log": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/workload.log",
+    "sha256": "71a57b05750c40bce7d0a21c14a2ca4aecf1b1f9e8ecc6b472df5cb7c39a0e41"
+  },
+  "linux-system/cpu-diagnostic/node-0-config.cpu.top.txt": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/node-0-config.cpu.top.txt",
+    "sha256": "a1d990e8e6dc4db609ef446d424a78225d7c961c727fde1a031e83d487579b21"
+  },
+  "linux-system/cpu-diagnostic/receipt.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/receipt.json",
+    "sha256": "dbce3a1165b73abca14e489d157342e1efd29962ca313fe8f2b10baec93197c1"
+  },
+  "linux-system/cpu-diagnostic/workload/mongo.md": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/workload/mongo.md",
+    "sha256": "2c20032a138e643edecc84d9db3c1550497e47f35a84bd34390d19cb3f659f76"
+  },
+  "linux-system/cpu-diagnostic/workload/mongo.json": {
+    "artifact_relative_path": "system-evidence-a1601921ba26874c92655d8b8b6a8f5712cd8bbd/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/workload/mongo.json",
+    "sha256": "43bd37eca39adad051b3e9499c7f1910803f9a197f877230174902692eea235f"
+  }
+}

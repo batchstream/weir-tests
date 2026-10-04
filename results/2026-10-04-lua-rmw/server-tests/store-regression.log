@@ -1,0 +1,183 @@
+=== RUN   TestAllRecordActionsShareBatch
+--- PASS: TestAllRecordActionsShareBatch (0.00s)
+=== RUN   TestMixedBatchRespectsBytesKeysAndSessionOrder
+--- PASS: TestMixedBatchRespectsBytesKeysAndSessionOrder (0.00s)
+=== RUN   TestDispatchContextsDoNotMutateReusablePlans
+--- PASS: TestDispatchContextsDoNotMutateReusablePlans (0.00s)
+=== RUN   TestAbandonAndSessionCloseCancelFuturePhasesOnly
+=== RUN   TestAbandonAndSessionCloseCancelFuturePhasesOnly/abandon
+=== RUN   TestAbandonAndSessionCloseCancelFuturePhasesOnly/session_close
+--- PASS: TestAbandonAndSessionCloseCancelFuturePhasesOnly (0.00s)
+    --- PASS: TestAbandonAndSessionCloseCancelFuturePhasesOnly/abandon (0.00s)
+    --- PASS: TestAbandonAndSessionCloseCancelFuturePhasesOnly/session_close (0.00s)
+=== RUN   TestEveryRecordActionSharesConcurrencyLimit
+--- PASS: TestEveryRecordActionSharesConcurrencyLimit (0.02s)
+=== RUN   TestBackendFeedbackDoesNotReduceConfiguredDispatch
+=== RUN   TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=false/working_slots=3
+=== RUN   TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=false/working_slots=4
+=== RUN   TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=true/working_slots=3
+=== RUN   TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=true/working_slots=4
+--- PASS: TestBackendFeedbackDoesNotReduceConfiguredDispatch (0.01s)
+    --- PASS: TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=false/working_slots=3 (0.00s)
+    --- PASS: TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=false/working_slots=4 (0.00s)
+    --- PASS: TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=true/working_slots=3 (0.00s)
+    --- PASS: TestBackendFeedbackDoesNotReduceConfiguredDispatch/bulk=true/working_slots=4 (0.00s)
+=== RUN   TestNativeCoalescedRPCDuplicateReadBudgetAndRetainedOwners
+2026/10/04 10:32:11 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=2 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestNativeCoalescedRPCDuplicateReadBudgetAndRetainedOwners (0.16s)
+=== RUN   TestIndependentRPCsShareExecutionAndKeepResultsAndQuota
+--- PASS: TestIndependentRPCsShareExecutionAndKeepResultsAndQuota (0.00s)
+=== RUN   TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds
+=== RUN   TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/different_target
+=== RUN   TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/singleton
+=== RUN   TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/native_bytes
+=== RUN   TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/working_envelope
+=== RUN   TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/large_RPC
+--- PASS: TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds (0.00s)
+    --- PASS: TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/different_target (0.00s)
+    --- PASS: TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/singleton (0.00s)
+    --- PASS: TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/native_bytes (0.00s)
+    --- PASS: TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/working_envelope (0.00s)
+    --- PASS: TestCrossRPCSelectionPreservesNamespaceAndPhysicalBounds/large_RPC (0.00s)
+=== RUN   TestCrossRPCDuplicateMutationsKeepInputOrder
+--- PASS: TestCrossRPCDuplicateMutationsKeepInputOrder (0.00s)
+=== RUN   TestCrossRPCSharedContextUsesLatestCallerAndBackendCap
+=== RUN   TestCrossRPCSharedContextUsesLatestCallerAndBackendCap/false
+=== RUN   TestCrossRPCSharedContextUsesLatestCallerAndBackendCap/true
+--- PASS: TestCrossRPCSharedContextUsesLatestCallerAndBackendCap (0.00s)
+    --- PASS: TestCrossRPCSharedContextUsesLatestCallerAndBackendCap/false (0.00s)
+    --- PASS: TestCrossRPCSharedContextUsesLatestCallerAndBackendCap/true (0.00s)
+=== RUN   TestCrossRPCBackendCapPrecedesLongCallerDeadline
+--- PASS: TestCrossRPCBackendCapPrecedesLongCallerDeadline (0.00s)
+=== RUN   TestCrossRPCPreflightRejectsLateBackendInvalidRecordBeforeAdmission
+--- PASS: TestCrossRPCPreflightRejectsLateBackendInvalidRecordBeforeAdmission (0.00s)
+=== RUN   TestCrossRPCActiveCancellationDoesNotCancelPeerOrEraseAcknowledgement
+--- PASS: TestCrossRPCActiveCancellationDoesNotCancelPeerOrEraseAcknowledgement (0.00s)
+=== RUN   TestCrossRPCAllCallersCancelSharedBackendAndKeepUnknownWrites
+--- PASS: TestCrossRPCAllCallersCancelSharedBackendAndKeepUnknownWrites (0.00s)
+=== RUN   TestCrossRPCOwnBackendDeadlineAndAbandonedOwnersReleaseAfterExecution
+--- PASS: TestCrossRPCOwnBackendDeadlineAndAbandonedOwnersReleaseAfterExecution (0.03s)
+=== RUN   TestCrossRPCLargeDuplicateMutationBatchKeepsSequentialGroups
+--- PASS: TestCrossRPCLargeDuplicateMutationBatchKeepsSequentialGroups (0.00s)
+=== RUN   TestCrossRPC512QueuedAndRetainedRequestsAreBoundedByBytes
+=== RUN   TestCrossRPC512QueuedAndRetainedRequestsAreBoundedByBytes/false
+=== RUN   TestCrossRPC512QueuedAndRetainedRequestsAreBoundedByBytes/true
+--- PASS: TestCrossRPC512QueuedAndRetainedRequestsAreBoundedByBytes (0.03s)
+    --- PASS: TestCrossRPC512QueuedAndRetainedRequestsAreBoundedByBytes/false (0.02s)
+    --- PASS: TestCrossRPC512QueuedAndRetainedRequestsAreBoundedByBytes/true (0.01s)
+=== RUN   TestCrossRPCByteAdmissionRemainsIndependentPerStore
+=== RUN   TestCrossRPCByteAdmissionRemainsIndependentPerStore/false
+=== RUN   TestCrossRPCByteAdmissionRemainsIndependentPerStore/true
+--- PASS: TestCrossRPCByteAdmissionRemainsIndependentPerStore (0.04s)
+    --- PASS: TestCrossRPCByteAdmissionRemainsIndependentPerStore/false (0.00s)
+    --- PASS: TestCrossRPCByteAdmissionRemainsIndependentPerStore/true (0.04s)
+=== RUN   TestCompletedTransportMetricsRemainDistinctFromHealthyBusinessEvidence
+--- PASS: TestCompletedTransportMetricsRemainDistinctFromHealthyBusinessEvidence (0.00s)
+=== RUN   TestRuntimeCanceledCallDoesNotBecomeBackendCongestion
+--- PASS: TestRuntimeCanceledCallDoesNotBecomeBackendCongestion (0.00s)
+=== RUN   TestRuntimeOwnedBackendDeadlineRemainsCongestion
+--- PASS: TestRuntimeOwnedBackendDeadlineRemainsCongestion (0.00s)
+=== RUN   TestRuntimePartiallyCanceledBatchPreservesEachCallOutcome
+--- PASS: TestRuntimePartiallyCanceledBatchPreservesEachCallOutcome (0.00s)
+=== RUN   TestNativeIndependentReadsOverlap
+    integration_test.go:157: same-key independent reads elapsed 211.345417ms
+2026/10/04 10:32:12 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=3 limit=3 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestNativeIndependentReadsOverlap (0.37s)
+=== RUN   TestNativeIndependentMutationDeadlines
+2026/10/04 10:32:12 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=3 limit=3 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestNativeIndependentMutationDeadlines (0.18s)
+=== RUN   TestNativeBatchItemAndUncertainErrors
+2026/10/04 10:32:12 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestNativeBatchItemAndUncertainErrors (0.28s)
+=== RUN   TestNativeShutdownQueueAndExecution
+2026/10/04 10:32:13 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=3 released=3
+--- PASS: TestNativeShutdownQueueAndExecution (0.14s)
+=== RUN   TestNativeWriteConcernAmbiguity
+2026/10/04 10:32:13 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestNativeWriteConcernAmbiguity (0.15s)
+=== RUN   TestNativeCancellationDispatchRace
+2026/10/04 10:32:13 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=26 released=26
+--- PASS: TestNativeCancellationDispatchRace (0.36s)
+=== RUN   TestNativeGracefulDrainCompletesAccepted
+2026/10/04 10:32:13 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestNativeGracefulDrainCompletesAccepted (0.17s)
+=== RUN   TestRouteNativeBackendIODeadline
+=== RUN   TestRouteNativeBackendIODeadline/configured_command
+    integration_test.go:504: blocked count: configured=100ms elapsed=103.110709ms completion=RESPONSE_INCOMPLETE
+2026/10/04 10:32:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestRouteNativeBackendIODeadline/configured_qualification
+    integration_test.go:504: blocked listCollections: configured=100ms elapsed=102.901917ms completion=NATIVE_NOT_STARTED
+2026/10/04 10:32:14 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+=== RUN   TestRouteNativeBackendIODeadline/default_command
+    integration_test.go:504: blocked count: configured=2s elapsed=2.001823041s completion=RESPONSE_INCOMPLETE
+2026/10/04 10:32:18 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestRouteNativeBackendIODeadline (4.38s)
+    --- PASS: TestRouteNativeBackendIODeadline/configured_command (0.58s)
+    --- PASS: TestRouteNativeBackendIODeadline/configured_qualification (0.68s)
+    --- PASS: TestRouteNativeBackendIODeadline/default_command (3.12s)
+=== RUN   TestRouteLuaDatabaseIODeadlineAndCommitUncertainty
+=== RUN   TestRouteLuaDatabaseIODeadlineAndCommitUncertainty/find
+    integration_test.go:578: blocked find: cap=100ms elapsed=118.466417ms outcome=NOT_APPLIED
+2026/10/04 10:32:18 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=3 released=3
+=== RUN   TestRouteLuaDatabaseIODeadlineAndCommitUncertainty/commitTransaction
+    integration_test.go:578: blocked commitTransaction: cap=100ms elapsed=103.065417ms outcome=UNKNOWN
+2026/10/04 10:32:19 INFO backend_connections_closed backend=mongo store=mongo owned=0 peak=2 limit=3 dialing=0 closing=0 acquired=2 released=2
+--- PASS: TestRouteLuaDatabaseIODeadlineAndCommitUncertainty (1.30s)
+    --- PASS: TestRouteLuaDatabaseIODeadlineAndCommitUncertainty/find (0.61s)
+    --- PASS: TestRouteLuaDatabaseIODeadlineAndCommitUncertainty/commitTransaction (0.70s)
+=== RUN   TestRuntimeOwnsAdapterExactlyOnce
+--- PASS: TestRuntimeOwnsAdapterExactlyOnce (0.00s)
+=== RUN   TestMetricsExactBatchOutcomesAdmissionAndConfiguredCapacity
+--- PASS: TestMetricsExactBatchOutcomesAdmissionAndConfiguredCapacity (0.03s)
+=== RUN   TestAllCallKindsShareWorkingSetAdmission
+--- PASS: TestAllCallKindsShareWorkingSetAdmission (0.00s)
+=== RUN   TestCanceledSingletonDoesNotRunOrPoisonPeer
+--- PASS: TestCanceledSingletonDoesNotRunOrPoisonPeer (0.00s)
+=== RUN   TestAdmissionBoundsAndReservation
+--- PASS: TestAdmissionBoundsAndReservation (0.00s)
+=== RUN   TestSameStreamOrderIndependentReadAndCancellation
+--- PASS: TestSameStreamOrderIndependentReadAndCancellation (0.00s)
+=== RUN   TestDispatchedCancellationPreservesBackendOutcome
+--- PASS: TestDispatchedCancellationPreservesBackendOutcome (0.01s)
+=== RUN   TestMicrobatchDeadlinesAndBounds
+--- PASS: TestMicrobatchDeadlinesAndBounds (0.00s)
+=== RUN   TestOnlyDirectStreamingExecutionUsesCallerLifetime
+=== RUN   TestOnlyDirectStreamingExecutionUsesCallerLifetime/false
+=== RUN   TestOnlyDirectStreamingExecutionUsesCallerLifetime/true
+--- PASS: TestOnlyDirectStreamingExecutionUsesCallerLifetime (0.00s)
+    --- PASS: TestOnlyDirectStreamingExecutionUsesCallerLifetime/false (0.00s)
+    --- PASS: TestOnlyDirectStreamingExecutionUsesCallerLifetime/true (0.00s)
+=== RUN   TestSlowConsumerRetainedBound
+--- PASS: TestSlowConsumerRetainedBound (0.01s)
+=== RUN   TestShutdownPreservesSynchronousResultEvidenceUntilAck
+--- PASS: TestShutdownPreservesSynchronousResultEvidenceUntilAck (0.00s)
+=== RUN   TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge
+=== RUN   TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/inputfalse
+=== RUN   TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/inputtrue
+=== RUN   TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/resultfalse
+=== RUN   TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/resulttrue
+--- PASS: TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge (0.00s)
+    --- PASS: TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/inputfalse (0.00s)
+    --- PASS: TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/inputtrue (0.00s)
+    --- PASS: TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/resultfalse (0.00s)
+    --- PASS: TestCommandAdmissionRequiresNonzeroMetadataAndTerminalCharge/resulttrue (0.00s)
+=== RUN   TestScanPageCompletionAndCleanupFailureReleaseReservations
+=== RUN   TestScanPageCompletionAndCleanupFailureReleaseReservations/exhausted
+=== RUN   TestScanPageCompletionAndCleanupFailureReleaseReservations/resumable
+=== RUN   TestScanPageCompletionAndCleanupFailureReleaseReservations/exhausted_cleanup_failure
+=== RUN   TestScanPageCompletionAndCleanupFailureReleaseReservations/resumable_cleanup_failure
+--- PASS: TestScanPageCompletionAndCleanupFailureReleaseReservations (0.00s)
+    --- PASS: TestScanPageCompletionAndCleanupFailureReleaseReservations/exhausted (0.00s)
+    --- PASS: TestScanPageCompletionAndCleanupFailureReleaseReservations/resumable (0.00s)
+    --- PASS: TestScanPageCompletionAndCleanupFailureReleaseReservations/exhausted_cleanup_failure (0.00s)
+    --- PASS: TestScanPageCompletionAndCleanupFailureReleaseReservations/resumable_cleanup_failure (0.00s)
+=== RUN   TestUnifiedStreamingBackpressureAndReservation
+--- PASS: TestUnifiedStreamingBackpressureAndReservation (0.01s)
+=== RUN   TestBlockedScanReleasesOnlyExecutionPermitAtConcurrencyOne
+--- PASS: TestBlockedScanReleasesOnlyExecutionPermitAtConcurrencyOne (0.00s)
+=== RUN   TestUnifiedStreamCancellationAndShutdownJoin
+--- PASS: TestUnifiedStreamCancellationAndShutdownJoin (0.01s)
+=== RUN   TestWorkingBudgetBackfillsIndependentWorkWithoutBreakingSessionOrder
+--- PASS: TestWorkingBudgetBackfillsIndependentWorkWithoutBreakingSessionOrder (0.00s)
+PASS
+ok  	github.com/batchstream/weir/internal/store	9.487s
