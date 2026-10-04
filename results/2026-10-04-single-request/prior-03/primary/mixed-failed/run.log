@@ -1,0 +1,605 @@
+database-full-load (10)	Set up job	﻿2026-10-03T22:56:44.4424068Z Current runner version: '2.337.0'
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4449970Z ##[group]Runner Image Provisioner
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4451154Z Hosted Compute Agent
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4451817Z Version: 20260901.588
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4452466Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4453213Z Build Date: 2026-09-01T19:56:44Z
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4453968Z Worker ID: {2f4323a6-989a-459c-b002-7784dd5c0f2e}
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4454680Z Azure Region: westcentralus
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4455254Z ##[endgroup]
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4456963Z ##[group]Operating System
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4457616Z Ubuntu
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4458184Z 24.04.5
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4458769Z LTS
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4459260Z ##[endgroup]
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4459870Z ##[group]Runner Image
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4460816Z Image: ubuntu-24.04
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4461494Z Version: 20260927.320.1
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4462562Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4464789Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4465793Z ##[endgroup]
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4466936Z ##[group]GITHUB_TOKEN Permissions
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4469060Z Contents: read
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4469763Z Metadata: read
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4470310Z ##[endgroup]
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4472640Z Secret source: Actions
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4473717Z Cache mode: write
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4474635Z Prepare workflow directory
+database-full-load (10)	Set up job	2026-10-03T22:56:44.4952016Z Prepare all required actions
+database-full-load (10)	Set up job	2026-10-03T22:56:44.5000887Z Getting action download info
+database-full-load (10)	Set up job	2026-10-03T22:56:44.7976452Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+database-full-load (10)	Set up job	2026-10-03T22:56:44.8888858Z Download action repository 'actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16' (SHA:924ae3a1cded613372ab5595356fb5720e22ba16)
+database-full-load (10)	Set up job	2026-10-03T22:56:45.4996028Z Download action repository 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+database-full-load (10)	Set up job	2026-10-03T22:56:45.7049178Z Complete job name: database-full-load (10)
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-10-03T22:56:45.7853778Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7854969Z with:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7855511Z   ref: 03fcec1bbb3806a41eca2aa39b4ff702a4b59331
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7856175Z   persist-credentials: false
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7856751Z   repository: batchstream/weir-tests
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7861269Z   token: ***
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7861755Z   ssh-strict: true
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7862233Z   ssh-user: git
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7862703Z   clean: true
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7863196Z   sparse-checkout-cone-mode: true
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7863769Z   fetch-depth: 1
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7864284Z   fetch-tags: false
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7864776Z   show-progress: true
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7865279Z   lfs: false
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7865731Z   submodules: false
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7866219Z   set-safe-directory: true
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7866785Z   allow-unsafe-pr-checkout: false
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7867623Z env:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7868117Z   GOENV: off
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7868561Z   GOWORK: off
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7869064Z   GOTOOLCHAIN: local
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7869580Z   GOFLAGS: -mod=readonly
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7870111Z   PYTHONDONTWRITEBYTECODE: 1
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.7870825Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8859299Z Syncing repository: batchstream/weir-tests
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8862807Z ##[group]Getting Git version info
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8864141Z Working directory is '/home/runner/work/weir-tests/weir-tests'
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8866101Z [command]/usr/bin/git version
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8916544Z git version 2.55.0
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8939296Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8952027Z Temporarily overriding HOME='/home/runner/work/_temp/1b858b16-e616-4288-b12c-ea0f82ffee77' before making global git config changes
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8954634Z Adding repository directory to the temporary git global config as a safe directory
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.8960007Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/weir-tests/weir-tests
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9020077Z Deleting the contents of '/home/runner/work/weir-tests/weir-tests'
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9030878Z ##[group]Determining repository object format
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9038528Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9039827Z ##[group]Initializing the repository
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9041707Z [command]/usr/bin/git init /home/runner/work/weir-tests/weir-tests
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9137784Z hint: Using 'master' as the name for the initial branch. This default branch name
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9139746Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9141890Z hint: to use in all of your new repositories, which will suppress this warning,
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9143375Z hint: call:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9144181Z hint:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9145307Z hint: 	git config --global init.defaultBranch <name>
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9146617Z hint:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9147737Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9149540Z hint: 'development'. The just-created branch can be renamed via this command:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9151831Z hint:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9153325Z hint: 	git branch -m <name>
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9154790Z hint:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9156458Z hint: Disable this message with "git config set advice.defaultBranchName false"
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9158995Z Initialized empty Git repository in /home/runner/work/weir-tests/weir-tests/.git/
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9163117Z [command]/usr/bin/git remote add origin https://github.com/batchstream/weir-tests
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9211578Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9212927Z ##[group]Disabling automatic garbage collection
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9216121Z [command]/usr/bin/git config --local gc.auto 0
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9249392Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9251042Z ##[group]Setting up auth
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9252339Z Removing SSH command configuration
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9269669Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9304055Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9677690Z Removing HTTP extra header
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9684706Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9724924Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9947209Z Removing includeIf entries pointing to credentials config files
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9952444Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:45.9987763Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0224705Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0266273Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path /home/runner/work/_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0301613Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0340318Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0377554Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0409713Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0411826Z ##[group]Fetching the repository
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:46.0418010Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 03fcec1bbb3806a41eca2aa39b4ff702a4b59331
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1047806Z From https://github.com/batchstream/weir-tests
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1050889Z  * branch            03fcec1bbb3806a41eca2aa39b4ff702a4b59331 -> FETCH_HEAD
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1061411Z [command]/usr/bin/git rev-parse --verify --quiet 03fcec1bbb3806a41eca2aa39b4ff702a4b59331^{object}
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1091674Z 03fcec1bbb3806a41eca2aa39b4ff702a4b59331
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1098109Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1100281Z ##[group]Determining the checkout info
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1103308Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1104841Z [command]/usr/bin/git sparse-checkout disable
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1156933Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1191589Z ##[group]Checking out the ref
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.1196431Z [command]/usr/bin/git checkout --progress --force 03fcec1bbb3806a41eca2aa39b4ff702a4b59331
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2339087Z Note: switching to '03fcec1bbb3806a41eca2aa39b4ff702a4b59331'.
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2340875Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2341877Z You are in 'detached HEAD' state. You can look around, make experimental
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2344269Z changes and commit them, and you can discard any commits you make in this
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2346660Z state without impacting any branches by switching back to a branch.
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2348066Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2348988Z If you want to create a new branch to retain commits you create, you may
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2351454Z do so (now or later) by using -c with the switch command. Example:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2352757Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2353316Z   git switch -c <new-branch-name>
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2354266Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2354802Z Or undo this operation with:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2355627Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2356167Z   git switch -
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2357188Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2358224Z Turn off this advice by setting config variable advice.detachedHead to false
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2359781Z 
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2361345Z HEAD is now at 03fcec1 🐛 fix: bound database monitoring without discarding CPU evidence
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2367799Z ##[endgroup]
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2416795Z [command]/usr/bin/git log -1 --format=%H
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2445662Z 03fcec1bbb3806a41eca2aa39b4ff702a4b59331
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2456162Z ##[group]Removing auth
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2458168Z Removing SSH command configuration
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2461537Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2499548Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2724161Z Removing HTTP extra header
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2728075Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2772501Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2994841Z Removing includeIf entries pointing to credentials config files
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.2998612Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3056848Z includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3060810Z includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3064081Z includeif.gitdir:/github/workspace/.git.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3066703Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3073785Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3097240Z /home/runner/work/_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3108258Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-0c8eb2f6\-920d\-448e\-94c0\-6a5b8e2405b7\.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3144938Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3169893Z /home/runner/work/_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3180301Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-0c8eb2f6\-920d\-448e\-94c0\-6a5b8e2405b7\.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3225514Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3251573Z /github/runner_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3259230Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-0c8eb2f6\-920d\-448e\-94c0\-6a5b8e2405b7\.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3299394Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3325312Z /github/runner_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3333700Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-0c8eb2f6\-920d\-448e\-94c0\-6a5b8e2405b7\.config
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3368810Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3591179Z Removing credentials config '/home/runner/work/_temp/git-credentials-0c8eb2f6-920d-448e-94c0-6a5b8e2405b7.config'
+database-full-load (10)	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T22:56:47.3598812Z ##[endgroup]
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	﻿2026-10-03T22:56:47.3989646Z ##[group]Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.3991513Z with:
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.3992379Z   go-version-file: go.mod
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.3993409Z   check-latest: false
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4003893Z   token: ***
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4004772Z   cache: true
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4005609Z env:
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4006393Z   GOENV: off
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4007231Z   GOWORK: off
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4008084Z   GOTOOLCHAIN: local
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4009051Z   GOFLAGS: -mod=readonly
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4010071Z   PYTHONDONTWRITEBYTECODE: 1
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.4011395Z ##[endgroup]
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.5270892Z Setup go version spec 1.27.1
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:47.5287427Z Attempting to download 1.27.1...
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:48.3444701Z matching 1.27.1...
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:48.3471343Z Acquiring 1.27.1 from https://github.com/actions/go-versions/releases/download/1.27.1-33583469715/go-1.27.1-linux-x64.tar.gz
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:49.0756158Z Extracting Go...
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:49.0865658Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/0c38a825-eb40-4d69-8a0a-aba90ee9f480 -f /home/runner/work/_temp/ebb77868-a225-4cc2-9e8f-0b7755679995
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:50.7671633Z Successfully extracted go to /home/runner/work/_temp/0c38a825-eb40-4d69-8a0a-aba90ee9f480
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:50.7672251Z Adding to the cache ...
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.7664588Z Successfully cached go to /opt/hostedtoolcache/go/1.27.1/x64
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.7665303Z Added go to the path
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.7666675Z Successfully set up Go version 1.27.1
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.7928332Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOMODCACHE
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.7965438Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOCACHE
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.8000881Z /home/runner/go/pkg/mod
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.8025918Z /home/runner/.cache/go-build
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:56.9913645Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:58.2031927Z Received 41943040 of 252007507 (16.6%), 40.0 MBs/sec
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:59.2037739Z Received 130023424 of 252007507 (51.6%), 62.0 MBs/sec
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:59.8739441Z Received 252007507 of 252007507 (100.0%), 90.0 MBs/sec
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:59.8740759Z Cache Size: ~240 MB (252007507 B)
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:56:59.8811774Z [command]/usr/bin/tar -xf /home/runner/work/_temp/907ef6e0-ffee-4433-95cb-204d96f2ef16/cache.tzst -P -C /home/runner/work/weir-tests/weir-tests --use-compress-program unzstd
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.8705273Z Cache restored successfully
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.8861181Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.8888008Z go version go1.27.1 linux/amd64
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.8888519Z 
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.8889062Z ##[group]go env
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9027215Z AR='ar'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9071024Z CC='gcc'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9071505Z CGO_CFLAGS='-O2 -g'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9072022Z CGO_CPPFLAGS=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9072505Z CGO_CXXFLAGS='-O2 -g'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9072986Z CGO_ENABLED='1'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9073469Z CGO_FFLAGS='-O2 -g'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9073926Z CGO_LDFLAGS='-O2 -g'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9074355Z CXX='g++'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9074733Z GCCGO='gccgo'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9075131Z GO111MODULE=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9075608Z GOAMD64='v1'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9076082Z GOARCH='amd64'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9076341Z GOAUTH='netrc'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9076633Z GOBIN='/home/runner/go/bin'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9077057Z GOCACHE='/home/runner/.cache/go-build'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9077362Z GOCACHEPROG=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9077584Z GODEBUG=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9077792Z GOENV=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9077989Z GOEXE=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9078223Z GOEXPERIMENT=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9078443Z GOFIPS140='off'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9078679Z GOFLAGS='-mod=readonly'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9079461Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build1891108516=/tmp/go-build -gno-record-gcc-switches'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9080926Z GOHOSTARCH='amd64'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9081367Z GOHOSTOS='linux'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9081761Z GOINSECURE=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9082316Z GOMOD='/home/runner/work/weir-tests/weir-tests/go.mod'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9083004Z GOMODCACHE='/home/runner/go/pkg/mod'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9083524Z GONOPROXY=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9083888Z GONOSUMDB=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9084265Z GOOS='linux'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9084645Z GOPACKAGESDRIVER=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9085094Z GOPATH='/home/runner/go'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9085540Z GOPRIVATE=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9086034Z GOPROXY='https://proxy.golang.org,direct'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9086657Z GOROOT='/opt/hostedtoolcache/go/1.27.1/x64'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9087256Z GOSUMDB='sum.golang.org'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9087716Z GOTELEMETRY='local'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9088227Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9088817Z GOTMPDIR=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9089190Z GOTOOLCHAIN='local'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9089879Z GOTOOLDIR='/opt/hostedtoolcache/go/1.27.1/x64/pkg/tool/linux_amd64'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9090864Z GOVCS=''
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9091261Z GOVERSION='go1.27.1'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9091693Z GOWORK='off'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9092100Z PKG_CONFIG='pkg-config'
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9092373Z 
+database-full-load (10)	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T22:57:01.9092920Z ##[endgroup]
+database-full-load (10)	Prepare immutable tools and owned database images	﻿2026-10-03T22:57:01.9246947Z ##[group]Run python3 scripts/download_modules.py
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9247471Z [36;1mpython3 scripts/download_modules.py[0m
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9247821Z [36;1mpython3 scripts/prepare_weir.py[0m
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9248136Z [36;1mpython3 scripts/prepare_images.py[0m
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9524296Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9524995Z env:
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9525246Z   GOENV: off
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9525508Z   GOWORK: off
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9525769Z   GOTOOLCHAIN: local
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9526070Z   GOFLAGS: -mod=readonly
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9526394Z   PYTHONDONTWRITEBYTECODE: 1
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:01.9526726Z ##[endgroup]
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:05.1501351Z all modules verified
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:29.5862621Z /home/runner/work/weir-tests/weir-tests/.tools/weir
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.1960696Z docker.io/library/mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c: Pulling from library/mongo
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3840164Z a60ef8ec184e: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3842102Z c4a88db82a6d: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3842643Z f97373a3dd33: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3843146Z 59898ec81c6b: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3843670Z 2252b895f5de: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3844155Z 08f85ec03d22: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3845025Z cfbbec1d5328: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3845829Z eedb5e3e5b38: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3846615Z 2252b895f5de: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3847298Z 08f85ec03d22: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3847689Z cfbbec1d5328: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3848425Z eedb5e3e5b38: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.3848819Z 59898ec81c6b: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.5673620Z c4a88db82a6d: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.5676740Z c4a88db82a6d: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.7501156Z f97373a3dd33: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.8412694Z a60ef8ec184e: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.8413345Z a60ef8ec184e: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.8423343Z 59898ec81c6b: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.8423905Z 59898ec81c6b: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.9462716Z 2252b895f5de: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:30.9467432Z 2252b895f5de: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:31.0308194Z 08f85ec03d22: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:31.0308792Z 08f85ec03d22: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:31.1319495Z eedb5e3e5b38: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:31.1319927Z eedb5e3e5b38: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:32.0161103Z a60ef8ec184e: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:32.1231164Z cfbbec1d5328: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:32.1231610Z cfbbec1d5328: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:33.8169972Z c4a88db82a6d: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:33.9769664Z f97373a3dd33: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:34.0213090Z 59898ec81c6b: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:34.0290932Z 2252b895f5de: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:34.0385958Z 08f85ec03d22: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:39.4713908Z cfbbec1d5328: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:39.5201141Z eedb5e3e5b38: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:39.5237926Z Digest: sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:39.5243782Z Status: Downloaded newer image for mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:39.5252199Z docker.io/library/mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.2482644Z docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595: Pulling from elasticsearch/elasticsearch
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5219301Z 2c22c1bb1ce1: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5220330Z 2796a25b8094: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5221093Z 714e5b673049: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5221579Z bd9ddc54bea9: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5221967Z 2d68f716f01a: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5222347Z c52e3a203c20: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5222732Z 9b415d76a9c6: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5223037Z d527cffe3ef6: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5223680Z b8cda4b5aaf3: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5224133Z 32c1c18d2ea5: Pulling fs layer
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5224595Z 9b415d76a9c6: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5225008Z d527cffe3ef6: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5225465Z b8cda4b5aaf3: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5225714Z 32c1c18d2ea5: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5226292Z bd9ddc54bea9: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5226525Z 2d68f716f01a: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.5226732Z c52e3a203c20: Waiting
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.8239967Z 714e5b673049: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:40.8240884Z 714e5b673049: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.0263776Z 2796a25b8094: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.0264372Z 2796a25b8094: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.1022653Z bd9ddc54bea9: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.1023196Z bd9ddc54bea9: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.3369466Z c52e3a203c20: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.3370087Z c52e3a203c20: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.4108623Z 2c22c1bb1ce1: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.4109446Z 2c22c1bb1ce1: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.7189256Z d527cffe3ef6: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.7189881Z d527cffe3ef6: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.7687953Z 9b415d76a9c6: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:41.7688699Z 9b415d76a9c6: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:42.1333946Z b8cda4b5aaf3: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:42.1334456Z b8cda4b5aaf3: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:42.2329097Z 32c1c18d2ea5: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:42.2329932Z 32c1c18d2ea5: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:42.6333039Z 2c22c1bb1ce1: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:43.4635287Z 2796a25b8094: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:43.4830469Z 714e5b673049: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:43.4931098Z bd9ddc54bea9: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:50.5292174Z 2d68f716f01a: Verifying Checksum
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:50.5292674Z 2d68f716f01a: Download complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.3707327Z 2d68f716f01a: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.3822901Z c52e3a203c20: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.3925225Z 9b415d76a9c6: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.4099074Z d527cffe3ef6: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.4173230Z b8cda4b5aaf3: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.4286203Z 32c1c18d2ea5: Pull complete
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.4318956Z Digest: sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.4326164Z Status: Downloaded newer image for docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595
+database-full-load (10)	Prepare immutable tools and owned database images	2026-10-03T22:57:58.4333763Z docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595
+database-full-load (10)	Independent single-request native and SDK clients	﻿2026-10-03T22:57:58.4453184Z ##[group]Run mkdir -p results/local
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4453565Z [36;1mmkdir -p results/local[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4453882Z [36;1mgo build -o .tools/weir-lab ./cmd/weir-lab[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4454286Z [36;1mIFS=',' read -r -a batch_limits <<< "$BACKEND_BATCH_LIMITS"[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4454688Z [36;1mfor backend_limit in "${batch_limits[@]}"; do[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4455076Z [36;1m  export BACKEND_BATCH_LIMIT="$backend_limit"[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4455526Z [36;1m  export MEASUREMENT_OUTPUT="results/local/saturation-batch-$backend_limit"[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4456155Z [36;1m  export MEASUREMENT_RECEIPT="results/local/measurement-batch-$backend_limit.receipt.json"[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4456667Z [36;1m  python3 - <<'PY'[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4456967Z [36;1mimport hashlib, json, os, pathlib, subprocess[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4457318Z [36;1mbinary = pathlib.Path('.tools/weir-lab')[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4459097Z [36;1mcommand = [str(binary), '-mode', 'saturation', '-weir', '.tools/weir', '-backend', 'all', '-database-cpus', os.environ['DATABASE_CPUS'], '-store-concurrency', '32', '-backend-batch-limit', os.environ['BACKEND_BATCH_LIMIT'], '-client-processes', '4', '-concurrency-levels', os.environ['CLIENT_LEVELS'], '-batch-sizes', '1', '-records', '2048', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', os.environ['MEASUREMENT_OUTPUT']][0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4462952Z [36;1mreceipt = {'host_memory_bytes': int(next(line for line in pathlib.Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemTotal:')).split()[1]) * 1024, 'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain'])), 'client_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'client_build': subprocess.check_output(['go', 'version', '-m', str(binary)], text=True), 'versions': json.loads(pathlib.Path('versions.json').read_text()), 'command': command}[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4465159Z [36;1mif receipt['source_dirty']:[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4465554Z [36;1m    raise SystemExit('measurement requires a clean source checkout')[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4466178Z [36;1mpathlib.Path(os.environ['MEASUREMENT_RECEIPT']).write_text(json.dumps(receipt, indent=2) + '\n')[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4466660Z [36;1mPY[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4468239Z [36;1m  .tools/weir-lab -mode saturation -weir .tools/weir -backend all -database-cpus "$DATABASE_CPUS" -store-concurrency 32 -backend-batch-limit "$BACKEND_BATCH_LIMIT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS" -batch-sizes 1 -records 2048 -payload-bytes 1024 -write-percent "$WRITE_PERCENT" -rounds 3 -warmup-duration 10s -duration 20s -output "$MEASUREMENT_OUTPUT" 2>&1 | tee "results/local/saturation-batch-$backend_limit.log"[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4469878Z [36;1mdone[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4470087Z [36;1mgit diff --exit-code[0m
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4532427Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4532795Z env:
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4533002Z   GOENV: off
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4533197Z   GOWORK: off
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4533398Z   GOTOOLCHAIN: local
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4533626Z   GOFLAGS: -mod=readonly
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4533869Z   PYTHONDONTWRITEBYTECODE: 1
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4534124Z   GOPROXY: off
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4534317Z   GOSUMDB: off
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4534508Z   WRITE_PERCENT: 10
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4534711Z   DATABASE_CPUS: 1
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4534924Z   CLIENT_LEVELS: 8,32,128,512
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4535163Z   BACKEND_BATCH_LIMITS: 32
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:57:58.4535402Z ##[endgroup]
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:58:35.1628415Z Owned fixture logs: /tmp/weir-tests-390323529
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T22:59:36.5992873Z single-request backend=mongo processes=4 workers=8 round=1 direct=5143.5 weir=3445.5 DB-CPU direct=99.5% weir=70.4%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:00:37.9692084Z single-request backend=mongo processes=4 workers=8 round=2 direct=5088.0 weir=3779.4 DB-CPU direct=99.6% weir=77.7%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:01:39.3037842Z single-request backend=mongo processes=4 workers=8 round=3 direct=5063.3 weir=3809.5 DB-CPU direct=99.6% weir=77.6%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:02:40.6568733Z single-request backend=mongo processes=4 workers=32 round=1 direct=5361.9 weir=5337.3 DB-CPU direct=100.0% weir=84.9%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:03:42.0202721Z single-request backend=mongo processes=4 workers=32 round=2 direct=5233.2 weir=5338.7 DB-CPU direct=100.0% weir=85.3%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:04:43.3574930Z single-request backend=mongo processes=4 workers=32 round=3 direct=5156.0 weir=5088.0 DB-CPU direct=100.0% weir=85.9%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:05:44.8310091Z single-request backend=mongo processes=4 workers=128 round=1 direct=4956.4 weir=7681.2 DB-CPU direct=100.1% weir=78.0%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:06:46.2185019Z single-request backend=mongo processes=4 workers=128 round=2 direct=4834.6 weir=7719.0 DB-CPU direct=100.1% weir=79.1%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:07:47.6603860Z single-request backend=mongo processes=4 workers=128 round=3 direct=4896.5 weir=8011.1 DB-CPU direct=100.3% weir=78.3%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:08:49.2887644Z single-request backend=mongo processes=4 workers=512 round=1 direct=4964.0 weir=11989.4 DB-CPU direct=100.0% weir=68.5%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:09:51.0163388Z single-request backend=mongo processes=4 workers=512 round=2 direct=4960.8 weir=11738.9 DB-CPU direct=100.3% weir=69.3%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.5906890Z single-request backend=mongo processes=4 workers=512 round=3 direct=5197.5 weir=11855.5 DB-CPU direct=100.1% weir=69.9%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6381439Z # Database saturation comparison
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6381753Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6381931Z Backend **mongo**. Started 2026-10-03T22:58:35.19077007Z.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6382533Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6385401Z independent OS client processes send one record per native call or unary SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6388889Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6389385Z Warmup 10s and measurement 20s per path/stage, 3 paired rounds, requested writes 10%.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6389863Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6391785Z 4 independent OS client processes. Each worker sends one business request containing one record, waits for its acknowledged result, and validates it. p50/p95/p99 describe individual requests; histograms are pooled rather than averaging process quantiles.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6393526Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6394167Z | Batch | Workers | Round | Path | Read | Write | Success | Errors/unknown | Ops/s | p95 call ms | DB CPU budget % | Full CPU time % | Sampling coverage % | Verified |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6395495Z | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6396357Z | 1 | 8 | 1 | direct | 92503 | 10374 | 102877 | 0 | 5143.5 | 2.303 | 99.5 | 98.4 | 98.4 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6397193Z | 1 | 8 | 1 | weir | 61973 | 6946 | 68919 | 0 | 3445.5 | 4.607 | 70.4 | 0.0 | 94.5 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6398073Z | 1 | 8 | 2 | direct | 91490 | 10274 | 101764 | 0 | 5088.0 | 2.303 | 99.6 | 98.9 | 98.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6398954Z | 1 | 8 | 2 | weir | 67976 | 7619 | 75595 | 0 | 3779.4 | 4.095 | 77.7 | 0.0 | 99.8 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6399897Z | 1 | 8 | 3 | direct | 91042 | 10230 | 101272 | 0 | 5063.3 | 2.303 | 99.6 | 98.1 | 98.1 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6401132Z | 1 | 8 | 3 | weir | 68525 | 7671 | 76196 | 0 | 3809.5 | 3.839 | 77.6 | 0.0 | 99.4 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6402220Z | 1 | 32 | 1 | direct | 96461 | 10800 | 107261 | 0 | 5361.9 | 40.959 | 100.0 | 99.0 | 99.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6403242Z | 1 | 32 | 1 | weir | 96009 | 10754 | 106763 | 0 | 5337.3 | 12.287 | 84.9 | 0.0 | 94.6 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6404555Z | 1 | 32 | 2 | direct | 94152 | 10524 | 104676 | 0 | 5233.2 | 40.959 | 100.0 | 97.9 | 97.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6405503Z | 1 | 32 | 2 | weir | 96061 | 10728 | 106789 | 0 | 5338.7 | 12.287 | 85.3 | 0.0 | 94.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6406042Z | 1 | 32 | 3 | direct | 92783 | 10354 | 103137 | 0 | 5156.0 | 40.959 | 100.0 | 99.0 | 99.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6406567Z | 1 | 32 | 3 | weir | 91557 | 10236 | 101793 | 0 | 5088.0 | 12.287 | 85.9 | 5.6 | 95.2 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6407089Z | 1 | 128 | 1 | direct | 89094 | 10123 | 99217 | 0 | 4956.4 | 73.727 | 100.1 | 99.4 | 99.4 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6407625Z | 1 | 128 | 1 | weir | 138264 | 15402 | 153666 | 0 | 7681.2 | 32.767 | 78.0 | 0.0 | 95.3 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6408138Z | 1 | 128 | 2 | direct | 86900 | 9870 | 96770 | 0 | 4834.6 | 73.727 | 100.1 | 99.3 | 99.3 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6408655Z | 1 | 128 | 2 | weir | 138971 | 15478 | 154449 | 0 | 7719.0 | 32.767 | 79.1 | 0.0 | 95.3 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6409185Z | 1 | 128 | 3 | direct | 88234 | 9976 | 98210 | 0 | 4896.5 | 73.727 | 100.3 | 99.0 | 99.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6409700Z | 1 | 128 | 3 | weir | 144521 | 16027 | 160548 | 0 | 8011.1 | 32.767 | 78.3 | 0.0 | 94.5 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6410209Z | 1 | 512 | 1 | direct | 89991 | 9805 | 99796 | 0 | 4964.0 | 212.991 | 100.0 | 95.8 | 95.8 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6411034Z | 1 | 512 | 1 | weir | 215888 | 24131 | 240019 | 0 | 11989.4 | 81.919 | 68.5 | 0.0 | 95.3 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6411556Z | 1 | 512 | 2 | direct | 90017 | 9748 | 99765 | 0 | 4960.8 | 212.991 | 100.3 | 95.0 | 95.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6412266Z | 1 | 512 | 2 | weir | 211335 | 23673 | 235008 | 0 | 11738.9 | 90.111 | 69.3 | 0.0 | 94.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6412798Z | 1 | 512 | 3 | direct | 94169 | 10276 | 104445 | 0 | 5197.5 | 196.607 | 100.1 | 97.1 | 97.1 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6413313Z | 1 | 512 | 3 | weir | 213425 | 23887 | 237312 | 0 | 11855.5 | 81.919 | 69.9 | 0.0 | 95.1 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6413617Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6413887Z Measured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6414232Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6414754Z | Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6415480Z | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6415876Z | 1 | 8 | 1 | 62510 | 1.103 | 61973/6946 | 0.027 | 1.016 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6416252Z | 1 | 8 | 2 | 68112 | 1.110 | 67976/7619 | 0.026 | 0.955 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6416623Z | 1 | 8 | 3 | 68871 | 1.106 | 68525/7671 | 0.025 | 0.945 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6416997Z | 1 | 32 | 1 | 65760 | 1.624 | 96009/10754 | 0.135 | 1.957 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6417381Z | 1 | 32 | 2 | 65229 | 1.637 | 96061/10728 | 0.140 | 1.927 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6417759Z | 1 | 32 | 3 | 62509 | 1.628 | 91557/10236 | 0.137 | 2.076 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6418151Z | 1 | 128 | 1 | 44233 | 3.474 | 138264/15402 | 0.614 | 3.818 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6418543Z | 1 | 128 | 2 | 43963 | 3.513 | 138971/15478 | 0.613 | 3.959 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6418948Z | 1 | 128 | 3 | 47961 | 3.347 | 144521/16027 | 0.576 | 3.753 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6419339Z | 1 | 512 | 1 | 24735 | 9.704 | 215888/24131 | 2.486 | 8.104 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6419721Z | 1 | 512 | 2 | 23581 | 9.966 | 211335/23673 | 2.517 | 8.819 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6420108Z | 1 | 512 | 3 | 24986 | 9.498 | 213425/23887 | 2.478 | 8.177 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6420344Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6421821Z **Batch 1: database-full-load throughput comparison unavailable.** both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6423135Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6423872Z Best verified business QPS within this ladder: direct 5250.4 (32 workers), Weir 11861.3 (512 workers), observed change +125.91%. This is a measured business-throughput comparison, not a maximum-database-capacity claim.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6424770Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6425210Z Observed single-request business performance at matched client concurrency (independent of the database-capacity qualification):
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6425714Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6425969Z | Workers | Direct QPS | Weir QPS | Change | Direct p50/p95/p99 ms | Weir p50/p95/p99 ms |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6426415Z | ---: | ---: | ---: | ---: | --- | --- |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6426782Z | 8 | 5098.3 | 3678.1 | -27.86% | 0.895 / 2.303 / 40.959 | 2.047 / 4.095 / 5.631 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6427227Z | 32 | 5250.4 | 5254.7 | +0.08% | 3.327 / 40.959 / 53.247 | 5.631 / 12.287 / 16.383 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6427690Z | 128 | 4895.9 | 7803.9 | +59.40% | 16.383 / 73.727 / 90.111 | 15.359 / 32.767 / 45.055 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6428169Z | 512 | 5040.8 | 11861.3 | +135.31% | 98.303 / 196.607 / 327.679 | 40.959 / 81.919 / 114.687 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6428458Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6429488Z These QPS and latency observations apply to this hardware and measured concurrency range. A business-throughput improvement can exist without demonstrating the maximum database capacity. An underfull database or missing next-level plateau keeps the database-capacity comparison unavailable.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6430774Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6433204Z Aggregation evidence: the JSON records one business request per record, Read/Mutate RPC counts, adapter invocation counts, average adapter batch and its cumulative histogram, and RPCs per adapter invocation. An adapter invocation is not necessarily one physical database wire command. MongoDB physical find/update/bulkWrite/getMore/killCursors deltas come from owned serverStatus at timed boundaries; missing counters remain unavailable. Elasticsearch has no equivalent physical HTTP-command counter. Every child PID, configured native pool limit, final revision ranges, exit result and sampled CPU/RSS is retained; coordinator sampling CPU is excluded from business-client CPU.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6435791Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:10:52.6439157Z The JSON retains before/after raw public Weir metrics and their observed deltas, every resource sample, monitor failures, raw cumulative database/container I/O and network counters, CPU quota/host core denominator, and client/Weir cumulative CPU. Docker CPU uses cumulative Engine usage and read timestamps across each entire sampling interval, never CLI instantaneous percentages. Both interval endpoints must succeed; missing intervals reduce full-run coverage. Samples include monitoring traffic and background database work. Native ps CPU has platform-dependent clock resolution. Native databases share the host CPU budget with the client and Weir. Disk/network utilization or capacity is not inferred from byte counters. A plateau without sustained database CPU saturation is not a database-full-load result. Startup/discovery/reset/postflight and warmup are excluded from throughput; all in-flight completion and validation is included.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:11:57.5582434Z single-request backend=search processes=4 workers=8 round=1 direct=1361.0 weir=1786.5 DB-CPU direct=99.8% weir=99.6%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:12:59.4188803Z single-request backend=search processes=4 workers=8 round=2 direct=4148.0 weir=2627.9 DB-CPU direct=99.7% weir=95.5%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:14:01.0121208Z single-request backend=search processes=4 workers=8 round=3 direct=4250.2 weir=3294.3 DB-CPU direct=99.5% weir=88.6%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:15:02.5105764Z single-request backend=search processes=4 workers=32 round=1 direct=5330.0 weir=4374.0 DB-CPU direct=99.9% weir=93.8%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:16:03.9512573Z single-request backend=search processes=4 workers=32 round=2 direct=5403.1 weir=4843.6 DB-CPU direct=99.8% weir=91.6%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:17:05.4351899Z single-request backend=search processes=4 workers=32 round=3 direct=5026.7 weir=4824.0 DB-CPU direct=99.8% weir=91.5%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:18:06.9323864Z single-request backend=search processes=4 workers=128 round=1 direct=5641.9 weir=7201.2 DB-CPU direct=100.1% weir=83.7%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:19:08.4123806Z single-request backend=search processes=4 workers=128 round=2 direct=5386.7 weir=7357.8 DB-CPU direct=99.9% weir=83.2%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:09.8767535Z single-request backend=search processes=4 workers=128 round=3 direct=5619.4 weir=7295.3 DB-CPU direct=100.0% weir=82.6%
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1830224Z # Database saturation comparison
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1831032Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1831459Z Backend **search**. Started 2026-10-03T23:10:53.028092741Z.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1831969Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1835713Z independent OS client processes send one record per native call or unary SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1838393Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1838734Z Warmup 10s and measurement 20s per path/stage, 3 paired rounds, requested writes 10%.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1839162Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1840198Z 4 independent OS client processes. Each worker sends one business request containing one record, waits for its acknowledged result, and validates it. p50/p95/p99 describe individual requests; histograms are pooled rather than averaging process quantiles.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1842520Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1843038Z | Batch | Workers | Round | Path | Read | Write | Success | Errors/unknown | Ops/s | p95 call ms | DB CPU budget % | Full CPU time % | Sampling coverage % | Verified |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1843806Z | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1844309Z | 1 | 8 | 1 | direct | 24551 | 2673 | 27224 | 0 | 1361.0 | 57.343 | 99.8 | 97.9 | 97.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1844805Z | 1 | 8 | 1 | weir | 32179 | 3555 | 35734 | 0 | 1786.5 | 9.215 | 99.6 | 97.8 | 97.8 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1845294Z | 1 | 8 | 2 | direct | 74622 | 8348 | 82970 | 0 | 4148.0 | 2.815 | 99.7 | 97.0 | 97.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1845780Z | 1 | 8 | 2 | weir | 47265 | 5297 | 52562 | 0 | 2627.9 | 5.119 | 95.5 | 98.9 | 98.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1846282Z | 1 | 8 | 3 | direct | 76474 | 8537 | 85011 | 0 | 4250.2 | 2.559 | 99.5 | 97.0 | 97.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1846760Z | 1 | 8 | 3 | weir | 59236 | 6657 | 65893 | 0 | 3294.3 | 4.607 | 88.6 | 16.3 | 99.2 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1847252Z | 1 | 32 | 1 | direct | 95889 | 10743 | 106632 | 0 | 5330.0 | 36.863 | 99.9 | 98.9 | 98.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1847802Z | 1 | 32 | 1 | weir | 78669 | 8834 | 87503 | 0 | 4374.0 | 14.335 | 93.8 | 88.5 | 99.8 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1848324Z | 1 | 32 | 2 | direct | 97224 | 10895 | 108119 | 0 | 5403.1 | 36.863 | 99.8 | 98.4 | 98.4 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1848828Z | 1 | 32 | 2 | weir | 87111 | 9778 | 96889 | 0 | 4843.6 | 13.311 | 91.6 | 77.8 | 94.7 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1849323Z | 1 | 32 | 3 | direct | 90423 | 10129 | 100552 | 0 | 5026.7 | 36.863 | 99.8 | 97.8 | 97.8 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1849817Z | 1 | 32 | 3 | weir | 86800 | 9722 | 96522 | 0 | 4824.0 | 13.311 | 91.5 | 82.6 | 99.5 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1850328Z | 1 | 128 | 1 | direct | 101621 | 11508 | 113129 | 0 | 5641.9 | 61.439 | 100.1 | 98.6 | 98.6 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1851267Z | 1 | 128 | 1 | weir | 129616 | 14475 | 144091 | 0 | 7201.2 | 36.863 | 83.7 | 16.8 | 94.4 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1851807Z | 1 | 128 | 2 | direct | 96812 | 10981 | 107793 | 0 | 5386.7 | 65.535 | 99.9 | 99.0 | 99.0 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1854046Z | 1 | 128 | 2 | weir | 132444 | 14779 | 147223 | 0 | 7357.8 | 32.767 | 83.2 | 0.0 | 95.3 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1854608Z | 1 | 128 | 3 | direct | 101036 | 11440 | 112476 | 0 | 5619.4 | 61.439 | 100.0 | 98.8 | 98.8 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1855151Z | 1 | 128 | 3 | weir | 131355 | 14661 | 146016 | 0 | 7295.3 | 36.863 | 82.6 | 5.5 | 94.6 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1855630Z | 1 | 512 | 1 | direct | 0 | 0 | 0 | 0 | 0.0 | 0.000 | 0.0 | 0.0 | 0.0 | false |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1856109Z | 1 | 512 | 1 | weir | 184552 | 20631 | 205183 | 0 | 10247.2 | 98.303 | 70.1 | 0.0 | 94.9 | true |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1856438Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1856706Z Measured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1857051Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1857568Z | Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1858301Z | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1858696Z | 1 | 8 | 1 | 33516 | 1.066 | 32179/3555 | 0.020 | 3.315 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1859071Z | 1 | 8 | 2 | 48563 | 1.082 | 47265/5297 | 0.022 | 1.914 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1859437Z | 1 | 8 | 3 | 60680 | 1.086 | 59236/6657 | 0.021 | 1.375 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1859816Z | 1 | 32 | 1 | 59588 | 1.468 | 78669/8834 | 0.110 | 3.724 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1860189Z | 1 | 32 | 2 | 65007 | 1.490 | 87111/9778 | 0.115 | 2.940 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1862275Z | 1 | 32 | 3 | 64920 | 1.487 | 86800/9722 | 0.112 | 3.018 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1863086Z | 1 | 128 | 1 | 48108 | 2.995 | 129616/14475 | 0.615 | 5.563 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1863511Z | 1 | 128 | 2 | 50066 | 2.941 | 132444/14779 | 0.564 | 5.197 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1863911Z | 1 | 128 | 3 | 48589 | 3.005 | 131355/14661 | 0.607 | 5.293 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1864330Z | 1 | 512 | 1 | 23898 | 8.586 | 184552/20631 | 2.474 | 12.294 | 0 | 32.000 |
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1864574Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1867016Z Aggregation evidence: the JSON records one business request per record, Read/Mutate RPC counts, adapter invocation counts, average adapter batch and its cumulative histogram, and RPCs per adapter invocation. An adapter invocation is not necessarily one physical database wire command. MongoDB physical find/update/bulkWrite/getMore/killCursors deltas come from owned serverStatus at timed boundaries; missing counters remain unavailable. Elasticsearch has no equivalent physical HTTP-command counter. Every child PID, configured native pool limit, final revision ranges, exit result and sampled CPU/RSS is retained; coordinator sampling CPU is excluded from business-client CPU.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1869399Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1874510Z The JSON retains before/after raw public Weir metrics and their observed deltas, every resource sample, monitor failures, raw cumulative database/container I/O and network counters, CPU quota/host core denominator, and client/Weir cumulative CPU. Docker CPU uses cumulative Engine usage and read timestamps across each entire sampling interval, never CLI instantaneous percentages. Both interval endpoints must succeed; missing intervals reduce full-run coverage. Samples include monitoring traffic and background database work. Native ps CPU has platform-dependent clock resolution. Native databases share the host CPU budget with the client and Weir. Disk/network utilization or capacity is not inferred from byte counters. A plateau without sustained database CPU saturation is not a database-full-load result. Startup/discovery/reset/postflight and warmup are excluded from throughput; all in-flight completion and validation is included.
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1877791Z 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:51.1880346Z Incomplete: direct single-request stage failed: independent client 14546 warmup failed: [Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": net/http: timeout awaiting response headers Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded] exit status 1 exit status 1 exit status 1 exit status 1 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3114292Z direct single-request stage failed: independent client 14546 warmup failed: [Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": net/http: timeout awaiting response headers Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded Post "http://127.0.0.1:32769/weirtest_a6067408c9c65d9a55b1026d/_mget?realtime=true": context deadline exceeded]
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3117223Z exit status 1
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3117637Z exit status 1
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3118009Z exit status 1
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3118379Z exit status 1 
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3118888Z saturation matrix workload failed or was incomplete
+database-full-load (10)	Independent single-request native and SDK clients	2026-10-03T23:20:54.3148845Z ##[error]Process completed with exit code 1.
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	﻿2026-10-03T23:20:54.3252541Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3253173Z with:
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3253548Z   name: saturation-evidence-writes-10-03fcec1bbb3806a41eca2aa39b4ff702a4b59331
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3254561Z   path: results/local/
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	/tmp/weir-tests-*/manifest.json
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	/tmp/weir-tests-*/cleanup.json
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	/tmp/weir-tests-*/*config.json
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	/tmp/weir-tests-*/*routes.json
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	/tmp/weir-tests-*/*process.log
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	/tmp/weir-tests-*/docker-engine.json
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3255430Z   retention-days: 14
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3255656Z   if-no-files-found: warn
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3255897Z   compression-level: 6
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3256111Z   overwrite: false
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3256326Z   include-hidden-files: false
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3256566Z env:
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3256751Z   GOENV: off
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3256940Z   GOWORK: off
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3257130Z   GOTOOLCHAIN: local
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3257347Z   GOFLAGS: -mod=readonly
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3257587Z   PYTHONDONTWRITEBYTECODE: 1
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.3257852Z ##[endgroup]
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.4909689Z (node:14790) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.4910814Z (Use `node --trace-deprecation ...` to show where the warning was created)
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.5082457Z Multiple search paths detected. Calculating the least common ancestor of all paths
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.5084174Z The least common ancestor is /. This will be the root directory of the artifact
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.5085072Z With the provided path, there will be 12 files uploaded
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.5085971Z Artifact name is valid!
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.5086379Z Root directory input is valid!
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.8253365Z Beginning upload of artifact content to blob storage
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:54.9868154Z (node:14790) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.4507180Z Uploaded bytes 742548
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.5129260Z Finished uploading artifact content to blob storage!
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.5130649Z SHA256 digest of uploaded artifact zip is eca9f6cf00857d9f881d28b9bae1d2c8ef17a33b1fc25793cde5eca82d04f8e4
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.5133028Z Finalizing artifact upload
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.7807576Z Artifact saturation-evidence-writes-10-03fcec1bbb3806a41eca2aa39b4ff702a4b59331.zip successfully finalized. Artifact ID 11287088881
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.7809336Z Artifact saturation-evidence-writes-10-03fcec1bbb3806a41eca2aa39b4ff702a4b59331 has been successfully uploaded! Final size is 742548 bytes. Artifact ID is 11287088881
+database-full-load (10)	Preserve raw resource samples, workload validation and cleanup	2026-10-03T23:20:55.7815406Z Artifact download URL: https://github.com/batchstream/weir-tests/actions/runs/37160122827/artifacts/11287088881
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-10-03T23:20:55.8020175Z Post job cleanup.
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.8880929Z [command]/usr/bin/git version
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.8924975Z git version 2.55.0
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.8970693Z Temporarily overriding HOME='/home/runner/work/_temp/166533cb-114a-4d8e-b5de-b03ead65b3ad' before making global git config changes
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.8972149Z Adding repository directory to the temporary git global config as a safe directory
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.8977670Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/weir-tests/weir-tests
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9009225Z Removing SSH command configuration
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9016153Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9051966Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9289030Z Removing HTTP extra header
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9295327Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9341075Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9587196Z Removing includeIf entries pointing to credentials config files
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9594944Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+database-full-load (10)	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:20:55.9635283Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+database-full-load (10)	Complete job	﻿2026-10-03T23:20:56.0036721Z Cleaning up orphan processes
+database-full-load (10)	Complete job	2026-10-03T23:20:56.0388897Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

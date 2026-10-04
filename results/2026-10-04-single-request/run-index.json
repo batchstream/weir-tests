@@ -1,0 +1,110 @@
+{
+  "test_source": "e790aa77629f0e4862159cbe8e3f0497df888314",
+  "weir_source": "2305186fffc5d1d9273e223f222e016fc8afe3ed",
+  "weir_version": "v0.1.1-0.20261003235319-2305186fffc5",
+  "weir_sum": "h1:6nCxXeaPaILriyyg8B0BJlYBsz6sYnNEaQcDk/CoFW8=",
+  "client_operation_timeout": "10s",
+  "weir_backend_timeout": "10s",
+  "system_run": 37163474956,
+  "primary_run": 37163474977,
+  "primary_levels": [
+    8,
+    32,
+    128
+  ],
+  "primary_write_percent": [
+    0,
+    10,
+    100
+  ],
+  "database_cpus": 1,
+  "benchmark_runs": [
+    {
+      "id": 37164079031,
+      "kind": "control",
+      "writes": 0,
+      "levels": [
+        8,
+        32,
+        128
+      ],
+      "limits": [
+        1,
+        32
+      ]
+    },
+    {
+      "id": 37164082220,
+      "kind": "control",
+      "writes": 10,
+      "levels": [
+        8,
+        32,
+        128
+      ],
+      "limits": [
+        1,
+        32
+      ]
+    },
+    {
+      "id": 37164085511,
+      "kind": "control",
+      "writes": 100,
+      "levels": [
+        8,
+        32,
+        128
+      ],
+      "limits": [
+        1,
+        32
+      ]
+    },
+    {
+      "id": 37164089012,
+      "kind": "stress",
+      "writes": 0,
+      "levels": [
+        8,
+        32,
+        128,
+        512
+      ],
+      "limits": [
+        32
+      ]
+    },
+    {
+      "id": 37164092477,
+      "kind": "stress",
+      "writes": 10,
+      "levels": [
+        8,
+        32,
+        128,
+        512
+      ],
+      "limits": [
+        32
+      ]
+    },
+    {
+      "id": 37164096257,
+      "kind": "stress",
+      "writes": 100,
+      "levels": [
+        8,
+        32,
+        128,
+        512
+      ],
+      "limits": [
+        32
+      ]
+    }
+  ],
+  "server_final_pr_head": "4713a5cf319986ae4270e8ac2760e6ff7b3f0684",
+  "server_ci_run": 37164204090,
+  "server_measurement_identity_scope": "Final PR head differs from the measured official module only in a test fixture; all non-test files identical to measured230."
+}

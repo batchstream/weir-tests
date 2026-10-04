@@ -1,0 +1,32 @@
+{
+  "server": {
+    "source": "8970222602bd6f323dcdfb5af5162f864fd06a7a",
+    "pull_request": "https://github.com/batchstream/weir/pull/31",
+    "reviewer": "bulk_protocol_sdk",
+    "findings": 0,
+    "checks": [
+      "independent focused race count3 store/server/mongodb",
+      "author full race and vet",
+      "native gRPC 512 independent calls aggregate16x32",
+      "real Mongo duplicate-budget/cancellation/UNKNOWN tests",
+      "real Elasticsearch mixed reads/writes/Lua tests",
+      "GitHub CI37157528222 success"
+    ]
+  },
+  "benchmark": {
+    "source": "ecf3172b3d27bdc564af87388592cc68b553ac08",
+    "pull_request": "https://github.com/batchstream/weir-tests/pull/5",
+    "reviewer": "bulk_protocol_sdk",
+    "source_findings": 0,
+    "system_run": 37158104910,
+    "system_test_passes": 10,
+    "system_skips": 0,
+    "system_findings": 0,
+    "smoke_successful_operations": 1024,
+    "smoke_timed_paths": 8,
+    "owned_weir_processes_stopped": 6,
+    "owned_containers_removed": 7,
+    "cancellation_scope": "pre-canceled calls with no write effects; graceful withdrawal/recovery is not an in-flight drain pressure proof",
+    "diagnostic_scope": "profile helper has distinct identity; no profiler data used for capacity conclusions"
+  }
+}

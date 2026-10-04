@@ -1,0 +1,43 @@
+File: weir-profile-node
+Build ID: 9c6253949284bc306b0c88afee9533d6ef6204dc
+Type: delay
+Time: 2026-10-03 23:01:51 UTC
+Showing nodes accounting for 23.89s, 99.66% of 23.97s total
+Dropped 346 nodes (cum <= 0.12s)
+Showing top 35 nodes out of 79
+      flat  flat%   sum%        cum   cum%
+    22.24s 92.80% 92.80%     22.27s 92.92%  sync.(*Mutex).Unlock (partial-inline)
+     1.44s  5.99% 98.79%      1.44s  5.99%  runtime.unlock (partial-inline)
+     0.21s  0.87% 99.66%      0.21s  0.87%  internal/sync.(*HashTrieMap[go.shape.interface {},go.shape.interface {}]).Swap
+         0     0% 99.66%      9.80s 40.88%  github.com/batchstream/weir-protocol/api/weir/v1._StoreService_Read_Handler
+         0     0% 99.66%      9.75s 40.67%  github.com/batchstream/weir-protocol/api/weir/v1._StoreService_Read_Handler.func1
+         0     0% 99.66%      3.06s 12.75%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).Execute
+         0     0% 99.66%      0.25s  1.05%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursor
+         0     0% 99.66%      0.25s  1.04%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursorState
+         0     0% 99.66%      0.25s  1.04%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursorState.func1
+         0     0% 99.66%      2.97s 12.41%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads
+         0     0% 99.66%      0.25s  1.04%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads.deferwrap1
+         0     0% 99.66%      3.06s 12.75%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeRecords
+         0     0% 99.66%      1.71s  7.12%  github.com/batchstream/weir/internal/execution.(*ResultBudget).Reserve
+         0     0% 99.66%      9.75s 40.67%  github.com/batchstream/weir/internal/server.(*Server).Read
+         0     0% 99.66%      6.82s 28.43%  github.com/batchstream/weir/internal/server.(*Server).submitBatch
+         0     0% 99.66%      0.26s  1.07%  github.com/batchstream/weir/internal/server.(*responseCodec).Marshal
+         0     0% 99.66%      2.34s  9.77%  github.com/batchstream/weir/internal/server.(*rpcState).finish
+         0     0% 99.66%      1.35s  5.63%  github.com/batchstream/weir/internal/server.(*rpcState).finishLocked
+         0     0% 99.66%      2.41s 10.07%  github.com/batchstream/weir/internal/server.(*transportStats).HandleRPC
+         0     0% 99.66%      2.42s 10.10%  github.com/batchstream/weir/internal/server.transportStats.HandleRPC
+         0     0% 99.66%      9.79s 40.83%  github.com/batchstream/weir/internal/server.unaryRPC
+         0     0% 99.66%      6.82s 28.43%  github.com/batchstream/weir/internal/store.(*Runtime).SubmitBatch
+         0     0% 99.66%      4.73s 19.71%  github.com/batchstream/weir/internal/store.(*Runtime).execute
+         0     0% 99.66%      3.06s 12.76%  github.com/batchstream/weir/internal/store.(*Runtime).executeBatch
+         0     0% 99.66%      4.75s 19.80%  github.com/batchstream/weir/internal/store.(*Runtime).loop
+         0     0% 99.66%      4.62s 19.29%  github.com/batchstream/weir/internal/store.(*Runtime).loop.gowrap2
+         0     0% 99.66%      4.73s 19.71%  github.com/batchstream/weir/internal/store.(*Runtime).runBatch
+         0     0% 99.66%      1.35s  5.63%  github.com/batchstream/weir/internal/store.(*Ticket).Ack
+         0     0% 99.66%      2.93s 12.22%  github.com/batchstream/weir/internal/store.(*Ticket).WaitBatch
+         0     0% 99.66%      1.71s  7.12%  github.com/batchstream/weir/internal/store.(*Ticket).retainResults
+         0     0% 99.66%      1.71s  7.12%  github.com/batchstream/weir/internal/store.(*Ticket).retainResults-fm
+         0     0% 99.66%      4.73s 19.71%  github.com/batchstream/weir/internal/store.New.gowrap1
+         0     0% 99.66%      0.90s  3.74%  go.mongodb.org/mongo-driver/v2/mongo.(*Database).RunCommand
+         0     0% 99.66%      0.25s  1.04%  go.mongodb.org/mongo-driver/v2/mongo.(*Session).EndSession
+         0     0% 99.66%      0.89s  3.73%  go.mongodb.org/mongo-driver/v2/x/mongo/driver.Operation.Execute

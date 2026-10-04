@@ -1,0 +1,62 @@
+# Database saturation comparison
+
+Backend **search**. Started 2026-10-03T23:07:11.876060281Z.
+
+independent OS client processes send one record per native call or unary SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain.
+
+Warmup 10s and measurement 20s per path/stage, 3 paired rounds, requested writes 0%.
+
+4 independent OS client processes. Each worker sends one business request containing one record, waits for its acknowledged result, and validates it. p50/p95/p99 describe individual requests; histograms are pooled rather than averaging process quantiles.
+
+| Batch | Workers | Round | Path | Read | Write | Success | Errors/unknown | Ops/s | p95 call ms | DB CPU budget % | Full CPU time % | Sampling coverage % | Verified |
+| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | 8 | 1 | direct | 255536 | 0 | 255536 | 0 | 12776.5 | 0.895 | 99.8 | 95.5 | 95.5 | true |
+| 1 | 8 | 1 | weir | 144169 | 0 | 144169 | 0 | 7208.2 | 2.303 | 66.8 | 0.0 | 95.8 | true |
+| 1 | 8 | 2 | direct | 307664 | 0 | 307664 | 0 | 15382.6 | 0.767 | 99.7 | 100.0 | 100.0 | true |
+| 1 | 8 | 2 | weir | 148144 | 0 | 148144 | 0 | 7406.8 | 2.303 | 64.6 | 0.0 | 95.3 | true |
+| 1 | 8 | 3 | direct | 304267 | 0 | 304267 | 0 | 15211.0 | 0.767 | 99.8 | 99.8 | 99.8 | true |
+| 1 | 8 | 3 | weir | 149467 | 0 | 149467 | 0 | 7473.1 | 2.303 | 66.8 | 0.0 | 95.2 | true |
+| 1 | 32 | 1 | direct | 377755 | 0 | 377755 | 0 | 18886.7 | 3.071 | 99.7 | 96.0 | 96.0 | true |
+| 1 | 32 | 1 | weir | 224926 | 0 | 224926 | 0 | 11244.9 | 5.631 | 67.6 | 0.0 | 95.8 | true |
+| 1 | 32 | 2 | direct | 376474 | 0 | 376474 | 0 | 18822.7 | 3.071 | 99.6 | 96.0 | 96.0 | true |
+| 1 | 32 | 2 | weir | 227442 | 0 | 227442 | 0 | 11371.0 | 5.631 | 68.5 | 0.0 | 95.7 | true |
+| 1 | 32 | 3 | direct | 381612 | 0 | 381612 | 0 | 19076.9 | 3.071 | 99.5 | 95.3 | 95.3 | true |
+| 1 | 32 | 3 | weir | 227085 | 0 | 227085 | 0 | 11353.5 | 5.631 | 67.2 | 0.0 | 95.9 | true |
+| 1 | 128 | 1 | direct | 420208 | 0 | 420208 | 0 | 21006.6 | 26.623 | 99.8 | 96.7 | 96.7 | true |
+| 1 | 128 | 1 | weir | 343106 | 0 | 343106 | 0 | 17151.9 | 14.335 | 59.5 | 0.0 | 95.9 | true |
+| 1 | 128 | 2 | direct | 417319 | 0 | 417319 | 0 | 20862.8 | 26.623 | 99.8 | 96.0 | 96.0 | true |
+| 1 | 128 | 2 | weir | 354811 | 0 | 354811 | 0 | 17737.2 | 14.335 | 58.9 | 0.0 | 95.6 | true |
+| 1 | 128 | 3 | direct | 427638 | 0 | 427638 | 0 | 21378.7 | 26.623 | 99.9 | 96.0 | 96.0 | true |
+| 1 | 128 | 3 | weir | 333789 | 0 | 333789 | 0 | 16687.0 | 15.359 | 59.2 | 0.0 | 95.9 | true |
+
+Measured Weir adapter and unary RPC evidence (warmup, reset and postflight excluded):
+
+| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Read/Mutate RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |
+| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | 8 | 1 | 132576 | 1.087 | 144169/0 | 0.008 | 0.540 | 0 | 32.000 |
+| 1 | 8 | 2 | 136017 | 1.089 | 148144/0 | 0.008 | 0.518 | 0 | 32.000 |
+| 1 | 8 | 3 | 137257 | 1.089 | 149467/0 | 0.008 | 0.519 | 0 | 32.000 |
+| 1 | 32 | 1 | 156822 | 1.434 | 224926/0 | 0.044 | 1.146 | 0 | 32.000 |
+| 1 | 32 | 2 | 159147 | 1.429 | 227442/0 | 0.044 | 1.116 | 0 | 32.000 |
+| 1 | 32 | 3 | 159062 | 1.428 | 227085/0 | 0.043 | 1.122 | 0 | 32.000 |
+| 1 | 128 | 1 | 120323 | 2.852 | 343106/0 | 0.253 | 2.253 | 0 | 32.000 |
+| 1 | 128 | 2 | 120596 | 2.942 | 354811/0 | 0.236 | 2.191 | 0 | 32.000 |
+| 1 | 128 | 3 | 114881 | 2.906 | 333789/0 | 0.249 | 2.321 | 0 | 32.000 |
+
+**Batch 1: database-full-load throughput comparison unavailable.** both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence.
+
+Best verified business QPS within this ladder: direct 21082.7 (128 workers), Weir 17192.1 (128 workers), observed change -18.45%. This is a measured business-throughput comparison, not a maximum-database-capacity claim.
+
+Observed single-request business performance at matched client concurrency (independent of the database-capacity qualification):
+
+| Workers | Direct QPS | Weir QPS | Change | Direct p50/p95/p99 ms | Weir p50/p95/p99 ms |
+| ---: | ---: | ---: | ---: | --- | --- |
+| 8 | 14456.7 | 7362.7 | -49.07% | 0.415 / 0.831 / 2.559 | 0.959 / 2.303 / 3.583 |
+| 32 | 18928.8 | 11323.1 | -40.18% | 1.279 / 3.071 / 22.527 | 2.559 / 5.631 / 7.679 |
+| 128 | 21082.7 | 17192.1 | -18.45% | 4.607 / 26.623 / 32.767 | 7.167 / 14.335 / 20.479 |
+
+These QPS and latency observations apply to this hardware and measured concurrency range. A business-throughput improvement can exist without demonstrating the maximum database capacity. An underfull database or missing next-level plateau keeps the database-capacity comparison unavailable.
+
+Aggregation evidence: the JSON records one business request per record, Read/Mutate RPC counts, adapter invocation counts, average adapter batch and its cumulative histogram, and RPCs per adapter invocation. An adapter invocation is not necessarily one physical database wire command. MongoDB physical find/update/bulkWrite/getMore/killCursors deltas come from owned serverStatus at timed boundaries; missing counters remain unavailable. Elasticsearch has no equivalent physical HTTP-command counter. Every child PID, configured native pool limit, final revision ranges, exit result and sampled CPU/RSS is retained; coordinator sampling CPU is excluded from business-client CPU.
+
+The JSON retains before/after raw public Weir metrics and their observed deltas, every resource sample, monitor failures, raw cumulative database/container I/O and network counters, CPU quota/host core denominator, and client/Weir cumulative CPU. Docker CPU uses cumulative Engine usage and read timestamps across each entire sampling interval, never CLI instantaneous percentages. Both interval endpoints must succeed; missing intervals reduce full-run coverage. Samples include monitoring traffic and background database work. Native ps CPU has platform-dependent clock resolution. Native databases share the host CPU budget with the client and Weir. Disk/network utilization or capacity is not inferred from byte counters. A plateau without sustained database CPU saturation is not a database-full-load result. Startup/discovery/reset/postflight and warmup are excluded from throughput; all in-flight completion and validation is included.

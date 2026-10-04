@@ -1,0 +1,38 @@
+=== RUN   TestIndependentSingleRequestClients
+    single_benchmark_test.go:44: single-request fixture artifacts: /tmp/weir-tests-2166198628
+=== RUN   TestIndependentSingleRequestClients/mongo
+single-request backend=mongo processes=2 workers=2 round=1 direct=4624.8 weir=2237.4 DB-CPU direct=89.3% weir=48.6%
+single-request backend=mongo processes=2 workers=4 round=1 direct=5131.1 weir=3100.1 DB-CPU direct=100.8% weir=62.9%
+=== RUN   TestIndependentSingleRequestClients/search
+single-request backend=search processes=2 workers=2 round=1 direct=462.5 weir=584.3 DB-CPU direct=100.6% weir=99.9%
+single-request backend=search processes=2 workers=4 round=1 direct=1379.1 weir=847.3 DB-CPU direct=100.3% weir=101.2%
+--- PASS: TestIndependentSingleRequestClients (95.93s)
+    --- PASS: TestIndependentSingleRequestClients/mongo (25.87s)
+    --- PASS: TestIndependentSingleRequestClients/search (27.39s)
+=== RUN   TestSystemIntegration
+    system_test.go:53: fixture artifacts: /tmp/weir-tests-1654219498
+=== RUN   TestSystemIntegration/native_reset_and_write_change_evidence
+    system_test.go:81: repeated 1/64-record reset succeeds; native Mongo matched-but-unmodified timed writes are rejected; real 32-record bulk changes persist
+=== RUN   TestSystemIntegration/mongo_lifecycle
+    system_test.go:86: Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, typed Read/Mutate sequence, Native, and direct database persistence verified
+    system_test.go:87: all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint
+    system_test.go:88: 48 independent unary SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified
+    system_test.go:89: 513 distinct native documents Put and Read in one physical adapter batch per unary call; every value independently persisted and reverse-order results verified
+=== RUN   TestSystemIntegration/search_lifecycle
+    system_test.go:86: Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, typed Read/Mutate sequence, Native, and direct database persistence verified
+    system_test.go:87: all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint
+    system_test.go:88: 48 independent unary SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified
+    system_test.go:89: 513 distinct native documents Put and Read in one physical adapter batch per unary call; every value independently persisted and reverse-order results verified
+=== RUN   TestSystemIntegration/any_node_discovery_and_no_relay
+=== RUN   TestSystemIntegration/cancellation
+=== RUN   TestSystemIntegration/owner_withdrawal_restart_and_seed_loss
+    system_test.go:105: graceful owner withdrawal converged; existing and recreated SDK clients read persisted data; restarted owner recovered; losing the seed did not interrupt direct business reads
+--- PASS: TestSystemIntegration (25.87s)
+    --- PASS: TestSystemIntegration/native_reset_and_write_change_evidence (0.26s)
+    --- PASS: TestSystemIntegration/mongo_lifecycle (0.73s)
+    --- PASS: TestSystemIntegration/search_lifecycle (2.41s)
+    --- PASS: TestSystemIntegration/any_node_discovery_and_no_relay (0.33s)
+    --- PASS: TestSystemIntegration/cancellation (0.00s)
+    --- PASS: TestSystemIntegration/owner_withdrawal_restart_and_seed_loss (0.16s)
+PASS
+ok  	github.com/batchstream/weir-tests/tests/integration	122.814s

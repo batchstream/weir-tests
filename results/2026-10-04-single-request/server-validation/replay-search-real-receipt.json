@@ -1,0 +1,46 @@
+{
+  "source": "4713a5cf319986ae4270e8ac2760e6ff7b3f0684",
+  "production_equivalent_to": "2305186fffc5d1d9273e223f222e016fc8afe3ed",
+  "production_comparison_command": "git diff --exit-code 2305186fffc5d1d9273e223f222e016fc8afe3ed HEAD -- . ':(exclude)**/*_test.go'",
+  "production_comparison_exit_code": 0,
+  "production_comparison_stdout": "replay-production-diff.txt",
+  "command": "env -u GOROOT GOENV=off GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off GOFLAGS=-mod=readonly PATH=/Users/liran/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.1.darwin-arm64/bin:$PATH WEIR_SEARCH_INTEGRATION=elasticsearch go test -v -race -tags=integration -count=2 -timeout=120s -run '^(TestRealSearchBackendDeadlineAcknowledgements|TestSearchSharedDeadlineCancellationAndDrain)$' ./internal/backend/search",
+  "exit_code": 0,
+  "result": "PASS 16.630s",
+  "stdout_and_stderr": "replay-search-real-deadline-cancel-drain-race2.log",
+  "stdout_sha256": "4c43405fefb8a17af6e13c63b593b5695fa891c556fb2ebda9e65363ef7833c5",
+  "evidence_level": "Complete stdout and stderr captured live by shell redirection for this new replay; original earlier stdout files did not exist.",
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "fixture": {
+    "product": "Elasticsearch 8.19.22",
+    "container_id": "da0118621160e61dc88077b82c6f44a5ee6dfd943bde5948d5885e2ba8e3e75d",
+    "owner": "weir-milestone-17",
+    "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:c2a3ed5f968be6d59c960aa0c60cfdaee667b6bc8211142021a41d0e85b43237",
+    "cpu_nano_units": 2000000000,
+    "memory_bytes": 1610612736,
+    "address": "127.0.0.1:19200",
+    "owned_isolated_container": true,
+    "start_stdout": "replay-es-start.log",
+    "stop_stdout": "replay-es-stop.log"
+  },
+  "coverage": [
+    "Headers and body each delay valid real committed ACK2150ms: configured4s returns APPLIED.",
+    "Headers and body each exceed configured1s: returns UNKNOWN plus fixed DEADLINE_EXCEEDED cause; independent real DB read verifies n7 persisted.",
+    "Each ACK case verifies exactlyonebulk submission, no retry and zero Runtime ownership after Ack.",
+    "one_caller_expires, drain, cancel_all each execute against real ES with independent persisted-effect checks; shared peer and resources remain correct.",
+    "Every subcase repeated twice."
+  ],
+  "not_covered": [
+    "MongoDB or secure/TLS opt-in profiles",
+    "Full Search package in this replay",
+    "Throughput or saturation capacity"
+  ],
+  "cleanup": {
+    "fixture_stopped_and_removed": true,
+    "port19200_has_no_listener": true,
+    "container_name_absent_after_stop": true,
+    "tracked_worktree_clean": true,
+    "production_source_modified": false,
+    "host_settings_modified": false
+  }
+}

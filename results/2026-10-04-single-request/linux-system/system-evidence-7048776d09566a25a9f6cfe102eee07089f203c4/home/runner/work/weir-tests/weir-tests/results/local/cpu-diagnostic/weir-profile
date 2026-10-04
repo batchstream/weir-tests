@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+import json, os, pathlib, sys
+identity = {'product': 'weir-integration-profiler', 'revision': '8970222602bd6f323dcdfb5af5162f864fd06a7a', 'instrumented': True}
+if sys.argv[1:] == ["version"]:
+    print(json.dumps(identity)); raise SystemExit(0)
+if len(sys.argv) != 6 or sys.argv[1] != "serve" or sys.argv[2] != "--config" or sys.argv[4] != "--routes":
+    raise SystemExit("profiler only supports owned fixture serve/version")
+profile = pathlib.Path(sys.argv[3]).with_suffix(".cpu.pprof")
+helper = '/home/runner/work/weir-tests/weir-tests/.tools/weir-profile-node'
+os.execv(helper, [helper, "-mode", "profile-node", "-config", sys.argv[3], "-routes", sys.argv[5], "-cpu-profile", str(profile)])

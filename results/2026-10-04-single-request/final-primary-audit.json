@@ -1,0 +1,253 @@
+{
+  "source": "e790aa77629f0e4862159cbe8e3f0497df888314",
+  "weir_source": "2305186fffc5d1d9273e223f222e016fc8afe3ed",
+  "equal_timeout_policy_verified": true,
+  "reports": [
+    {
+      "file": "saturation-evidence-writes-10-f8ba341b99680ce4fc16c99c73c07838b0ccfc89/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+      "backend": "mongo",
+      "writes": 10,
+      "backend_batch_limit": 32,
+      "business_peaks": {
+        "direct_observed_peak": {
+          "path": "direct",
+          "concurrency": 32,
+          "batch_size": 1,
+          "successful_operations_per_second": 5440.861695563556,
+          "mean_database_cpu_budget_percent": 99.98256878907902,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        "weir_observed_peak": {
+          "path": "weir",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 8071.283022047762,
+          "mean_database_cpu_budget_percent": 78.11929854098327,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "observed_weir_direct_peak_throughput_ratio": 1.4834567525634834,
+        "observed_weir_peak_throughput_delta_percent": 48.34567525634834,
+        "scope": "best verified business throughput within this measured concurrency ladder on the recorded hardware; does not imply maximum database capacity"
+      },
+      "batch_average_min": 1.104661448336866,
+      "batch_average_max": 3.4674009555621326,
+      "global_command_excesses": [
+        {
+          "concurrency": 32,
+          "round": 2,
+          "path": "direct",
+          "excess_over_business_calls": {
+            "find": 0,
+            "update": 1
+          },
+          "scope": "global serverStatus counters include background database commands; namespace attribution is unavailable"
+        }
+      ],
+      "database_counter_error_samples": 0
+    },
+    {
+      "file": "saturation-evidence-writes-100-f8ba341b99680ce4fc16c99c73c07838b0ccfc89/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+      "backend": "mongo",
+      "writes": 100,
+      "backend_batch_limit": 32,
+      "business_peaks": {
+        "direct_observed_peak": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 2644.7919326353285,
+          "mean_database_cpu_budget_percent": 99.92736478747916,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "weir_observed_peak": {
+          "path": "weir",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 3526.976680864871,
+          "mean_database_cpu_budget_percent": 99.82242824546815,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "observed_weir_direct_peak_throughput_ratio": 1.333555444322047,
+        "observed_weir_peak_throughput_delta_percent": 33.355544432204695,
+        "scope": "best verified business throughput within this measured concurrency ladder on the recorded hardware; does not imply maximum database capacity"
+      },
+      "batch_average_min": 1.0769055330018702,
+      "batch_average_max": 2.8077748721751687,
+      "global_command_excesses": [
+        {
+          "concurrency": 32,
+          "round": 2,
+          "path": "direct",
+          "excess_over_business_calls": {
+            "find": 0,
+            "update": 1
+          },
+          "scope": "global serverStatus counters include background database commands; namespace attribution is unavailable"
+        }
+      ],
+      "database_counter_error_samples": 0
+    },
+    {
+      "file": "saturation-evidence-writes-0-f8ba341b99680ce4fc16c99c73c07838b0ccfc89/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+      "backend": "mongo",
+      "writes": 0,
+      "backend_batch_limit": 32,
+      "business_peaks": {
+        "direct_observed_peak": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 19829.01522380843,
+          "mean_database_cpu_budget_percent": 100.20221334412777,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "weir_observed_peak": {
+          "path": "weir",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 18010.381540494316,
+          "mean_database_cpu_budget_percent": 59.8082805372995,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "observed_weir_direct_peak_throughput_ratio": 0.9082842156916343,
+        "observed_weir_peak_throughput_delta_percent": -9.171578430836568,
+        "scope": "best verified business throughput within this measured concurrency ladder on the recorded hardware; does not imply maximum database capacity"
+      },
+      "batch_average_min": 1.109036158640491,
+      "batch_average_max": 3.451188267514798,
+      "global_command_excesses": [],
+      "database_counter_error_samples": 0
+    },
+    {
+      "file": "saturation-evidence-writes-10-f8ba341b99680ce4fc16c99c73c07838b0ccfc89/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+      "backend": "search",
+      "writes": 10,
+      "backend_batch_limit": 32,
+      "business_peaks": {
+        "direct_observed_peak": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 5641.580552084439,
+          "mean_database_cpu_budget_percent": 99.97605614980314,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "weir_observed_peak": {
+          "path": "weir",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 7171.923172362376,
+          "mean_database_cpu_budget_percent": 82.40323951390312,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "observed_weir_direct_peak_throughput_ratio": 1.2712613258198555,
+        "observed_weir_peak_throughput_delta_percent": 27.12613258198555,
+        "scope": "best verified business throughput within this measured concurrency ladder on the recorded hardware; does not imply maximum database capacity"
+      },
+      "batch_average_min": 1.066178360318684,
+      "batch_average_max": 2.977131406614746,
+      "global_command_excesses": [],
+      "database_counter_error_samples": 0
+    },
+    {
+      "file": "saturation-evidence-writes-100-f8ba341b99680ce4fc16c99c73c07838b0ccfc89/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+      "backend": "search",
+      "writes": 100,
+      "backend_batch_limit": 32,
+      "business_peaks": {
+        "direct_observed_peak": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 2019.6646564919802,
+          "mean_database_cpu_budget_percent": 72.59239849072141,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "weir_observed_peak": {
+          "path": "weir",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 5048.145610890373,
+          "mean_database_cpu_budget_percent": 74.5799098653773,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "observed_weir_direct_peak_throughput_ratio": 2.499496931168097,
+        "observed_weir_peak_throughput_delta_percent": 149.9496931168097,
+        "scope": "best verified business throughput within this measured concurrency ladder on the recorded hardware; does not imply maximum database capacity"
+      },
+      "batch_average_min": 1.004135597468513,
+      "batch_average_max": 3.6406979690837344,
+      "global_command_excesses": [],
+      "database_counter_error_samples": 0
+    },
+    {
+      "file": "saturation-evidence-writes-0-f8ba341b99680ce4fc16c99c73c07838b0ccfc89/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+      "backend": "search",
+      "writes": 0,
+      "backend_batch_limit": 32,
+      "business_peaks": {
+        "direct_observed_peak": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 19629.825345416528,
+          "mean_database_cpu_budget_percent": 99.8650022619878,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "weir_observed_peak": {
+          "path": "weir",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 16597.44455538124,
+          "mean_database_cpu_budget_percent": 59.08288441316417,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": false,
+          "throughput_plateau_at_next_concurrency": false,
+          "database_saturation_demonstrated": false
+        },
+        "observed_weir_direct_peak_throughput_ratio": 0.8455217641178181,
+        "observed_weir_peak_throughput_delta_percent": -15.44782358821819,
+        "scope": "best verified business throughput within this measured concurrency ladder on the recorded hardware; does not imply maximum database capacity"
+      },
+      "batch_average_min": 1.0880043176947265,
+      "batch_average_max": 2.927969776327652,
+      "global_command_excesses": [],
+      "database_counter_error_samples": 0
+    }
+  ],
+  "successful_operations": 16103395,
+  "timed_stages": 108
+}

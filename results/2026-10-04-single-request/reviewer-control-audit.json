@@ -1,0 +1,518 @@
+{
+  "source": "e790aa77629f0e4862159cbe8e3f0497df888314",
+  "weir_source": "2305186fffc5d1d9273e223f222e016fc8afe3ed",
+  "weir_version": "v0.1.1-0.20261003235319-2305186fffc5",
+  "weir_sum": "h1:6nCxXeaPaILriyyg8B0BJlYBsz6sYnNEaQcDk/CoFW8=",
+  "controls": [
+    {
+      "backend": "mongo",
+      "write_percent": 0,
+      "same_single_job_runner_demonstrated": true,
+      "run_id": 37164079031,
+      "unavailable": null,
+      "comparisons": [
+        {
+          "concurrency": 8,
+          "direct": {
+            "limit_1_qps": 10453.559038599402,
+            "limit_32_qps": 10343.25782744964,
+            "limit_32_over_1_ratio": 0.9894484538000429,
+            "change_percent": -1.055154619995713,
+            "limit_1_p99_upper_bound_ns": 2047000,
+            "limit_32_p99_upper_bound_ns": 2303000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 5277.671639274869,
+            "limit_32_qps": 5519.356344368986,
+            "limit_32_over_1_ratio": 1.0457938124258377,
+            "change_percent": 4.579381242583769,
+            "limit_1_p99_upper_bound_ns": 4095000,
+            "limit_32_p99_upper_bound_ns": 3583000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.126629473397741
+          }
+        },
+        {
+          "concurrency": 32,
+          "direct": {
+            "limit_1_qps": 13274.23338584952,
+            "limit_32_qps": 13124.767632738696,
+            "limit_32_over_1_ratio": 0.988740159317211,
+            "change_percent": -1.1259840682788957,
+            "limit_1_p99_upper_bound_ns": 40959000,
+            "limit_32_p99_upper_bound_ns": 40959000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 7158.241745395914,
+            "limit_32_qps": 8717.75044989599,
+            "limit_32_over_1_ratio": 1.21786197783878,
+            "change_percent": 21.786197783878002,
+            "limit_1_p99_upper_bound_ns": 11263000,
+            "limit_32_p99_upper_bound_ns": 9215000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.7335938043683576
+          }
+        },
+        {
+          "concurrency": 128,
+          "direct": {
+            "limit_1_qps": 14326.408675647126,
+            "limit_32_qps": 14591.368089299956,
+            "limit_32_over_1_ratio": 1.0184944754579859,
+            "change_percent": 1.8494475457985882,
+            "limit_1_p99_upper_bound_ns": 53247000,
+            "limit_32_p99_upper_bound_ns": 53247000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 8168.997912054003,
+            "limit_32_qps": 14742.70121625184,
+            "limit_32_over_1_ratio": 1.8047135493201458,
+            "change_percent": 80.47135493201458,
+            "limit_1_p99_upper_bound_ns": 28671000,
+            "limit_32_p99_upper_bound_ns": 22527000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 3.960179743900747
+          }
+        }
+      ],
+      "scope": "Weir limit 1 versus 32 within one job measures aggregation effect at matched concurrency; native baselines are rerun and their variation is disclosed. The sequential fresh-fixture modes are not randomized or simultaneous. QPS does not imply maximum DB capacity without each path qualification and plateau."
+    },
+    {
+      "backend": "mongo",
+      "write_percent": 10,
+      "same_single_job_runner_demonstrated": true,
+      "run_id": 37164082220,
+      "unavailable": null,
+      "comparisons": [
+        {
+          "concurrency": 8,
+          "direct": {
+            "limit_1_qps": 5095.723161505423,
+            "limit_32_qps": 5085.652361111933,
+            "limit_32_over_1_ratio": 0.9980236759191378,
+            "change_percent": -0.1976324080862235,
+            "limit_1_p99_upper_bound_ns": 36863000,
+            "limit_32_p99_upper_bound_ns": 40959000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 3498.1362428367815,
+            "limit_32_qps": 3796.9879325559614,
+            "limit_32_over_1_ratio": 1.0854316896121887,
+            "change_percent": 8.543168961218871,
+            "limit_1_p99_upper_bound_ns": 6143000,
+            "limit_32_p99_upper_bound_ns": 5631000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.1078060046189377
+          }
+        },
+        {
+          "concurrency": 32,
+          "direct": {
+            "limit_1_qps": 5329.731172340116,
+            "limit_32_qps": 5401.956214845346,
+            "limit_32_over_1_ratio": 1.0135513481205316,
+            "change_percent": 1.3551348120531603,
+            "limit_1_p99_upper_bound_ns": 53247000,
+            "limit_32_p99_upper_bound_ns": 49151000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 4209.767289219263,
+            "limit_32_qps": 5337.12656278186,
+            "limit_32_over_1_ratio": 1.2677961027559972,
+            "change_percent": 26.77961027559972,
+            "limit_1_p99_upper_bound_ns": 20479000,
+            "limit_32_p99_upper_bound_ns": 15359000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.633764882318734
+          }
+        },
+        {
+          "concurrency": 128,
+          "direct": {
+            "limit_1_qps": 5178.739576760312,
+            "limit_32_qps": 5139.1422294192835,
+            "limit_32_over_1_ratio": 0.9923538639558702,
+            "change_percent": -0.7646136044129781,
+            "limit_1_p99_upper_bound_ns": 81919000,
+            "limit_32_p99_upper_bound_ns": 90111000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 4701.32605375533,
+            "limit_32_qps": 7936.165090885518,
+            "limit_32_over_1_ratio": 1.6880694936157983,
+            "change_percent": 68.80694936157983,
+            "limit_1_p99_upper_bound_ns": 53247000,
+            "limit_32_p99_upper_bound_ns": 45055000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 3.414888735948612
+          }
+        }
+      ],
+      "scope": "Weir limit 1 versus 32 within one job measures aggregation effect at matched concurrency; native baselines are rerun and their variation is disclosed. The sequential fresh-fixture modes are not randomized or simultaneous. QPS does not imply maximum DB capacity without each path qualification and plateau."
+    },
+    {
+      "backend": "mongo",
+      "write_percent": 100,
+      "same_single_job_runner_demonstrated": true,
+      "run_id": 37164085511,
+      "unavailable": null,
+      "comparisons": [
+        {
+          "concurrency": 8,
+          "direct": {
+            "limit_1_qps": 2589.395109073846,
+            "limit_32_qps": 2525.9045525502293,
+            "limit_32_over_1_ratio": 0.9754805451276513,
+            "change_percent": -2.4519454872348745,
+            "limit_1_p99_upper_bound_ns": 49151000,
+            "limit_32_p99_upper_bound_ns": 53247000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 2274.176672597772,
+            "limit_32_qps": 2325.6339999628176,
+            "limit_32_over_1_ratio": 1.022626794120734,
+            "change_percent": 2.2626794120734095,
+            "limit_1_p99_upper_bound_ns": 18431000,
+            "limit_32_p99_upper_bound_ns": 18431000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.0797124996131588
+          }
+        },
+        {
+          "concurrency": 32,
+          "direct": {
+            "limit_1_qps": 2662.9507982070477,
+            "limit_32_qps": 2569.215544306479,
+            "limit_32_over_1_ratio": 0.9648002306450122,
+            "change_percent": -3.519976935498781,
+            "limit_1_p99_upper_bound_ns": 73727000,
+            "limit_32_p99_upper_bound_ns": 81919000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 2292.1664550673454,
+            "limit_32_qps": 2674.54866097207,
+            "limit_32_over_1_ratio": 1.1668213078763907,
+            "change_percent": 16.68213078763907,
+            "limit_1_p99_upper_bound_ns": 73727000,
+            "limit_32_p99_upper_bound_ns": 73727000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.3903028099516959
+          }
+        },
+        {
+          "concurrency": 128,
+          "direct": {
+            "limit_1_qps": 2591.9957543409682,
+            "limit_32_qps": 2595.0489590900124,
+            "limit_32_over_1_ratio": 1.0011779358604005,
+            "change_percent": 0.11779358604004919,
+            "limit_1_p99_upper_bound_ns": 229375000,
+            "limit_32_p99_upper_bound_ns": 212991000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 2309.3031698979075,
+            "limit_32_qps": 3698.6770736730814,
+            "limit_32_over_1_ratio": 1.6016420545755354,
+            "change_percent": 60.16420545755354,
+            "limit_1_p99_upper_bound_ns": 196607000,
+            "limit_32_p99_upper_bound_ns": 180223000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 2.801604824566937
+          }
+        }
+      ],
+      "scope": "Weir limit 1 versus 32 within one job measures aggregation effect at matched concurrency; native baselines are rerun and their variation is disclosed. The sequential fresh-fixture modes are not randomized or simultaneous. QPS does not imply maximum DB capacity without each path qualification and plateau."
+    },
+    {
+      "backend": "search",
+      "write_percent": 0,
+      "same_single_job_runner_demonstrated": true,
+      "run_id": 37164079031,
+      "unavailable": null,
+      "comparisons": [
+        {
+          "concurrency": 8,
+          "direct": {
+            "limit_1_qps": 7905.383578807401,
+            "limit_32_qps": 7925.6248814865085,
+            "limit_32_over_1_ratio": 1.00256044535693,
+            "change_percent": 0.2560445356929897,
+            "limit_1_p99_upper_bound_ns": 22527000,
+            "limit_32_p99_upper_bound_ns": 20479000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 5186.474694712169,
+            "limit_32_qps": 5260.482166633643,
+            "limit_32_over_1_ratio": 1.0142693209314078,
+            "change_percent": 1.4269320931407758,
+            "limit_1_p99_upper_bound_ns": 3839000,
+            "limit_32_p99_upper_bound_ns": 3839000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.1072878115517513
+          }
+        },
+        {
+          "concurrency": 32,
+          "direct": {
+            "limit_1_qps": 11618.175704009886,
+            "limit_32_qps": 11969.167858957177,
+            "limit_32_over_1_ratio": 1.0302106082649576,
+            "change_percent": 3.0210608264957584,
+            "limit_1_p99_upper_bound_ns": 36863000,
+            "limit_32_p99_upper_bound_ns": 36863000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 7209.857485246804,
+            "limit_32_qps": 8233.24921462215,
+            "limit_32_over_1_ratio": 1.1419434061587854,
+            "change_percent": 14.194340615878541,
+            "limit_1_p99_upper_bound_ns": 11263000,
+            "limit_32_p99_upper_bound_ns": 10239000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.5656532045431497
+          }
+        },
+        {
+          "concurrency": 128,
+          "direct": {
+            "limit_1_qps": 12900.842003900421,
+            "limit_32_qps": 12994.2319151034,
+            "limit_32_over_1_ratio": 1.00723905549535,
+            "change_percent": 0.7239055495350089,
+            "limit_1_p99_upper_bound_ns": 49151000,
+            "limit_32_p99_upper_bound_ns": 49151000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 7861.732785844848,
+            "limit_32_qps": 12699.226925883915,
+            "limit_32_over_1_ratio": 1.6153216182505006,
+            "change_percent": 61.53216182505006,
+            "limit_1_p99_upper_bound_ns": 28671000,
+            "limit_32_p99_upper_bound_ns": 24575000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 3.310658019902615
+          }
+        }
+      ],
+      "scope": "Weir limit 1 versus 32 within one job measures aggregation effect at matched concurrency; native baselines are rerun and their variation is disclosed. The sequential fresh-fixture modes are not randomized or simultaneous. QPS does not imply maximum DB capacity without each path qualification and plateau."
+    },
+    {
+      "backend": "search",
+      "write_percent": 10,
+      "same_single_job_runner_demonstrated": true,
+      "run_id": 37164082220,
+      "unavailable": null,
+      "comparisons": [
+        {
+          "concurrency": 8,
+          "direct": {
+            "limit_1_qps": 3277.088297842149,
+            "limit_32_qps": 3190.581479201544,
+            "limit_32_over_1_ratio": 0.9736025365268409,
+            "change_percent": -2.6397463473159077,
+            "limit_1_p99_upper_bound_ns": 53247000,
+            "limit_32_p99_upper_bound_ns": 53247000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 2457.147146171359,
+            "limit_32_qps": 2338.915971984755,
+            "limit_32_over_1_ratio": 0.9518827456585871,
+            "change_percent": -4.811725434141289,
+            "limit_1_p99_upper_bound_ns": 45055000,
+            "limit_32_p99_upper_bound_ns": 45055000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.079024855273577
+          }
+        },
+        {
+          "concurrency": 32,
+          "direct": {
+            "limit_1_qps": 5156.222396229618,
+            "limit_32_qps": 5167.4121237306545,
+            "limit_32_over_1_ratio": 1.0021701405876555,
+            "change_percent": 0.21701405876555224,
+            "limit_1_p99_upper_bound_ns": 53247000,
+            "limit_32_p99_upper_bound_ns": 49151000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 4137.43079923987,
+            "limit_32_qps": 4562.076833452162,
+            "limit_32_over_1_ratio": 1.1026351991893877,
+            "change_percent": 10.26351991893877,
+            "limit_1_p99_upper_bound_ns": 26623000,
+            "limit_32_p99_upper_bound_ns": 28671000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.466296437120778
+          }
+        },
+        {
+          "concurrency": 128,
+          "direct": {
+            "limit_1_qps": 5569.48960314462,
+            "limit_32_qps": 5402.186762350145,
+            "limit_32_over_1_ratio": 0.9699608307554766,
+            "change_percent": -3.0039169244523434,
+            "limit_1_p99_upper_bound_ns": 73727000,
+            "limit_32_p99_upper_bound_ns": 73727000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": true
+          },
+          "weir": {
+            "limit_1_qps": 4288.160954612837,
+            "limit_32_qps": 7024.027456962194,
+            "limit_32_over_1_ratio": 1.6380046204670435,
+            "change_percent": 63.800462046704354,
+            "limit_1_p99_upper_bound_ns": 73727000,
+            "limit_32_p99_upper_bound_ns": 53247000,
+            "limit_1_all_rounds_cpu_qualified": true,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 2.9744416383311933
+          }
+        }
+      ],
+      "scope": "Weir limit 1 versus 32 within one job measures aggregation effect at matched concurrency; native baselines are rerun and their variation is disclosed. The sequential fresh-fixture modes are not randomized or simultaneous. QPS does not imply maximum DB capacity without each path qualification and plateau."
+    },
+    {
+      "backend": "search",
+      "write_percent": 100,
+      "same_single_job_runner_demonstrated": true,
+      "run_id": 37164085511,
+      "unavailable": null,
+      "comparisons": [
+        {
+          "concurrency": 8,
+          "direct": {
+            "limit_1_qps": 1296.59288529229,
+            "limit_32_qps": 1272.690991333975,
+            "limit_32_over_1_ratio": 0.98156561382571,
+            "change_percent": -1.8434386174290052,
+            "limit_1_p99_upper_bound_ns": 57343000,
+            "limit_32_p99_upper_bound_ns": 57343000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false
+          },
+          "weir": {
+            "limit_1_qps": 1269.2774565477764,
+            "limit_32_qps": 1300.8714458918278,
+            "limit_32_over_1_ratio": 1.0248913184277153,
+            "change_percent": 2.4891318427715303,
+            "limit_1_p99_upper_bound_ns": 45055000,
+            "limit_32_p99_upper_bound_ns": 49151000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.0033156413452764
+          }
+        },
+        {
+          "concurrency": 32,
+          "direct": {
+            "limit_1_qps": 1760.4888916913346,
+            "limit_32_qps": 1755.803630096729,
+            "limit_32_over_1_ratio": 0.9973386588141977,
+            "change_percent": -0.2661341185802302,
+            "limit_1_p99_upper_bound_ns": 36863000,
+            "limit_32_p99_upper_bound_ns": 32767000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false
+          },
+          "weir": {
+            "limit_1_qps": 1527.353836324346,
+            "limit_32_qps": 1522.0137362490836,
+            "limit_32_over_1_ratio": 0.9965036915819627,
+            "change_percent": -0.3496308418037275,
+            "limit_1_p99_upper_bound_ns": 40959000,
+            "limit_32_p99_upper_bound_ns": 36863000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 1.0035903291684052
+          }
+        },
+        {
+          "concurrency": 128,
+          "direct": {
+            "limit_1_qps": 1931.2640331691225,
+            "limit_32_qps": 1931.4213279501885,
+            "limit_32_over_1_ratio": 1.0000814465440067,
+            "change_percent": 0.008144654400665807,
+            "limit_1_p99_upper_bound_ns": 106495000,
+            "limit_32_p99_upper_bound_ns": 98303000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false
+          },
+          "weir": {
+            "limit_1_qps": 1519.693908465063,
+            "limit_32_qps": 4825.607506982772,
+            "limit_32_over_1_ratio": 3.1753812265107926,
+            "change_percent": 217.53812265107925,
+            "limit_1_p99_upper_bound_ns": 147455000,
+            "limit_32_p99_upper_bound_ns": 65535000,
+            "limit_1_all_rounds_cpu_qualified": false,
+            "limit_32_all_rounds_cpu_qualified": false,
+            "limit_1_actual_batch_average": 1.0,
+            "limit_32_actual_batch_average": 3.638350489580718
+          }
+        }
+      ],
+      "scope": "Weir limit 1 versus 32 within one job measures aggregation effect at matched concurrency; native baselines are rerun and their variation is disclosed. The sequential fresh-fixture modes are not randomized or simultaneous. QPS does not imply maximum DB capacity without each path qualification and plateau."
+    }
+  ]
+}

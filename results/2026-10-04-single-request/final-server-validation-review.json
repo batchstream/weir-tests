@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "actionable_findings": [],
+  "source": "4713a5cf319986ae4270e8ac2760e6ff7b3f0684",
+  "production_equivalent_to": "2305186fffc5d1d9273e223f222e016fc8afe3ed",
+  "raw_evidence_sha256_verified": "4c43405fefb8a17af6e13c63b593b5695fa891c556fb2ebda9e65363ef7833c5",
+  "raw_log": "server-validation/replay-search-real-deadline-cancel-drain-race2.log",
+  "raw_result": "PASS 16.630s",
+  "independent_reviewer_reran_fixture": false,
+  "platform": "darwin/arm64",
+  "go": "1.27.1",
+  "real_backend": "Elasticsearch 8.19.22",
+  "focused_tests": {
+    "unique_leaf_subcases": 7,
+    "repeats_each": 2,
+    "leaf_subcase_executions": 14,
+    "skipped": 0,
+    "failed": 0,
+    "passed": [
+      "TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds",
+      "TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds",
+      "TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline",
+      "TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline",
+      "TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires",
+      "TestSearchSharedDeadlineCancellationAndDrain/drain",
+      "TestSearchSharedDeadlineCancellationAndDrain/cancel_all"
+    ]
+  },
+  "scope": [
+    "Headers/body valid committed ACK delayed 2150ms returns APPLIED within Store 4s configured cap.",
+    "Headers/body ACK exceeding Store 1s cap returns UNKNOWN with fixed DEADLINE_EXCEEDED; independent GET proves n7 persisted.",
+    "Each delayed-ACK case asserts one backend bulk submission/no retry and zero Store ownership after Ack.",
+    "Real peer caller expiry, cancellation of all callers and close/drain cases independently verify persisted effects, single backend batch and released resources."
+  ],
+  "fixture_identity": {
+    "product": "Elasticsearch 8.19.22",
+    "container_id": "da0118621160e61dc88077b82c6f44a5ee6dfd943bde5948d5885e2ba8e3e75d",
+    "owner": "weir-milestone-17",
+    "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:c2a3ed5f968be6d59c960aa0c60cfdaee667b6bc8211142021a41d0e85b43237",
+    "cpu_nano_units": 2000000000,
+    "memory_bytes": 1610612736,
+    "address": "127.0.0.1:19200",
+    "owned_isolated_container": true,
+    "start_stdout": "replay-es-start.log",
+    "stop_stdout": "replay-es-stop.log"
+  },
+  "cleanup": {
+    "receipt_flags_verified": true,
+    "owner_start_id_and_image_limits_match": true,
+    "stop_and_remove_stdout_matches_expected_owned_container_name": true,
+    "scope": "Archived author receipt plus complete owned start/stop stdout, not a new live Docker inspection by reviewer."
+  },
+  "production_tree_comparison": {
+    "exit_code": 0,
+    "stdout_empty": true,
+    "independent_exact_git_comparison_also_passed": true
+  },
+  "server_ci": {
+    "run_id": 37164204090,
+    "url": "https://github.com/batchstream/weir/actions/runs/37164204090",
+    "source": "4713a5cf319986ae4270e8ac2760e6ff7b3f0684",
+    "conclusion": "success"
+  },
+  "historical_evidence": {
+    "full_search_33_879s": "Search package PASS within overall failed combined Mongo/Search/Store command; observed tool return only, not independently archived original stdout.",
+    "focused_search_16_305s": "Original tool-return-only observation, no original stdout file; new replay is separate.",
+    "invalid_concurrent_mongo_failpoint_sweep": "Excluded as isolated correctness proof; sequential recorded Mongo/Store runs remain separate.",
+    "late_macos_eaddr_stress": "Environment/socket exhaustion excluded as production defect proof."
+  },
+  "limitations": [
+    "MongoDB or secure/TLS opt-in profiles",
+    "Full Search package in this replay",
+    "Throughput or saturation capacity",
+    "Correctness replay uses a separate Darwin ARM fixture and is not Linux throughput/capacity evidence.",
+    "No external M10/TLS profile coverage claimed."
+  ]
+}

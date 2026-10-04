@@ -1,0 +1,26 @@
+{
+  "containers": [
+    {
+      "id": "d7cf91ad83a3323a803cc48ecdf7adee0897bae617ede4093ea2bbe999b09066",
+      "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+      "name": "weir-tests-09c8c3d3850da1b184f81619-mongo",
+      "removed": true
+    },
+    {
+      "id": "fe2808921b76d175fa1b603c4d7172fa4d4cec5f394074eb37d2671b99378994",
+      "image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
+      "name": "weir-tests-09c8c3d3850da1b184f81619-search",
+      "removed": true
+    }
+  ],
+  "errors": "",
+  "finished_at": "2026-10-03T23:16:29.206948122Z",
+  "owner": "09c8c3d3850da1b184f81619",
+  "processes": [
+    {
+      "index": 0,
+      "pid": 5924,
+      "stopped": true
+    }
+  ]
+}

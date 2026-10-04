@@ -1,0 +1,67 @@
+{
+  "source": "ecf3172b3d27bdc564af87388592cc68b553ac08",
+  "mongo_global_command_note": "one read-only direct stage contains one extra global update; namespace/background attribution unavailable",
+  "search_sampling_issues": [
+    {
+      "writes": 10,
+      "concurrency": 128,
+      "round": 3,
+      "path": "direct",
+      "samples": 19,
+      "counter_errors": 19,
+      "error": "database counters: Search response exceeds bounded document workspace or is incomplete",
+      "raw_cpu_samples": 19
+    },
+    {
+      "writes": 10,
+      "concurrency": 128,
+      "round": 3,
+      "path": "weir",
+      "samples": 19,
+      "counter_errors": 19,
+      "error": "database counters: Search response exceeds bounded document workspace or is incomplete",
+      "raw_cpu_samples": 19
+    },
+    {
+      "writes": 0,
+      "concurrency": 128,
+      "round": 3,
+      "path": "direct",
+      "samples": 19,
+      "counter_errors": 19,
+      "error": "database counters: Search response exceeds bounded document workspace or is incomplete",
+      "raw_cpu_samples": 19
+    },
+    {
+      "writes": 0,
+      "concurrency": 128,
+      "round": 3,
+      "path": "weir",
+      "samples": 18,
+      "counter_errors": 10,
+      "error": "database counters: Search response exceeds bounded document workspace or is incomplete",
+      "raw_cpu_samples": 18
+    },
+    {
+      "writes": 100,
+      "concurrency": 128,
+      "round": 3,
+      "path": "direct",
+      "samples": 20,
+      "counter_errors": 20,
+      "error": "database counters: Search response exceeds bounded document workspace or is incomplete",
+      "raw_cpu_samples": 20
+    },
+    {
+      "writes": 100,
+      "concurrency": 128,
+      "round": 3,
+      "path": "weir",
+      "samples": 19,
+      "counter_errors": 19,
+      "error": "database counters: Search response exceeds bounded document workspace or is incomplete",
+      "raw_cpu_samples": 19
+    }
+  ],
+  "scope": "business accounting and persisted verification passed; this recipe needs a projected monitor response and independent CPU/counter error fields before final capacity evidence"
+}

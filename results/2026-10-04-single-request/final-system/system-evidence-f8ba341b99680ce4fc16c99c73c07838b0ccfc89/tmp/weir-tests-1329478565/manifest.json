@@ -1,0 +1,44 @@
+{
+  "binary": "/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/weir-profile",
+  "binary_sha256": "da8e291c7fd29a69396741946a955f426d6579e73527df361367a8643118c9ce",
+  "containers": [
+    {
+      "id": "b9978b0c01825b17b697944cda000da3b665730cb5ac0f9008f2ca056e9ef135",
+      "name": "weir-tests-0d7a690849e96ac6eadecb8c-mongo",
+      "image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
+      "backend": "mongo"
+    }
+  ],
+  "created_at": "2026-10-04T00:03:59.964278104Z",
+  "host_arch": "amd64",
+  "host_os": "linux",
+  "mongo_uri": "mongodb://127.0.0.1:32774/?directConnection=true",
+  "nodes": [
+    {
+      "Application": "127.0.0.1:41709",
+      "Peer": "127.0.0.1:36903",
+      "Diagnostics": "127.0.0.1:45007",
+      "Owner": true
+    }
+  ],
+  "options": {
+    "WeirBinary": "/home/runner/work/weir-tests/weir-tests/results/local/cpu-diagnostic/weir-profile",
+    "MongoBinary": "",
+    "Backends": [
+      "mongo"
+    ],
+    "OwnerCount": 1,
+    "DiscoveryOnly": false,
+    "StoreConcurrency": 32,
+    "BatchSize": 32,
+    "BackendTimeout": 10000000000,
+    "IngressSessions": 64,
+    "DatabaseCPUs": 1,
+    "ProcessMemoryMiB": 9216,
+    "WorkingMemoryMiB": {
+      "mongo": 1312
+    }
+  },
+  "owner": "0d7a690849e96ac6eadecb8c",
+  "search_url": ""
+}

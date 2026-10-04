@@ -1,0 +1,133 @@
+test	Native CGO1 race tests	﻿2026-10-03T23:56:37.0489428Z ##[group]Run CGO_ENABLED=1 timeout 12m go test -race -count=1 -timeout=180s ./...
+test	Native CGO1 race tests	2026-10-03T23:56:37.0490041Z [36;1mCGO_ENABLED=1 timeout 12m go test -race -count=1 -timeout=180s ./...[0m
+test	Native CGO1 race tests	2026-10-03T23:56:37.0546082Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+test	Native CGO1 race tests	2026-10-03T23:56:37.0546423Z env:
+test	Native CGO1 race tests	2026-10-03T23:56:37.0546576Z   GOENV: off
+test	Native CGO1 race tests	2026-10-03T23:56:37.0546736Z   GOWORK: off
+test	Native CGO1 race tests	2026-10-03T23:56:37.0546898Z   GOTOOLCHAIN: local
+test	Native CGO1 race tests	2026-10-03T23:56:37.0547078Z   GOFLAGS: -mod=readonly
+test	Native CGO1 race tests	2026-10-03T23:56:37.0547254Z   GOPROXY: off
+test	Native CGO1 race tests	2026-10-03T23:56:37.0547409Z   GOSUMDB: off
+test	Native CGO1 race tests	2026-10-03T23:56:37.0547574Z   PYTHONDONTWRITEBYTECODE: 1
+test	Native CGO1 race tests	2026-10-03T23:56:37.0547963Z   GOROOT: /home/runner/work/weir/weir/.tools/ci/go
+test	Native CGO1 race tests	2026-10-03T23:56:37.0548248Z   GOMODCACHE: /home/runner/work/weir/weir/.tools/ci/modules
+test	Native CGO1 race tests	2026-10-03T23:56:37.0548496Z   GOEXPERIMENT: 
+test	Native CGO1 race tests	2026-10-03T23:56:37.0548658Z ##[endgroup]
+test	Native CGO1 race tests	2026-10-03T23:57:21.2649623Z ok  	github.com/batchstream/weir/cmd/weir	14.584s
+test	Native CGO1 race tests	2026-10-03T23:57:21.2699018Z ok  	github.com/batchstream/weir/deploy/kubernetes	1.021s
+test	Native CGO1 race tests	2026-10-03T23:57:21.2723152Z ok  	github.com/batchstream/weir/internal/api/peer/v1	1.009s
+test	Native CGO1 race tests	2026-10-03T23:57:21.2739877Z ok  	github.com/batchstream/weir/internal/app	6.684s
+test	Native CGO1 race tests	2026-10-03T23:57:21.2786725Z ok  	github.com/batchstream/weir/internal/backend/mongodb	6.446s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1429625Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=3 released=3
+test	Native CGO1 race tests	2026-10-03T23:57:26.1431313Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1432637Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1433856Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1435033Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1436355Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=4 released=4
+test	Native CGO1 race tests	2026-10-03T23:57:26.1437598Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=2 released=2
+test	Native CGO1 race tests	2026-10-03T23:57:26.1439177Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=2 released=2
+test	Native CGO1 race tests	2026-10-03T23:57:26.1445050Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=2 released=2
+test	Native CGO1 race tests	2026-10-03T23:57:26.1446728Z 2026/10/03 23:57:09 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1457363Z 2026/10/03 23:57:11 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=3 released=3
+test	Native CGO1 race tests	2026-10-03T23:57:26.1458540Z 2026/10/03 23:57:11 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1461956Z 2026/10/03 23:57:11 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1463195Z 2026/10/03 23:57:13 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1464285Z 2026/10/03 23:57:15 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1465429Z 2026/10/03 23:57:15 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1466669Z 2026/10/03 23:57:15 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1467804Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1469433Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=3 released=3
+test	Native CGO1 race tests	2026-10-03T23:57:26.1470594Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=3 released=3
+test	Native CGO1 race tests	2026-10-03T23:57:26.1471766Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=3 released=3
+test	Native CGO1 race tests	2026-10-03T23:57:26.1472863Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=2 limit=3 acquired=2 released=2
+test	Native CGO1 race tests	2026-10-03T23:57:26.1474217Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1475348Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1476778Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1477977Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1479090Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1480187Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1481271Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1482450Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1483997Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1487063Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1488820Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1490249Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1491939Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1493306Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1494576Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1495179Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1495923Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1497283Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1498096Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1498782Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1499493Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1500301Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1501012Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1501969Z 2026/10/03 23:57:16 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1502667Z 2026/10/03 23:57:18 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1503371Z 2026/10/03 23:57:20 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1504102Z 2026/10/03 23:57:20 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=3 acquired=17 released=17
+test	Native CGO1 race tests	2026-10-03T23:57:26.1505050Z 2026/10/03 23:57:20 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=5 released=5
+test	Native CGO1 race tests	2026-10-03T23:57:26.1505756Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1506726Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1507516Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1508222Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1510195Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1510815Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1515949Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1520446Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1523662Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1525261Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1525938Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1526749Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1527338Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1527883Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1528425Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1529023Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1529660Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1530214Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1530795Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1531364Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1531922Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1532671Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1533225Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1533773Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1534314Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1534994Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1535545Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1536312Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1537108Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1537942Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1538673Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1539512Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1540530Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1541162Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1541797Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1542480Z 2026/10/03 23:57:22 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1543138Z 2026/10/03 23:57:26 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=7 released=7
+test	Native CGO1 race tests	2026-10-03T23:57:26.1543805Z 2026/10/03 23:57:26 INFO backend_connections_closed backend=search store=search owned=0 peak=3 limit=3 acquired=7 released=7
+test	Native CGO1 race tests	2026-10-03T23:57:26.1544249Z --- FAIL: TestSearchScanAndNativeRequestTargets (0.02s)
+test	Native CGO1 race tests	2026-10-03T23:57:26.1544620Z     --- FAIL: TestSearchScanAndNativeRequestTargets/elasticsearch (0.01s)
+test	Native CGO1 race tests	2026-10-03T23:57:26.1545194Z         targets_paths_test.go:170: Scan target/PIT failure right 0 &{[] false false [] code:INTERNAL message:"invalid, truncated or excessive Scan response"}
+test	Native CGO1 race tests	2026-10-03T23:57:26.1545825Z         targets_paths_test.go:164: code:UNAVAILABLE message:"PIT allocation reply lost; remote cleanup unconfirmed"
+test	Native CGO1 race tests	2026-10-03T23:57:26.1546548Z         targets_paths_test.go:197: request target operation/cleanup counts 2 1
+test	Native CGO1 race tests	2026-10-03T23:57:26.1547022Z FAIL
+test	Native CGO1 race tests	2026-10-03T23:57:26.1547438Z FAIL	github.com/batchstream/weir/internal/backend/search	17.013s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1548058Z ok  	github.com/batchstream/weir/internal/backend/targetcache	1.028s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1548628Z ok  	github.com/batchstream/weir/internal/directory	2.079s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1549135Z ok  	github.com/batchstream/weir/internal/execution	1.247s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1549613Z ok  	github.com/batchstream/weir/internal/luaengine	1.741s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1550066Z ok  	github.com/batchstream/weir/internal/overload	1.782s
+test	Native CGO1 race tests	2026-10-03T23:57:26.1550469Z ok  	github.com/batchstream/weir/internal/protowire	1.007s
+test	Native CGO1 race tests	2026-10-03T23:57:33.0968375Z ok  	github.com/batchstream/weir/internal/server	11.358s
+test	Native CGO1 race tests	2026-10-03T23:57:33.0968838Z ok  	github.com/batchstream/weir/internal/store	1.384s
+test	Native CGO1 race tests	2026-10-03T23:57:33.0969135Z ok  	github.com/batchstream/weir/internal/testutil	1.111s
+test	Native CGO1 race tests	2026-10-03T23:57:45.0491057Z ok  	github.com/batchstream/weir/internal/testutil/testcapacity	19.465s
+test	Native CGO1 race tests	2026-10-03T23:57:45.0491704Z ok  	github.com/batchstream/weir/internal/testutil/testdns	1.075s
+test	Native CGO1 race tests	2026-10-03T23:57:45.0492170Z ?   	github.com/batchstream/weir/internal/testutil/testmetrics	[no test files]
+test	Native CGO1 race tests	2026-10-03T23:57:45.0492591Z ok  	github.com/batchstream/weir/internal/testutil/testmongo	1.014s
+test	Native CGO1 race tests	2026-10-03T23:57:45.0492992Z ?   	github.com/batchstream/weir/internal/testutil/testrecords	[no test files]
+test	Native CGO1 race tests	2026-10-03T23:57:45.0493408Z ok  	github.com/batchstream/weir/internal/testutil/testresource	1.006s
+test	Native CGO1 race tests	2026-10-03T23:57:45.0494063Z ok  	github.com/batchstream/weir/internal/value	1.008s
+test	Native CGO1 race tests	2026-10-03T23:57:45.0494392Z FAIL
+test	Native CGO1 race tests	2026-10-03T23:57:45.3576607Z ##[error]Process completed with exit code 1.

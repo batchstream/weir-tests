@@ -1,0 +1,822 @@
+{
+  "source": "e790aa77629f0e4862159cbe8e3f0497df888314",
+  "weir_source": "2305186fffc5d1d9273e223f222e016fc8afe3ed",
+  "status": "INCOMPLETE_STRESS",
+  "rows": [
+    {
+      "backend": "mongo",
+      "write_percent": 0,
+      "concurrency": 512,
+      "direct_qps": 10469.33215939061,
+      "weir_qps": 18117.065087245748,
+      "change_percent": 73.04890905572617,
+      "actual_adapter_batch_average": 12.05325325768992,
+      "workflow": {
+        "run_id": 37164089012,
+        "conclusion": "success",
+        "head": "e790aa77629f0e4862159cbe8e3f0497df888314"
+      },
+      "source_file": "read/saturation-evidence-writes-0-e790aa77629f0e4862159cbe8e3f0497df888314/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+      "capacity": {
+        "batch_size": 1,
+        "direct_database_saturated_point": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 11557.353880782037,
+          "mean_database_cpu_budget_percent": 100.13378168619495,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      }
+    },
+    {
+      "backend": "mongo",
+      "write_percent": 10,
+      "concurrency": 512,
+      "direct_qps": 5096.702125155353,
+      "weir_qps": 11543.678750564608,
+      "change_percent": 126.49310214912242,
+      "actual_adapter_batch_average": 9.784171240704943,
+      "workflow": {
+        "run_id": 37164092477,
+        "conclusion": "failure",
+        "head": "e790aa77629f0e4862159cbe8e3f0497df888314"
+      },
+      "source_file": "mixed/saturation-evidence-writes-10-e790aa77629f0e4862159cbe8e3f0497df888314/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+      "capacity": {
+        "batch_size": 1,
+        "direct_database_saturated_point": {
+          "path": "direct",
+          "concurrency": 32,
+          "batch_size": 1,
+          "successful_operations_per_second": 5318.445704398399,
+          "mean_database_cpu_budget_percent": 99.97768963211753,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      }
+    },
+    {
+      "backend": "mongo",
+      "write_percent": 100,
+      "concurrency": 512,
+      "direct_qps": 2906.1900731112923,
+      "weir_qps": 6581.01241630027,
+      "change_percent": 126.44810734126581,
+      "actual_adapter_batch_average": 9.542920981188285,
+      "workflow": {
+        "run_id": 37164096257,
+        "conclusion": "success",
+        "head": "e790aa77629f0e4862159cbe8e3f0497df888314"
+      },
+      "source_file": "write/saturation-evidence-writes-100-e790aa77629f0e4862159cbe8e3f0497df888314/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/mongo.json",
+      "capacity": {
+        "batch_size": 1,
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      }
+    },
+    {
+      "backend": "search",
+      "write_percent": 0,
+      "concurrency": 512,
+      "direct_qps": 10365.385470171239,
+      "weir_qps": 15429.055055418992,
+      "change_percent": 48.85172480868769,
+      "actual_adapter_batch_average": 9.87995904786281,
+      "workflow": {
+        "run_id": 37164089012,
+        "conclusion": "success",
+        "head": "e790aa77629f0e4862159cbe8e3f0497df888314"
+      },
+      "source_file": "read/saturation-evidence-writes-0-e790aa77629f0e4862159cbe8e3f0497df888314/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+      "capacity": {
+        "batch_size": 1,
+        "direct_database_saturated_point": {
+          "path": "direct",
+          "concurrency": 128,
+          "batch_size": 1,
+          "successful_operations_per_second": 11093.271883759791,
+          "mean_database_cpu_budget_percent": 99.88449626877743,
+          "all_rounds_successful_verified": true,
+          "all_rounds_cpu_saturated": true,
+          "throughput_plateau_at_next_concurrency": true,
+          "database_saturation_demonstrated": true
+        },
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      }
+    },
+    {
+      "backend": "search",
+      "write_percent": 100,
+      "concurrency": 512,
+      "direct_qps": 1548.347007242368,
+      "weir_qps": 9713.383057816543,
+      "change_percent": 527.338898346582,
+      "actual_adapter_batch_average": 12.333586145872836,
+      "workflow": {
+        "run_id": 37164096257,
+        "conclusion": "success",
+        "head": "e790aa77629f0e4862159cbe8e3f0497df888314"
+      },
+      "source_file": "write/saturation-evidence-writes-100-e790aa77629f0e4862159cbe8e3f0497df888314/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+      "capacity": {
+        "batch_size": 1,
+        "unavailable": "both paths must independently demonstrate sustained database CPU saturation and a verified next-level throughput plateau; increase concurrency or isolate client/Weir resources; I/O/network-bound saturation needs additional device/link capacity evidence"
+      }
+    }
+  ],
+  "incomplete_backend_reports": [
+    {
+      "file": "mixed/saturation-evidence-writes-10-e790aa77629f0e4862159cbe8e3f0497df888314/home/runner/work/weir-tests/weir-tests/results/local/saturation-batch-32/search.json",
+      "backend": "search",
+      "write_percent": 10,
+      "status": "INCOMPLETE",
+      "workflow": {
+        "run_id": 37164092477,
+        "conclusion": "failure",
+        "head": "e790aa77629f0e4862159cbe8e3f0497df888314"
+      },
+      "incomplete_reason": "direct single-request stage failed: independent client 14467 warmup failed: [Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded]\nexit status 1\nexit status 1\nexit status 1\nexit status 1 ",
+      "successful_timed_stages": [
+        {
+          "concurrency": 8,
+          "round": 1,
+          "path": "direct",
+          "successful_operations": 25272,
+          "qps_recomputed": 1263.4684051539436,
+          "latency": {
+            "samples": 25272,
+            "p50_upper_bound_ns": 2303000,
+            "p95_upper_bound_ns": 61439000,
+            "p99_upper_bound_ns": 73727000,
+            "max_observed_ns": 99333262,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.6925473471379,
+            "coverage": 0.9888693318497148,
+            "threshold_fraction": 0.9888693318497148,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 8,
+          "round": 1,
+          "path": "weir",
+          "successful_operations": 31461,
+          "qps_recomputed": 1572.8663580222862,
+          "latency": {
+            "samples": 31461,
+            "p50_upper_bound_ns": 3071000,
+            "p95_upper_bound_ns": 12287000,
+            "p99_upper_bound_ns": 53247000,
+            "max_observed_ns": 64393400,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.85726378588379,
+            "coverage": 0.9889170686515033,
+            "threshold_fraction": 0.9889170686515033,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": {
+            "invocations": 29411,
+            "records": 31461,
+            "average": 1.0697018122471185,
+            "one_record_invocations": 28000,
+            "multi_record_invocations": 1411
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 8,
+          "round": 2,
+          "path": "weir",
+          "successful_operations": 48472,
+          "qps_recomputed": 2423.3936576024603,
+          "latency": {
+            "samples": 48472,
+            "p50_upper_bound_ns": 2559000,
+            "p95_upper_bound_ns": 5631000,
+            "p99_upper_bound_ns": 45055000,
+            "max_observed_ns": 70149541,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 95.66135671882338,
+            "coverage": 0.9950829417680861,
+            "threshold_fraction": 0.9950829417680861,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": {
+            "invocations": 44899,
+            "records": 48472,
+            "average": 1.0795786097685918,
+            "one_record_invocations": 42410,
+            "multi_record_invocations": 2489
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 8,
+          "round": 2,
+          "path": "direct",
+          "successful_operations": 80559,
+          "qps_recomputed": 4027.7283792805906,
+          "latency": {
+            "samples": 80559,
+            "p50_upper_bound_ns": 1151000,
+            "p95_upper_bound_ns": 2815000,
+            "p99_upper_bound_ns": 32767000,
+            "max_observed_ns": 87743551,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.71721588015548,
+            "coverage": 0.9698386330415152,
+            "threshold_fraction": 0.9698386330415152,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 8,
+          "round": 3,
+          "path": "direct",
+          "successful_operations": 80359,
+          "qps_recomputed": 4017.7213751810946,
+          "latency": {
+            "samples": 80359,
+            "p50_upper_bound_ns": 1151000,
+            "p95_upper_bound_ns": 2815000,
+            "p99_upper_bound_ns": 32767000,
+            "max_observed_ns": 70080647,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.70459612907878,
+            "coverage": 0.9699341275714113,
+            "threshold_fraction": 0.9699341275714113,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 8,
+          "round": 3,
+          "path": "weir",
+          "successful_operations": 55933,
+          "qps_recomputed": 2796.443751367206,
+          "latency": {
+            "samples": 55933,
+            "p50_upper_bound_ns": 2303000,
+            "p95_upper_bound_ns": 4607000,
+            "p99_upper_bound_ns": 18431000,
+            "max_observed_ns": 162765613,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": false,
+            "mean_percent": 89.72814447055997,
+            "coverage": 0.9879099788362119,
+            "threshold_fraction": 0.4377786778651706,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": {
+            "invocations": 51580,
+            "records": 55933,
+            "average": 1.0843931756494765,
+            "one_record_invocations": 48524,
+            "multi_record_invocations": 3056
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 32,
+          "round": 1,
+          "path": "weir",
+          "successful_operations": 92206,
+          "qps_recomputed": 4609.4455468485085,
+          "latency": {
+            "samples": 92206,
+            "p50_upper_bound_ns": 6143000,
+            "p95_upper_bound_ns": 13311000,
+            "p99_upper_bound_ns": 24575000,
+            "max_observed_ns": 64824767,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 92.98532647447611,
+            "coverage": 0.9489430558782846,
+            "threshold_fraction": 0.9489430558782846,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 18
+          },
+          "adapter": {
+            "invocations": 61958,
+            "records": 92206,
+            "average": 1.4882016850124278,
+            "one_record_invocations": 54271,
+            "multi_record_invocations": 7687
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 32,
+          "round": 1,
+          "path": "direct",
+          "successful_operations": 102988,
+          "qps_recomputed": 5148.553112439114,
+          "latency": {
+            "samples": 102988,
+            "p50_upper_bound_ns": 3839000,
+            "p95_upper_bound_ns": 36863000,
+            "p99_upper_bound_ns": 49151000,
+            "max_observed_ns": 67638850,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.87106940059603,
+            "coverage": 0.9882439672545287,
+            "threshold_fraction": 0.9882439672545287,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 32,
+          "round": 2,
+          "path": "direct",
+          "successful_operations": 106105,
+          "qps_recomputed": 5304.307544691874,
+          "latency": {
+            "samples": 106105,
+            "p50_upper_bound_ns": 3839000,
+            "p95_upper_bound_ns": 36863000,
+            "p99_upper_bound_ns": 45055000,
+            "max_observed_ns": 73268989,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.69705191814614,
+            "coverage": 0.9847299708883069,
+            "threshold_fraction": 0.9847299708883069,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 32,
+          "round": 2,
+          "path": "weir",
+          "successful_operations": 92491,
+          "qps_recomputed": 4623.891853960269,
+          "latency": {
+            "samples": 92491,
+            "p50_upper_bound_ns": 6143000,
+            "p95_upper_bound_ns": 13311000,
+            "p99_upper_bound_ns": 26623000,
+            "max_observed_ns": 86275971,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 92.89817782039324,
+            "coverage": 0.9898922278993443,
+            "threshold_fraction": 0.9366974367304804,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": {
+            "invocations": 62708,
+            "records": 92491,
+            "average": 1.4749473751355489,
+            "one_record_invocations": 55101,
+            "multi_record_invocations": 7607
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 32,
+          "round": 3,
+          "path": "weir",
+          "successful_operations": 94154,
+          "qps_recomputed": 4706.969365622539,
+          "latency": {
+            "samples": 94154,
+            "p50_upper_bound_ns": 6143000,
+            "p95_upper_bound_ns": 13311000,
+            "p99_upper_bound_ns": 22527000,
+            "max_observed_ns": 64667851,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": false,
+            "mean_percent": 90.72197631547745,
+            "coverage": 0.9495698392687478,
+            "threshold_fraction": 0.5009498874797134,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 18
+          },
+          "adapter": {
+            "invocations": 62767,
+            "records": 94154,
+            "average": 1.5000557617856516,
+            "one_record_invocations": 54993,
+            "multi_record_invocations": 7774
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 32,
+          "round": 3,
+          "path": "direct",
+          "successful_operations": 108227,
+          "qps_recomputed": 5402.424435252088,
+          "latency": {
+            "samples": 108227,
+            "p50_upper_bound_ns": 3839000,
+            "p95_upper_bound_ns": 36863000,
+            "p99_upper_bound_ns": 45055000,
+            "max_observed_ns": 76616313,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.90757784125523,
+            "coverage": 0.9849334502585299,
+            "threshold_fraction": 0.9849334502585299,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 128,
+          "round": 1,
+          "path": "direct",
+          "successful_operations": 112534,
+          "qps_recomputed": 5624.312009921736,
+          "latency": {
+            "samples": 112534,
+            "p50_upper_bound_ns": 15359000,
+            "p95_upper_bound_ns": 61439000,
+            "p99_upper_bound_ns": 73727000,
+            "max_observed_ns": 94288369,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 100.0322326187502,
+            "coverage": 0.9897162728008873,
+            "threshold_fraction": 0.9897162728008873,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 128,
+          "round": 1,
+          "path": "weir",
+          "successful_operations": 143263,
+          "qps_recomputed": 7158.991208491801,
+          "latency": {
+            "samples": 143263,
+            "p50_upper_bound_ns": 18431000,
+            "p95_upper_bound_ns": 36863000,
+            "p99_upper_bound_ns": 49151000,
+            "max_observed_ns": 117481602,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": false,
+            "mean_percent": 83.11503794813432,
+            "coverage": 0.9512857901430259,
+            "threshold_fraction": 0.05656998369144344,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 18
+          },
+          "adapter": {
+            "invocations": 48240,
+            "records": 143263,
+            "average": 2.969796849087894,
+            "one_record_invocations": 39188,
+            "multi_record_invocations": 9052
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 128,
+          "round": 2,
+          "path": "weir",
+          "successful_operations": 147418,
+          "qps_recomputed": 7367.8444786375185,
+          "latency": {
+            "samples": 147418,
+            "p50_upper_bound_ns": 16383000,
+            "p95_upper_bound_ns": 32767000,
+            "p99_upper_bound_ns": 45055000,
+            "max_observed_ns": 97587914,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": false,
+            "mean_percent": 81.72301893422534,
+            "coverage": 0.9463066480387845,
+            "threshold_fraction": 0.0,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 18
+          },
+          "adapter": {
+            "invocations": 50378,
+            "records": 147418,
+            "average": 2.9262376434157766,
+            "one_record_invocations": 41166,
+            "multi_record_invocations": 9212
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 128,
+          "round": 2,
+          "path": "direct",
+          "successful_operations": 114817,
+          "qps_recomputed": 5739.156272826907,
+          "latency": {
+            "samples": 114817,
+            "p50_upper_bound_ns": 15359000,
+            "p95_upper_bound_ns": 61439000,
+            "p99_upper_bound_ns": 73727000,
+            "max_observed_ns": 160283242,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 100.05777149641682,
+            "coverage": 0.9895362814795896,
+            "threshold_fraction": 0.9895362814795896,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 128,
+          "round": 3,
+          "path": "direct",
+          "successful_operations": 113161,
+          "qps_recomputed": 5655.186970265034,
+          "latency": {
+            "samples": 113161,
+            "p50_upper_bound_ns": 15359000,
+            "p95_upper_bound_ns": 61439000,
+            "p99_upper_bound_ns": 73727000,
+            "max_observed_ns": 93413353,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": true,
+            "mean_percent": 99.85479530050574,
+            "coverage": 0.9885079529344235,
+            "threshold_fraction": 0.9885079529344235,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 19
+          },
+          "adapter": null,
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 128,
+          "round": 3,
+          "path": "weir",
+          "successful_operations": 140776,
+          "qps_recomputed": 7036.039388837671,
+          "latency": {
+            "samples": 140776,
+            "p50_upper_bound_ns": 18431000,
+            "p95_upper_bound_ns": 36863000,
+            "p99_upper_bound_ns": 53247000,
+            "max_observed_ns": 103980184,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": false,
+            "mean_percent": 82.82059779341638,
+            "coverage": 0.9532773094877905,
+            "threshold_fraction": 0.11234666284979089,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 18
+          },
+          "adapter": {
+            "invocations": 47306,
+            "records": 140776,
+            "average": 2.975859299031835,
+            "one_record_invocations": 38381,
+            "multi_record_invocations": 8925
+          },
+          "global_command_excess": {}
+        },
+        {
+          "concurrency": 512,
+          "round": 1,
+          "path": "weir",
+          "successful_operations": 209844,
+          "qps_recomputed": 10480.911468796836,
+          "latency": {
+            "samples": 209844,
+            "p50_upper_bound_ns": 49151000,
+            "p95_upper_bound_ns": 90111000,
+            "p99_upper_bound_ns": 114687000,
+            "max_observed_ns": 194174498,
+            "method": "256 fixed logarithmic buckets, 8 subdivisions/power-of-two, microsecond rounding; quantiles are inclusive bucket upper bounds (<=12.5% plus 1us); final overflow bucket uses observed maximum"
+          },
+          "cpu": {
+            "qualified": false,
+            "mean_percent": 69.39272847226403,
+            "coverage": 0.9509755148281573,
+            "threshold_fraction": 0.0,
+            "cpu_error_samples": 0,
+            "database_counter_error_samples": 0,
+            "optional_storage_unavailable_samples": 18
+          },
+          "adapter": {
+            "invocations": 25457,
+            "records": 209844,
+            "average": 8.243076560474526,
+            "one_record_invocations": 16028,
+            "multi_record_invocations": 9429
+          },
+          "global_command_excess": {}
+        }
+      ],
+      "failed_warmups": [
+        {
+          "phase": "warmup",
+          "path": "direct",
+          "concurrency": 512,
+          "counts": {
+            "attempted": 53331,
+            "succeeded": 53279,
+            "errors": 47,
+            "indeterminate": 5,
+            "business_operation_timeouts": 52
+          },
+          "max_observed_latency_ns": 10003122920,
+          "children": [
+            {
+              "pid": 14467,
+              "counts": {
+                "attempted": 19345,
+                "succeeded": 19343,
+                "errors": 2,
+                "indeterminate": 0,
+                "business_operation_timeouts": 2
+              },
+              "owned_process_exited": false,
+              "owned_process_exit_error": "exit status 1",
+              "error_examples": [
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded"
+              ]
+            },
+            {
+              "pid": 14476,
+              "counts": {
+                "attempted": 7750,
+                "succeeded": 7729,
+                "errors": 19,
+                "indeterminate": 2,
+                "business_operation_timeouts": 21
+              },
+              "owned_process_exited": false,
+              "owned_process_exit_error": "exit status 1",
+              "error_examples": [
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded"
+              ]
+            },
+            {
+              "pid": 14485,
+              "counts": {
+                "attempted": 17471,
+                "succeeded": 17471,
+                "errors": 0,
+                "indeterminate": 0,
+                "business_operation_timeouts": 0
+              },
+              "owned_process_exited": false,
+              "owned_process_exit_error": "exit status 1",
+              "error_examples": []
+            },
+            {
+              "pid": 14494,
+              "counts": {
+                "attempted": 8765,
+                "succeeded": 8736,
+                "errors": 26,
+                "indeterminate": 3,
+                "business_operation_timeouts": 29
+              },
+              "owned_process_exited": false,
+              "owned_process_exit_error": "exit status 1",
+              "error_examples": [
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded",
+                "Post \"http://127.0.0.1:32769/weirtest_bd90bd2994abd7f6e35d116e/_mget?realtime=true\": context deadline exceeded"
+              ]
+            }
+          ],
+          "capacity_evidence": false,
+          "scope": "Warmup outcomes are not timed postflight-verified throughput. UNKNOWN mutation effects remain unconfirmed. Nonzero exit errors and unsuccessful child exit flags remain raw observations.",
+          "round": 1
+        }
+      ],
+      "missing_expected_timed_stages": [
+        {
+          "concurrency": 512,
+          "round": 1,
+          "path": "direct"
+        },
+        {
+          "concurrency": 512,
+          "round": 2,
+          "path": "direct"
+        },
+        {
+          "concurrency": 512,
+          "round": 2,
+          "path": "weir"
+        },
+        {
+          "concurrency": 512,
+          "round": 3,
+          "path": "direct"
+        },
+        {
+          "concurrency": 512,
+          "round": 3,
+          "path": "weir"
+        }
+      ],
+      "database_saturated_comparison": "unavailable: incomplete stress report",
+      "scope": "Only individually successful timed stages are checked; missing paths and failed warmup cannot become a paired capacity comparison or a complete observed peak."
+    }
+  ],
+  "scope": "A complete backend can be checked within a failed workflow through this explicit stress-only entry point. The whole workflow failure and incomplete backend remain visible; no complete six-report PASS or incomplete paired capacity is asserted."
+}
