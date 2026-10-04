@@ -230,7 +230,7 @@ func (p *Paths) Prepare(ctx context.Context, batchSize int) error {
 			// actual changes, but repeating revision zero during setup is valid.
 			outcomes = p.direct.mongoBatch(ctx, operations, false)
 		} else {
-			outcomes = p.Direct.ExecuteBatch(ctx, operations)
+			outcomes = p.direct.searchBatch(ctx, operations)
 		}
 		if len(outcomes) != len(operations) {
 			return errors.New("seed result count mismatch")

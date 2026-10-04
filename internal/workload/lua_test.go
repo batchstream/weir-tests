@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 )
@@ -91,5 +92,57 @@ func TestLuaComparisonRejectsClientBatching(t *testing.T) {
 				t.Fatal("Lua comparison allowed client batching", result)
 			}
 		}
+	}
+}
+
+func TestLuaComparisonUsesOrdinarySetupAndBatchedIndependentPostflightReads(t *testing.T) {
+	dataset := testDataset(t, "search")
+	dataset.Config.LuaMutations = true
+	var reads, seeds atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/"+dataset.Config.Namespace+"/_bulk" {
+			seeds.Add(1)
+			raw, err := io.ReadAll(request.Body)
+			lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
+			if err != nil || len(lines) != 2*dataset.Config.Records {
+				t.Error("fixture reset was not an ordinary replacement batch", err)
+			}
+			items := make([]string, dataset.Config.Records)
+			for index := range items {
+				items[index] = fmt.Sprintf(`{"index":{"_index":%q,"_id":%q,"status":201,"result":"created","_shards":{"successful":1,"failed":0}}}`, dataset.Config.Namespace, dataset.ID(index))
+			}
+			fmt.Fprintf(writer, `{"items":[%s]}`, strings.Join(items, ","))
+			return
+		}
+		if request.URL.Path == "/"+dataset.Config.Namespace+"/_refresh" {
+			fmt.Fprint(writer, `{}`)
+			return
+		}
+		if request.URL.Path == "/"+dataset.Config.Namespace+"/_count" {
+			fmt.Fprintf(writer, `{"count":%d}`, dataset.Config.Records)
+			return
+		}
+		reads.Add(1)
+		var body struct {
+			IDs []string `json:"ids"`
+		}
+		if request.Method != http.MethodPost || json.NewDecoder(request.Body).Decode(&body) != nil || len(body.IDs) != dataset.Config.Records {
+			t.Error("postflight did not read the complete fixture in one batch")
+		}
+		docs := make([]string, dataset.Config.Records)
+		for index := range docs {
+			operation := Operation{Record: index}
+			docs[index] = fmt.Sprintf(`{"_index":%q,"_id":%q,"found":true,"_source":%s}`, dataset.Config.Namespace, dataset.ID(index), dataset.Document(operation))
+		}
+		fmt.Fprintf(writer, `{"docs":[%s]}`, strings.Join(docs, ","))
+	}))
+	defer server.Close()
+	direct := &directPath{dataset: dataset, search: server.Client(), baseURL: server.URL}
+	paths := &Paths{Direct: direct, direct: direct, owned: true}
+	if err := paths.Prepare(t.Context(), 64); err != nil {
+		t.Fatal("Lua guard blocked ordinary fixture setup or untimed postflight reads", err)
+	}
+	if reads.Load() != 1 || seeds.Load() != 1 {
+		t.Fatal("setup entered timed RMW or postflight lost read batching", reads.Load(), seeds.Load())
 	}
 }
