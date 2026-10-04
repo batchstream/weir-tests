@@ -37,6 +37,8 @@ type mongoServerStatus struct {
 			BulkWrite   mongoCommandCounter `bson:"bulkWrite"`
 			GetMore     mongoCommandCounter `bson:"getMore"`
 			KillCursors mongoCommandCounter `bson:"killCursors"`
+			Commit      mongoCommandCounter `bson:"commitTransaction"`
+			Abort       mongoCommandCounter `bson:"abortTransaction"`
 		} `bson:"commands"`
 	} `bson:"metrics"`
 	Network struct {
@@ -54,8 +56,8 @@ type mongoServerStatus struct {
 func (s mongoServerStatus) counters() DatabaseCounters {
 	counters := DatabaseCounters{NetworkIn: s.Network.In, NetworkOut: s.Network.Out, ReadBytes: s.WiredTiger.Cache.Read, WriteBytes: s.WiredTiger.Cache.Written, Connections: s.Connections.Current, Commands: make(map[string]uint64)}
 	commands := s.Metrics.Commands
-	observed := map[string]*uint64{"find": commands.Find.Total, "update": commands.Update.Total, "bulkWrite": commands.BulkWrite.Total, "getMore": commands.GetMore.Total, "killCursors": commands.KillCursors.Total}
-	for _, name := range []string{"find", "update", "bulkWrite", "getMore", "killCursors"} {
+	observed := map[string]*uint64{"find": commands.Find.Total, "update": commands.Update.Total, "bulkWrite": commands.BulkWrite.Total, "getMore": commands.GetMore.Total, "killCursors": commands.KillCursors.Total, "commitTransaction": commands.Commit.Total, "abortTransaction": commands.Abort.Total}
+	for _, name := range []string{"find", "update", "bulkWrite", "getMore", "killCursors", "commitTransaction", "abortTransaction"} {
 		total := observed[name]
 		if total == nil {
 			counters.CommandUnavailable += "missing " + name + "; "

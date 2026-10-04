@@ -93,6 +93,23 @@ checks whether the database limits throughput. Run on Linux with Docker so each
 owned database has an enforced, inspected CPU quota and the client/Weir retain
 CPU capacity:
 
+For Lua read-modify-write, add `-lua-mutations -write-percent 100`. Each native
+MongoDB request owns a snapshot transaction with one read, revision computation,
+one replacement and majority commit. Each native Search request does one real-time
+point read and one write conditioned on its observed sequence number/primary term.
+The SDK sends one Lua AtomicTransform per request, computing the same revision
+toggle from the current document. Clients never batch; four independent client
+processes and the existing postflight check remain unchanged. Fixture fields are
+identical on both paths and no Weir metadata is inserted. The Lua comparison
+rejects client bulk mode. Transport failures invalidate the stage without replay;
+the disjoint worker IDs avoid planned version conflicts.
+
+The saturation workflow exposes `lua-mutations` and `backend-batch-limit: 1,32`
+to compare grouping limits on the same runner with fresh fixtures. Each Lua report
+retains the workload flag, exact native/SDK write policy and all original resource
+samples. Database CPU/plateau qualification still applies; a smoke test or a
+throughput increase alone does not establish maximum database capacity.
+
 ```sh
 make benchmark
 
@@ -105,11 +122,14 @@ go run ./cmd/weir-lab -mode saturation \
   -output results/local/saturation-read
 ```
 
-Every timed worker makes one native database call or one SDK `ReadOne`/`Put`
-RPC containing exactly one record. The coordinator launches four real client OS
+In the ordinary workload, every timed worker makes one native database call or
+one SDK `ReadOne`/`Put` RPC containing exactly one record. With `-lua-mutations`,
+each mutation instead performs the read-modify-write sequence described above,
+or one SDK `AtomicTransform` RPC. The coordinator launches four real client OS
 processes. At primary concurrency 8/32/128, each has 2/8/32 concurrent
 sequential workers, its own driver or SDK pool, and a disjoint ID partition.
-MongoDB uses `FindOne`/`ReplaceOne`, never `BulkWrite` for a timed single write.
+The ordinary MongoDB workload uses `FindOne`/`ReplaceOne`; neither native
+workload uses `BulkWrite` for timed requests.
 Search uses one-ID `POST _mget` and single-document `PUT _doc`; the read POST keeps
 connection reuse without an implicit HTTP GET retry. There is no client batching.
 Native pool limits equal each process's worker count; Weir's configured backend

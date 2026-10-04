@@ -104,6 +104,9 @@ func Open(ctx context.Context, dataset *Dataset) (*Paths, error) {
 	info.Protocol = "gRPC unary Read/Mutate batches via published Weir SDK"
 	info.Endpoint = dataset.Config.WeirSeed
 	info.RetryPolicy = "SDK never replays business requests"
+	if dataset.Config.LuaMutations {
+		info.WritePolicy = "one Lua AtomicTransform per RPC; revision computed from current document; server batches snapshot transactions or native OCC; no custom document fields"
+	}
 	via := &weirPath{dataset: dataset, client: client, info: info}
 	paths.Weir = via
 	return paths, nil
@@ -145,6 +148,9 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 		direct.info.Endpoint = address.Host
 		direct.info.Version = build.Version
 		direct.info.WritePolicy = "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency"
+		if dataset.Config.LuaMutations {
+			direct.info.WritePolicy = "one snapshot transaction per business mutation: FindOne, compute revision toggle, ReplaceOne, majority commit; no client bulk; pool=worker concurrency"
+		}
 		direct.info.RetryPolicy = "retryReads=false; retryWrites=false; maxAdaptiveRetries=0"
 		return direct, nil
 	}
@@ -173,6 +179,9 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 	direct.info.Endpoint = address.Host
 	direct.info.Version = root.Version.Number
 	direct.info.WritePolicy = "PUT _doc; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; POST _mget?realtime=true with one ID; no compression; connections=worker concurrency"
+	if dataset.Config.LuaMutations {
+		direct.info.WritePolicy = "single-ID real-time _mget, compute revision toggle, PUT _doc with observed if_seq_no/if_primary_term; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; no client bulk"
+	}
 	direct.info.RetryPolicy = "no application retries; business POST/PUT have no idempotency key and are not transparently replayed by http.Transport"
 	return direct, nil
 }
@@ -221,7 +230,7 @@ func (p *Paths) Prepare(ctx context.Context, batchSize int) error {
 			// actual changes, but repeating revision zero during setup is valid.
 			outcomes = p.direct.mongoBatch(ctx, operations, false)
 		} else {
-			outcomes = p.Direct.ExecuteBatch(ctx, operations)
+			outcomes = p.direct.searchBatch(ctx, operations)
 		}
 		if len(outcomes) != len(operations) {
 			return errors.New("seed result count mismatch")
@@ -331,6 +340,12 @@ func (p *directPath) close() error {
 func (p *directPath) Execute(ctx context.Context, operation Operation) Outcome {
 	if err := ctx.Err(); err != nil {
 		return failed(err, false)
+	}
+	if operation.Write && p.dataset.Config.LuaMutations {
+		if p.mongo != nil {
+			return p.executeMongoTransform(ctx, operation)
+		}
+		return p.executeSearchTransform(ctx, operation)
 	}
 	if p.mongo != nil {
 		return p.executeMongo(ctx, operation)
@@ -466,6 +481,13 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 		return failed(err, false)
 	}
 	if operation.Write {
+		if p.dataset.Config.LuaMutations {
+			program := &weir.ProgramTransform{Runtime: "lua.v1", Source: []byte(p.dataset.luaSource())}
+			request := &weir.AtomicTransformRequest{Resource: p.dataset.Resource(operation.Record), Program: program}
+			opts := weir.AtomicTransformOptions{StoreName: p.dataset.Config.StoreName, Request: request}
+			result, err := p.client.AtomicTransform(ctx, opts)
+			return mutationOutcome(result, len(program.Source), err)
+		}
 		document := &weir.Document{MediaType: p.dataset.MediaType(), Data: p.dataset.Document(operation)}
 		request := &weir.WriteRequest{Resource: p.dataset.Resource(operation.Record), Document: document}
 		opts := weir.WriteOptions{StoreName: p.dataset.Config.StoreName, Request: request}

@@ -17,8 +17,20 @@ import (
 // worker a homogeneous batch of distinct IDs so no write/read dependencies are
 // hidden by unordered bulk execution.
 func (p *directPath) ExecuteBatch(ctx context.Context, operations []Operation) []Outcome {
+	if p.dataset.Config.LuaMutations && len(operations) == 1 {
+		outcomes := []Outcome{p.Execute(ctx, operations[0])}
+		return outcomes
+	}
 	if err := validateBatch(operations); err != nil {
 		return batchFailure(operations, err)
+	}
+	if p.dataset.Config.LuaMutations && operations[0].Write {
+		err := errors.New("Lua comparison requires one mutation per client call")
+		outcomes := make([]Outcome, len(operations))
+		for index := range outcomes {
+			outcomes[index] = failed(err, false)
+		}
+		return outcomes
 	}
 	if p.mongo != nil {
 		return p.mongoBatch(ctx, operations, true)

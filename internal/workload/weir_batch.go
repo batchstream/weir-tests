@@ -16,6 +16,14 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 	if err := validateBatch(operations); err != nil {
 		return batchFailure(operations, err)
 	}
+	if p.dataset.Config.LuaMutations && operations[0].Write {
+		err := errors.New("Lua comparison requires one mutation per client call")
+		outcomes := make([]Outcome, len(operations))
+		for index := range outcomes {
+			outcomes[index] = failed(err, false)
+		}
+		return outcomes
+	}
 	if operations[0].Write {
 		requests := make([]*weir.MutateRequest, len(operations))
 		for index, operation := range operations {

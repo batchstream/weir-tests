@@ -24,6 +24,7 @@ type Config struct {
 	Records      int    `json:"records"`
 	PayloadBytes int    `json:"padding_bytes"`
 	Concurrency  int    `json:"concurrency"`
+	LuaMutations bool   `json:"lua_mutations,omitempty"`
 }
 
 type Operation struct {

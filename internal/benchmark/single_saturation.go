@@ -70,6 +70,9 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 	provenance["go"], provenance["client_os_arch"] = runtime.Version(), runtime.GOOS+"/"+runtime.GOARCH
 	provenance["client_process_model"] = "independent OS client processes; one SDK/driver pool each; sequential single-request goroutine workers; total native pool limit equals total client concurrency"
 	report := &SaturationReport{Schema: 3, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: params, Provenance: provenance, CPUQuota: quota, Method: "independent OS client processes send one record per native call or unary SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain"}
+	if options.Dataset.Config.LuaMutations {
+		report.Method = strings.Replace(report.Method, "native FindOne/ReplaceOne or single-ID mget/PUT", "native single-record snapshot transaction FindOne/compute/ReplaceOne/commit or real-time single-ID mget/compute/version-conditional PUT; SDK Lua AtomicTransform computes the same revision toggle from the current source", 1)
+	}
 	for level, workers := range options.Concurrency {
 		for round := range options.Rounds {
 			pair := SaturationPair{Round: round + 1, Concurrency: workers, BatchSize: 1, Order: pairOrder(level + round)}
