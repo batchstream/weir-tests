@@ -1,0 +1,93 @@
+{
+  "test_source": "03fcec1bbb3806a41eca2aa39b4ff702a4b59331",
+  "weir_source": "8970222602bd6f323dcdfb5af5162f864fd06a7a",
+  "system_run": 37160117713,
+  "pr_matrix_run": 37160117709,
+  "database_cpus": 1,
+  "benchmark_runs": [
+    {
+      "id": 37160116196,
+      "kind": "primary",
+      "writes": 0,
+      "levels": [
+        8,
+        32,
+        128,
+        512
+      ],
+      "limits": [
+        32
+      ]
+    },
+    {
+      "id": 37160118515,
+      "kind": "control",
+      "writes": 0,
+      "levels": [
+        8,
+        32,
+        128
+      ],
+      "limits": [
+        1,
+        32
+      ]
+    },
+    {
+      "id": 37160122827,
+      "kind": "primary",
+      "writes": 10,
+      "levels": [
+        8,
+        32,
+        128,
+        512
+      ],
+      "limits": [
+        32
+      ]
+    },
+    {
+      "id": 37160125584,
+      "kind": "control",
+      "writes": 10,
+      "levels": [
+        8,
+        32,
+        128
+      ],
+      "limits": [
+        1,
+        32
+      ]
+    },
+    {
+      "id": 37160128363,
+      "kind": "primary",
+      "writes": 100,
+      "levels": [
+        8,
+        32,
+        128,
+        512
+      ],
+      "limits": [
+        32
+      ]
+    },
+    {
+      "id": 37160130515,
+      "kind": "control",
+      "writes": 100,
+      "levels": [
+        8,
+        32,
+        128
+      ],
+      "limits": [
+        1,
+        32
+      ]
+    }
+  ]
+}

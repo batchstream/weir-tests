@@ -1,0 +1,24 @@
+{
+  "stores": [
+    {
+      "max_batch_operations": 1,
+      "max_concurrency": 32,
+      "max_read_size": "2MiB",
+      "mongodb": {
+        "uri": "mongodb://127.0.0.1:32768/?directConnection=true"
+      },
+      "name": "mongo",
+      "working_memory": "1312MiB"
+    },
+    {
+      "max_batch_operations": 1,
+      "max_concurrency": 32,
+      "max_read_size": "2MiB",
+      "name": "search",
+      "search": {
+        "url": "http://127.0.0.1:32769"
+      },
+      "working_memory": "3072MiB"
+    }
+  ]
+}

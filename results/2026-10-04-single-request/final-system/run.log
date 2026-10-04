@@ -1,0 +1,918 @@
+unit	Set up job	﻿2026-10-03T23:59:03.2038454Z Current runner version: '2.337.0'
+unit	Set up job	2026-10-03T23:59:03.2067658Z ##[group]Runner Image Provisioner
+unit	Set up job	2026-10-03T23:59:03.2068717Z Hosted Compute Agent
+unit	Set up job	2026-10-03T23:59:03.2069335Z Version: 20260901.588
+unit	Set up job	2026-10-03T23:59:03.2070210Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+unit	Set up job	2026-10-03T23:59:03.2070985Z Build Date: 2026-09-01T19:56:44Z
+unit	Set up job	2026-10-03T23:59:03.2071749Z Worker ID: {e372659c-b93f-4a1d-9447-29fcadbea220}
+unit	Set up job	2026-10-03T23:59:03.2072615Z Azure Region: northcentralus
+unit	Set up job	2026-10-03T23:59:03.2073257Z ##[endgroup]
+unit	Set up job	2026-10-03T23:59:03.2074698Z ##[group]Operating System
+unit	Set up job	2026-10-03T23:59:03.2075362Z Ubuntu
+unit	Set up job	2026-10-03T23:59:03.2075915Z 24.04.5
+unit	Set up job	2026-10-03T23:59:03.2076546Z LTS
+unit	Set up job	2026-10-03T23:59:03.2077097Z ##[endgroup]
+unit	Set up job	2026-10-03T23:59:03.2077666Z ##[group]Runner Image
+unit	Set up job	2026-10-03T23:59:03.2078363Z Image: ubuntu-24.04
+unit	Set up job	2026-10-03T23:59:03.2079016Z Version: 20260927.320.1
+unit	Set up job	2026-10-03T23:59:03.2080361Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+unit	Set up job	2026-10-03T23:59:03.2082089Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+unit	Set up job	2026-10-03T23:59:03.2083215Z ##[endgroup]
+unit	Set up job	2026-10-03T23:59:03.2084373Z ##[group]GITHUB_TOKEN Permissions
+unit	Set up job	2026-10-03T23:59:03.2086634Z Contents: read
+unit	Set up job	2026-10-03T23:59:03.2087254Z Metadata: read
+unit	Set up job	2026-10-03T23:59:03.2087950Z ##[endgroup]
+unit	Set up job	2026-10-03T23:59:03.2090392Z Secret source: Actions
+unit	Set up job	2026-10-03T23:59:03.2091553Z Cache mode: write
+unit	Set up job	2026-10-03T23:59:03.2092687Z Prepare workflow directory
+unit	Set up job	2026-10-03T23:59:03.2516748Z Prepare all required actions
+unit	Set up job	2026-10-03T23:59:03.2566608Z Getting action download info
+unit	Set up job	2026-10-03T23:59:03.5284787Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+unit	Set up job	2026-10-03T23:59:03.6392091Z Download action repository 'actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16' (SHA:924ae3a1cded613372ab5595356fb5720e22ba16)
+unit	Set up job	2026-10-03T23:59:04.0825013Z Complete job name: unit
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-10-03T23:59:04.1591094Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1592216Z with:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1592715Z   ref: e790aa77629f0e4862159cbe8e3f0497df888314
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1593361Z   persist-credentials: false
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1593907Z   repository: batchstream/weir-tests
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1597995Z   token: ***
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1598448Z   ssh-strict: true
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1598912Z   ssh-user: git
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1599347Z   clean: true
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1599962Z   sparse-checkout-cone-mode: true
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1600506Z   fetch-depth: 1
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1600946Z   fetch-tags: false
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1601400Z   show-progress: true
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1601864Z   lfs: false
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1602289Z   submodules: false
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1602768Z   set-safe-directory: true
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1603285Z   allow-unsafe-pr-checkout: false
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1604015Z env:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1604423Z   GOENV: off
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1604844Z   GOWORK: off
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1605350Z   GOTOOLCHAIN: local
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1605824Z   GOFLAGS: -mod=readonly
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1606322Z   PYTHONDONTWRITEBYTECODE: 1
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.1606818Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2752374Z Syncing repository: batchstream/weir-tests
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2754890Z ##[group]Getting Git version info
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2755975Z Working directory is '/home/runner/work/weir-tests/weir-tests'
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2757810Z [command]/usr/bin/git version
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2820993Z git version 2.55.0
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2840956Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2853872Z Temporarily overriding HOME='/home/runner/work/_temp/3313fae8-fa95-4d31-8cc2-f10b5de4ec51' before making global git config changes
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2870685Z Adding repository directory to the temporary git global config as a safe directory
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2873090Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/weir-tests/weir-tests
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2914553Z Deleting the contents of '/home/runner/work/weir-tests/weir-tests'
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2919432Z ##[group]Determining repository object format
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2921184Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2922595Z ##[group]Initializing the repository
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.2925764Z [command]/usr/bin/git init /home/runner/work/weir-tests/weir-tests
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3007206Z hint: Using 'master' as the name for the initial branch. This default branch name
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3008891Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3010588Z hint: to use in all of your new repositories, which will suppress this warning,
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3011858Z hint: call:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3012537Z hint:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3013378Z hint: 	git config --global init.defaultBranch <name>
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3014409Z hint:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3015360Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3016927Z hint: 'development'. The just-created branch can be renamed via this command:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3018218Z hint:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3018910Z hint: 	git branch -m <name>
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3019862Z hint:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3020894Z hint: Disable this message with "git config set advice.defaultBranchName false"
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3022557Z Initialized empty Git repository in /home/runner/work/weir-tests/weir-tests/.git/
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3025382Z [command]/usr/bin/git remote add origin https://github.com/batchstream/weir-tests
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3070144Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3071541Z ##[group]Disabling automatic garbage collection
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3073406Z [command]/usr/bin/git config --local gc.auto 0
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3109941Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3111527Z ##[group]Setting up auth
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3112399Z Removing SSH command configuration
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3117572Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3155237Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3530724Z Removing HTTP extra header
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3532527Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3573906Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3837507Z Removing includeIf entries pointing to credentials config files
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3844028Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.3894991Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4155406Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4199036Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path /home/runner/work/_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4237135Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4279156Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4318529Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4355052Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4356229Z ##[group]Fetching the repository
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:04.4361184Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin e790aa77629f0e4862159cbe8e3f0497df888314
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2746154Z From https://github.com/batchstream/weir-tests
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2747927Z  * branch            e790aa77629f0e4862159cbe8e3f0497df888314 -> FETCH_HEAD
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2771484Z [command]/usr/bin/git rev-parse --verify --quiet e790aa77629f0e4862159cbe8e3f0497df888314^{object}
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2788587Z e790aa77629f0e4862159cbe8e3f0497df888314
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2795432Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2797112Z ##[group]Determining the checkout info
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2798695Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2801171Z [command]/usr/bin/git sparse-checkout disable
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2858538Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2898789Z ##[group]Checking out the ref
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.2903039Z [command]/usr/bin/git checkout --progress --force e790aa77629f0e4862159cbe8e3f0497df888314
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4095710Z Note: switching to 'e790aa77629f0e4862159cbe8e3f0497df888314'.
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4096739Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4097313Z You are in 'detached HEAD' state. You can look around, make experimental
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4098572Z changes and commit them, and you can discard any commits you make in this
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4100170Z state without impacting any branches by switching back to a branch.
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4100903Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4101427Z If you want to create a new branch to retain commits you create, you may
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4102592Z do so (now or later) by using -c with the switch command. Example:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4103353Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4103724Z   git switch -c <new-branch-name>
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4104364Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4104727Z Or undo this operation with:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4105247Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4105567Z   git switch -
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4106335Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4106974Z Turn off this advice by setting config variable advice.detachedHead to false
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4107925Z 
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4108917Z HEAD is now at e790aa7 📌 chore: pin Weir with explicit backend request deadlines
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4120209Z ##[endgroup]
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4172999Z [command]/usr/bin/git log -1 --format=%H
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4205841Z e790aa77629f0e4862159cbe8e3f0497df888314
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4216703Z ##[group]Removing auth
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4217663Z Removing SSH command configuration
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4220771Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4260003Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4505019Z Removing HTTP extra header
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4508374Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4552968Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4794880Z Removing includeIf entries pointing to credentials config files
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4797779Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4831411Z includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4834709Z includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4837626Z includeif.gitdir:/github/workspace/.git.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4840678Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4845692Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4872859Z /home/runner/work/_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4883869Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-535c7fc1\-e1fa\-4236\-aa00\-3940d6467862\.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4924758Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4954692Z /home/runner/work/_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.4964518Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-535c7fc1\-e1fa\-4236\-aa00\-3940d6467862\.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5004697Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5033416Z /github/runner_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5041397Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-535c7fc1\-e1fa\-4236\-aa00\-3940d6467862\.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5122512Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5167129Z /github/runner_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5175846Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-535c7fc1\-e1fa\-4236\-aa00\-3940d6467862\.config
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5215896Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5455410Z Removing credentials config '/home/runner/work/_temp/git-credentials-535c7fc1-e1fa-4236-aa00-3940d6467862.config'
+unit	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:05.5465465Z ##[endgroup]
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	﻿2026-10-03T23:59:05.5878371Z ##[group]Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5880094Z with:
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5880981Z   go-version-file: go.mod
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5881992Z   check-latest: false
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5890126Z   token: ***
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5891006Z   cache: true
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5891868Z env:
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5892691Z   GOENV: off
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5893544Z   GOWORK: off
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5894432Z   GOTOOLCHAIN: local
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5895399Z   GOFLAGS: -mod=readonly
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5896410Z   PYTHONDONTWRITEBYTECODE: 1
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.5897436Z ##[endgroup]
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.7148714Z Setup go version spec 1.27.1
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:05.7161925Z Attempting to download 1.27.1...
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:06.4294273Z matching 1.27.1...
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:06.4321788Z Acquiring 1.27.1 from https://github.com/actions/go-versions/releases/download/1.27.1-33583469715/go-1.27.1-linux-x64.tar.gz
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:06.9062795Z Extracting Go...
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:06.9189029Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/c5864d60-bba8-443a-bc0b-18cafd25b29c -f /home/runner/work/_temp/a6b2eee8-416b-46d0-b4e9-af091e1d212e
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:08.7402736Z Successfully extracted go to /home/runner/work/_temp/c5864d60-bba8-443a-bc0b-18cafd25b29c
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:08.7403570Z Adding to the cache ...
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.5858912Z Successfully cached go to /opt/hostedtoolcache/go/1.27.1/x64
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.5861600Z Added go to the path
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.5864045Z Successfully set up Go version 1.27.1
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.6078109Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOMODCACHE
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.6117041Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOCACHE
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.6165395Z /home/runner/go/pkg/mod
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.6181168Z /home/runner/.cache/go-build
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:13.7204193Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:14.8313606Z Received 146800640 of 252007507 (58.3%), 139.0 MBs/sec
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:15.2094929Z Received 252007507 of 252007507 (100.0%), 173.5 MBs/sec
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:15.2095619Z Cache Size: ~240 MB (252007507 B)
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:15.2130877Z [command]/usr/bin/tar -xf /home/runner/work/_temp/dc7a8808-f7a3-4cd6-8aab-edc797a87f57/cache.tzst -P -C /home/runner/work/weir-tests/weir-tests --use-compress-program unzstd
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9410702Z Cache restored successfully
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9543856Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9568986Z go version go1.27.1 linux/amd64
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9569234Z 
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9569567Z ##[group]go env
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9816727Z AR='ar'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9817193Z CC='gcc'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9828512Z CGO_CFLAGS='-O2 -g'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9828890Z CGO_CPPFLAGS=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9829271Z CGO_CXXFLAGS='-O2 -g'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9829736Z CGO_ENABLED='1'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9830059Z CGO_FFLAGS='-O2 -g'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9830307Z CGO_LDFLAGS='-O2 -g'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9830586Z CXX='g++'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9830791Z GCCGO='gccgo'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9831015Z GO111MODULE=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9831220Z GOAMD64='v1'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9831429Z GOARCH='amd64'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9831656Z GOAUTH='netrc'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9831891Z GOBIN='/home/runner/go/bin'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9832178Z GOCACHE='/home/runner/.cache/go-build'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9832465Z GOCACHEPROG=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9832681Z GODEBUG=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9832886Z GOENV=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9833077Z GOEXE=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9833279Z GOEXPERIMENT=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9833502Z GOFIPS140='off'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9833721Z GOFLAGS='-mod=readonly'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9834411Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build1786017669=/tmp/go-build -gno-record-gcc-switches'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9835084Z GOHOSTARCH='amd64'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9835581Z GOHOSTOS='linux'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9835805Z GOINSECURE=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9836129Z GOMOD='/home/runner/work/weir-tests/weir-tests/go.mod'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9836482Z GOMODCACHE='/home/runner/go/pkg/mod'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9836758Z GONOPROXY=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9836965Z GONOSUMDB=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9837212Z GOOS='linux'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9837424Z GOPACKAGESDRIVER=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9837667Z GOPATH='/home/runner/go'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9837903Z GOPRIVATE=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9838197Z GOPROXY='https://proxy.golang.org,direct'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9838544Z GOROOT='/opt/hostedtoolcache/go/1.27.1/x64'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9838852Z GOSUMDB='sum.golang.org'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9839096Z GOTELEMETRY='local'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9839392Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9840127Z GOTMPDIR=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9840379Z GOTOOLCHAIN='local'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9840722Z GOTOOLDIR='/opt/hostedtoolcache/go/1.27.1/x64/pkg/tool/linux_amd64'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9841099Z GOVCS=''
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9841316Z GOVERSION='go1.27.1'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9841543Z GOWORK='off'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9841796Z PKG_CONFIG='pkg-config'
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9841950Z 
+unit	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:16.9842275Z ##[endgroup]
+unit	Run python3 scripts/download_modules.py	﻿2026-10-03T23:59:17.0071725Z ##[group]Run python3 scripts/download_modules.py
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0072196Z [36;1mpython3 scripts/download_modules.py[0m
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0306120Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0306523Z env:
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0306753Z   GOENV: off
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0306964Z   GOWORK: off
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0307176Z   GOTOOLCHAIN: local
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0307419Z   GOFLAGS: -mod=readonly
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0307742Z   PYTHONDONTWRITEBYTECODE: 1
+unit	Run python3 scripts/download_modules.py	2026-10-03T23:59:17.0307999Z ##[endgroup]
+unit	Offline defaults and boundaries	﻿2026-10-03T23:59:17.0942414Z ##[group]Run python3 scripts/check_dependencies.py
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0942888Z [36;1mpython3 scripts/check_dependencies.py[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0943438Z [36;1mgo test -race -count=1 -timeout=90s ./...[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0943774Z [36;1mgo vet ./...[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0944031Z [36;1mgo vet -tags=integration ./...[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0944352Z [36;1mgo test -tags=integration -run '^$' ./...[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0944748Z [36;1mpython3 -m unittest discover -s scripts -p '*_test.py'[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0945213Z [36;1mpython3 -O -m unittest discover -s scripts -p '*_test.py'[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0945609Z [36;1mtest -z "$(gofmt -l cmd internal tests)"[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.0945922Z [36;1mgit diff --exit-code[0m
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1017077Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1017442Z env:
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1017648Z   GOENV: off
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1017852Z   GOWORK: off
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1018066Z   GOTOOLCHAIN: local
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1018333Z   GOFLAGS: -mod=readonly
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1018585Z   PYTHONDONTWRITEBYTECODE: 1
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1018848Z   GOPROXY: off
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1019061Z   GOSUMDB: off
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.1019264Z ##[endgroup]
+unit	Offline defaults and boundaries	2026-10-03T23:59:17.7554110Z Independent blackbox tests and exact SDK/protocol release dependencies verified
+unit	Offline defaults and boundaries	2026-10-03T23:59:21.7853986Z ok  	github.com/batchstream/weir-tests/cmd/weir-bench	1.019s
+unit	Offline defaults and boundaries	2026-10-03T23:59:21.9003263Z ok  	github.com/batchstream/weir-tests/cmd/weir-lab	1.019s
+unit	Offline defaults and boundaries	2026-10-03T23:59:22.6955740Z ok  	github.com/batchstream/weir-tests/internal/benchmark	1.340s
+unit	Offline defaults and boundaries	2026-10-03T23:59:28.8459958Z ok  	github.com/batchstream/weir-tests/internal/fixture	7.302s
+unit	Offline defaults and boundaries	2026-10-03T23:59:28.8460706Z ok  	github.com/batchstream/weir-tests/internal/observe	1.033s
+unit	Offline defaults and boundaries	2026-10-03T23:59:28.8461225Z ok  	github.com/batchstream/weir-tests/internal/workload	2.116s
+unit	Offline defaults and boundaries	2026-10-03T23:59:31.5462216Z ok  	github.com/batchstream/weir-tests/cmd/weir-bench	0.007s [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:31.5664198Z ok  	github.com/batchstream/weir-tests/cmd/weir-lab	0.015s [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.1876736Z ok  	github.com/batchstream/weir-tests/internal/benchmark	0.009s [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.3761238Z ok  	github.com/batchstream/weir-tests/internal/fixture	0.009s [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.3762491Z ok  	github.com/batchstream/weir-tests/internal/observe	(cached) [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.7708595Z ok  	github.com/batchstream/weir-tests/internal/workload	0.005s [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.7709399Z ok  	github.com/batchstream/weir-tests/tests/integration	0.006s [no tests to run]
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.8454891Z ......
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.8455496Z ----------------------------------------------------------------------
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.8456149Z Ran 6 tests in 0.000s
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.8456396Z 
+unit	Offline defaults and boundaries	2026-10-03T23:59:32.8456540Z OK
+unit	Offline defaults and boundaries	2026-10-03T23:59:33.1683590Z ......
+unit	Offline defaults and boundaries	2026-10-03T23:59:33.1683995Z ----------------------------------------------------------------------
+unit	Offline defaults and boundaries	2026-10-03T23:59:33.1684415Z Ran 6 tests in 0.001s
+unit	Offline defaults and boundaries	2026-10-03T23:59:33.1684576Z 
+unit	Offline defaults and boundaries	2026-10-03T23:59:33.1684677Z OK
+unit	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	﻿2026-10-03T23:59:33.2077753Z Post job cleanup.
+unit	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:33.3297787Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOMODCACHE
+unit	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:33.3340706Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOCACHE
+unit	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:33.3369516Z /home/runner/go/pkg/mod
+unit	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:33.3395242Z /home/runner/.cache/go-build
+unit	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:33.3401428Z Cache hit occurred on the primary key setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a, not saving cache.
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-10-03T23:59:33.3662718Z Post job cleanup.
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4503090Z [command]/usr/bin/git version
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4557318Z git version 2.55.0
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4595655Z Temporarily overriding HOME='/home/runner/work/_temp/d0f1cd77-e95d-4fa7-9dea-2b06b9489216' before making global git config changes
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4598933Z Adding repository directory to the temporary git global config as a safe directory
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4602195Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/weir-tests/weir-tests
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4638350Z Removing SSH command configuration
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4645020Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4682889Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4953731Z Removing HTTP extra header
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4959504Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.4995042Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.5242858Z Removing includeIf entries pointing to credentials config files
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.5250424Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+unit	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:33.5288449Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+unit	Complete job	﻿2026-10-03T23:59:33.5698634Z Cleaning up orphan processes
+blackbox	Set up job	﻿2026-10-03T23:59:39.3526898Z Current runner version: '2.337.0'
+blackbox	Set up job	2026-10-03T23:59:39.3564985Z ##[group]Runner Image Provisioner
+blackbox	Set up job	2026-10-03T23:59:39.3566816Z Hosted Compute Agent
+blackbox	Set up job	2026-10-03T23:59:39.3568150Z Version: 20260901.588
+blackbox	Set up job	2026-10-03T23:59:39.3569342Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+blackbox	Set up job	2026-10-03T23:59:39.3570685Z Build Date: 2026-09-01T19:56:44Z
+blackbox	Set up job	2026-10-03T23:59:39.3571882Z Worker ID: {d1556ae7-af13-4917-8322-9ab2e8b577c9}
+blackbox	Set up job	2026-10-03T23:59:39.3573151Z Azure Region: northcentralus
+blackbox	Set up job	2026-10-03T23:59:39.3574407Z ##[endgroup]
+blackbox	Set up job	2026-10-03T23:59:39.3577881Z ##[group]Operating System
+blackbox	Set up job	2026-10-03T23:59:39.3579119Z Ubuntu
+blackbox	Set up job	2026-10-03T23:59:39.3580207Z 24.04.5
+blackbox	Set up job	2026-10-03T23:59:39.3581088Z LTS
+blackbox	Set up job	2026-10-03T23:59:39.3582154Z ##[endgroup]
+blackbox	Set up job	2026-10-03T23:59:39.3583098Z ##[group]Runner Image
+blackbox	Set up job	2026-10-03T23:59:39.3584109Z Image: ubuntu-24.04
+blackbox	Set up job	2026-10-03T23:59:39.3585205Z Version: 20260927.320.1
+blackbox	Set up job	2026-10-03T23:59:39.3587442Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+blackbox	Set up job	2026-10-03T23:59:39.3590878Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+blackbox	Set up job	2026-10-03T23:59:39.3592761Z ##[endgroup]
+blackbox	Set up job	2026-10-03T23:59:39.3594609Z ##[group]GITHUB_TOKEN Permissions
+blackbox	Set up job	2026-10-03T23:59:39.3598321Z Contents: read
+blackbox	Set up job	2026-10-03T23:59:39.3599633Z Metadata: read
+blackbox	Set up job	2026-10-03T23:59:39.3600648Z ##[endgroup]
+blackbox	Set up job	2026-10-03T23:59:39.3604257Z Secret source: Actions
+blackbox	Set up job	2026-10-03T23:59:39.3606522Z Cache mode: write
+blackbox	Set up job	2026-10-03T23:59:39.3608625Z Prepare workflow directory
+blackbox	Set up job	2026-10-03T23:59:39.4232869Z Prepare all required actions
+blackbox	Set up job	2026-10-03T23:59:39.4306585Z Getting action download info
+blackbox	Set up job	2026-10-03T23:59:39.6807489Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+blackbox	Set up job	2026-10-03T23:59:39.8044432Z Download action repository 'actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16' (SHA:924ae3a1cded613372ab5595356fb5720e22ba16)
+blackbox	Set up job	2026-10-03T23:59:40.2124370Z Download action repository 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+blackbox	Set up job	2026-10-03T23:59:40.4154590Z Complete job name: blackbox
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-10-03T23:59:40.4989769Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4990973Z with:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4991528Z   ref: e790aa77629f0e4862159cbe8e3f0497df888314
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4992212Z   persist-credentials: false
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4992813Z   repository: batchstream/weir-tests
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4997223Z   token: ***
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4997743Z   ssh-strict: true
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4998239Z   ssh-user: git
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4998727Z   clean: true
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4999225Z   sparse-checkout-cone-mode: true
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.4999825Z   fetch-depth: 1
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5000335Z   fetch-tags: false
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5000851Z   show-progress: true
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5001375Z   lfs: false
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5001856Z   submodules: false
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5002373Z   set-safe-directory: true
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5002982Z   allow-unsafe-pr-checkout: false
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5003861Z env:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5004345Z   GOENV: off
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5004835Z   GOWORK: off
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5005354Z   GOTOOLCHAIN: local
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5006080Z   GOFLAGS: -mod=readonly
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5006654Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.5007228Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6026646Z Syncing repository: batchstream/weir-tests
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6029687Z ##[group]Getting Git version info
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6030665Z Working directory is '/home/runner/work/weir-tests/weir-tests'
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6032027Z [command]/usr/bin/git version
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6112556Z git version 2.55.0
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6140530Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6154296Z Temporarily overriding HOME='/home/runner/work/_temp/23f5c95f-b125-4db9-bb82-0d03cf73d7cf' before making global git config changes
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6157745Z Adding repository directory to the temporary git global config as a safe directory
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6160893Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/weir-tests/weir-tests
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6217417Z Deleting the contents of '/home/runner/work/weir-tests/weir-tests'
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6221129Z ##[group]Determining repository object format
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6227233Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6228682Z ##[group]Initializing the repository
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6230263Z [command]/usr/bin/git init /home/runner/work/weir-tests/weir-tests
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6348455Z hint: Using 'master' as the name for the initial branch. This default branch name
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6351149Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6352915Z hint: to use in all of your new repositories, which will suppress this warning,
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6354298Z hint: call:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6355042Z hint:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6356233Z hint: 	git config --global init.defaultBranch <name>
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6357460Z hint:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6358527Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6360261Z hint: 'development'. The just-created branch can be renamed via this command:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6361699Z hint:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6362508Z hint: 	git branch -m <name>
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6363407Z hint:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6364599Z hint: Disable this message with "git config set advice.defaultBranchName false"
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6367098Z Initialized empty Git repository in /home/runner/work/weir-tests/weir-tests/.git/
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6370612Z [command]/usr/bin/git remote add origin https://github.com/batchstream/weir-tests
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6421073Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6423340Z ##[group]Disabling automatic garbage collection
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6426706Z [command]/usr/bin/git config --local gc.auto 0
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6465822Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6467785Z ##[group]Setting up auth
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6468856Z Removing SSH command configuration
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6471684Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6508055Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6873452Z Removing HTTP extra header
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6879570Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.6922249Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7179422Z Removing includeIf entries pointing to credentials config files
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7184432Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7221879Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7453445Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7495147Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path /home/runner/work/_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7531284Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7571681Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7610379Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7645917Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7647588Z ##[group]Fetching the repository
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:40.7693160Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin e790aa77629f0e4862159cbe8e3f0497df888314
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4754032Z From https://github.com/batchstream/weir-tests
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4756898Z  * branch            e790aa77629f0e4862159cbe8e3f0497df888314 -> FETCH_HEAD
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4766374Z [command]/usr/bin/git rev-parse --verify --quiet e790aa77629f0e4862159cbe8e3f0497df888314^{object}
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4797658Z e790aa77629f0e4862159cbe8e3f0497df888314
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4809642Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4812191Z ##[group]Determining the checkout info
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4883962Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4886022Z [command]/usr/bin/git sparse-checkout disable
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4891792Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4907142Z ##[group]Checking out the ref
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.4913956Z [command]/usr/bin/git checkout --progress --force e790aa77629f0e4862159cbe8e3f0497df888314
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6073726Z Note: switching to 'e790aa77629f0e4862159cbe8e3f0497df888314'.
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6075269Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6076615Z You are in 'detached HEAD' state. You can look around, make experimental
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6079181Z changes and commit them, and you can discard any commits you make in this
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6081677Z state without impacting any branches by switching back to a branch.
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6083187Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6084133Z If you want to create a new branch to retain commits you create, you may
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6086775Z do so (now or later) by using -c with the switch command. Example:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6088144Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6088716Z   git switch -c <new-branch-name>
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6089702Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6090249Z Or undo this operation with:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6091127Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6091633Z   git switch -
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6092596Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6094030Z Turn off this advice by setting config variable advice.detachedHead to false
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6096664Z 
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6098543Z HEAD is now at e790aa7 📌 chore: pin Weir with explicit backend request deadlines
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6105429Z ##[endgroup]
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6153100Z [command]/usr/bin/git log -1 --format=%H
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6184335Z e790aa77629f0e4862159cbe8e3f0497df888314
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6197614Z ##[group]Removing auth
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6199544Z Removing SSH command configuration
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6202775Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6244693Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6478315Z Removing HTTP extra header
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6482334Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6529515Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6759273Z Removing includeIf entries pointing to credentials config files
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6763498Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6795273Z includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6798154Z includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6800342Z includeif.gitdir:/github/workspace/.git.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6802026Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6807447Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6833723Z /home/runner/work/_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6844558Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-9c9f49dc\-16a3\-47c3\-b0cd\-c22611f80079\.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6883768Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6911049Z /home/runner/work/_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6921915Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/weir-tests/weir-tests/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-9c9f49dc\-16a3\-47c3\-b0cd\-c22611f80079\.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6961051Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.6992268Z /github/runner_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7001863Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-9c9f49dc\-16a3\-47c3\-b0cd\-c22611f80079\.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7082852Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7140817Z /github/runner_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7169343Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-9c9f49dc\-16a3\-47c3\-b0cd\-c22611f80079\.config
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7201296Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7445066Z Removing credentials config '/home/runner/work/_temp/git-credentials-9c9f49dc-16a3-47c3-b0cd-c22611f80079.config'
+blackbox	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-03T23:59:41.7469784Z ##[endgroup]
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	﻿2026-10-03T23:59:41.7832945Z ##[group]Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7834680Z with:
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7835858Z   go-version-file: go.mod
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7837010Z   check-latest: false
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7846488Z   token: ***
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7847538Z   cache: true
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7848532Z env:
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7849461Z   GOENV: off
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7850439Z   GOWORK: off
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7851446Z   GOTOOLCHAIN: local
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7852528Z   GOFLAGS: -mod=readonly
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7853706Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.7854879Z ##[endgroup]
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.9151253Z Setup go version spec 1.27.1
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:41.9164988Z Attempting to download 1.27.1...
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:42.7725922Z matching 1.27.1...
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:42.7758552Z Acquiring 1.27.1 from https://github.com/actions/go-versions/releases/download/1.27.1-33583469715/go-1.27.1-linux-x64.tar.gz
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:43.2559488Z Extracting Go...
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:43.2672216Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/79916c77-bd88-4ef8-bdbf-c24edd0373c9 -f /home/runner/work/_temp/f505d722-6371-48b0-bd28-7faffc770326
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:44.9713295Z Successfully extracted go to /home/runner/work/_temp/79916c77-bd88-4ef8-bdbf-c24edd0373c9
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:44.9714174Z Adding to the cache ...
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9235344Z Successfully cached go to /opt/hostedtoolcache/go/1.27.1/x64
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9238664Z Added go to the path
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9241332Z Successfully set up Go version 1.27.1
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9472985Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOMODCACHE
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9506738Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOCACHE
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9544028Z /home/runner/go/pkg/mod
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:50.9562665Z /home/runner/.cache/go-build
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:51.0960125Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:52.2312079Z Received 163577856 of 252007507 (64.9%), 156.2 MBs/sec
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:52.5574853Z Received 252007507 of 252007507 (100.0%), 181.2 MBs/sec
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:52.5576301Z Cache Size: ~240 MB (252007507 B)
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:52.5652462Z [command]/usr/bin/tar -xf /home/runner/work/_temp/395da2f3-47aa-4c46-b32b-326a1472ee70/cache.tzst -P -C /home/runner/work/weir-tests/weir-tests --use-compress-program unzstd
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.3971764Z Cache restored successfully
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4093068Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4115113Z go version go1.27.1 linux/amd64
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4115418Z 
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4116160Z ##[group]go env
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4253350Z AR='ar'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4253811Z CC='gcc'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4254375Z CGO_CFLAGS='-O2 -g'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4254709Z CGO_CPPFLAGS=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4254996Z CGO_CXXFLAGS='-O2 -g'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4255297Z CGO_ENABLED='1'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4255802Z CGO_FFLAGS='-O2 -g'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4256248Z CGO_LDFLAGS='-O2 -g'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4256689Z CXX='g++'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4256955Z GCCGO='gccgo'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4257224Z GO111MODULE=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4257475Z GOAMD64='v1'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4257723Z GOARCH='amd64'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4257976Z GOAUTH='netrc'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4258252Z GOBIN='/home/runner/go/bin'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4258592Z GOCACHE='/home/runner/.cache/go-build'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4258947Z GOCACHEPROG=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4259204Z GODEBUG=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4259449Z GOENV=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4259686Z GOEXE=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4259924Z GOEXPERIMENT=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4260181Z GOFIPS140='off'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4260461Z GOFLAGS='-mod=readonly'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4261325Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build1636478714=/tmp/go-build -gno-record-gcc-switches'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4262184Z GOHOSTARCH='amd64'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4262724Z GOHOSTOS='linux'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4262987Z GOINSECURE=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4263372Z GOMOD='/home/runner/work/weir-tests/weir-tests/go.mod'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4263805Z GOMODCACHE='/home/runner/go/pkg/mod'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4264151Z GONOPROXY=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4264406Z GONOSUMDB=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4264665Z GOOS='linux'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4264926Z GOPACKAGESDRIVER=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4265216Z GOPATH='/home/runner/go'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4265506Z GOPRIVATE=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4266291Z GOPROXY='https://proxy.golang.org,direct'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4266694Z GOROOT='/opt/hostedtoolcache/go/1.27.1/x64'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4267063Z GOSUMDB='sum.golang.org'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4267522Z GOTELEMETRY='local'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4267830Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4268166Z GOTMPDIR=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4268380Z GOTOOLCHAIN='local'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4268720Z GOTOOLDIR='/opt/hostedtoolcache/go/1.27.1/x64/pkg/tool/linux_amd64'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4269128Z GOVCS=''
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4269370Z GOVERSION='go1.27.1'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4269611Z GOWORK='off'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4269837Z PKG_CONFIG='pkg-config'
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4269992Z 
+blackbox	Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-03T23:59:54.4270278Z ##[endgroup]
+blackbox	Prepare locked public tools and local images	﻿2026-10-03T23:59:54.4459490Z ##[group]Run python3 scripts/download_modules.py
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4459986Z [36;1mpython3 scripts/download_modules.py[0m
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4460336Z [36;1mpython3 scripts/prepare_weir.py[0m
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4460660Z [36;1mpython3 scripts/prepare_images.py[0m
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4740246Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4740702Z env:
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4740944Z   GOENV: off
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4741192Z   GOWORK: off
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4741671Z   GOTOOLCHAIN: local
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4741955Z   GOFLAGS: -mod=readonly
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4742268Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:54.4742582Z ##[endgroup]
+blackbox	Prepare locked public tools and local images	2026-10-03T23:59:58.5781918Z all modules verified
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:23.3151689Z /home/runner/work/weir-tests/weir-tests/.tools/weir
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:23.7465617Z docker.io/library/mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c: Pulling from library/mongo
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.3996705Z a60ef8ec184e: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.3997940Z c4a88db82a6d: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.3998743Z f97373a3dd33: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.3999167Z 59898ec81c6b: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.3999583Z 2252b895f5de: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4000021Z 08f85ec03d22: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4000446Z cfbbec1d5328: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4000902Z eedb5e3e5b38: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4001331Z 2252b895f5de: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4001731Z eedb5e3e5b38: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4002116Z cfbbec1d5328: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4002504Z 08f85ec03d22: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.4002881Z 59898ec81c6b: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.5100538Z c4a88db82a6d: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.5101616Z c4a88db82a6d: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.5361076Z f97373a3dd33: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.5361681Z f97373a3dd33: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6136962Z 59898ec81c6b: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6137806Z 59898ec81c6b: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6713460Z a60ef8ec184e: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6714482Z a60ef8ec184e: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6776349Z 2252b895f5de: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6777068Z 2252b895f5de: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6848032Z 08f85ec03d22: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.6848914Z 08f85ec03d22: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:24.8983605Z eedb5e3e5b38: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:25.9237688Z cfbbec1d5328: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:25.9238327Z cfbbec1d5328: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:25.9302814Z a60ef8ec184e: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:27.7868315Z c4a88db82a6d: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:27.9442879Z f97373a3dd33: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:27.9863106Z 59898ec81c6b: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:27.9949265Z 2252b895f5de: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:28.0077555Z 08f85ec03d22: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:33.5426793Z cfbbec1d5328: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:33.5848462Z eedb5e3e5b38: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:33.5887561Z Digest: sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:33.5895366Z Status: Downloaded newer image for mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:33.5904746Z docker.io/library/mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.0000468Z docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595: Pulling from elasticsearch/elasticsearch
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3378242Z 2c22c1bb1ce1: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3378863Z 2796a25b8094: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3379825Z 714e5b673049: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3380367Z bd9ddc54bea9: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3380818Z 2d68f716f01a: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3381217Z c52e3a203c20: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3381512Z 9b415d76a9c6: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3381815Z d527cffe3ef6: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3382596Z b8cda4b5aaf3: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3382905Z 32c1c18d2ea5: Pulling fs layer
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3383234Z 2d68f716f01a: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3383627Z c52e3a203c20: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3383884Z 9b415d76a9c6: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3384143Z d527cffe3ef6: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3384398Z b8cda4b5aaf3: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3384820Z 32c1c18d2ea5: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.3385282Z bd9ddc54bea9: Waiting
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.6515539Z 714e5b673049: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.6516816Z 714e5b673049: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.7834122Z bd9ddc54bea9: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.7837442Z bd9ddc54bea9: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.8762558Z 2796a25b8094: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:34.8763447Z 2796a25b8094: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.0076634Z 2c22c1bb1ce1: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.1479334Z 9b415d76a9c6: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.2819398Z d527cffe3ef6: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.2820244Z d527cffe3ef6: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.3877877Z c52e3a203c20: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.3878974Z c52e3a203c20: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.5570251Z 32c1c18d2ea5: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.5571465Z 32c1c18d2ea5: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.6169659Z b8cda4b5aaf3: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:35.6170464Z b8cda4b5aaf3: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:36.2036400Z 2c22c1bb1ce1: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:36.8564242Z 2796a25b8094: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:36.9878321Z 714e5b673049: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:36.9984664Z bd9ddc54bea9: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:46.8074439Z 2d68f716f01a: Verifying Checksum
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:46.8075070Z 2d68f716f01a: Download complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.4885423Z 2d68f716f01a: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.4979386Z c52e3a203c20: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5071285Z 9b415d76a9c6: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5277536Z d527cffe3ef6: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5357111Z b8cda4b5aaf3: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5455982Z 32c1c18d2ea5: Pull complete
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5487453Z Digest: sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5494894Z Status: Downloaded newer image for docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595
+blackbox	Prepare locked public tools and local images	2026-10-04T00:00:54.5502424Z docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595
+blackbox	Real multi-node integration	﻿2026-10-04T00:00:54.5946509Z ##[group]Run mkdir -p results/local
+blackbox	Real multi-node integration	2026-10-04T00:00:54.5946911Z [36;1mmkdir -p results/local[0m
+blackbox	Real multi-node integration	2026-10-04T00:00:54.5947626Z [36;1mWEIR_TEST_BINARY="$PWD/.tools/weir" go test -race -tags=integration -count=1 -timeout=10m -v ./tests/integration 2>&1 | tee results/local/integration.log[0m
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6010807Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6011182Z env:
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6011379Z   GOENV: off
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6011583Z   GOWORK: off
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6011793Z   GOTOOLCHAIN: local
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6012025Z   GOFLAGS: -mod=readonly
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6012289Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6012549Z   GOPROXY: off
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6012755Z   GOSUMDB: off
+blackbox	Real multi-node integration	2026-10-04T00:00:54.6012965Z ##[endgroup]
+blackbox	Real multi-node integration	2026-10-04T00:00:56.7369142Z === RUN   TestIndependentSingleRequestClients
+blackbox	Real multi-node integration	2026-10-04T00:01:36.0244527Z     single_benchmark_test.go:45: single-request fixture artifacts: /tmp/weir-tests-2438301725
+blackbox	Real multi-node integration	2026-10-04T00:01:36.0247562Z === RUN   TestIndependentSingleRequestClients/mongo
+blackbox	Real multi-node integration	2026-10-04T00:01:48.9868703Z single-request backend=mongo processes=2 workers=2 round=1 direct=4512.9 weir=2192.4 DB-CPU direct=86.9% weir=46.6%
+blackbox	Real multi-node integration	2026-10-04T00:02:01.9224731Z single-request backend=mongo processes=2 workers=4 round=1 direct=5122.1 weir=3088.8 DB-CPU direct=100.0% weir=61.3%
+blackbox	Real multi-node integration	2026-10-04T00:02:01.9250040Z === RUN   TestIndependentSingleRequestClients/search
+blackbox	Real multi-node integration	2026-10-04T00:02:15.8548310Z single-request backend=search processes=2 workers=2 round=1 direct=521.8 weir=623.3 DB-CPU direct=100.7% weir=101.7%
+blackbox	Real multi-node integration	2026-10-04T00:02:28.9917466Z single-request backend=search processes=2 workers=4 round=1 direct=1469.9 weir=909.5 DB-CPU direct=100.2% weir=100.8%
+blackbox	Real multi-node integration	2026-10-04T00:02:31.8614914Z --- PASS: TestIndependentSingleRequestClients (95.12s)
+blackbox	Real multi-node integration	2026-10-04T00:02:31.8616149Z     --- PASS: TestIndependentSingleRequestClients/mongo (25.90s)
+blackbox	Real multi-node integration	2026-10-04T00:02:31.8617470Z     --- PASS: TestIndependentSingleRequestClients/search (27.15s)
+blackbox	Real multi-node integration	2026-10-04T00:02:31.8618199Z === RUN   TestSystemIntegration
+blackbox	Real multi-node integration	2026-10-04T00:02:54.5171909Z     system_test.go:53: fixture artifacts: /tmp/weir-tests-3903623355
+blackbox	Real multi-node integration	2026-10-04T00:02:54.7085762Z === RUN   TestSystemIntegration/native_reset_and_write_change_evidence
+blackbox	Real multi-node integration	2026-10-04T00:02:54.9267368Z     system_test.go:81: repeated 1/64-record reset succeeds; native Mongo matched-but-unmodified timed writes are rejected; real 32-record bulk changes persist
+blackbox	Real multi-node integration	2026-10-04T00:02:54.9287265Z === RUN   TestSystemIntegration/mongo_lifecycle
+blackbox	Real multi-node integration	2026-10-04T00:02:54.9569725Z     system_test.go:86: Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, typed Read/Mutate sequence, Native, and direct database persistence verified
+blackbox	Real multi-node integration	2026-10-04T00:02:54.9672298Z     system_test.go:87: all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint
+blackbox	Real multi-node integration	2026-10-04T00:02:55.1022477Z     system_test.go:88: 48 independent unary SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified
+blackbox	Real multi-node integration	2026-10-04T00:02:55.6321020Z     system_test.go:89: 513 distinct native documents Put and Read in one physical adapter batch per unary call; every value independently persisted and reverse-order results verified
+blackbox	Real multi-node integration	2026-10-04T00:02:55.6328153Z === RUN   TestSystemIntegration/search_lifecycle
+blackbox	Real multi-node integration	2026-10-04T00:02:55.8511614Z     system_test.go:86: Create/preconditions/Replace/Put/AtomicTransform/Read/Delete, typed Read/Mutate sequence, Native, and direct database persistence verified
+blackbox	Real multi-node integration	2026-10-04T00:02:55.9881445Z     system_test.go:87: all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint
+blackbox	Real multi-node integration	2026-10-04T00:02:56.6606161Z     system_test.go:88: 48 independent unary SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI execution order, and SDK/server late-invalid preflight verified
+blackbox	Real multi-node integration	2026-10-04T00:02:57.8988226Z     system_test.go:89: 513 distinct native documents Put and Read in one physical adapter batch per unary call; every value independently persisted and reverse-order results verified
+blackbox	Real multi-node integration	2026-10-04T00:02:57.9364153Z === RUN   TestSystemIntegration/any_node_discovery_and_no_relay
+blackbox	Real multi-node integration	2026-10-04T00:02:58.2504658Z === RUN   TestSystemIntegration/cancellation
+blackbox	Real multi-node integration	2026-10-04T00:02:58.2514168Z === RUN   TestSystemIntegration/owner_withdrawal_restart_and_seed_loss
+blackbox	Real multi-node integration	2026-10-04T00:02:58.4050219Z     system_test.go:105: graceful owner withdrawal converged; existing and recreated SDK clients read persisted data; restarted owner recovered; losing the seed did not interrupt direct business reads
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9399838Z --- PASS: TestSystemIntegration (29.08s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9400974Z     --- PASS: TestSystemIntegration/native_reset_and_write_change_evidence (0.22s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9402070Z     --- PASS: TestSystemIntegration/mongo_lifecycle (0.70s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9402899Z     --- PASS: TestSystemIntegration/search_lifecycle (2.30s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9403570Z     --- PASS: TestSystemIntegration/any_node_discovery_and_no_relay (0.31s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9404193Z     --- PASS: TestSystemIntegration/cancellation (0.00s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9404879Z     --- PASS: TestSystemIntegration/owner_withdrawal_restart_and_seed_loss (0.16s)
+blackbox	Real multi-node integration	2026-10-04T00:03:00.9405377Z PASS
+blackbox	Real multi-node integration	2026-10-04T00:03:01.9456825Z ok  	github.com/batchstream/weir-tests/tests/integration	125.222s
+blackbox	Verified comparison smoke	﻿2026-10-04T00:03:01.9717032Z ##[group]Run go run ./cmd/weir-lab -mode fixed -weir .tools/weir -operations 128 -warmup 32 -records 64 -rounds 2 -output results/local/smoke
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9718068Z [36;1mgo run ./cmd/weir-lab -mode fixed -weir .tools/weir -operations 128 -warmup 32 -records 64 -rounds 2 -output results/local/smoke[0m
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9781020Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9781392Z env:
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9781791Z   GOENV: off
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9782021Z   GOWORK: off
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9782254Z   GOTOOLCHAIN: local
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9782512Z   GOFLAGS: -mod=readonly
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9782802Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9783079Z   GOPROXY: off
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9783310Z   GOSUMDB: off
+blackbox	Verified comparison smoke	2026-10-04T00:03:01.9783532Z ##[endgroup]
+blackbox	Verified comparison smoke	2026-10-04T00:03:36.3853383Z Owned fixture logs: /tmp/weir-tests-2909305407
+blackbox	Verified comparison smoke	2026-10-04T00:03:37.2228540Z mongo direct=6735.9 ops/s weir=2470.7 ops/s ratio=0.367
+blackbox	Verified comparison smoke	2026-10-04T00:03:45.6507951Z search direct=604.7 ops/s weir=462.9 ops/s ratio=0.765
+blackbox	Separate opt-in server CPU diagnostic	﻿2026-10-04T00:03:48.4533796Z ##[group]Run python3 scripts/profile_weir.py --offline
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4534264Z [36;1mpython3 scripts/profile_weir.py --offline[0m
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4596788Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4597223Z env:
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4597451Z   GOENV: off
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4597695Z   GOWORK: off
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4597941Z   GOTOOLCHAIN: local
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4598238Z   GOFLAGS: -mod=readonly
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4598540Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4598841Z   GOPROXY: off
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4599082Z   GOSUMDB: off
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:48.4599323Z ##[endgroup]
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:03:49.3881739Z all modules verified
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4693947Z File: weir-profile-node
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4694453Z Build ID: 4ffe2bf8558cbe705d409dfabd23323989d8aa53
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4694976Z Type: cpu
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4695351Z Time: 2026-10-04 00:03:59 UTC
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4696079Z Duration: 54.61s, Total samples = 35.91s (65.75%)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4696681Z Showing nodes accounting for 16.50s, 45.95% of 35.91s total
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4697066Z Dropped 1070 nodes (cum <= 0.18s)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4697362Z Showing top 35 nodes out of 321
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4697720Z       flat  flat%   sum%        cum   cum%
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4698247Z      7.04s 19.60% 19.60%      7.04s 19.60%  internal/runtime/syscall/linux.Syscall6
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4698830Z      0.71s  1.98% 21.58%      1.18s  3.29%  runtime.tryDeferToSpanScan
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4699309Z      0.69s  1.92% 23.50%      0.90s  2.51%  runtime.step
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4699759Z      0.51s  1.42% 24.92%      1.54s  4.29%  runtime.pcvalue
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4700200Z      0.41s  1.14% 26.07%      0.41s  1.14%  runtime.futex
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4700639Z      0.41s  1.14% 27.21%      0.41s  1.14%  runtime.memmove
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4701119Z      0.40s  1.11% 28.32%      0.81s  2.26%  runtime.scanObjectsSmall
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4701651Z      0.39s  1.09% 29.41%      0.39s  1.09%  runtime.nanotime (inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4702161Z      0.35s  0.97% 30.38%      3.37s  9.38%  runtime.mallocgc
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4702698Z      0.29s  0.81% 31.19%      0.47s  1.31%  regexp.(*Regexp).doOnePass
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4703259Z      0.29s  0.81% 32.00%      0.29s  0.81%  runtime.memclrNoHeapPointers
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4703790Z      0.26s  0.72% 32.72%      1.55s  4.32%  runtime.adjustframe
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4704308Z      0.26s  0.72% 33.44%      0.26s  0.72%  runtime.adjustpointers
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4704810Z      0.26s  0.72% 34.17%      0.33s  0.92%  runtime.findfunc
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4705298Z      0.26s  0.72% 34.89%      1.35s  3.76%  runtime.scanObject
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4706066Z      0.25s   0.7% 35.59%      0.26s  0.72%  runtime.heapArenaOf (inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4706681Z      0.25s   0.7% 36.29%      0.25s   0.7%  runtime.typePointers.nextFast (inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4707235Z      0.24s  0.67% 36.95%      0.56s  1.56%  runtime.selectgo
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4707738Z      0.22s  0.61% 37.57%      0.22s  0.61%  runtime.procyieldAsm
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4708282Z      0.22s  0.61% 38.18%      0.38s  1.06%  runtime.typePointers.next
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4708848Z      0.21s  0.58% 38.76%      1.01s  2.81%  runtime.(*stkframe).getStackMap
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4709417Z      0.21s  0.58% 39.35%      0.21s  0.58%  runtime.readvarint (inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4709954Z      0.21s  0.58% 39.93%      0.23s  0.64%  runtime.spanOf (inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4710722Z      0.20s  0.56% 40.49%      0.20s  0.56%  indexbytebody
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4711300Z      0.20s  0.56% 41.05%      0.37s  1.03%  runtime.mallocgcSmallScanNoHeaderSC2
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4711907Z      0.19s  0.53% 41.58%      0.19s  0.53%  runtime.(*moduledata).textAddr
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4712454Z      0.19s  0.53% 42.11%      0.19s  0.53%  runtime.asyncPreempt
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4713035Z      0.19s  0.53% 42.63%      1.11s  3.09%  runtime.mallocgcSmallScanNoHeaderSC5
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4713806Z      0.18s   0.5% 43.14%      8.31s 23.14%  go.mongodb.org/mongo-driver/v2/x/mongo/driver.Operation.Execute
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4714609Z      0.18s   0.5% 43.64%      0.28s  0.78%  runtime.mallocgcTinySC2
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4715060Z      0.18s   0.5% 44.14%      1.54s  4.29%  runtime.schedule
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4715561Z      0.17s  0.47% 44.61%      0.23s  0.64%  internal/runtime/maps.(*Iter).Next
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4716585Z      0.17s  0.47% 45.08%      0.18s   0.5%  runtime.(*mspan).writeHeapBitsSmall
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4717141Z      0.17s  0.47% 45.56%      0.97s  2.70%  runtime.(*unwinder).resolveInternal
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4717621Z      0.14s  0.39% 45.95%      0.35s  0.97%  runtime.findObject
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4717857Z 
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4717966Z File: weir-profile-node
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4718252Z Build ID: 4ffe2bf8558cbe705d409dfabd23323989d8aa53
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4718559Z Type: delay
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4718769Z Time: 2026-10-04 00:04:54 UTC
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4719081Z Showing nodes accounting for 24.84s, 100% of 24.84s total
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4719432Z Dropped 307 nodes (cum <= 0.12s)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4719702Z Showing top 35 nodes out of 102
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4720024Z       flat  flat%   sum%        cum   cum%
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4720480Z     23.19s 93.35% 93.35%     23.21s 93.42%  sync.(*Mutex).Unlock (partial-inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4721022Z      1.32s  5.31% 98.67%      1.32s  5.31%  runtime.unlock (partial-inline)
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4721755Z      0.18s  0.72% 99.38%      0.18s  0.72%  internal/sync.(*HashTrieMap[go.shape.interface {},go.shape.interface {}]).Swap
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4722662Z      0.15s   0.6%   100%      0.15s  0.61%  internal/sync.(*HashTrieMap[go.shape.interface {},go.shape.interface {}]).LoadAndDelete
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4723649Z          0     0%   100%      8.04s 32.37%  github.com/batchstream/weir-protocol/api/weir/v1._StoreService_Read_Handler
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4724624Z          0     0%   100%         8s 32.22%  github.com/batchstream/weir-protocol/api/weir/v1._StoreService_Read_Handler.func1
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4725542Z          0     0%   100%      4.47s 18.00%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).Execute
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4726790Z          0     0%   100%      0.30s  1.22%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursor
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4727808Z          0     0%   100%      0.29s  1.18%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursorState
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4728875Z          0     0%   100%      0.29s  1.18%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursorState.func1
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4729862Z          0     0%   100%      4.32s 17.41%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4730859Z          0     0%   100%      0.29s  1.18%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads.deferwrap1
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4731837Z          0     0%   100%      4.47s 18.00%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeRecords
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4732880Z          0     0%   100%      0.15s  0.59%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).qualifyRecordBatch
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4733862Z          0     0%   100%      0.15s  0.59%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).qualifyTarget
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4736170Z          0     0%   100%      0.15s  0.59%  github.com/batchstream/weir/internal/backend/targetcache.(*Cache[go.shape.struct { github.com/batchstream/weir/internal/backend/mongodb.database string; github.com/batchstream/weir/internal/backend/mongodb.collection string },go.shape.struct {}]).Acquire
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4738112Z          0     0%   100%      1.73s  6.97%  github.com/batchstream/weir/internal/execution.(*ResultBudget).Reserve
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4738920Z          0     0%   100%         8s 32.22%  github.com/batchstream/weir/internal/server.(*Server).Read
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4739711Z          0     0%   100%      5.19s 20.88%  github.com/batchstream/weir/internal/server.(*Server).submitBatch
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4740709Z          0     0%   100%      0.20s   0.8%  github.com/batchstream/weir/internal/server.(*responseCodec).Marshal
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4741523Z          0     0%   100%      2.74s 11.04%  github.com/batchstream/weir/internal/server.(*rpcState).finish
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4742338Z          0     0%   100%      1.64s  6.61%  github.com/batchstream/weir/internal/server.(*rpcState).finishLocked
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4743207Z          0     0%   100%      2.89s 11.64%  github.com/batchstream/weir/internal/server.(*transportStats).HandleRPC
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4744112Z          0     0%   100%      2.89s 11.65%  github.com/batchstream/weir/internal/server.transportStats.HandleRPC
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4744878Z          0     0%   100%      8.03s 32.32%  github.com/batchstream/weir/internal/server.unaryRPC
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4745887Z          0     0%   100%      5.19s 20.88%  github.com/batchstream/weir/internal/store.(*Runtime).SubmitBatch
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4746715Z          0     0%   100%      6.88s 27.70%  github.com/batchstream/weir/internal/store.(*Runtime).execute
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4747512Z          0     0%   100%      4.48s 18.02%  github.com/batchstream/weir/internal/store.(*Runtime).executeBatch
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4750450Z          0     0%   100%      4.85s 19.52%  github.com/batchstream/weir/internal/store.(*Runtime).loop
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4751885Z          0     0%   100%      6.73s 27.09%  github.com/batchstream/weir/internal/store.(*Runtime).loop.gowrap2
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4753261Z          0     0%   100%      6.88s 27.70%  github.com/batchstream/weir/internal/store.(*Runtime).runBatch
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4754109Z          0     0%   100%      1.64s  6.61%  github.com/batchstream/weir/internal/store.(*Ticket).Ack
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4754901Z          0     0%   100%      2.81s 11.29%  github.com/batchstream/weir/internal/store.(*Ticket).WaitBatch
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4756007Z          0     0%   100%      1.73s  6.97%  github.com/batchstream/weir/internal/store.(*Ticket).retainResults
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4756904Z          0     0%   100%      1.73s  6.95%  github.com/batchstream/weir/internal/store.(*Ticket).retainResults-fm
+blackbox	Separate opt-in server CPU diagnostic	2026-10-04T00:04:58.4757336Z 
+blackbox	Preserve results and owned fixture receipts	﻿2026-10-04T00:04:58.4866585Z ##[group]Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4867066Z with:
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4867380Z   name: system-evidence-f8ba341b99680ce4fc16c99c73c07838b0ccfc89
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4868342Z   path: results/local/
+blackbox	Preserve results and owned fixture receipts	/tmp/weir-tests-*/manifest.json
+blackbox	Preserve results and owned fixture receipts	/tmp/weir-tests-*/cleanup.json
+blackbox	Preserve results and owned fixture receipts	/tmp/weir-tests-*/*config.json
+blackbox	Preserve results and owned fixture receipts	/tmp/weir-tests-*/*routes.json
+blackbox	Preserve results and owned fixture receipts	/tmp/weir-tests-*/*process.log
+blackbox	Preserve results and owned fixture receipts	/tmp/weir-tests-*/docker-engine.json
+blackbox	Preserve results and owned fixture receipts	
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4869206Z   retention-days: 14
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4869441Z   if-no-files-found: warn
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4869686Z   compression-level: 6
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4869914Z   overwrite: false
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4870145Z   include-hidden-files: false
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4870391Z env:
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4870576Z   GOENV: off
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4870773Z   GOWORK: off
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4870979Z   GOTOOLCHAIN: local
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4871204Z   GOFLAGS: -mod=readonly
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4871448Z   PYTHONDONTWRITEBYTECODE: 1
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.4871729Z ##[endgroup]
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.6656775Z (node:10251) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.6658821Z (Use `node --trace-deprecation ...` to show where the warning was created)
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.7066567Z Multiple search paths detected. Calculating the least common ancestor of all paths
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.7078724Z The least common ancestor is /. This will be the root directory of the artifact
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.7079840Z With the provided path, there will be 46 files uploaded
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.7081165Z Artifact name is valid!
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.7081804Z Root directory input is valid!
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:58.9724977Z Beginning upload of artifact content to blob storage
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.0583378Z (node:10251) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.2430077Z Uploaded bytes 228374
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.2768181Z Finished uploading artifact content to blob storage!
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.2769405Z SHA256 digest of uploaded artifact zip is 7df307f7f7979d1d656278d68ef99f7f1350f47138628af2b75cbdde67a7d7f2
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.2770773Z Finalizing artifact upload
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.5258220Z Artifact system-evidence-f8ba341b99680ce4fc16c99c73c07838b0ccfc89.zip successfully finalized. Artifact ID 11288417481
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.5260040Z Artifact system-evidence-f8ba341b99680ce4fc16c99c73c07838b0ccfc89 has been successfully uploaded! Final size is 228374 bytes. Artifact ID is 11288417481
+blackbox	Preserve results and owned fixture receipts	2026-10-04T00:04:59.5266218Z Artifact download URL: https://github.com/batchstream/weir-tests/actions/runs/37163474956/artifacts/11288417481
+blackbox	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	﻿2026-10-04T00:04:59.5439163Z Post job cleanup.
+blackbox	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-04T00:04:59.6646816Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOMODCACHE
+blackbox	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-04T00:04:59.6692032Z [command]/opt/hostedtoolcache/go/1.27.1/x64/bin/go env GOCACHE
+blackbox	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-04T00:04:59.6733004Z /home/runner/go/pkg/mod
+blackbox	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-04T00:04:59.6746439Z /home/runner/.cache/go-build
+blackbox	Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16	2026-10-04T00:04:59.6754224Z Cache hit occurred on the primary key setup-go-Linux-x64-ubuntu24-go-1.27.1-f3893fbf0ff2b6e2efba8903234513786674983d753d1815a9a1fcf84a06448a, not saving cache.
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-10-04T00:04:59.6932732Z Post job cleanup.
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7798668Z [command]/usr/bin/git version
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7842271Z git version 2.55.0
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7881596Z Temporarily overriding HOME='/home/runner/work/_temp/affd1e5e-42b2-428e-a469-d11649371812' before making global git config changes
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7883506Z Adding repository directory to the temporary git global config as a safe directory
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7887674Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/weir-tests/weir-tests
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7919817Z Removing SSH command configuration
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7927810Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.7965294Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.8218993Z Removing HTTP extra header
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.8226747Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.8264023Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.8557989Z Removing includeIf entries pointing to credentials config files
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.8564717Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+blackbox	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-10-04T00:04:59.8635516Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+blackbox	Complete job	﻿2026-10-04T00:04:59.9112486Z Cleaning up orphan processes
+blackbox	Complete job	2026-10-04T00:04:59.9460717Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

@@ -1,0 +1,96 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "createdAt": "2026-10-04T00:09:54Z",
+  "databaseId": 37164085511,
+  "event": "workflow_dispatch",
+  "headSha": "e790aa77629f0e4862159cbe8e3f0497df888314",
+  "jobs": [
+    {
+      "completedAt": "2026-10-04T00:49:37Z",
+      "conclusion": "success",
+      "databaseId": 111323334068,
+      "name": "database-full-load (100)",
+      "startedAt": "2026-10-04T00:09:58Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-04T00:10:01Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-04T00:09:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:10:02Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 2,
+          "startedAt": "2026-10-04T00:10:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:10:18Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+          "number": 3,
+          "startedAt": "2026-10-04T00:10:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:11:11Z",
+          "conclusion": "success",
+          "name": "Prepare immutable tools and owned database images",
+          "number": 4,
+          "startedAt": "2026-10-04T00:10:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:49:32Z",
+          "conclusion": "success",
+          "name": "Independent single-request native and SDK clients",
+          "number": 5,
+          "startedAt": "2026-10-04T00:11:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:49:34Z",
+          "conclusion": "success",
+          "name": "Preserve raw resource samples, workload validation and cleanup",
+          "number": 6,
+          "startedAt": "2026-10-04T00:49:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:49:34Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+          "number": 11,
+          "startedAt": "2026-10-04T00:49:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:49:34Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 12,
+          "startedAt": "2026-10-04T00:49:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-04T00:49:34Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-10-04T00:49:34Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/batchstream/weir-tests/actions/runs/37164085511/job/111323334068"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-10-04T00:49:38Z",
+  "url": "https://github.com/batchstream/weir-tests/actions/runs/37164085511"
+}

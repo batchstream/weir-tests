@@ -1,0 +1,14 @@
+{
+  "server_pr": 31,
+  "server_pr_url": "https://github.com/batchstream/weir/pull/31",
+  "server_reviewed_head": "4713a5cf319986ae4270e8ac2760e6ff7b3f0684",
+  "server_merge_commit": "b251db84b4890b91f3c2bbef11a59e434ad56ed5",
+  "server_merge_tree_equals_reviewed_head": true,
+  "server_non_test_tree_equals_measured230": true,
+  "tests_pr": 5,
+  "tests_pr_url": "https://github.com/batchstream/weir-tests/pull/5",
+  "tests_reviewed_head": "e790aa77629f0e4862159cbe8e3f0497df888314",
+  "tests_merge_commit": "fecaf22de92e6077d53d1e1dd936f1ab83bb99d4",
+  "tests_merge_tree_equals_measured_recipe": true,
+  "scope": "Squash merge commit identities differ; git diff --exit-code independently confirms identical source trees. Timed measurements retain their original immutable identities."
+}

@@ -1,0 +1,80 @@
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:40 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:40 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:42 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:42 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:43 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:43 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:44 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:44 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestRealSearchBackendDeadlineAcknowledgements (6.96s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds (2.41s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds (2.31s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline (1.12s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline (1.12s)
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:44 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 08:18:44 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/drain
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:44 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 08:18:44 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/cancel_all
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:45 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 08:18:45 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchSharedDeadlineCancellationAndDrain (0.46s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires (0.20s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/drain (0.13s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/cancel_all (0.12s)
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:47 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:47 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:49 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:49 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:50 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline
+    deadline_integration_test.go:34: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:51 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=2 acquired=1 released=1
+2026/10/04 08:18:51 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestRealSearchBackendDeadlineAcknowledgements (6.83s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/headers_after_two_seconds (2.28s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/body_after_two_seconds (2.28s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/headers_past_deadline (1.13s)
+    --- PASS: TestRealSearchBackendDeadlineAcknowledgements/body_past_deadline (1.14s)
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 08:18:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/drain
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 08:18:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+=== RUN   TestSearchSharedDeadlineCancellationAndDrain/cancel_all
+    runtime_integration_test.go:26: actual backend profile=elasticsearch-8.19.22 build=3b2a41103de35e0af4064d647974032fcc1bcde9
+2026/10/04 08:18:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+2026/10/04 08:18:52 INFO backend_connections_closed backend=search store=search owned=0 peak=1 limit=5 acquired=1 released=1
+--- PASS: TestSearchSharedDeadlineCancellationAndDrain (0.48s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/one_caller_expires (0.22s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/drain (0.14s)
+    --- PASS: TestSearchSharedDeadlineCancellationAndDrain/cancel_all (0.12s)
+PASS
+ok  	github.com/batchstream/weir/internal/backend/search	16.630s

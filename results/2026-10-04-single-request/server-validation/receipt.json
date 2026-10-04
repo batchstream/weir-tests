@@ -1,0 +1,215 @@
+{
+  "source": {
+    "main": "d70cde37e71bdab7dc08431e308d2fc07dc439fb",
+    "previousPR": "8970222602bd6f323dcdfb5af5162f864fd06a7a",
+    "fixtureReadTestFix": "bc95e787128206b5600cf2481d593f3a50dcbd41",
+    "final": "2305186fffc5d1d9273e223f222e016fc8afe3ed"
+  },
+  "environment": {
+    "go": "1.27.1",
+    "race": true,
+    "offlineModules": true,
+    "mongodb": "8.0.32 / owned loopback27028",
+    "elasticsearch": "8.19.22 / owned loopback19200",
+    "secureM10Enabled": false,
+    "platform": "darwin/arm64",
+    "go_command_prefix": "env -u GOROOT GOENV=off GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off GOFLAGS=-mod=readonly PATH=/Users/liran/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.1.darwin-arm64/bin:$PATH"
+  },
+  "comparison": {
+    "args": "go test -race -tags=integration -count=1 -run 'TestMongoExpressionReplyLossAndConcern/conflict$|TestMongoNativeRealErrorsBoundsAndReplyLoss/drop$' ./internal/backend/mongodb",
+    "cases": [
+      "TestMongoExpressionReplyLossAndConcern/conflict",
+      "TestMongoNativeRealErrorsBoundsAndReplyLoss/drop"
+    ],
+    "main": {
+      "conflict": "PASS",
+      "nativeDrop": "FAIL stored record exceeds read limit",
+      "log": "main-d70cde3-mongodb-cases.log"
+    },
+    "previousPR": {
+      "conflict": "PASS",
+      "nativeDrop": "FAIL stored record exceeds read limit",
+      "log": "pr-8970222-mongodb-cases.log"
+    },
+    "current": {
+      "conflict": "PASS",
+      "nativeDrop": "PASS",
+      "log": "current-mongodb-cases.log"
+    },
+    "testCorrection": "Native fixture has 150KiB padding; configure its reconnect Read max_read_size 256KiB instead of default16KiB. Production default and full-document assertion unchanged."
+  },
+  "validation": [
+    {
+      "command": "go test -race -count=1 ./...",
+      "result": "PASS",
+      "searchDuration": "21.657s"
+    },
+    {
+      "command": "go vet ./...",
+      "result": "PASS"
+    },
+    {
+      "command": "go vet -tags=integration ./...",
+      "result": "PASS"
+    },
+    {
+      "command": "go test -race -count=3 -run 'Test(BackendTimeout|ConfiguredBackendDeadline|ConnectedBackendDeadline|BackendDeadlineIsCumulative|BulkUnknownRetains|CrossRPC)' ./internal/app ./internal/backend/search ./internal/store",
+      "result": "PASS",
+      "durations": {
+        "app": "2.485s",
+        "search": "17.092s",
+        "store": "4.039s"
+      }
+    },
+    {
+      "command": "WEIR_INTEGRATION=1 go test -race -tags=integration -count=1 -run '<96 test names; excludes TestMongoOwnerRemoteTail and TestMongoDriverRetirementOwnership>' ./internal/backend/mongodb",
+      "result": "PASS",
+      "duration": "24.956s",
+      "log": "current-mongodb-suite.log",
+      "selectedTests": [
+        "TestMongoMixedBatchRetainsQualificationAcrossExecutions",
+        "TestMongoPointReadUsesEqualityForOneUniqueID",
+        "TestMongoMixedBatchRejectsUnqualifiedTargetBeforeReadingOrWriting",
+        "TestMongoMixedBatchRechecksWriteCallerAfterRead",
+        "TestMongoMixedRecordBatchUsesPointReadAndVerboseBulkWrite",
+        "TestMongoCallerCancellationBeforeWritePhaseDoesNotAffectPeers",
+        "TestMongoMixedWriteLostReplyDoesNotReplayExpression",
+        "TestMongoIndependentRPCDuplicateReadsKeepBudgetAndCallerIsolation",
+        "TestMongoPointReadRejectsMalformedCursorEvidence",
+        "TestMongoPointReadMatchesTypedIDsAcrossPages",
+        "TestMongoBulkItemEvidence",
+        "TestMongoBulkCursorRequiresConsistentSummary",
+        "TestMongoBulkReplyQualifiesReplicaSetMetadata",
+        "TestMongoVerboseWriteCursorKeepsItemIndexesAndSessionAcrossPages",
+        "TestMongoReadContinuationStopsWhenItsCallersCancel",
+        "TestMongoCanceledProgramBatchHasNeutralFeedback",
+        "TestMongoBulkCursorRejectsDuplicateAndMissingIndexes",
+        "TestMongoBatchBoundsRejectBeforeBackendWork",
+        "TestMongoReadBatchAccepts513DistinctDocuments",
+        "TestMongoDuplicateReadSeparatesRPCResultBudgets",
+        "TestCodecRoundTrip",
+        "TestCodecLimitsAndMalformed",
+        "TestMongoOwnerRetiredRawOverlap",
+        "TestMongoOwnerCloseDuringTLSAndDial",
+        "TestMongoOwnerJoinsSlowResolverClose",
+        "TestMongoOwnerOpenFailure",
+        "TestMongoOwnerBoundedWaiters",
+        "TestMongoExpressionAtomicAndNumeric",
+        "TestMongoExpressionNativeCompetition",
+        "TestMongoExpressionReplyLossAndConcern",
+        "TestMongoExpressionCancellationLedgerAndDrain",
+        "TestMongoExpressionValidation",
+        "TestMongoExpressionEvidence",
+        "TestNativeRMWConflicts",
+        "TestCommitReplyLostAfterRealCommit",
+        "TestRMWAttemptAndDeadlineBounds",
+        "TestPartialInitializationAndClose",
+        "TestCommitCancellationRetainsOriginalDeadline",
+        "TestUnrelatedUniqueConflictDoesNotRetry",
+        "TestAcknowledgedOrdinaryBatchReplyLostIsNotReplayed",
+        "TestAmbiguitySurvivesLaterDefiniteError",
+        "TestMissingDeleteBatchAcknowledgedWithoutRead",
+        "TestCloseDuringCommit",
+        "TestMongoNativeRealErrorsBoundsAndReplyLoss",
+        "TestMongoNativeExplicitCongestion",
+        "TestMongoNativeCommandScope",
+        "TestMongoNativeRejectsCode",
+        "TestMongoNativeExactCommandBound",
+        "TestMongoProgramCommitRetries",
+        "TestPrepareProgramTransformUsesBuiltInLuaAndBSONInput",
+        "TestMongoProgramReplacementPreservesResourceIdentity",
+        "TestMongoOpenDoesNotQueryServerVersion",
+        "TestMongoServerQualificationUsesTopologyOnly",
+        "TestMongoReadSizeConfigurationAndBudgets",
+        "TestMongoReadSizeLimitDoesNotConstrainOrMisreportWrites",
+        "TestMongoCompleteBatchPreflightBeforeAnyCommand",
+        "TestMongoNamespaceBytePolicy",
+        "TestRouteCallRelativeTargetAndLargeRead",
+        "TestRouteLuaPlanKeepsIndependentTransaction",
+        "TestRouteNativeBackendBudgetExcludesOutputStall",
+        "TestMongoScanTraversal",
+        "TestMongoScanFaultPagesAndNoAutomaticRetry",
+        "TestMongoScanFetchCancellation",
+        "TestMongoScanNativeBatchBudgetAndOutputBoundary",
+        "TestMongoScanResumesMixedIDsWithoutSessionOrPreviousRecord",
+        "TestMongoScanBSONExtremesWithFilterAndProjection",
+        "TestMongoScanDeepKeysetUsesIDIndexAndIncludesMaxKey",
+        "TestMongoScanEnvelopeIntegrity",
+        "TestMongoScanSelectorControls",
+        "TestMongoScanRejectsUnstableIdentitySelectorsAndTokens",
+        "TestMongoSCRAMTLSProductionOpen",
+        "TestMongoSCRAMTLSRepeatedFailureAndClose",
+        "TestMongoSCRAMTLS391NoReplay",
+        "TestMongoConcurrentTargetQualificationUsesOneCommand",
+        "TestMongoQualificationFailureIsNotCached",
+        "TestMongoQualificationCacheIncludesDatabase",
+        "TestMongoCanceledMetadataCheckIsNotCached",
+        "TestMongoResourceTargetsBulkLuaScanNative",
+        "TestMongoResourceTargetsConcurrent",
+        "TestMongoResourceTargetsRejectUnqualifiedCollections",
+        "TestMongoResourceTargetsPrepareWithoutIO",
+        "TestMongoInvalidResourceTargetsDoNotAccessClient",
+        "TestMongoPointReadsIsolateTargetsAndDuplicateIDs",
+        "TestMongoNativeTargetMismatchDoesNotAccessClient",
+        "TestMongoQualificationFailureDoesNotAttemptWrites",
+        "TestMongoCallerCanceledDuringQualificationIsNotDispatched",
+        "TestMongoCanceledTargetsDoNotContactBackend",
+        "TestMongoTLSVerificationAndOCSP",
+        "TestMongoTLSWireGuardBeforeDriverHeader",
+        "TestMongoTLSHandshakeStallCancellation",
+        "TestMongoDNSCancellation",
+        "TestValidateMongoConfigProfiles",
+        "TestValidateMongoConfigRejectsOutsideProfile",
+        "TestMongoDriverAuthenticationOptions",
+        "TestMongoDriverUnauthenticatedOptions",
+        "TestMongoWireBoundsBeforeDriverHeader"
+      ]
+    },
+    {
+      "command": "WEIR_INTEGRATION=1 go test -race -tags=integration -count=1 ./internal/store",
+      "result": "PASS",
+      "duration": "9.892s",
+      "log": "current-store-integration.log"
+    },
+    {
+      "command": "WEIR_INTEGRATION=1 WEIR_SEARCH_INTEGRATION=elasticsearch go test -race -tags=integration -count=1 ./internal/backend/mongodb ./internal/backend/search ./internal/store",
+      "result": "PASS for Search package; combined command FAIL in MongoDB",
+      "duration": "33.879s",
+      "scope": "Search full tagged package before extending real deadline test with post-commit timeout cases; production equivalent to230. Shared-Mongo cross-package failpoint interference invalidates combined Mongo/Store run as isolated lifecycle proof; superseded by recorded sequential Mongo/Store runs.",
+      "combined_command_exit_code": 1,
+      "package_results": {
+        "mongodb": "FAIL 25.113s: conflict APPLIED in invalid concurrent failpoint run; pre-existing native/drop read-budget mismatch; 2 disabled secure opt-in tests",
+        "search": "PASS 33.879s",
+        "store": "PASS 10.020s"
+      },
+      "evidence_level": "Observed exec tool return only; no standalone original stdout file retained."
+    },
+    {
+      "command": "WEIR_SEARCH_INTEGRATION=elasticsearch go test -race -tags=integration -count=2 -run 'TestRealSearchBackendDeadlineAcknowledgements|TestSearchSharedDeadlineCancellationAndDrain$' ./internal/backend/search",
+      "result": "PASS",
+      "duration": "16.305s",
+      "scope": "Final real ACK headers/body delay2150ms; cap4s APPLIED, cap1s UNKNOWN Deadline; both persisted n7, exactlyonebulk, quota zero",
+      "combined_command_exit_code": 0,
+      "evidence_level": "Observed exec tool return only; no standalone original stdout file retained. Fresh raw stdout will be recorded separately, not retroactively attributed to this run."
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "env -u GOROOT GOENV=off GOTOOLCHAIN=local GOWORK=off GOPROXY=off GOSUMDB=off GOFLAGS=-mod=readonly PATH=/Users/liran/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.27.1.darwin-arm64/bin:$PATH WEIR_SEARCH_INTEGRATION=elasticsearch go test -v -race -tags=integration -count=2 -timeout=120s -run '^(TestRealSearchBackendDeadlineAcknowledgements|TestSearchSharedDeadlineCancellationAndDrain)$' ./internal/backend/search",
+      "result": "PASS",
+      "duration": "16.630s",
+      "log": "replay-search-real-deadline-cancel-drain-race2.log",
+      "receipt": "replay-search-real-receipt.json",
+      "scope": "Separate exact471 focused real ES replay, complete live stdout; production-equivalent to230. Not a full package or throughput measurement.",
+      "evidence_level": "Complete stdout and stderr captured live by shell redirection for this new replay; original earlier stdout files did not exist."
+    }
+  ],
+  "coverageLimit": "TLS opt-in suites not enabled; no external services or secrets accessed.",
+  "invalidInitialSweep": "The first concurrent mongodb and store integration packages shared global failCommand on the same instance. One conflict case failed there, but isolated previous/current repeat10 each passed. Exact interfering configureFailPoint caller was not traced. Documented -p=1 or sequential packages; final Mongo/Store proof is sequential.",
+  "cleanup": "Only the fixtures started by this task stopped; no listeners27028/19200 remain. Worktree clean; commits not pushed.",
+  "evidence_note": "Prior real Search PASS facts derive from observed tools, with no independent original stdout artifact. The full-package command was a combined failed command, not an overall PASS. A separate focused replay with live owned ES records raw stdout; replay is correctness validation only, not throughput/capacity measurement.",
+  "fresh_real_search_validation": "replay-search-real-receipt.json",
+  "cleanup_note": "Initial cleanup and unpushed commit statement describe original authoring time. Root subsequently published230/471. Fresh real ES replay fixture da011862 stopped and removed; port19200 unoccupied; source and tracked files unchanged."
+}

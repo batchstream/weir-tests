@@ -1,0 +1,43 @@
+File: weir-profile-node
+Build ID: 9c6253949284bc306b0c88afee9533d6ef6204dc
+Type: delay
+Time: 2026-10-03 22:25:06 UTC
+Showing nodes accounting for 21.08s, 99.91% of 21.10s total
+Dropped 346 nodes (cum <= 0.11s)
+Showing top 35 nodes out of 98
+      flat  flat%   sum%        cum   cum%
+    18.82s 89.18% 89.18%     18.83s 89.23%  sync.(*Mutex).Unlock (partial-inline)
+     1.86s  8.80% 97.98%      1.86s  8.80%  runtime.unlock (partial-inline)
+     0.41s  1.93% 99.91%      0.41s  1.93%  internal/sync.(*HashTrieMap[go.shape.interface {},go.shape.interface {}]).Swap
+         0     0% 99.91%      0.12s  0.57%  _.goready.func1
+         0     0% 99.91%      6.56s 31.07%  github.com/batchstream/weir-protocol/api/weir/v1._StoreService_Read_Handler
+         0     0% 99.91%      6.51s 30.87%  github.com/batchstream/weir-protocol/api/weir/v1._StoreService_Read_Handler.func1
+         0     0% 99.91%      3.87s 18.33%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).Execute
+         0     0% 99.91%      0.25s  1.17%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursor
+         0     0% 99.91%      0.23s  1.11%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursorState
+         0     0% 99.91%      0.23s  1.11%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).closeRecordCursorState.func1
+         0     0% 99.91%      3.72s 17.61%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads
+         0     0% 99.91%      0.23s  1.11%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeReads.deferwrap1
+         0     0% 99.91%      3.87s 18.33%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).executeRecords
+         0     0% 99.91%      0.15s  0.72%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).qualifyRecordBatch
+         0     0% 99.91%      0.15s  0.72%  github.com/batchstream/weir/internal/backend/mongodb.(*Adapter).qualifyTarget
+         0     0% 99.91%      0.15s  0.72%  github.com/batchstream/weir/internal/backend/targetcache.(*Cache[go.shape.struct { github.com/batchstream/weir/internal/backend/mongodb.database string; github.com/batchstream/weir/internal/backend/mongodb.collection string },go.shape.struct {}]).Acquire
+         0     0% 99.91%      1.75s  8.31%  github.com/batchstream/weir/internal/execution.(*ResultBudget).Reserve
+         0     0% 99.91%      6.51s 30.87%  github.com/batchstream/weir/internal/server.(*Server).Read
+         0     0% 99.91%      4.84s 22.92%  github.com/batchstream/weir/internal/server.(*Server).submitBatch
+         0     0% 99.91%      0.46s  2.17%  github.com/batchstream/weir/internal/server.(*responseCodec).Marshal
+         0     0% 99.91%      1.75s  8.31%  github.com/batchstream/weir/internal/server.(*rpcState).finish
+         0     0% 99.91%      1.06s  5.03%  github.com/batchstream/weir/internal/server.(*rpcState).finishLocked
+         0     0% 99.91%      1.76s  8.35%  github.com/batchstream/weir/internal/server.(*transportStats).HandleRPC
+         0     0% 99.91%      1.77s  8.38%  github.com/batchstream/weir/internal/server.transportStats.HandleRPC
+         0     0% 99.91%      6.54s 31.00%  github.com/batchstream/weir/internal/server.unaryRPC
+         0     0% 99.91%      4.84s 22.92%  github.com/batchstream/weir/internal/store.(*Runtime).SubmitBatch
+         0     0% 99.91%      5.30s 25.12%  github.com/batchstream/weir/internal/store.(*Runtime).execute
+         0     0% 99.91%      3.87s 18.34%  github.com/batchstream/weir/internal/store.(*Runtime).executeBatch
+         0     0% 99.91%      4.64s 21.97%  github.com/batchstream/weir/internal/store.(*Runtime).loop
+         0     0% 99.91%      5.14s 24.37%  github.com/batchstream/weir/internal/store.(*Runtime).loop.gowrap2
+         0     0% 99.91%      5.30s 25.12%  github.com/batchstream/weir/internal/store.(*Runtime).runBatch
+         0     0% 99.91%      1.06s  5.03%  github.com/batchstream/weir/internal/store.(*Ticket).Ack
+         0     0% 99.91%      1.65s  7.84%  github.com/batchstream/weir/internal/store.(*Ticket).WaitBatch
+         0     0% 99.91%      1.75s  8.31%  github.com/batchstream/weir/internal/store.(*Ticket).retainResults
+         0     0% 99.91%      1.75s  8.30%  github.com/batchstream/weir/internal/store.(*Ticket).retainResults-fm

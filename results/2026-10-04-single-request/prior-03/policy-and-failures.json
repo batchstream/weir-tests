@@ -1,0 +1,25 @@
+{
+  "source": "03fcec1bbb3806a41eca2aa39b4ff702a4b59331",
+  "server": "8970222602bd6f323dcdfb5af5162f864fd06a7a",
+  "client_request_timeout_seconds": 10,
+  "server_backend_timeout_seconds": 2,
+  "server_search_http_timeout_seconds": 2,
+  "scope": "Prior recipe; unequal internal backend budgets. All raw evidence retained; not the final equal-budget experiment. Complete three-level matrices remain measured observations, not maximum database capacity proof. Failed full-ladder reports are excluded from successful aggregate tables.",
+  "failed_primary_runs": [
+    {
+      "id": 37160128363,
+      "writes": 100,
+      "failure": "Elasticsearch Weir32 round3 timed:9 UNKNOWN, maximum ~2.0019s; message genericUNAVAILABLE cannot conclusively identify underlying transport cause."
+    },
+    {
+      "id": 37160116196,
+      "writes": 0,
+      "failure": "Elasticsearch direct512 round1 warmup:HTTP/context timeout."
+    },
+    {
+      "id": 37160122827,
+      "writes": 10,
+      "failure": "Elasticsearch direct512 round1 warmup:HTTP/context timeout."
+    }
+  ]
+}
