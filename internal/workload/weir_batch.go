@@ -54,36 +54,20 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 	}
 	outcomes := make([]Outcome, len(operations))
 	for index, reply := range replies {
-		if err != nil {
-			outcomes[index] = failed(err, false)
-			continue
-		}
-		if reply == nil || reply.Document == nil || reply.Failure != nil || reply.Missing || reply.Document.MediaType != p.dataset.MediaType() {
-			outcomes[index] = failed(errors.New("Weir batch read lacks matching successful document"), false)
-			continue
-		}
-		if err := p.dataset.Validate(reply.Document.Data, operations[index]); err != nil {
-			outcomes[index] = failed(err, false)
-			continue
-		}
-		outcome := Outcome{Status: Success, ResponseBytes: uint64(len(reply.Document.Data))}
-		outcomes[index] = outcome
+		outcomes[index] = p.readOutcome(reply, operations[index], err)
 	}
 	return outcomes
 }
 
 // A confirmed APPLIED item can also contain a post-write business failure.
 // Preserve that evidence, but exclude it from successful throughput. A failed
-// unary RPC supplies no item acknowledgements; all its writes remain unknown.
+// stream retains confirmed item evidence; only unconfirmed writes remain unknown.
 func mutationOutcome(result *weir.MutationResult, requestBytes int, rpcErr error) Outcome {
 	if result != nil && result.GetOutcome() == weir.MutationApplied {
 		outcome := Outcome{Status: Success, Applied: true, RequestBytes: uint64(requestBytes)}
-		if result.GetFailure() != nil || rpcErr != nil {
+		if result.GetFailure() != nil {
 			outcome.Status = Failed
-			failure := rpcErr
-			if result.GetFailure() != nil {
-				failure = errors.Join(fmt.Errorf("Weir APPLIED with failure: %v", result.GetFailure()), rpcErr)
-			}
+			failure := fmt.Errorf("Weir APPLIED with failure: %v", result.GetFailure())
 			outcome.Error = failure.Error()
 		}
 		return outcome

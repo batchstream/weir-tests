@@ -29,7 +29,7 @@ func metricsSnapshot(t *testing.T, measured bool) observe.Snapshot {
 	if measured {
 		rpc += 100
 	}
-	fmt.Fprintf(&raw, "weir_rpc_completions_total{method=\"read\",status=\"ok\"} %d\n", rpc)
+	fmt.Fprintf(&raw, "weir_rpc_completions_total{method=\"execute\",status=\"ok\"} %d\n", rpc)
 	metrics, err := observe.Parse(raw.String())
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +42,7 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	before := metricsSnapshot(t, false)
 	after := metricsSnapshot(t, true)
 	metrics := serverMetricDelta(before, after, "mongo")
-	if metrics.Unavailable != "" || metrics.AdapterBatchAverage == nil || *metrics.AdapterBatchAverage != 32 || metrics.Deltas["weir_store_executions_total"] != 100 || metrics.Deltas["weir_rpc_completions_total:read"] != 100 {
+	if metrics.Unavailable != "" || metrics.AdapterBatchAverage == nil || *metrics.AdapterBatchAverage != 32 || metrics.Deltas["weir_store_executions_total"] != 100 || metrics.Deltas["weir_rpc_completions_total:execute"] != 100 {
 		t.Fatalf("measured batch did not exclude warmup/other store: %+v", metrics)
 	}
 	if metrics.QueueWaitMeanSeconds == nil || *metrics.QueueWaitMeanSeconds != .001 || metrics.ExecutionMeanSeconds == nil || *metrics.ExecutionMeanSeconds != .005 {
@@ -51,8 +51,15 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	if metrics.ConcurrencyLimit == nil || *metrics.ConcurrencyLimit != 32 {
 		t.Fatal("configured limit became a delta or came from another store", metrics)
 	}
-	if metrics.RPCUnavailable["mutate"] == "" {
-		t.Fatal("missing optional RPC observation silently disappeared")
+	if len(metrics.RPCUnavailable) != 0 {
+		t.Fatal("observed stream RPC unexpectedly unavailable")
+	}
+	pair := SaturationPair{BatchSize: 1, Concurrency: 32, Round: 1}
+	pair.Weir.ServerMetrics = metrics
+	report := &SaturationReport{Pairs: []SaturationPair{pair}}
+	markdown := report.Markdown()
+	if !strings.Contains(markdown, "Execute RPCs") || !strings.Contains(markdown, "| 1 | 32 | 1 | 100 | 32.000 | 100 |") || strings.Contains(markdown, "Read/Mutate RPC counts") {
+		t.Fatal("human-readable report lost observed Execute counts", markdown)
 	}
 	after.Error = "scrape failed"
 	metrics = serverMetricDelta(before, after, "mongo")
@@ -83,14 +90,14 @@ func TestSingleRequestRPCProofRequiresActiveMethodCounts(t *testing.T) {
 	metrics := serverMetricDelta(before, after, "mongo")
 	metrics.qualifySingleRequests(100, 0)
 	if metrics.RPCsPerAdapter == nil || *metrics.RPCsPerAdapter != 1 {
-		t.Fatal("unused mutation series hid verified read-only aggregation evidence")
+		t.Fatal("read-only stream aggregation evidence lost")
 	}
 	metrics.qualifySingleRequests(100, 1)
 	if metrics.RPCsPerAdapter != nil {
-		t.Fatal("missing active mutation count became zero")
+		t.Fatal("mismatched total stream count became valid")
 	}
 	metrics.qualifySingleRequests(99, 0)
-	if metrics.RPCsPerAdapter != nil || metrics.RPCUnavailable["read"] == "" {
-		t.Fatal("extra timed unary completions were treated as single-request proof")
+	if metrics.RPCsPerAdapter != nil || metrics.RPCUnavailable["execute"] == "" {
+		t.Fatal("extra timed stream completions were treated as single-request proof")
 	}
 }

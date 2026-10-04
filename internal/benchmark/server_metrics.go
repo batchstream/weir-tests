@@ -49,7 +49,7 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 	} else {
 		metrics.ConcurrencyLimit = &afterLimit
 	}
-	for _, method := range []string{"read", "mutate"} {
+	for _, method := range []string{"execute"} {
 		methodLabels := map[string]string{"method": method}
 		value, deltaErr := observe.Delta(before, after, "weir_rpc_completions_total", methodLabels)
 		if deltaErr == nil {
@@ -65,10 +65,8 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 	if count := metrics.Deltas["weir_store_batch_operations_count"]; count > 0 {
 		average := metrics.Deltas["weir_store_batch_operations_sum"] / count
 		metrics.AdapterBatchAverage = &average
-		read, readFound := metrics.Deltas["weir_rpc_completions_total:read"]
-		mutate, mutateFound := metrics.Deltas["weir_rpc_completions_total:mutate"]
-		if readFound && mutateFound {
-			ratio := (read + mutate) / count
+		if streams, found := metrics.Deltas["weir_rpc_completions_total:execute"]; found {
+			ratio := streams / count
 			metrics.RPCsPerAdapter = &ratio
 		}
 	} else {
@@ -98,29 +96,21 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 	return metrics
 }
 
-// Single-request aggregation evidence must match the measured business calls.
-// An unused RPC method need not have an exported series; an active one must.
+// Single-request aggregation evidence must match every measured business stream.
 func (m *ServerMetrics) qualifySingleRequests(reads, writes uint64) {
 	m.RPCsPerAdapter = nil
 	if m.Unavailable != "" || m.AdapterBatchAverage == nil {
 		return
 	}
-	count := m.Deltas["weir_store_batch_operations_count"]
-	var observed float64
-	for method, calls := range map[string]uint64{"read": reads, "mutate": writes} {
-		value, found := m.Deltas["weir_rpc_completions_total:"+method]
-		if calls > 0 && !found {
-			return
-		}
-		if found && value != float64(calls) {
-			m.RPCUnavailable[method] = "timed unary completion count differs from measured single-request calls"
-			return
-		}
-		if found {
-			observed += value
-		}
+	observed, found := m.Deltas["weir_rpc_completions_total:execute"]
+	if !found {
+		return
 	}
-	if count > 0 {
+	if observed != float64(reads+writes) {
+		m.RPCUnavailable["execute"] = "timed stream completion count differs from measured single-request calls"
+		return
+	}
+	if count := m.Deltas["weir_store_batch_operations_count"]; count > 0 {
 		ratio := observed / count
 		m.RPCsPerAdapter = &ratio
 	}
