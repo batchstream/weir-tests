@@ -16,7 +16,7 @@ import (
 
 func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
 	t.Helper()
-	secondary := provisionBatchTarget(t, ctx, backend)
+	secondary := backend.provisionTarget(t, ctx, "batch_extra")
 	targets := []*backendData{backend, secondary}
 	const count = 48
 	mutations := make([]*weir.MutateRequest, count)
@@ -95,15 +95,15 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	t.Log("48 streamed SDK mutations across two same-Store targets, ordered results including precondition/missing, duplicate URI order, and slice preflight verified")
 }
 
-func provisionBatchTarget(t *testing.T, ctx context.Context, base *backendData) *backendData {
+func (base *backendData) provisionTarget(t *testing.T, ctx context.Context, suffix string) *backendData {
 	t.Helper()
-	name := base.collection + "_batch_extra"
+	name := base.collection + "_" + suffix
 	if base.name == "mongo" {
 		database := base.mongo.Database()
-		if err := database.CreateCollection(ctx, "batch_extra"); err != nil {
+		if err := database.CreateCollection(ctx, suffix); err != nil {
 			t.Fatal("create second owned Mongo collection:", err)
 		}
-		secondary := &backendData{name: base.name, collection: database.Name() + "/batch_extra", mongo: database.Collection("batch_extra")}
+		secondary := &backendData{name: base.name, collection: database.Name() + "/" + suffix, mongo: database.Collection(suffix)}
 		return secondary
 	}
 	secondary := &backendData{name: base.name, collection: name, searchURL: base.searchURL, http: base.http}

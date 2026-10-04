@@ -88,6 +88,8 @@ func TestSystemIntegration(t *testing.T) {
 			testPublicBatch(t, ctx, client, backend)
 			suite.testLargeDistinctBatch(t, backend)
 			suite.testStreamMemory(t, backend)
+			suite.testLuaSemantics(t, backend)
+			suite.testProjectionAndFailures(t, backend)
 		}) {
 			return
 		}

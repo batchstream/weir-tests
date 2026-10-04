@@ -482,8 +482,8 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 	}
 	if operation.Write {
 		if p.dataset.Config.LuaMutations {
-			program := &weir.ProgramTransform{Runtime: "lua.v1", Source: []byte(p.dataset.luaSource())}
-			request := &weir.AtomicTransformRequest{Resource: p.dataset.Resource(operation.Record), Program: program}
+			program := &weir.LuaTransform{Source: []byte(p.dataset.luaSource())}
+			request := &weir.AtomicTransformRequest{Resource: p.dataset.Resource(operation.Record), Lua: program}
 			opts := weir.AtomicTransformOptions{StoreName: p.dataset.Config.StoreName, Request: request}
 			result, err := p.client.AtomicTransform(ctx, opts)
 			return mutationOutcome(result, len(program.Source), err)
