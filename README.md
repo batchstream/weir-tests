@@ -47,7 +47,14 @@ Coverage includes discovery through every node, direct owner connections, typed
 CRUD and Lua transformations, independent persistence checks, same-Store calls
 containing many records, slice preflight and per-record validation, typed Scan filters and include/exclude projections, cross-owner continuation, Native response evidence,
 cancellation, owner restart, directory convergence and persistent client recovery.
-Lua tests cover missing and existing documents, explicit and implicit decisions, first creation, and concurrent read-modify-write through both owners. Missing records and missing backend targets have distinct outcomes; empty scans succeed and complete HTTP 404 responses retain Native completion evidence. Separate multi-process tests verify independent single-record callers.
+Lua source returns one function receiving the current and incoming documents as
+ordinary tables. Tests cover object replacements, explicit keep/delete/reject
+actions, first creation, and concurrent read-modify-write through both owners.
+Nil, missing or multiple callback results return INVALID_ARGUMENT, including a
+callback that returns a missing current document. Missing records and missing
+backend targets have distinct outcomes; empty scans succeed and complete HTTP
+404 responses retain Native completion evidence. Separate multi-process tests
+verify independent single-record callers.
 One-RPC reads deliver 64 MiB and 256 MiB across 1024 and 4096 distinct documents while
 checking bounded result credits and sampled owner RSS. Interrupted streams retain
 confirmed record outcomes; unconfirmed mutations remain indeterminate.
@@ -97,6 +104,8 @@ MongoDB request uses a snapshot transaction with one read, revision computation,
 replacement and majority commit. Each native Search request uses one real-time
 read and a write conditioned on its observed sequence number and primary term.
 The SDK sends one Lua `AtomicTransform` per request with the same computation.
+The function updates `current.revision = 1 - current.revision` and returns the
+current document; existing BSON int32 revision fields retain their width.
 Fixture documents are identical on both paths; Weir adds no document metadata.
 
 Repeat with `-backend-batch-limit 1` to disable server aggregation. Keep other

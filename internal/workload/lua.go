@@ -19,8 +19,11 @@ import (
 )
 
 func (d *Dataset) luaSource() string {
-	// The fixture stores BSON int32 and JSON 0/1, both read as Lua int32.
-	return `return weir.replace(weir.set(current, "revision", weir.sub(weir.i32("1"), weir.get(current, "revision"))))`
+	// Reassigning the existing revision field preserves its BSON int32 width.
+	return `return function(current)
+  current.revision = 1 - current.revision
+  return current
+end`
 }
 
 // The native path performs the same single-record read-modify-write, without

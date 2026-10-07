@@ -21,15 +21,16 @@ func (s *system) testLuaSemantics(t *testing.T, backend *backendData) {
 		n            int64
 		failure      weir.FailureCode
 	}{
-		{name: "merge", source: "return weir.replace(weir.merge(current,input))", present: true, n: 42},
-		{name: "implicit_replace", source: "return weir.merge(current,input)", present: true, n: 42},
-		{name: "keep", source: "return weir.keep()"},
-		{name: "delete", source: "return weir.delete()"},
-		{name: "reject", source: "return weir.reject(\"rejected\")", failure: weir.FailurePreconditionFailed},
-		{name: "no_return", source: "local v = current"},
-		{name: "nil_return", source: "return nil"},
-		{name: "current", source: "return current"},
-		{name: "invalid", source: "return )", failure: weir.FailureInvalidArgument},
+		{name: "merge", source: "return function(current, incoming) current = current or weir.object(); for key, item in pairs(incoming) do current[key] = item end; return current end", present: true, n: 42},
+		{name: "replace", source: "return function(_, incoming) return incoming end", present: true, n: 42},
+		{name: "keep", source: "return function() return weir.keep() end"},
+		{name: "delete", source: "return function() return weir.delete() end"},
+		{name: "reject", source: "return function() return weir.reject(\"rejected\") end", failure: weir.FailurePreconditionFailed},
+		{name: "no_return", source: "return function(current) local v = current end", failure: weir.FailureInvalidArgument},
+		{name: "nil_return", source: "return function() return nil end", failure: weir.FailureInvalidArgument},
+		{name: "multiple_return", source: "return function() return {}, weir.keep() end", failure: weir.FailureInvalidArgument},
+		{name: "current", source: "return function(current) return current end"},
+		{name: "invalid", source: "return function() return ) end", failure: weir.FailureInvalidArgument},
 	}
 	for _, existing := range []bool{false, true} {
 		for _, tc := range cases {
@@ -78,12 +79,11 @@ func (s *system) testConcurrentLuaCreate(t *testing.T, backend *backendData) {
 	t.Helper()
 	const id = "lua_cross_owner_counter"
 	const iterations = 4
-	one := "weir.i64(\"1\")"
-	if backend.name == "search" {
-		one = "weir.i32(\"1\")"
-	}
-	source := []byte(`if weir.kind(current)=="missing" then return weir.replace(input) end
-return weir.replace(weir.set(current,"n",weir.add(weir.get(current,"n"),` + one + `)))`)
+	source := []byte(`return function(current, incoming)
+  if current == nil then return incoming end
+  current.n = current.n + 1
+  return current
+end`)
 	start := make(chan struct{})
 	finished := make(chan error, 2)
 	for _, node := range s.cluster.Nodes[:2] {
