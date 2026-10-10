@@ -24,7 +24,6 @@ func metricsSnapshot(t *testing.T, measured bool) observe.Snapshot {
 		}
 		fmt.Fprintf(&raw, "%s{store=\"mongo\"} %g\n%s{store=\"search\"} 999999\n", name, value, name)
 	}
-	raw.WriteString("weir_store_concurrency_limit{store=\"mongo\"} 32\nweir_store_concurrency_limit{store=\"search\"} 16\n")
 	rpc := 10
 	if measured {
 		rpc += 100
@@ -48,9 +47,7 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	if metrics.QueueWaitMeanSeconds == nil || *metrics.QueueWaitMeanSeconds != .001 || metrics.ExecutionMeanSeconds == nil || *metrics.ExecutionMeanSeconds != .005 {
 		t.Fatal("queue/adapter means lost", metrics)
 	}
-	if metrics.ConcurrencyLimit == nil || *metrics.ConcurrencyLimit != 32 {
-		t.Fatal("configured limit became a delta or came from another store", metrics)
-	}
+
 	if len(metrics.RPCUnavailable) != 0 {
 		t.Fatal("observed stream RPC unexpectedly unavailable")
 	}
@@ -72,17 +69,7 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	if metrics.Unavailable == "" || metrics.AdapterBatchAverage != nil {
 		t.Fatal("missing metrics became zero batching", metrics)
 	}
-	after = metricsSnapshot(t, true)
-	for index := range after.Metrics {
-		metric := &after.Metrics[index]
-		if metric.Name == "weir_store_concurrency_limit" && metric.Labels["store"] == "mongo" {
-			metric.Value = 16
-		}
-	}
-	metrics = serverMetricDelta(before, after, "mongo")
-	if metrics.Unavailable == "" || metrics.ConcurrencyLimit != nil || metrics.AdapterBatchAverage != nil {
-		t.Fatal("changing concurrency configuration produced comparable evidence", metrics)
-	}
+
 }
 
 func TestSingleRequestRPCProofRequiresActiveMethodCounts(t *testing.T) {

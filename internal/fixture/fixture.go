@@ -32,18 +32,14 @@ const ownerLabel = "io.batchstream.weir-tests.owner"
 type Options struct {
 	WeirBinary string
 	// MongoBinary explicitly selects a native pinned mongod; empty uses Docker.
-	MongoBinary      string
-	Backends         []string
-	OwnerCount       int
-	DiscoveryOnly    bool
-	StoreConcurrency int
-	BatchSize        int
-	MaxReadSizeBytes int
-	BackendTimeout   time.Duration
-	IngressSessions  int
-	DatabaseCPUs     float64
-	ProcessMemoryMiB int
-	WorkingMemoryMiB map[string]int
+	MongoBinary    string
+	Backends       []string
+	OwnerCount     int
+	DiscoveryOnly  bool
+	BatchSize      int
+	PendingRecords int
+	ExchangeBytes  int
+	DatabaseCPUs   float64
 }
 
 type Node struct {
@@ -113,20 +109,11 @@ func Start(ctx context.Context, options Options) (*Cluster, error) {
 }
 
 func validateOptions(options Options) (Options, error) {
-	if options.BackendTimeout == 0 {
-		options.BackendTimeout = 2 * time.Second
-	}
-	if options.BackendTimeout < 0 {
-		return options, errors.New("backend timeout must be positive")
-	}
-	if options.IngressSessions == 0 {
-		options.IngressSessions = 64
-	}
 	if options.DatabaseCPUs == 0 {
 		options.DatabaseCPUs = 2
 	}
-	if options.IngressSessions < 1 || options.IngressSessions > 512 || options.DatabaseCPUs <= 0 || options.DatabaseCPUs > float64(runtime.NumCPU()) {
-		return options, errors.New("invalid ingress sessions or database CPU budget")
+	if options.DatabaseCPUs <= 0 || options.DatabaseCPUs > float64(runtime.NumCPU()) {
+		return options, errors.New("invalid database CPU budget")
 	}
 	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
 		return options, errors.New("fixture requires Linux or macOS")
@@ -172,35 +159,9 @@ func validateOptions(options Options) (Options, error) {
 	if options.OwnerCount < 1 || options.OwnerCount > 8 {
 		return options, errors.New("OwnerCount must be between 1 and 8")
 	}
-	if options.StoreConcurrency == 0 {
-		options.StoreConcurrency = 2
+	if options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
+		return options, errors.New("invalid batching, transport or exchange limit")
 	}
-	if options.MaxReadSizeBytes == 0 {
-		options.MaxReadSizeBytes = 2 << 20
-	}
-	if options.MaxReadSizeBytes < 1024 || options.MaxReadSizeBytes > 2<<20 {
-		return options, errors.New("invalid maximum read document size")
-	}
-	if options.BatchSize == 0 {
-		options.BatchSize = 32
-	}
-	if options.StoreConcurrency < 1 || options.BatchSize < 1 {
-		return options, errors.New("StoreConcurrency or BatchSize exceeds Weir bounds")
-	}
-	if options.ProcessMemoryMiB == 0 {
-		options.ProcessMemoryMiB = 8192
-	}
-	if options.ProcessMemoryMiB < 64 || options.ProcessMemoryMiB > 65536 {
-		return options, errors.New("invalid process memory envelope")
-	}
-	workspace := make(map[string]int, len(options.WorkingMemoryMiB))
-	for backend, memory := range options.WorkingMemoryMiB {
-		if !slices.Contains(options.Backends, backend) || memory < 24 || memory > options.ProcessMemoryMiB {
-			return options, errors.New("invalid backend working memory envelope")
-		}
-		workspace[backend] = memory
-	}
-	options.WorkingMemoryMiB = workspace
 	return options, nil
 }
 
@@ -285,22 +246,29 @@ func (c *Cluster) writeConfiguration(index int) error {
 	if !node.Owner {
 		discovery["group"] = "directory-" + c.owner
 	}
-	transport := map[string]any{"max_connections": 64, "max_sessions": c.options.IngressSessions}
-	basic := map[string]any{"listeners": listeners, "diagnostics": diagnostics, "discovery": discovery, "transport": transport, "memory": fmt.Sprintf("%dMiB", c.options.ProcessMemoryMiB)}
+	transport := map[string]any{}
+	if c.options.PendingRecords > 0 {
+		transport["max_pending_records"] = c.options.PendingRecords
+	}
+	basic := map[string]any{"listeners": listeners, "diagnostics": diagnostics, "discovery": discovery, "transport": transport}
 	if err := writeJSON(c.nodeFile(index, "config.json"), basic); err != nil {
 		return err
 	}
 	stores := make([]map[string]any, 0, len(c.options.Backends))
 	if node.Owner {
 		for _, backend := range c.options.Backends {
-			store := map[string]any{"name": backend, "max_concurrency": c.options.StoreConcurrency, "max_batch_operations": c.options.BatchSize, "max_read_size": fmt.Sprintf("%dB", c.options.MaxReadSizeBytes), "backend_timeout": c.options.BackendTimeout.String()}
-			if memory, configured := c.options.WorkingMemoryMiB[backend]; configured {
-				store["working_memory"] = fmt.Sprintf("%dMiB", memory)
+			adapter := map[string]any{}
+			if c.options.ExchangeBytes > 0 {
+				adapter["max_exchange_bytes"] = fmt.Sprintf("%dB", c.options.ExchangeBytes)
 			}
 			if backend == "mongo" {
-				store["mongodb"] = map[string]any{"uri": c.MongoURI}
+				adapter["mongodb"] = map[string]any{"uri": c.MongoURI}
 			} else {
-				store["search"] = map[string]any{"url": c.SearchURL}
+				adapter["search"] = map[string]any{"url": c.SearchURL}
+			}
+			store := map[string]any{"name": backend, "backend": adapter}
+			if c.options.BatchSize > 0 {
+				store["batching"] = map[string]any{"max_operations": c.options.BatchSize}
 			}
 			stores = append(stores, store)
 		}

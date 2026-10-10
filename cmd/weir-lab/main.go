@@ -46,8 +46,9 @@ type labOptions struct {
 	warmupDuration    time.Duration
 	duration          time.Duration
 	databaseCPUs      float64
-	storeConcurrency  int
-	workingMemoryMiB  int
+	pendingRecords    int
+	exchangeBytes     int
+	serverReceipt     string
 	clientProcesses   int
 	backendBatchLimit int
 	luaMutations      bool
@@ -72,7 +73,7 @@ func main() {
 	flag.IntVar(&opts.warmup, "warmup", 1000, "untimed operations per path")
 	flag.IntVar(&opts.records, "records", 2048, "fixed working-set document count")
 	flag.IntVar(&opts.payload, "payload-bytes", 1024, "deterministic document payload size")
-	flag.IntVar(&opts.concurrency, "concurrency", 8, "matched client workers and Weir Store concurrency")
+	flag.IntVar(&opts.concurrency, "concurrency", 8, "client workers for finite diagnostics")
 	flag.IntVar(&opts.rounds, "rounds", 3, "alternating paired rounds")
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
 	flag.BoolVar(&opts.luaMutations, "lua-mutations", false, "single-record read-modify-write: native transaction/OCC versus Weir Lua; no client batching")
@@ -80,12 +81,13 @@ func main() {
 	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 512 in single-request mode")
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
 	flag.IntVar(&opts.clientProcesses, "client-processes", 4, "independent client OS processes; each level is evenly divided into concurrent workers and its own connection pool")
-	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 32, "server adapter aggregation limit, independent of one-record client requests; 1 disables cross-request aggregation")
+	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 0, "batching.max_operations override; 0 uses server default, 1 disables aggregation")
 	flag.DurationVar(&opts.warmupDuration, "warmup-duration", 10*time.Second, "untimed warmup per saturation stage")
 	flag.DurationVar(&opts.duration, "duration", 20*time.Second, "timed duration per saturation stage, including completion joins")
 	flag.Float64Var(&opts.databaseCPUs, "database-cpus", 1, "enforced CPU quota for each owned Docker database; native Mongo uses all host CPUs")
-	flag.IntVar(&opts.storeConcurrency, "store-concurrency", 32, "fixed Weir backend concurrency in saturation mode, independently of client workers")
-	flag.IntVar(&opts.workingMemoryMiB, "store-working-memory-mib", 0, "backend working memory override; zero sizes each backend for the configured concurrency")
+	flag.IntVar(&opts.pendingRecords, "pending-records", 0, "transport.max_pending_records override; 0 uses server default")
+	flag.IntVar(&opts.exchangeBytes, "exchange-bytes", 0, "backend.max_exchange_bytes override; 0 uses server default")
+	flag.StringVar(&opts.serverReceipt, "server-receipt", "", "verified build receipt for an explicit local source server")
 	flag.Parse()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -118,7 +120,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if err != nil {
 			return err
 		}
-		if len(levels) < 2 || len(levels) > 12 || len(batches) > 8 || opts.duration < 5*time.Second || opts.duration > 10*time.Minute || opts.warmupDuration < time.Second || opts.warmupDuration > time.Minute || opts.storeConcurrency < 1 || opts.storeConcurrency > 32 {
+		if len(levels) < 2 || len(levels) > 12 || len(batches) > 8 || opts.duration < 5*time.Second || opts.duration > 10*time.Minute || opts.warmupDuration < time.Second || opts.warmupDuration > time.Minute {
 			return errors.New("invalid saturation matrix or durations")
 		}
 		previous := 0
@@ -152,8 +154,8 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.databaseCPUs <= 0 || opts.databaseCPUs > float64(runtime.NumCPU()) {
 		return errors.New("database CPU quota exceeds host budget")
 	}
-	if opts.backendBatchLimit < 1 || opts.backendBatchLimit > 1024 {
-		return errors.New("backend-batch-limit must be 1 through 1024")
+	if opts.backendBatchLimit < 0 || opts.backendBatchLimit > 1024 || opts.pendingRecords < 0 || opts.pendingRecords > 4096 || opts.exchangeBytes < 0 || opts.exchangeBytes > 1<<30 || opts.exchangeBytes > 0 && opts.exchangeBytes < 4<<20 {
+		return errors.New("invalid batching, pending-records or exchange-bytes override")
 	}
 	maxWorkers := 32
 	if opts.mode != "fixed" {
@@ -181,13 +183,13 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	}
 	digest := sha256.Sum256(data)
 	provenance := map[string]string{
-		"weir_binary_sha256":           hex.EncodeToString(digest[:]),
-		"topology":                     "native client and Weir on one host; dedicated database Docker containers with loopback ports",
-		"client_operation_timeout":     businessTimeout.String(),
-		"weir_backend_timeout":         businessTimeout.String(),
-		"weir_max_batch_operations":    fmt.Sprint(opts.backendBatchLimit),
-		"weir_ingress_max_connections": "64",
-		"host_cpus":                    fmt.Sprint(runtime.NumCPU()),
+		"weir_binary_sha256":                          hex.EncodeToString(digest[:]),
+		"topology":                                    "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+		"client_operation_timeout":                    businessTimeout.String(),
+		"weir_batching_max_operations_override":       fmt.Sprint(opts.backendBatchLimit),
+		"weir_transport_max_pending_records_override": fmt.Sprint(opts.pendingRecords),
+		"weir_backend_max_exchange_bytes_override":    fmt.Sprint(opts.exchangeBytes),
+		"host_cpus":                                   fmt.Sprint(runtime.NumCPU()),
 	}
 	identityRaw, err := exec.CommandContext(ctx, binary, "version").Output()
 	if err != nil {
@@ -201,14 +203,14 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	}
 	provenance["weir_source"] = identity.Revision
 	if opts.mongoBinary != "" && slices.Contains(backends, "mongo") {
-		provenance["topology"] = "native client, Weir and isolated MongoDB on one host; Elasticsearch in a dedicated loopback Docker container"
+		provenance["topology"] = "native client, Weir and isolated MongoDB on one host; native MongoDB has no enforced CPU quota"
 	}
 	if pinsRaw, err := os.ReadFile("versions.json"); err == nil {
 		var pins map[string]string
 		if err := json.Unmarshal(pinsRaw, &pins); err != nil {
 			return err
 		}
-		if identity.Revision != pins["weir_source"] {
+		if opts.serverReceipt == "" && identity.Revision != pins["weir_source"] {
 			return errors.New("Weir binary does not match versions.json")
 		}
 		for _, key := range []string{"sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
@@ -216,6 +218,36 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		}
 	} else {
 		return errors.New("run the lab from the repository root with its versions.json lock")
+	}
+	if opts.serverReceipt != "" {
+		receiptRaw, err := os.ReadFile(opts.serverReceipt)
+		if err != nil {
+			return err
+		}
+		var receipt struct {
+			Source           string `json:"source"`
+			SHA256           string `json:"sha256"`
+			SourceDiffSHA256 string `json:"source_diff_sha256"`
+			SourceTreeSHA256 string `json:"source_tree_sha256"`
+			SourceDirty      bool   `json:"source_dirty"`
+			Identity         struct {
+				Revision string `json:"revision"`
+			} `json:"identity"`
+		}
+		if err := json.Unmarshal(receiptRaw, &receipt); err != nil {
+			return err
+		}
+		if receipt.Identity.Revision != identity.Revision || receipt.SHA256 != provenance["weir_binary_sha256"] || len(receipt.Source) != 40 || len(receipt.SourceTreeSHA256) != 64 || len(receipt.SourceDiffSHA256) != 64 {
+			return errors.New("local server build receipt does not match binary identity, checksum or source evidence")
+		}
+		provenance["weir_binary_revision"] = identity.Revision
+		provenance["weir_source"] = receipt.Source
+		provenance["weir_source_diff_sha256"] = receipt.SourceDiffSHA256
+		provenance["weir_source_tree_sha256"] = receipt.SourceTreeSHA256
+		provenance["weir_source_dirty"] = fmt.Sprint(receipt.SourceDirty)
+		provenance["weir_source_kind"] = "explicit local source build; unpublished changes may be present"
+	} else {
+		provenance["weir_source_kind"] = "locked immutable module source"
 	}
 	if revision, err := exec.CommandContext(ctx, "git", "rev-parse", "HEAD").Output(); err == nil {
 		provenance["test_source"] = strings.TrimSpace(string(revision))
@@ -229,24 +261,10 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if err := os.Mkdir(opts.output, 0o755); err != nil {
 		return fmt.Errorf("requires a new output directory; preserving existing reports: %w", err)
 	}
-	storeWorkers := opts.concurrency
-	if opts.mode != "fixed" {
-		storeWorkers = opts.storeConcurrency
+	if opts.mongoBinary == "" || slices.Contains(backends, "search") {
+		provenance["database_docker_cpu_quota"] = fmt.Sprint(opts.databaseCPUs)
 	}
-	provenance["weir_store_concurrency"] = fmt.Sprint(storeWorkers)
-	provenance["weir_ingress_max_sessions"] = fmt.Sprint(max(64, opts.concurrency))
-	provenance["database_docker_cpu_quota"] = fmt.Sprint(opts.databaseCPUs)
-	workspace, memoryMiB, err := fixtureMemoryBudget(opts, backends, storeWorkers)
-	if err != nil {
-		return err
-	}
-	for backend, memory := range workspace {
-		provenance["weir_"+backend+"_working_memory_mib"] = fmt.Sprint(memory)
-	}
-	maxReadBytes := min(2<<20, ((opts.payload+4096+4095)/4096)*4096)
-	provenance["weir_max_read_size_bytes"] = fmt.Sprint(maxReadBytes)
-	provenance["weir_memory_budget"] = fmt.Sprintf("%dMiB (declared process admission budget; not an OS reservation)", memoryMiB)
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, StoreConcurrency: storeWorkers, BatchSize: opts.backendBatchLimit, MaxReadSizeBytes: maxReadBytes, BackendTimeout: businessTimeout, IngressSessions: max(64, opts.concurrency), DatabaseCPUs: opts.databaseCPUs, ProcessMemoryMiB: memoryMiB, WorkingMemoryMiB: workspace}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, BatchSize: opts.backendBatchLimit, PendingRecords: opts.pendingRecords, ExchangeBytes: opts.exchangeBytes, DatabaseCPUs: opts.databaseCPUs}
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
 		return err
@@ -294,40 +312,6 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		}
 	}
 	return nil
-}
-
-func fixtureMemoryBudget(opts labOptions, backends []string, workers int) (map[string]int, int, error) {
-	if workers < 1 || workers > 65536/2 || opts.workingMemoryMiB < 0 || opts.workingMemoryMiB > 65536 {
-		return nil, 0, errors.New("invalid backend memory parameters")
-	}
-	workspace := make(map[string]int, len(backends))
-	// The pinned adapters bound one 2MiB-read batch by at most 41MiB for
-	// MongoDB (native reply, guard and scratch) and 96MiB for Search.
-	// Streaming ingress uses 32MiB per admitted stream. Add 1GiB for Store input/results and other framing.
-	memoryMiB := max(64, opts.concurrency)*32 + 1024
-	for _, backend := range backends {
-		perBatchMiB := 41
-		if opts.luaMutations {
-			perBatchMiB = 64
-		}
-		if backend == "search" {
-			perBatchMiB = 96
-		}
-		memory := opts.workingMemoryMiB
-		if memory == 0 {
-			if workers > 65536/perBatchMiB {
-				return nil, 0, errors.New("backend concurrency cannot fit the process memory envelope")
-			}
-			memory = max(384, workers*perBatchMiB)
-		}
-		workspace[backend] = memory
-		memoryMiB += memory + workers*2
-	}
-	memoryMiB = (memoryMiB + 1023) / 1024 * 1024
-	if memoryMiB > 65536 {
-		return nil, 0, errors.New("combined ingress and backend memory cannot fit the process envelope")
-	}
-	return workspace, memoryMiB, nil
 }
 
 func parsePositiveList(raw string) ([]int, error) {

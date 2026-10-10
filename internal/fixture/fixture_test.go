@@ -34,12 +34,11 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, Backends: []string{"redis"}},
 		{WeirBinary: binary, OwnerCount: -1},
 		{WeirBinary: binary, OwnerCount: 9},
-		{WeirBinary: binary, StoreConcurrency: -1},
 		{WeirBinary: binary, BatchSize: -1},
-		{WeirBinary: binary, MaxReadSizeBytes: 1023},
-		{WeirBinary: binary, MaxReadSizeBytes: (2 << 20) + 1},
-		{WeirBinary: binary, BackendTimeout: -time.Second},
-		{WeirBinary: binary, ProcessMemoryMiB: -1},
+		{WeirBinary: binary, BatchSize: 1025},
+		{WeirBinary: binary, PendingRecords: -1},
+		{WeirBinary: binary, PendingRecords: 4097},
+		{WeirBinary: binary, ExchangeBytes: (4 << 20) - 1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},
 	}
 	for _, options := range cases {
@@ -54,23 +53,14 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	backends[0] = "search"
-	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.StoreConcurrency != 2 || validated.BatchSize != 32 || validated.BackendTimeout != 2*time.Second {
+	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.BatchSize != 0 || validated.PendingRecords != 0 || validated.ExchangeBytes != 0 {
 		t.Fatalf("invalid defaults or retained caller slice: %+v", validated)
 	}
 	large := Options{WeirBinary: binary, BatchSize: 513}
 	if _, err := validateOptions(large); err != nil {
 		t.Fatal("valid physical batch greater than 128 rejected:", err)
 	}
-	workspace := map[string]int{"mongo": 384}
-	parallel := Options{WeirBinary: binary, StoreConcurrency: 33, WorkingMemoryMiB: workspace}
-	prepared, err := validateOptions(parallel)
-	if err != nil {
-		t.Fatal("backend concurrency retained an arbitrary cap", err)
-	}
-	workspace["mongo"] = 1024
-	if prepared.WorkingMemoryMiB["mongo"] != 384 {
-		t.Fatal("caller changed the admitted fixture memory envelope")
-	}
+
 	ctx := context.Background()
 	missing := Options{}
 	if _, err := Start(ctx, missing); err == nil {
@@ -154,7 +144,7 @@ func TestPublishedPortMustBeOneLoopbackBinding(t *testing.T) {
 }
 
 func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
-	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 4, BatchSize: 16, BackendTimeout: 10 * time.Second}
+	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, BatchSize: 16, PendingRecords: 128, ExchangeBytes: 8 << 20}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true", SearchURL: "http://127.0.0.1:50002"}
 	c.Nodes = []Node{
 		{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true},
@@ -190,8 +180,13 @@ func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
 		}
 		var routing struct {
 			Stores []struct {
-				Name           string `json:"name"`
-				BackendTimeout string `json:"backend_timeout"`
+				Name     string `json:"name"`
+				Batching struct {
+					MaxOperations int `json:"max_operations"`
+				} `json:"batching"`
+				Backend struct {
+					MaxExchangeBytes string `json:"max_exchange_bytes"`
+				} `json:"backend"`
 			}
 		}
 		if err := json.Unmarshal(routes, &routing); err != nil {
@@ -201,8 +196,8 @@ func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
 			t.Fatal("wrong Store ownership", string(routes))
 		}
 		for position, store := range routing.Stores {
-			if store.Name != options.Backends[position] || store.BackendTimeout != "10s" {
-				t.Fatal("owner backend did not receive the explicit business timeout", string(routes))
+			if store.Name != options.Backends[position] || store.Batching.MaxOperations != 16 || store.Backend.MaxExchangeBytes != "8388608B" {
+				t.Fatal("owner backend did not receive the current batching/exchange overrides", string(routes))
 			}
 		}
 	}
@@ -381,7 +376,7 @@ func TestStoppedProcessFailureIsPreservedInCloseAndReceipt(t *testing.T) {
 }
 
 func TestSingleOwnerConfigurationUsesAnEmptySeedList(t *testing.T) {
-	input := Options{WeirBinary: executableFile(t), Backends: []string{"mongo"}, OwnerCount: 1, StoreConcurrency: 2, BatchSize: 32}
+	input := Options{WeirBinary: executableFile(t), Backends: []string{"mongo"}, OwnerCount: 1}
 	options, err := validateOptions(input)
 	if err != nil {
 		t.Fatal(err)
@@ -397,8 +392,8 @@ func TestSingleOwnerConfigurationUsesAnEmptySeedList(t *testing.T) {
 		t.Fatal("single-owner config emits unsupported null seeds", string(data), err)
 	}
 	routes, err := os.ReadFile(c.nodeFile(0, "routes.json"))
-	if err != nil || !bytes.Contains(routes, []byte(`"backend_timeout": "2s"`)) {
-		t.Fatal("ordinary fixture lost the production backend timeout default", string(routes), err)
+	if err != nil || bytes.Contains(routes, []byte(`"batching"`)) || bytes.Contains(routes, []byte(`"max_exchange_bytes"`)) {
+		t.Fatal("ordinary fixture must leave server defaults unchanged", string(routes), err)
 	}
 }
 

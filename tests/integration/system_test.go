@@ -43,8 +43,8 @@ func TestSystemIntegration(t *testing.T) {
 	options := fixture.Options{
 		WeirBinary: binary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"),
 		Backends:   []string{"mongo", "search"},
-		OwnerCount: 2, DiscoveryOnly: true, StoreConcurrency: 2,
-		BatchSize: 513,
+		OwnerCount: 2, DiscoveryOnly: true,
+		BatchSize: 513, PendingRecords: streamPendingRecords,
 	}
 	cluster, err := fixture.Start(ctx, options)
 	if err != nil {

@@ -6,8 +6,10 @@ Go SDK and public protocol. It imports no server packages.
 
 The SDK, protocol, server revision, Go toolchain and database artifacts are
 locked in [versions.json](versions.json). Server binaries are built separately
-from the verified immutable source. Module replacements and floating revisions
-are rejected by the dependency check.
+from verified immutable module source. Explicit local builds for before/after
+experiments are frozen with a source snapshot and checksummed receipt; they are
+reported as local source. Module replacements and floating revisions are rejected
+by the dependency check.
 
 ## Preparation and offline tests
 
@@ -72,7 +74,8 @@ are retained in the printed output directory, including startup failures.
 
 The primary benchmark measures Weir's aggregation of independent single-record
 business requests. Four client OS processes issue one record per database call
-or SDK RPC. Every process owns its driver or SDK connection pool and a disjoint
+or SDK RPC. Concurrency levels count total workers across all processes; with
+four processes, levels 8 and 32 mean 2 and 8 workers per process. Every process owns its driver or SDK connection pool and a disjoint
 key partition. There is no client batching.
 
 Run on Linux with Docker so database CPU quotas can be enforced and inspected:
@@ -83,7 +86,7 @@ make benchmark
 # Equivalent command; choose a fresh output directory for each run.
 go run ./cmd/weir-lab -mode saturation \
   -weir .tools/weir -backend all -database-cpus 1 \
-  -store-concurrency 32 -backend-batch-limit 32 -client-processes 4 \
+  -client-processes 4 \
   -concurrency-levels 8,32,128 -batch-sizes 1 \
   -records 2048 -payload-bytes 1024 -write-percent 0 \
   -rounds 3 -warmup-duration 10s -duration 20s \
@@ -132,12 +135,82 @@ concurrency alone cannot prove a plateau. A plateau with low database CPU leaves
 maximum-capacity comparison unavailable. Reports still show observed throughput
 and latency at each matched concurrency. No performance ratio is a CI threshold.
 
-The lab records `weir_max_read_size_bytes`: the payload plus 4 KiB metadata
-headroom, rounded up to 4 KiB and capped at 2 MiB. This prevents reserving 2 MiB
-for every 1 KiB benchmark read; large-document integration still uses 2 MiB.
-Weir working-memory and process-admission budgets scale with backend concurrency
-and ingress sessions. Reports record declared budgets and observed usage.
-`-store-working-memory-mib` allows explicit workspace experiments.
+The lab leaves server configuration at its defaults unless an experiment explicitly
+sets `-backend-batch-limit` (`batching.max_operations`), `-pending-records`
+(`transport.max_pending_records`) or `-exchange-bytes`
+(`backend.max_exchange_bytes`). Zero means omitted; the generated fixture
+configuration and raw metrics preserve the actual settings. There is no Store
+concurrency, workspace memory or per-backend timeout override in the current
+server contract. The SDK and native callers both use the complete 10s request
+budget.
+
+For an unpublished local server refactor, freeze its Go source and build a new
+binary. Existing output artifacts are preserved:
+
+```sh
+python3 scripts/build_local_server.py --source ../weir \
+  --output .tools/performance-after-server
+go build -trimpath -buildvcs=false -o .tools/performance-lab ./cmd/weir-lab
+.tools/performance-lab -mode saturation \
+  -weir .tools/performance-after-server \
+  -server-receipt .tools/performance-after-server.receipt.json \
+  -backend mongo -mongod .tools/mongod -client-processes 4 \
+  -concurrency-levels 8,32 -batch-sizes 1 -records 1024 \
+  -payload-bytes 1024 -write-percent 10 -rounds 3 \
+  -warmup-duration 2s -duration 5s -output results/local/after-mixed
+```
+
+The receipt records the binary SHA256, source HEAD, dirty state, Go source tree
+SHA256 and every frozen input file. The retained source snapshot includes local
+untracked Go files and a tracked Go diff, so the binary can be rebuilt independently
+of later edits. Only Go build inputs are copied; secret files are excluded.
+Local macOS measurements describe the observed workload on that host and do not
+prove Linux database saturation or a production capacity limit.
+
+`scripts/run_performance_matrix.py` serializes read, mixed (10%), write and Lua
+cases at total concurrency 8/32, with three alternating native/Weir rounds,
+2s warmup and 5s measurement for native MongoDB, or 20s warmup and 20s
+measurement for Elasticsearch per stage. Longer Search stages gave better
+resource sampling coverage and avoided a short-run regression that did not
+reproduce in the adjacent longer comparison. These are measurement defaults;
+the server batching and transport defaults remain 32 records.
+`--warmup-duration` and `--duration` allow explicit overrides. It retains exact commands, client source
+snapshots, binary hashes, JSON/Markdown reports and copied fixture cleanup/log
+evidence. The runner uses an explicit `--server-receipt` or automatically loads
+the adjacent `.receipt.json`, passing frozen local receipts to the lab while
+retaining locked module receipts as provenance. It checks the server SHA256
+before and after every case, and the summarizer requires each report's actual
+binary, source and pinned SDK/protocol/backend images to match its receipt.
+Use a fresh output root for each server or batching candidate:
+
+```sh
+python3 scripts/run_performance_matrix.py --backend mongo \
+  --weir .tools/performance-before-server --mongod .tools/mongod \
+  --output results/local/mongo-before --bulk
+python3 scripts/run_performance_matrix.py --backend mongo \
+  --weir .tools/performance-after-server \
+  --server-receipt .tools/performance-after-server.receipt.json \
+  --mongod .tools/mongod --output results/local/mongo-after --bulk
+python3 scripts/summarize_performance.py --backend mongo \
+  --before results/local/mongo-before --after results/local/mongo-after \
+  --output results/local/mongo-comparison
+```
+
+`--bulk` appends read and write cases using 32 records per call. Bulk cases use
+one client process with 8/32 workers; ordinary and Lua cases use four independent
+client processes. Batching limits 128/256 need the bulk cases or higher single
+request concurrency to exercise batches above 32 records.
+
+The summary recomputes throughput from all successful records and measured time,
+preserves each round's throughput and p95, and checks that every compared case
+has matching client source/binary hashes, workload parameters and paired round
+order. Missing core cases are marked partial; a one-sided bulk case is recorded
+as missing. Server CPU time and Go allocation costs use Prometheus counter
+differences around each timed stage, including small metrics collection overhead.
+RSS is a sampled maximum. Physical database commands are reported only when the
+harness captured counters around the full stage; an unavailable bulk count is
+not inferred from adapter calls. Histograms without separate 31 and 32 boundaries
+cannot determine the exact 32-record full-batch fraction.
 
 ## Other workload modes
 
@@ -167,6 +240,8 @@ concurrency and grouping controls on dispatch. Workflow artifacts preserve raw
 reports and owned-resource cleanup receipts.
 
 Generated measurements belong in ignored output directories under `results/`.
+The minimal `results/go.mod` isolates historical generated Go evidence from root
+unit tests and dependency checks without moving or deleting old measurements.
 See [results/README.md](results/README.md) for the evidence required when comparing
 runs. The current checkout documents and tests the current contract; previous
 source revisions and measurements remain available in Git history.

@@ -28,9 +28,7 @@ func (r *SaturationReport) Markdown() string {
 	if r.Parameters.OperationTimeout != "" {
 		fmt.Fprintf(&text, "Complete business-request budget for both paths: %s.\n\n", r.Parameters.OperationTimeout)
 	}
-	if timeout := r.Provenance["weir_backend_timeout"]; timeout != "" {
-		fmt.Fprintf(&text, "Configured Weir Store backend budget: %s; the active caller deadline also applies.\n\n", timeout)
-	}
+
 	if r.Parameters.ClientProcesses > 0 {
 		fmt.Fprintf(&text, "%d independent OS client processes. Each worker sends one business request containing one record, waits for its acknowledged result, and validates it. p50/p95/p99 describe individual requests; histograms are pooled rather than averaging process quantiles.\n\n", r.Parameters.ClientProcesses)
 	} else {
@@ -42,17 +40,17 @@ func (r *SaturationReport) Markdown() string {
 			fmt.Fprintf(&text, "| %d | %d | %d | %s | %d | %d | %d | %d | %.1f | %.3f | %.1f | %.1f | %.1f | %t |\n", pair.BatchSize, pair.Concurrency, pair.Round, result.Path, result.Reads, result.Writes, result.Succeeded, result.Errors+result.Indeterminate, result.OperationsPerSec, float64(result.Latency.P95NS)/1e6, result.Resources.MeanCPUPercent, result.Resources.FullCPUFraction*100, result.Resources.Coverage*100, result.Verified)
 		}
 	}
-	text.WriteString("\nMeasured Weir adapter and streaming RPC evidence (warmup, reset and postflight excluded):\n\n| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Execute RPCs | Queue mean ms | Adapter mean ms | Rejections | Backend concurrency limit |\n| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |\n")
+	text.WriteString("\nMeasured Weir adapter and streaming RPC evidence (warmup, reset and postflight excluded):\n\n| Batch | Workers | Round | Adapter invocations | Mean adapter batch | Execute RPCs | Queue mean ms | Adapter mean ms | Rejections |\n| ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: |\n")
 	var metricWarnings []string
 	for _, pair := range r.Pairs {
 		metrics := pair.Weir.ServerMetrics
 		if metrics == nil {
-			fmt.Fprintf(&text, "| %d | %d | %d | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |\n", pair.BatchSize, pair.Concurrency, pair.Round)
+			fmt.Fprintf(&text, "| %d | %d | %d | unavailable | unavailable | unavailable | unavailable | unavailable | unavailable |\n", pair.BatchSize, pair.Concurrency, pair.Round)
 			continue
 		}
-		fmt.Fprintf(&text, "| %d | %d | %d | %s | %s | %s | %s | %s | %s | %s |\n", pair.BatchSize, pair.Concurrency, pair.Round,
+		fmt.Fprintf(&text, "| %d | %d | %d | %s | %s | %s | %s | %s | %s |\n", pair.BatchSize, pair.Concurrency, pair.Round,
 			metricCounter(metrics, "weir_store_executions_total"), metricMean(metrics.AdapterBatchAverage, 1), metricCounter(metrics, "weir_rpc_completions_total:execute"),
-			metricMean(metrics.QueueWaitMeanSeconds, 1000), metricMean(metrics.ExecutionMeanSeconds, 1000), metricCounter(metrics, "weir_store_rejections_total"), metricMean(metrics.ConcurrencyLimit, 1))
+			metricMean(metrics.QueueWaitMeanSeconds, 1000), metricMean(metrics.ExecutionMeanSeconds, 1000), metricCounter(metrics, "weir_store_rejections_total"))
 		if metrics.Unavailable != "" {
 			warning := fmt.Sprintf("Metrics unavailable (batch %d, workers %d, round %d): %s.", pair.BatchSize, pair.Concurrency, pair.Round, strings.ReplaceAll(metrics.Unavailable, "\n", " "))
 			metricWarnings = append(metricWarnings, warning)
