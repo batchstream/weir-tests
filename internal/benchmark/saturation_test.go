@@ -210,9 +210,9 @@ func TestDurationMeasurementJoinsInFlightBatchesAndCountsLogicalWork(t *testing.
 	}
 }
 
-func TestSaturationReportRecordsClientAndBackendRequestBudgets(t *testing.T) {
+func TestSaturationReportRecordsCompleteRequestBudget(t *testing.T) {
 	parameters := SaturationParameters{OperationTimeout: "10s", ClientProcesses: 4}
-	report := &SaturationReport{Parameters: parameters, Provenance: map[string]string{"weir_backend_timeout": "10s", "client_operation_timeout": "10s"}}
+	report := &SaturationReport{Parameters: parameters, Provenance: map[string]string{"client_operation_timeout": "10s"}}
 	raw, err := json.Marshal(report)
 	if err != nil {
 		t.Fatal(err)
@@ -226,11 +226,11 @@ func TestSaturationReportRecordsClientAndBackendRequestBudgets(t *testing.T) {
 	if err := json.Unmarshal(raw, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	if decoded.Parameters.OperationTimeout != "10s" || decoded.Provenance["client_operation_timeout"] != "10s" || decoded.Provenance["weir_backend_timeout"] != "10s" {
+	if decoded.Parameters.OperationTimeout != "10s" || decoded.Provenance["client_operation_timeout"] != "10s" {
 		t.Fatal("raw report lost the matched complete-request policy", string(raw))
 	}
 	markdown := report.Markdown()
-	if !strings.Contains(markdown, "Complete business-request budget for both paths: 10s") || !strings.Contains(markdown, "Configured Weir Store backend budget: 10s") {
+	if !strings.Contains(markdown, "Complete business-request budget for both paths: 10s") {
 		t.Fatal("human-readable report hid the request budgets", markdown)
 	}
 }

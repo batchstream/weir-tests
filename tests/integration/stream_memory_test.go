@@ -15,10 +15,67 @@ import (
 	"time"
 
 	weir "github.com/batchstream/weir-go"
+	"github.com/batchstream/weir-protocol/api/protocol"
 	"github.com/batchstream/weir-tests/internal/fixture"
 	"github.com/batchstream/weir-tests/internal/observe"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
+
+const streamPendingRecords = 32
+
+// A ReadStream uses one Execute RPC with no other business RPCs active here.
+// Each owner's reservations are bounded by its transport record window and the
+// public protocol event size; these credits describe ownership rather than RSS.
+func streamReservations(ctx context.Context, nodes []fixture.Node, store string) (bool, error) {
+	idle := true
+	labels := map[string]string{"store": store}
+	for _, node := range nodes {
+		if !node.Owner {
+			continue
+		}
+		snapshot := observe.Fetch(ctx, node.Diagnostics)
+		values := make(map[string]float64)
+		for _, name := range []string{
+			"pending_entries", "pending_reserved_bytes", "result_reserved_entries", "result_reserved_bytes",
+			"working_reserved_bytes", "retained_results", "retained_result_reserved_bytes", "active_executions", "publishers",
+		} {
+			value, found := snapshot.Sum("weir_store_"+name, labels)
+			if !found || value < 0 {
+				return false, fmt.Errorf("Store stream metric %s unavailable or negative: value=%v error=%s", name, value, snapshot.Error)
+			}
+			values[name] = value
+			idle = idle && value == 0
+		}
+		if values["result_reserved_entries"] > streamPendingRecords || values["result_reserved_bytes"] > streamPendingRecords*protocol.MaxEvent ||
+			values["pending_entries"] > values["result_reserved_entries"] || values["retained_results"] > values["result_reserved_entries"] ||
+			values["retained_result_reserved_bytes"] > values["result_reserved_bytes"] {
+			return false, fmt.Errorf("Store %s stream reservations exceeded transport/protocol ownership bounds: %v", store, values)
+		}
+	}
+	return idle, nil
+}
+
+func (s *system) waitStreamIdle(t *testing.T, store string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(s.ctx, 5*time.Second)
+	defer cancel()
+	ticker := time.NewTicker(20 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		idle, err := streamReservations(ctx, s.cluster.Nodes, store)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if idle {
+			return
+		}
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			t.Fatalf("Store %s retained execution or publication credits after stream completion: %v", store, ctx.Err())
+		}
+	}
+}
 
 // Sample only processes started by this suite, including both possible owners.
 func ownerResidentBytes(ctx context.Context, nodes []fixture.Node) (uint64, error) {
@@ -88,6 +145,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 	backend.assertPersisted(t, s.ctx, "stream_memory_1023", 42)
 	var shortPeak uint64
 	for _, count := range []int{1024, 4096} {
+		s.waitStreamIdle(t, backend.name)
 		before := s.nodeMetrics(t)
 		ctx, stop := context.WithTimeout(s.ctx, 90*time.Second)
 		produced, consumed := 0, uint64(0)
@@ -98,19 +156,8 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 				return err
 			}
 			peak = max(peak, resident)
-			for _, node := range s.cluster.Nodes {
-				if !node.Owner {
-					continue
-				}
-				snapshot := observe.Fetch(ctx, node.Diagnostics)
-				labels := map[string]string{"store": backend.name}
-				retained, found := snapshot.Sum("weir_store_result_reserved_bytes", labels)
-				limit, limitFound := snapshot.Sum("weir_store_result_reserved_bytes_limit", labels)
-				if !found || !limitFound || retained < 0 || retained > limit {
-					return fmt.Errorf("Store result credits invalid: retained=%v limit=%v error=%s", retained, limit, snapshot.Error)
-				}
-			}
-			return nil
+			_, err = streamReservations(ctx, s.cluster.Nodes, backend.name)
+			return err
 		}
 		if err := sample(); err != nil {
 			stop()
@@ -149,6 +196,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		if err != nil || consumed != uint64(count) || bytes < uint64(count)*payloadBytes {
 			t.Fatalf("large call failed: count=%d consumed=%d bytes=%d error=%v", count, consumed, bytes, err)
 		}
+		s.waitStreamIdle(t, backend.name)
 		evidence := streamBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "read", Records: count}
 		assertStreamBatchMetrics(t, evidence)
 		if count == 1024 {

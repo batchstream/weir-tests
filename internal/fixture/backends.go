@@ -170,7 +170,7 @@ func (c *Cluster) readySearch(ctx context.Context) error {
 	var acknowledged struct {
 		Acknowledged bool `json:"acknowledged"`
 	}
-	template := `{"index_patterns":["*"],"priority":1000,"template":{"settings":{"number_of_shards":1,"number_of_replicas":0}}}`
+	template := `{"index_patterns":["weirtest_*","weir_*"],"priority":1000,"template":{"settings":{"number_of_shards":1,"number_of_replicas":0}}}`
 	templateRequest := searchRequest{Method: http.MethodPut, URL: c.SearchURL + "/_index_template/weir-tests", Body: template, Result: &acknowledged}
 	// Cluster-state publication can exceed a readiness probe at small CPU quotas.
 	// The complete startup context and this request still bound the wait.
