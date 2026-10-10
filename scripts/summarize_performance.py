@@ -5,6 +5,32 @@ from datetime import datetime
 import json
 from pathlib import Path
 
+from performance_evidence import validate_report_provenance
+
+
+def summarize_physical_counts(values):
+    commands, reasons = {}, []
+    expected_commands = None
+    for index, value in enumerate(values, 1):
+        unavailable = value.get('physical_database_command_observation_unavailable')
+        observed = value.get('timed_physical_database_command_deltas')
+        reason = None
+        if unavailable:
+            reason = str(unavailable)
+        elif not isinstance(observed, dict) or not observed:
+            reason = 'missing physical database command deltas'
+        elif any(not isinstance(count, int) or isinstance(count, bool) or count < 0 for count in observed.values()):
+            reason = 'invalid or reset physical database command counter'
+        elif expected_commands is not None and set(observed) != expected_commands:
+            reason = 'physical database command counters differ between rounds'
+        if reason:
+            reasons.append('paired round ' + str(index) + ': ' + reason)
+            continue
+        expected_commands = set(observed)
+        for name, count in observed.items():
+            commands[name] = commands.get(name, 0) + count
+    return (None if reasons else commands), reasons
+
 
 def metric_delta(metrics, name):
     counters = []
@@ -46,10 +72,7 @@ def summarize(report, concurrency, path):
     empty = {}
     succeeded = sum(value['succeeded'] for value in values)
     elapsed = sum(value['elapsed_ns'] for value in values)
-    commands = {}
-    for value in values:
-        for name, count in value.get('timed_physical_database_command_deltas', empty).items():
-            commands[name] = commands.get(name, 0) + count
+    commands, command_reasons = summarize_physical_counts(values)
     reads = sum(value['reads'] for value in values)
     writes = sum(value['writes'] for value in values)
     samples = [sample for value in values for sample in value['resources']['samples']]
@@ -113,7 +136,8 @@ def summarize(report, concurrency, path):
                   server_gc_pause_microseconds_per_operation=sum(gc_pauses) / succeeded * 1e6 if all(value is not None for value in gc_pauses) else None,
                   server_resource_scope='Prometheus counter differences between snapshots wrapping each measured Weir stage; includes small metrics collection overhead; RSS is a sampled maximum',
                   physical_commands=commands,
-                  physical_commands_available=all('timed_physical_database_command_deltas' in value for value in values),
+                  physical_commands_available=not command_reasons,
+                  physical_commands_unavailable_reasons=command_reasons,
                   reads=reads, writes=writes,
                   errors=sum(value['errors'] for value in values),
                   indeterminate=sum(value['indeterminate'] for value in values),
@@ -145,6 +169,11 @@ def main():
         before_receipt = json.loads((args.before / (case + '.receipt.json')).read_text())
         after_receipt = json.loads((args.after / (case + '.receipt.json')).read_text())
         receipts = (before_receipt, after_receipt)
+        for phase, report, receipt in (('before', before, before_receipt), ('after', after, after_receipt)):
+            try:
+                validate_report_provenance(report, receipt)
+            except ValueError as error:
+                raise SystemExit(case + ' ' + phase + ': ' + str(error)) from error
         if any(receipt.get('exit_code') != 0 for receipt in receipts):
             raise SystemExit(case + ': benchmark process did not exit successfully')
         if before_receipt['versions'] != after_receipt['versions']:

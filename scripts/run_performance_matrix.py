@@ -9,6 +9,7 @@ import shutil
 import subprocess
 
 from build_local_server import freeze_source
+from performance_evidence import validate_report_provenance, validate_server_receipt
 
 
 def main():
@@ -30,24 +31,23 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     client = output / 'performance-lab'
     weir = args.weir.resolve()
+    versions = json.loads((root / 'versions.json').read_text())
+    server_sha256 = hashlib.sha256(weir.read_bytes()).hexdigest()
+    server_receipt_path = args.server_receipt.resolve() if args.server_receipt else weir.with_suffix('.receipt.json')
+    server_receipt = json.loads(server_receipt_path.read_text())
+    receipt_kind = validate_server_receipt(server_receipt, server_sha256, versions)
+    archived_receipt = output / 'server.receipt.json'
+    archived_receipt.write_text(json.dumps(server_receipt, indent=2) + '\n')
     source_sha256, source_files = freeze_source(root, output / 'client-source')
     build_env = dict(os.environ, GOENV='off', GOWORK='off', GOFLAGS='-mod=readonly')
     subprocess.run(['go', 'build', '-trimpath', '-buildvcs=false', '-o', str(client), './cmd/weir-lab'],
                    cwd=output / 'client-source', env=build_env, check=True, timeout=600)
     provenance = dict(client_source_tree_sha256=source_sha256, client_source_files=source_files,
                       client_binary_sha256=hashlib.sha256(client.read_bytes()).hexdigest(),
-                      server_binary_sha256=hashlib.sha256(weir.read_bytes()).hexdigest(),
+                      server_binary_sha256=server_sha256,
                       test_source=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
                       test_source_dirty=bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=root)),
-                      versions=json.loads((root / 'versions.json').read_text()))
-    if args.server_receipt:
-        provenance['server_receipt'] = json.loads(args.server_receipt.read_text())
-        shutil.copy2(args.server_receipt, output / 'server.receipt.json')
-    else:
-        receipt = weir.with_suffix('.receipt.json')
-        if receipt.exists():
-            provenance['server_receipt'] = json.loads(receipt.read_text())
-            shutil.copy2(receipt, output / 'server.receipt.json')
+                      versions=versions, server_receipt=server_receipt, server_receipt_kind=receipt_kind)
     if args.mongod:
         mongod = args.mongod.resolve()
         provenance['native_mongodb_binary_sha256'] = hashlib.sha256(mongod.read_bytes()).hexdigest()
@@ -70,8 +70,8 @@ def main():
                    '-output', str(directory)]
         if args.mongod:
             command += ['-mongod', str(args.mongod.resolve())]
-        if args.server_receipt:
-            command += ['-server-receipt', str(args.server_receipt.resolve())]
+        if receipt_kind == 'local':
+            command += ['-server-receipt', str(archived_receipt)]
         if lua:
             command.append('-lua-mutations')
         concurrency = 'total 8/32; four OS processes each have 2/8 single-record workers'
@@ -79,14 +79,30 @@ def main():
             concurrency = 'one client OS process with 8/32 workers; 32 records per call'
         receipt = dict(provenance, command=command, case=name, concurrency=concurrency)
         receipt_path = output / (name + '.receipt.json')
+        receipt['server_binary_before_sha256'] = hashlib.sha256(weir.read_bytes()).hexdigest()
+        if receipt['server_binary_before_sha256'] != server_sha256:
+            receipt['validation_error'] = 'server binary changed before ' + name
+            receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+            raise ValueError(receipt['validation_error'])
         receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
         print('Starting ' + name, flush=True)
         with (output / (name + '.log')).open('w') as log:
             result = subprocess.run(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
         receipt['exit_code'] = result.returncode
+        receipt['server_binary_after_sha256'] = hashlib.sha256(weir.read_bytes()).hexdigest()
+        if receipt['server_binary_after_sha256'] != server_sha256:
+            receipt['validation_error'] = 'server binary changed during ' + name
+            receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+            raise ValueError(receipt['validation_error'])
         report_path = directory / (args.backend + '.json')
         if report_path.exists():
             report = json.loads(report_path.read_text())
+            try:
+                validate_report_provenance(report, receipt)
+            except ValueError as error:
+                receipt['validation_error'] = str(error)
+                receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+                raise
             fixture = Path(report['provenance']['fixture_logs'])
             evidence = output / (name + '-fixture')
             evidence.mkdir()

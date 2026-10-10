@@ -176,7 +176,12 @@ reproduce in the adjacent longer comparison. These are measurement defaults;
 the server batching and transport defaults remain 32 records.
 `--warmup-duration` and `--duration` allow explicit overrides. It retains exact commands, client source
 snapshots, binary hashes, JSON/Markdown reports and copied fixture cleanup/log
-evidence. Use a fresh output root for each server or batching candidate:
+evidence. The runner uses an explicit `--server-receipt` or automatically loads
+the adjacent `.receipt.json`, passing frozen local receipts to the lab while
+retaining locked module receipts as provenance. It checks the server SHA256
+before and after every case, and the summarizer requires each report's actual
+binary, source and pinned SDK/protocol/backend images to match its receipt.
+Use a fresh output root for each server or batching candidate:
 
 ```sh
 python3 scripts/run_performance_matrix.py --backend mongo \

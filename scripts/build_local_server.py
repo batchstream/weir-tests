@@ -64,7 +64,7 @@ def main():
     diff_paths = [item['path'] for item in manifest]
     diff = subprocess.check_output(['git', 'diff', 'HEAD', '--', *diff_paths], cwd=source)
     (frozen / 'source.diff').write_bytes(diff)
-    env = dict(os.environ, GOENV='off', GOWORK='off', CGO_ENABLED='0')
+    env = dict(os.environ, GOENV='off', GOWORK='off', GOFLAGS='-mod=readonly', CGO_ENABLED='0')
     # Ordinary local builds remain dev identities. The receipt identifies the frozen inputs.
     subprocess.run(['go', 'build', '-trimpath', '-buildvcs=false',
                     '-o', str(output), './cmd/weir'], cwd=frozen, env=env, check=True, timeout=600)
