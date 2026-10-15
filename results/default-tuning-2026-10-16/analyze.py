@@ -356,6 +356,44 @@ def analysis_inputs():
     return sorted(names)
 
 
+def formal_results(options):
+    manifest, rows = options['manifest'], options['rows']
+    capacity, rate_bounds, sustained, comparisons = [], [], [], []
+    for entry in manifest['entries']:
+        if entry['phase'] == 'selection':
+            continue
+        plan = json.loads(committed(REPO, entry['client_source'], entry['plan_path']))
+        cases = plan['case_sets'][entry['case_set']]
+        measured = [row for row in rows if row['label'] == entry['label']]
+        for case in cases:
+            points = [row for row in measured if row['case_id'] == case['id']]
+            if not points:
+                continue
+            if entry['phase'] == 'soak':
+                for row in points:
+                    if row['path'] in ('weir', 'optimized'):
+                        sustained.append(dict(label=entry['label'], case_id=case['id'], decision=capacity_rules.soak(dict(row=row, kind=case['kind'], histogram=helpers.histogram))))
+            elif case['kind'] == 'write' and case['backend'] == 'search' and case['write_percent'] == 100 and not case.get('lua_mutations') and len(case['levels']) >= 2:
+                capacity.append(dict(label=entry['label'], case_id=case['id'], decision=capacity_rules.capacity(dict(rows=points, levels=case['levels']))))
+            for row in points:
+                if row['path'] not in ('weir', 'optimized'):
+                    continue
+                native = next((item for item in points if item['path'] == 'direct' and item['round'] == row['round'] and item['workers'] == row['workers']), None)
+                qualified_pair = bool(native and native['usable'] and row['usable'])
+                comparison = dict(label=entry['label'], case_id=case['id'], workers=row['workers'], round=row['round'], qualified=qualified_pair)
+                if qualified_pair:
+                    comparison.update(qps_ratio=row['completed_s'] / native['completed_s'], database_cpu_per_unit_ratio=row['db_cpu_ms_per_completed'] / native['db_cpu_ms_per_completed'], actual_database_cpu_ratio=row['db_cpu_quota_percent'] / native['db_cpu_quota_percent'])
+                    comparison['comparable_throughput'] = .95 <= comparison['qps_ratio'] <= 1.05
+                comparisons.append(comparison)
+        crawler_cases = [case for case in cases if case['kind'] == 'crawler']
+        if entry['phase'] != 'soak' and len(crawler_cases) >= 2:
+            rates = sorted({case['rate'] for case in crawler_cases})
+            if measured and len(rates) >= 2:
+                rate_bounds.append(dict(label=entry['label'], decision=capacity_rules.crawler_rate_bounds(dict(rows=measured, rates=rates))))
+    result = dict(cpu_capacity=capacity, crawler_rate_bounds=rate_bounds, sustained=sustained, comparisons=comparisons)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, default=FOLDER / 'manifest.json')
@@ -379,7 +417,7 @@ def main():
     plan = json.loads(committed(REPO, manifest['selection_client'], manifest['selection_plan']))
     selection = rules.choose(dict(rows=[r for r in rows if r['phase'] == 'selection'], plan=plan))
     byte_selection = rules.choose_bytes([r for r in rows if r['phase'] == 'selection'])
-    result = dict(schema=1, runs=runs, rows=rows, selection=selection, byte_selection=byte_selection, complete_inventory=all(run['available'] for run in runs), analysis_sha256=checksum(Path(__file__).read_bytes()), selection_rules_sha256=checksum((FOLDER / 'selection_rules.py').read_bytes()))
+    result = dict(schema=1, runs=runs, rows=rows, selection=selection, byte_selection=byte_selection, formal=formal_results(dict(manifest=manifest, rows=rows)), complete_inventory=all(run['available'] for run in runs), analysis_sha256=checksum(Path(__file__).read_bytes()), selection_rules_sha256=checksum((FOLDER / 'selection_rules.py').read_bytes()))
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / 'analysis.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
     for name, values in (('stages', rows), ('runs', runs)):
