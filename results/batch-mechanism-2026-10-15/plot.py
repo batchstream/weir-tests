@@ -40,7 +40,10 @@ def main():
         fig.supxlabel('Circles: round 1; squares: round 2; triangles: round 3. Hollow markers fail all-arrivals gate. Throughput and CPU include drain.\nNative sends single updates; framed record counts are attempted request sizes, not acknowledged writes.', fontsize=8)
         fig.tight_layout(rect=(0, .07, 1, .94))
         for extension in ('png', 'svg'):
-            fig.savefig(args.output/(label+'.'+extension), dpi=180, bbox_inches='tight', metadata={'Creator': 'batch-mechanism plot.py'})
+            target = args.output/(label+'.'+extension)
+            fig.savefig(target, dpi=180, bbox_inches='tight', metadata={'Creator': 'batch-mechanism plot.py'})
+            if extension == 'svg':
+                target.write_text('\n'.join(line.rstrip() for line in target.read_text().splitlines())+'\n')
         plt.close(fig)
 
 
