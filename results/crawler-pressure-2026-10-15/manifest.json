@@ -66,7 +66,22 @@
     "duration_ns": 20000000000,
     "warmup_ns": 10000000000,
     "rounds": 3,
-    "selection": null
+    "selection": {
+      "status": "selected_from_native_calibration",
+      "workers": 512,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736840274",
+      "label": "calibration512",
+      "native_offered_products_s": 96,
+      "native_completed_products_s_including_drain": 57.69827286153495,
+      "q": 57,
+      "rates": [
+        45,
+        57,
+        68
+      ],
+      "selected_whole_run_go_audit_pass": true,
+      "calibration_is_capacity_evidence": false
+    }
   },
   "entries": [
     {

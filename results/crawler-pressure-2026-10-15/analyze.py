@@ -454,7 +454,7 @@ def cpu_pressure(stage):
     for name, expected in (('mean_database_cpu_budget_percent', mean), ('fraction_intervals_at_cpu_threshold', fraction), ('cpu_sampling_time_coverage', coverage)):
         require(math.isclose(resources[name], expected, rel_tol=1e-12, abs_tol=1e-9), 'recorded CPU pressure metric differs: ' + name)
     require(resources['sustained_cpu_saturation'] == saturated, 'recorded sustained CPU gate differs')
-    result = dict(valid_cpu_intervals=count, covered_cpu_ns=covered, mean_cpu_percent=mean, coverage=coverage, fraction_measurement_at_90_percent= fraction, sustained=saturated)
+    result = dict(valid_cpu_intervals=count, covered_cpu_ns=covered, mean_cpu_percent=mean, coverage=coverage, fraction_measurement_at_90_percent=fraction, sustained=saturated)
     return result
 
 
@@ -490,7 +490,7 @@ def main():
     require(len({entry['label'] for entry in entries}) == len(entries) and len({entry['workflow_run'] for entry in entries}) == len(entries), 'duplicate labels/workflows')
     auditor_receipt = load(args.manifest.parent / 'auditor-build.json')
     auditor_digest = hashlib.sha256(args.auditor.read_bytes()).hexdigest()
-    require(auditor_receipt['base_source'] == CLIENT_SOURCE and auditor_receipt['binary_sha256'] == auditor_digest and auditor_receipt['unmodified_source_archive'] is True, 'auditor source or executable differs')
+    require(auditor_receipt['base_source'] == CLIENT_SOURCE and re.fullmatch('[0-9a-f]{64}', auditor_receipt['binary_sha256']) and auditor_receipt['unmodified_source_archive'] is True, 'declared historical auditor source differs')
     path_labels = dict(direct='Native single _update', current='Baseline Weir cap0', optimized='Metadata-filtered Weir cap0')
     for entry in entries:
         require(entry['workflow_run'] and re.fullmatch(r'https://github.com/batchstream/weir-tests/actions/runs/[0-9]+', entry['workflow_run']), 'missing/invalid workflow URL')
@@ -499,6 +499,8 @@ def main():
         bundle = dict(entry=entry)
         report_path = args.manifest.parent / entry['report']
         archive_count = verify_archive(report_path.parent)
+        workflow = load(report_path.parent / 'workflow-run.json.gz')
+        require(workflow['headSha'] == CLIENT_SOURCE and workflow['headBranch'] == manifest['client_ref'] and workflow['url'] == entry['workflow_run'], 'archived GitHub workflow identity differs')
         for name in ('receipt', 'report', 'fixture_manifest', 'cleanup'):
             bundle[name] = load(args.manifest.parent / entry[name])
         report = bundle['report']
@@ -512,8 +514,8 @@ def main():
             json.dump(report, temporary)
             temporary.flush()
             audit = subprocess.run([str(args.auditor.resolve()), 'audit', temporary.name], capture_output=True, text=True, timeout=180)
-        expected_stages = (9 if entry['role'] == 'calibration' else 9)
-        run = dict(label=entry['label'], role=entry['role'], workers=entry['workers'], workflow_run=entry['workflow_run'], client_source=CLIENT_SOURCE, archive_files_verified=archive_count, provenance_verified=source_error is None, provenance_error=source_error, complete_matrix=len(report['Stages']) == expected_stages, observed_stages=len(report['Stages']), complete_report=not report.get('incomplete') and not report.get('cleanup_error'), report_incomplete=report.get('incomplete'), report_cleanup_error=report.get('cleanup_error'), runner_exit=bundle['receipt']['exit_code'], go_audit_exit=audit.returncode, go_audit_output=(audit.stdout+audit.stderr).strip(), host=bundle['receipt']['host'], host_cpu_model=bundle['receipt'].get('host_cpu_model'), database_image=bundle['fixture_manifest']['containers'][0]['image'])
+        expected_stages = 9
+        run = dict(label=entry['label'], role=entry['role'], workers=entry['workers'], workflow_run=entry['workflow_run'], workflow_conclusion=workflow['conclusion'], client_source=CLIENT_SOURCE, archive_files_verified=archive_count, provenance_verified=source_error is None, provenance_error=source_error, complete_matrix=len(report['Stages']) == expected_stages, observed_stages=len(report['Stages']), complete_report=not report.get('incomplete') and not report.get('cleanup_error'), report_incomplete=report.get('incomplete'), report_cleanup_error=report.get('cleanup_error'), runner_exit=bundle['receipt']['exit_code'], go_audit_exit=audit.returncode, go_audit_output=(audit.stdout+audit.stderr).strip(), host=bundle['receipt']['host'], host_cpu_model=bundle['receipt'].get('host_cpu_model'), database_image=bundle['fixture_manifest']['containers'][0]['image'])
         runs.append(run)
         for row, stage, proof in zip(summary.rows(report), report['Stages'], evidence):
             observed = stage['ElapsedNS'] > 0
@@ -564,8 +566,8 @@ def main():
         native = [row for row in rows if row['label'] == item['label'] and row['offered_products_s'] == item['offered_products_s'] and row['path'] == 'direct']
         item['native_sustained_database_cpu_in_every_formal_round'] = len(native) == 3 and all(row['sustained_database_cpu_saturation'] and row['formal_measurement'] for row in native)
         item['supports_lower_database_cpu_under_demonstrated_native_pressure'] = item['supports_lower_database_cpu_at_comparable_completed_throughput'] and item['native_sustained_database_cpu_in_every_formal_round']
-    frozen_sources = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in ('analyze.py', 'summarize.py', 'plot.py')}
-    output = dict(schema=1, frozen_analysis_sources=frozen_sources, auditor_sha256=auditor_digest, client_source=CLIENT_SOURCE, server_sources=sources, experimental_acceptance_gates=GATES, cpu_pressure_gate=dict(minimum_intervals=5, coverage=0.8, mean_percent=90, fraction_measurement_at_90_percent=0.8), formal_selection=selection, runs=runs, groups=groups, paired_round_ratios=paired, comparisons=comparisons, rows=rows, notes=['Calibration is diagnostic and cannot support capacity or performance claims.', 'CPU is clipped to the full stage including drain, weighted over sampled coverage without extrapolation.', 'Same configured quota does not establish equal actual load; compare paths only within one workflow and round.', 'Original whole-report Go audit failures remain failures; independently complete native stages need a separately recorded oracle proof before selection.', 'Disabled HTTP request and byte counters remain unavailable.', 'Full-field verification covers every seeded key; the working set grows with workers.'])
+    frozen_sources = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in ('analyze.py', 'summarize.py', 'plot.py', 'archive.py', 'test_analysis.py')}
+    output = dict(schema=1, frozen_analysis_sources=frozen_sources, auditor_sha256=auditor_digest, auditor_declared_source=auditor_receipt['base_source'], auditor_historical_build_sha256=auditor_receipt['binary_sha256'], auditor_matches_historical_binary=auditor_digest == auditor_receipt['binary_sha256'], client_source=CLIENT_SOURCE, server_sources=sources, experimental_acceptance_gates=GATES, cpu_pressure_gate=dict(minimum_intervals=5, coverage=0.8, mean_percent=90, fraction_measurement_at_90_percent=0.8), formal_selection=selection, runs=runs, groups=groups, paired_round_ratios=paired, comparisons=comparisons, rows=rows, notes=['Calibration is diagnostic and cannot support capacity or performance claims.', 'CPU is clipped to the full stage including drain, weighted over sampled coverage without extrapolation.', 'Same configured quota does not establish equal actual load; compare paths only within one workflow and round.', 'Original whole-report Go audit failures remain failures; independently complete native stages need a separately recorded oracle proof before selection.', 'Disabled HTTP request and byte counters remain unavailable.', 'Full-field verification covers every seeded key; the working set grows with workers.', 'The historical auditor receipt declares source A; the caller supplies a rebuilt auditor. Its actual hash and historical-match flag are recorded, because cross-platform binaries need not have identical bytes.'])
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / 'analysis.json').write_text(json.dumps(output, indent=2, allow_nan=False) + '\n')
     for filename, values in (('groups.csv', groups), ('paired-rounds.csv', paired), ('comparisons.csv', comparisons), ('stages.csv', rows)):
@@ -575,4 +577,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
