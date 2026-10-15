@@ -249,7 +249,7 @@ an explicit flag; credential-bearing URLs are rejected.
 
 CI runs offline unit/race/vet and dependency checks, real multi-node integration,
 and verified ordinary and Lua comparison smoke tests on both databases.
-`saturation.yml` runs read/mixed/write matrices on PRs and accepts CPU quota,
+`saturation.yml` runs only on explicit dispatch and accepts write percentage, CPU quota,
 concurrency, backend, workload mode, records per call and grouping controls on
 dispatch. Its default independent-client curve is 4/8/32/128/256, with three
 alternating rounds and 10s warmup plus 20s measurement per path. Supplemental

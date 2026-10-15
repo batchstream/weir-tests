@@ -48,9 +48,6 @@ on:
         default: '1'
         required: true
         type: string
-  pull_request:
-    paths-ignore:
-      - 'results/**'
 
 permissions:
   contents: read

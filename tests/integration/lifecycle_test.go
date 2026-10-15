@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strings"
 	"testing"
 
 	weir "github.com/batchstream/weir-go"
@@ -213,9 +212,9 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 	t.Helper()
 	request := &weir.NativeRequest{Resource: backend.collection}
 	if backend.name == "mongo" {
-		parts := strings.Split(backend.collection, "/")
 		filter := bson.D{{Key: "_id", Value: "primary"}}
-		command := bson.D{{Key: "count", Value: parts[len(parts)-1]}, {Key: "query", Value: filter}}
+		command := bson.D{{Key: "count", Value: backend.mongo.Name()}, {Key: "query", Value: filter}}
+		request.Resource = weir.EncodeSegment(backend.mongo.Database().Name())
 		request.Request = bsonDocument(t, command)
 	} else {
 		request = nativeHTTPGet(t, backend.collection, "/_doc/primary")
