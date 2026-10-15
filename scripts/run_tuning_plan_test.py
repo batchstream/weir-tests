@@ -57,9 +57,9 @@ class TuningPlanTest(unittest.TestCase):
         self.assertIn('-capture-effective-config', command)
 
     def test_invalid_load_matrix_fails_before_external_work(self):
-        for field, invalid in [('levels', [128, 128]), ('levels', [1028]), ('levels', [3]),
+        for field, invalid in [('levels', [128, 128]), ('levels', [2052]), ('levels', [3]),
                                ('records', 100), ('payload_bytes', 1 << 20), ('rounds', True),
-                               ('duration', '0s'), ('warmup', '61s'), ('client_processes', 9)]:
+                               ('duration', '0s'), ('warmup', '301s'), ('client_processes', 9)]:
             case = write_case()
             case[field] = invalid
             with self.subTest(field=field, invalid=invalid), self.assertRaises(ValueError):
@@ -69,6 +69,25 @@ class TuningPlanTest(unittest.TestCase):
         self.assertEqual(validate_case(case), 2)
         case = crawler_case()
         case['paths'] = ['direct', 'direct']
+        with self.assertRaises(ValueError):
+            validate_case(case)
+
+    def test_extended_write_ladder_keeps_crawler_warmup_and_finite_stages_bounded(self):
+        case = write_case()
+        case.update(levels=[1024, 2048], rounds=3, warmup='300s', duration='180s')
+        self.assertEqual(validate_case(case), 12)
+        command = write_command(case, Path('measurement'))
+        self.assertEqual(command[command.index('-concurrency-levels') + 1], '1024,2048')
+        self.assertEqual(command[command.index('-warmup-duration') + 1], '300s')
+        case['client_processes'] = 1
+        with self.assertRaises(ValueError):
+            validate_case(case)
+        case['client_processes'] = 4
+        case['levels'] = [2049]
+        with self.assertRaises(ValueError):
+            validate_case(case)
+        case = crawler_case()
+        case['warmup'] = '61s'
         with self.assertRaises(ValueError):
             validate_case(case)
 

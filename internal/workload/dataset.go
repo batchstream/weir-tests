@@ -78,7 +78,7 @@ func New(config Config) (*Dataset, error) {
 	if !namespacePattern.MatchString(config.Namespace) || !storePattern.MatchString(config.StoreName) {
 		return nil, errors.New("requires a generated namespace and valid Store name")
 	}
-	if config.Concurrency < 1 || config.Concurrency > 1024 || config.Records < config.Concurrency || config.Records > 100000 || config.PayloadBytes < 0 || config.PayloadBytes > 1<<20 {
+	if config.Concurrency < 1 || config.Concurrency > 2048 || config.Records < config.Concurrency || config.Records > 100000 || config.PayloadBytes < 0 || config.PayloadBytes > 1<<20 {
 		return nil, errors.New("invalid concurrency, record count, or padding size")
 	}
 	if int64(config.Records)*int64(config.PayloadBytes+128)*2 > 512<<20 {

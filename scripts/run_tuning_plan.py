@@ -62,8 +62,9 @@ def validate_case(case):
     validate_batching(case['batching'] if case['batching'] is not None else case.get('expected_batching'))
     if case['batching'] is not None and 'expected_batching' in case and case['expected_batching'] != case['batching']:
         raise ValueError('explicit batching and expected_batching must agree')
-    if not 1000000000 <= duration_ns(case['warmup']) <= 60000000000:
-        raise ValueError('warmup must be 1s through 60s')
+    max_warmup = 300 if case['kind'] == 'write' else 60
+    if not 1000000000 <= duration_ns(case['warmup']) <= max_warmup * 1000000000:
+        raise ValueError('warmup must be 1s through ' + str(max_warmup) + 's')
     if not 5000000000 <= duration_ns(case['duration']) <= 600000000000:
         raise ValueError('duration must be 5s through 10m')
     integer(case['rounds'], 1, 5, 'rounds')
@@ -84,9 +85,9 @@ def validate_case(case):
         if not isinstance(levels, list) or not 1 <= len(levels) <= 12:
             raise ValueError('write levels require a finite ladder')
         for level in levels:
-            integer(level, 1, 1024, 'level')
-            if level % case['client_processes']:
-                raise ValueError('levels must divide evenly into client processes')
+            integer(level, 1, 2048, 'level')
+            if level % case['client_processes'] or level // case['client_processes'] > 1024:
+                raise ValueError('levels must divide evenly into at most 1024 workers/process')
         if levels != sorted(set(levels)) or case['records'] < levels[-1]:
             raise ValueError('levels must strictly increase within the seeded record count')
         if case['records'] * (case['payload_bytes'] + 128) * 2 > 512 << 20:
