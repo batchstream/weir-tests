@@ -484,6 +484,11 @@ def main():
     require(sources == dict(current=BASELINE_SOURCE, optimized=CANDIDATE_SOURCE), 'frozen server sources differ')
     require(manifest['client_ref'] == 'randy/crawler-pressure-client', 'frozen client branch differs')
     require(manifest['calibration'] == dict(worker_levels=list(WORKERS), rates=list(RATES), duration_ns=5*10**9, warmup_ns=2*10**9, rounds=1, planned_timed_stages=18), 'frozen calibration controls differ')
+    require(manifest['controls'] == dict(input_shape='single', profiles=['two-step'], http_observer='disabled', modes=['fixed-rate'], processes=4, page_size=1, queue_pages=1, timeout_ns=10*10**9, after_max_in_flight=0, database_cpus=1, database_memory_bytes=1536*2**20, database_heap_bytes=512*2**20, batch_size=32, pending_records=4096), 'frozen common controls differ')
+    require(manifest['formal']['duration_ns'] == 20*10**9 and manifest['formal']['warmup_ns'] == 10*10**9 and manifest['formal']['rounds'] == 3, 'frozen formal duration/rounds differ')
+    if manifest['formal_entries']:
+        require(manifest['formal']['selection']['workers'] == 512 and manifest['formal']['selection']['rates'] == [45, 57, 68], 'formal selection differs from the frozen pre-dispatch result')
+        require(sorted(entry['rate'] for entry in manifest['formal_entries']) == [45, 57, 68] and all(entry['workers'] == 512 and entry['role'] == 'formal' for entry in manifest['formal_entries']), 'formal worker/rate matrix differs')
     entries = manifest['entries'] + manifest['formal_entries']
     require(len(manifest['entries']) == 2 and sorted(entry['workers'] for entry in manifest['entries']) == list(WORKERS), 'calibration worker matrix differs')
     require(all(entry['role'] == 'calibration' and entry['rates'] == list(RATES) for entry in manifest['entries']), 'calibration role/rates differ')
@@ -495,7 +500,9 @@ def main():
     for entry in entries:
         require(entry['workflow_run'] and re.fullmatch(r'https://github.com/batchstream/weir-tests/actions/runs/[0-9]+', entry['workflow_run']), 'missing/invalid workflow URL')
         dispatch = [item for item in manifest['dispatch_attempts'] if item['workflow_run'] == entry['workflow_run']]
-        require(len(dispatch) == 1 and dispatch[0]['head_sha'] == CLIENT_SOURCE and dispatch[0]['head_branch'] == manifest['client_ref'], 'dispatch ledger source differs')
+        require(len(dispatch) == 1 and dispatch[0]['head_sha'] == CLIENT_SOURCE and dispatch[0]['head_branch'] == manifest['client_ref'] and dispatch[0]['role'] == entry['role'] and dispatch[0]['workers'] == entry['workers'], 'dispatch ledger source/role/worker level differs')
+        if entry['role'] == 'formal':
+            require(dispatch[0]['rate'] == entry['rate'], 'dispatch ledger formal rate differs')
         bundle = dict(entry=entry)
         report_path = args.manifest.parent / entry['report']
         archive_count = verify_archive(report_path.parent)

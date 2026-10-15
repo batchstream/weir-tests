@@ -37,6 +37,28 @@ class PressureAnalysisTests(unittest.TestCase):
         self.assertEqual(selected['status'], 'no_eligible_sustained_cpu_native_stage')
         self.assertFalse(selected['formal_dispatch_permitted_by_plan'])
 
+    def test_missing_cpu_coverage_is_not_extrapolated_to_sustained_pressure(self):
+        stage = self.stage()
+        stage['ElapsedNS'] *= 2
+        resources = stage['Resources']
+        resources['measurement_elapsed_ns'] *= 2
+        resources['cpu_sampling_time_coverage'] = 0.5
+        resources['fraction_intervals_at_cpu_threshold'] = 0.5
+        resources['sustained_cpu_saturation'] = False
+        self.assertFalse(analyze.cpu_pressure(stage)['sustained'])
+
+    def test_formal_cpu_claim_requires_every_round_and_all_arrivals(self):
+        paired = []
+        for round_index in (1, 2, 3):
+            row = dict(label='formal57', workflow_run='one-runner', input_shape='single', profile='two-step', baseline_profile='two-step', mode='fixed-rate', offered_products_s=57, workers=512, path='optimized', baseline_path='direct', path_label='Metadata Weir', baseline_label='Native', round=round_index, both_formal_measurement=True, both_formal_all_arrivals=True, completed_products_s_ratio=1.0, sampled_db_cpu_ms_per_product_ratio=0.9)
+            paired.append(row)
+        self.assertTrue(analyze.compare_paired_rounds(paired)[0]['supports_lower_database_cpu_at_comparable_completed_throughput'])
+        for field, value in (('sampled_db_cpu_ms_per_product_ratio', 1.0), ('completed_products_s_ratio', 1.051), ('both_formal_all_arrivals', False)):
+            negative = copy.deepcopy(paired)
+            negative[1][field] = value
+            self.assertFalse(analyze.compare_paired_rounds(negative)[0]['supports_lower_database_cpu_at_comparable_completed_throughput'])
+        self.assertFalse(analyze.compare_paired_rounds(paired[:2])[0]['supports_lower_database_cpu_at_comparable_completed_throughput'])
+
 
 if __name__ == '__main__':
     unittest.main()
