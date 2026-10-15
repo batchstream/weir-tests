@@ -1,0 +1,40 @@
+{
+  "experiment": "search-metadata-2026-10-15",
+  "client_source": "8bdfe233f4baad325c66718a4cdec1c8c436a41a",
+  "server_sources": {
+    "current": "0f6fac3edb462e088decff98b67560dae2c23c9a",
+    "optimized": "745501319ae59a16351294c2eaed58019288c3ad"
+  },
+  "entries": [
+    {
+      "label": "formal16",
+      "role": "optimization",
+      "rate": 16,
+      "workflow_run": null,
+      "receipt": "raw/formal16/crawler.receipt.json.gz",
+      "report": "raw/formal16/crawler.json.gz",
+      "fixture_manifest": "raw/formal16/manifest.json.gz",
+      "cleanup": "raw/formal16/cleanup.json.gz"
+    },
+    {
+      "label": "formal48",
+      "role": "optimization",
+      "rate": 48,
+      "workflow_run": null,
+      "receipt": "raw/formal48/crawler.receipt.json.gz",
+      "report": "raw/formal48/crawler.json.gz",
+      "fixture_manifest": "raw/formal48/manifest.json.gz",
+      "cleanup": "raw/formal48/cleanup.json.gz"
+    },
+    {
+      "label": "formal96",
+      "role": "optimization",
+      "rate": 96,
+      "workflow_run": null,
+      "receipt": "raw/formal96/crawler.receipt.json.gz",
+      "report": "raw/formal96/crawler.json.gz",
+      "fixture_manifest": "raw/formal96/manifest.json.gz",
+      "cleanup": "raw/formal96/cleanup.json.gz"
+    }
+  ]
+}
