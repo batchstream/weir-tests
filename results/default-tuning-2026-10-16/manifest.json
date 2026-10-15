@@ -207,7 +207,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-capacity-independent-2026-10-16.json",
       "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38783506953"
     },
     {
       "label": "confirm-crawler-independent-q025",
@@ -217,7 +217,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-capacity-independent-2026-10-16.json",
       "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38783516132"
     }
   ]
 }
