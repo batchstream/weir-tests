@@ -73,7 +73,8 @@
       "duration_ns": 60000000000,
       "rounds": 3,
       "planned_timed_stages": 12,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38759209569",
+      "run_id": 38759209569
     },
     {
       "label": "formal-partial",
