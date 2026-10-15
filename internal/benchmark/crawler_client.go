@@ -106,23 +106,31 @@ func crawlerHTTP(ctx context.Context, client *http.Client, requestOptions crawle
 }
 
 func (c *crawlerClient) execute(ctx context.Context, mutations []crawlerMutation) (bool, error) {
-	if c.config.Profile != "two-step" {
-		return c.executeMutations(ctx, mutations)
-	}
-	first := make([]crawlerMutation, 0, c.config.PageSize)
-	next := append([]crawlerMutation{}, mutations...)
-	for index, mutation := range mutations {
+	products := make([]crawlerMutation, 0, c.config.PageSize)
+	sellers := make([]crawlerMutation, 0, len(mutations)-c.config.PageSize)
+	for _, mutation := range mutations {
 		if mutation.Product {
-			mutation.ReconcileOnly = true
-			first = append(first, mutation)
-			next[index].Reconcile = false
+			products = append(products, mutation)
+		} else {
+			sellers = append(sellers, mutation)
 		}
 	}
-	unknown, err := c.executeMutations(ctx, first)
+	if c.config.Profile == "two-step" {
+		first := append([]crawlerMutation{}, products...)
+		for index := range first {
+			first[index].ReconcileOnly = true
+			products[index].Reconcile = false
+		}
+		unknown, err := c.executeMutations(ctx, first)
+		if err != nil {
+			return unknown, err
+		}
+	}
+	unknown, err := c.executeMutations(ctx, products)
 	if err != nil {
 		return unknown, err
 	}
-	return c.executeMutations(ctx, next)
+	return c.executeMutations(ctx, sellers)
 }
 
 func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawlerMutation) (bool, error) {

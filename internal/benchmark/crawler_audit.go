@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // AuditCrawlerReport checks arithmetic and reconstructs all expected persisted fields
@@ -69,7 +70,7 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				if stage.Path != path || stage.Round != round+1 || stage.Profile != test.Profile || stage.Mode != test.Mode || stage.Concurrency != test.Workers || stage.ProductsPerSecond != test.Rate {
 					return fmt.Errorf("crawler stage %d does not follow the declared same-runner rotation", stageIndex)
 				}
-				if !stage.Verified || !stage.ClientsExited || stage.VerificationError != "" || len(stage.ClientExitErrors) != 0 || stage.Failed != 0 || stage.Indeterminate != 0 || stage.TimedOut != 0 || stage.ElapsedNS <= 0 || len(stage.Clients) != options.Processes {
+				if !stage.BeforeWarmupSettling.Settled || !stage.BeforeMeasurementSettling.Settled || stage.BeforeWarmupSettling.RequiredQuietNS < int64(2*time.Second) || stage.BeforeMeasurementSettling.RequiredQuietNS < int64(2*time.Second) || !stage.Verified || !stage.ClientsExited || stage.VerificationError != "" || len(stage.ClientExitErrors) != 0 || stage.Failed != 0 || stage.Indeterminate != 0 || stage.TimedOut != 0 || stage.ElapsedNS <= 0 || len(stage.Clients) != options.Processes {
 					return fmt.Errorf("crawler stage %d is unqualified", stageIndex)
 				}
 				server := "current"

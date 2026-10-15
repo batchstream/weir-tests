@@ -47,6 +47,7 @@ type CrawlerReport struct {
 	CleanupError             string `json:"cleanup_error,omitempty"`
 }
 type crawlerStage struct {
+	BeforeWarmupSettling, BeforeMeasurementSettling                                   crawlerSettling
 	Profile                                                                           string
 	RequestedMutations                                                                uint64
 	ExpectedDocumentsSHA256                                                           string
@@ -131,7 +132,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		servers[name] = server
 	}
 	origins := map[string]string{"original_pse": "7f36b501cded06a1bcc7484575346bb9c4d6311b", "optimized_pse": "8725e4743c6ddba66132874e0e0fe9d393ab4a85", "weir_lua_translation_base": "283940ef442b479440e45b39c86988351b92d7b5"}
-	report = &CrawlerReport{BusinessSources: origins, Schema: 1, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Three-way same-runner rotation; native atomic Elasticsearch scripted bulk versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; 1 shared no-change seller per 100 pages, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
+	report = &CrawlerReport{BusinessSources: origins, Schema: 1, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Three-way same-runner rotation; native atomic Elasticsearch scripted bulk versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; 1 shared no-change seller per 100 pages, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
 	defer func() {
 		if resultErr != nil {
 			report.Incomplete = resultErr.Error()
@@ -201,10 +202,6 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 					replacement.MaxInFlight = opts.AfterMaxInFlight
 				}
 				if err := cluster.ReplaceServer(ctx, replacement); err != nil {
-					return report, err
-				}
-				reset := crawlerResetOptions{URL: cluster.SearchURL, Namespace: namespace, Workers: opts.Concurrency[len(opts.Concurrency)-1], PageSize: opts.PageSize}
-				if err := resetCrawler(ctx, client, reset); err != nil {
 					return report, err
 				}
 				stageOpts := crawlerStageOptions{Options: opts, Case: test, Path: path, Round: round + 1, Namespace: namespace, Cluster: cluster, Observer: observer, HTTP: client}
@@ -294,6 +291,15 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	}
 	binarySum := sha256.Sum256(binaryRaw)
 	stage.ServerSHA256 = hex.EncodeToString(binarySum[:])
+	reset := crawlerResetOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace, Workers: config.Concurrency[len(config.Concurrency)-1], PageSize: config.PageSize}
+	settle := crawlerSettleOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace}
+	if err := resetCrawler(ctx, opts.HTTP, reset); err != nil {
+		return stage, err
+	}
+	stage.BeforeWarmupSettling, err = waitCrawlerSettled(ctx, opts.HTTP, settle)
+	if err != nil {
+		return stage, err
+	}
 	var clients []*crawlerProcess
 	defer func() {
 		for _, client := range clients {
@@ -325,8 +331,11 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 			}
 		}
 	}
-	reset := crawlerResetOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace, Workers: config.Concurrency[len(config.Concurrency)-1], PageSize: config.PageSize}
 	if err := resetCrawler(ctx, opts.HTTP, reset); err != nil {
+		return stage, err
+	}
+	stage.BeforeMeasurementSettling, err = waitCrawlerSettled(ctx, opts.HTTP, settle)
+	if err != nil {
 		return stage, err
 	}
 	target := opts.Cluster.Resources("search")
