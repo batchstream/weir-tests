@@ -88,7 +88,8 @@
       "duration_ns": 60000000000,
       "rounds": 3,
       "planned_timed_stages": 9,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38758792930",
+      "run_id": 38758792930
     },
     {
       "label": "formal-crawler",
@@ -103,7 +104,8 @@
       "duration_ns": 60000000000,
       "rounds": 3,
       "planned_timed_stages": 9,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38758812622",
+      "run_id": 38758812622
     }
   ],
   "analysis_freeze_source": "2dab1408126d0d00de037d09b7e8189c2b8b9b5e",
