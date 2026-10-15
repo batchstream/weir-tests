@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func testDataset(t *testing.T, backend string) *Dataset {
@@ -168,5 +170,20 @@ func TestWorkloadBoundsAndOwnedNamespace(t *testing.T) {
 	opts := PlanOptions{Operations: 1, WritePercent: 10}
 	if _, err := dataset.Plan(opts); err == nil {
 		t.Fatal("accepted fewer operations than workers")
+	}
+}
+
+func TestMongoValidationRejectsChangedRevisionType(t *testing.T) {
+	dataset := testDataset(t, "mongo")
+	operation := Operation{Record: 2, Revision: 1}
+	for _, revision := range []any{int64(1), float64(1), "1"} {
+		fields := bson.D{{Key: "_id", Value: dataset.ID(2)}, {Key: "fixture_id", Value: dataset.ID(2)}, {Key: "revision", Value: revision}, {Key: "padding", Value: dataset.padding}}
+		raw, err := bson.Marshal(fields)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := dataset.Validate(raw, operation); err == nil {
+			t.Fatalf("accepted BSON revision type %T instead of int32", revision)
+		}
 	}
 }

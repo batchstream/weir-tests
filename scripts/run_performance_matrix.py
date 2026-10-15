@@ -21,11 +21,18 @@ def main():
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--bulk', action='store_true', help='append read and write bulk32 comparisons')
     parser.add_argument('--batch-limit', type=int, default=0, help='0 keeps the server default')
-    parser.add_argument('--warmup-duration', help='default: Search 20s, native Mongo 2s per path/stage')
-    parser.add_argument('--duration', help='default measurement: Search 20s, native Mongo 5s per path/stage')
+    parser.add_argument('--database-cpus', type=float, default=1, help='enforced CPU quota for each owned Docker database')
+    parser.add_argument('--concurrency-levels', default='8,32', help='ascending total client concurrency')
+    parser.add_argument('--bulk-concurrency-levels', default='8,32', help='ascending bulk client concurrency, at most 64')
+    parser.add_argument('--client-processes', type=int, default=4, help='independent client OS processes for single-record cases')
+    parser.add_argument('--records', type=int, default=8192, help='working-set document count')
+    parser.add_argument('--payload-bytes', type=int, default=1024, help='document payload size')
+    parser.add_argument('--rounds', type=int, default=3, help='alternating paired rounds')
+    parser.add_argument('--warmup-duration', help='default: Search 20s, Mongo 10s per path/stage')
+    parser.add_argument('--duration', help='default measurement: 20s per path/stage')
     args = parser.parse_args()
-    warmup = args.warmup_duration or ('20s' if args.backend == 'search' else '2s')
-    duration = args.duration or ('20s' if args.backend == 'search' else '5s')
+    warmup = args.warmup_duration or ('20s' if args.backend == 'search' else '10s')
+    duration = args.duration or '20s'
     root = Path(__file__).resolve().parent.parent
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -61,11 +68,12 @@ def main():
         cases += [('bulk-read', 0, False, 'bulk-saturation'), ('bulk-write', 100, False, 'bulk-saturation')]
     for name, writes, lua, mode in cases:
         directory = output / name
+        levels = args.bulk_concurrency_levels if mode == 'bulk-saturation' else args.concurrency_levels
         command = [str(client), '-mode', mode, '-weir', str(weir), '-backend', args.backend,
-                   '-client-processes', '4', '-concurrency-levels', '8,32',
+                   '-client-processes', str(args.client_processes), '-concurrency-levels', levels,
                    '-batch-sizes', '32' if mode == 'bulk-saturation' else '1',
-                   '-records', '1024', '-payload-bytes', '1024', '-rounds', '3',
-                   '-warmup-duration', warmup, '-duration', duration, '-database-cpus', '2',
+                   '-records', str(args.records), '-payload-bytes', str(args.payload_bytes), '-rounds', str(args.rounds),
+                   '-warmup-duration', warmup, '-duration', duration, '-database-cpus', str(args.database_cpus),
                    '-write-percent', str(writes), '-backend-batch-limit', str(args.batch_limit),
                    '-output', str(directory)]
         if args.mongod:
@@ -74,9 +82,9 @@ def main():
             command += ['-server-receipt', str(archived_receipt)]
         if lua:
             command.append('-lua-mutations')
-        concurrency = 'total 8/32; four OS processes each have 2/8 single-record workers'
+        concurrency = 'total ' + levels + '; ' + str(args.client_processes) + ' independent OS client processes'
         if mode == 'bulk-saturation':
-            concurrency = 'one client OS process with 8/32 workers; 32 records per call'
+            concurrency = 'one client OS process with ' + levels + ' workers; 32 records per call'
         receipt = dict(provenance, command=command, case=name, concurrency=concurrency)
         receipt_path = output / (name + '.receipt.json')
         receipt['server_binary_before_sha256'] = hashlib.sha256(weir.read_bytes()).hexdigest()
