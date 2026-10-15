@@ -183,7 +183,8 @@ Any failed/rejected/unknown work, invalid bucket offset or mismatched bucket sum
 invalidates that capacity check. Finite sampling can miss brief queue spikes;
 zero sampled queue is never interpreted as proof that no queue existed.
 
-Five-minute checks use the selected defaults only, 60s warmup +300s timed:
+Five-minute checks evaluate selected defaults, 60s warmup +300s timed (the pure
+write engine also retains its paired native control; crawler uses optimized only):
 for pure writes, the smallest concurrency satisfying the database CPU/plateau
 rule; for each crawler profile, the highest three-round qualified rate with a
 valid service-overload upper bound. At most three checks, one per workload.
