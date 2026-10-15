@@ -74,11 +74,16 @@ Missing/reset counters are unavailable, never zero-filled.
 
 A usable candidate point requires immutable clean source/binary/config receipts,
 owned cleanup, every seeded-field check, zero failed/unknown/timed-out work,
-positive completed work, CPU coverage >=90%, and no source/config mismatch.
+positive completed work, CPU coverage >=80%, and no source/config mismatch.
+The short selection coverage floor retains the prior calibration convention;
+confirmation raises it to 95% and never extrapolates missing CPU intervals.
 Crawler additionally requires no rejection, offered=completed, p99 histogram
 upper bound <=5s, drain <=3s and maximum absolute generator lag <=50ms. Native
-control failures remain visible and cannot support a paired performance claim;
-they do not silently rewrite successful candidate work or its absolute metrics.
+control failures remain visible. A failed/unknown/timed-out operation or incomplete
+matrix fails the original whole-case audit: all paths in that case are ineligible,
+including otherwise successful candidate paths. Their raw absolute measurements
+remain retained. A fully audited rejection is a valid overload observation, but
+does not qualify that stage for selection or an all-arrivals performance claim.
 
 For count/wait/slot selection:
 
@@ -125,6 +130,10 @@ The finite independent confirmation inventory is:
   512 workers, three rotating paired rounds, 60s warmup +60s arrivals.
 - Partial512 and crawler68 at 1 CPU: matching previous representative loads,
   three paired rounds, 60s warmup +60s arrivals.
+- Search and Mongo pure reads: actual defaults and explicit legacy controls,
+  native single-record comparison, workers 4/128, three alternating rounds,
+  30s warmup +30s timed. The same normalized throughput/p99 read guard must pass
+  independently after selection.
 - Mongo ordinary write, 90/10 mixed and Lua mutation: actual defaults versus
   native and explicit legacy controls, 128 workers, three alternating rounds,
   30s warmup +30s timed; retain full-field oracle and actual resource load.
@@ -142,17 +151,37 @@ intervals; 60 seconds alone does not establish steady state.
 Database CPU capacity requires, in every one of three rounds: usable measurements,
 mean >=90% of actual quota, >=90% quota CPU during >=80% of full elapsed time,
 at least five valid intervals, and <=10% throughput gain at the next declared
-concurrency. Host samples must cover >=90% of elapsed time, mean host busy <=85%,
+concurrency. Both adjacent concurrency points must meet the CPU and headroom
+gates. Host samples must cover >=90% of elapsed time, mean host busy <=85%,
 mean steal <=5%, and each client process CPU must stay below 80% of the effective
 host CPU capacity. A full host or Weir/client bottleneck must not be relabeled
 as database saturation. Preserve node queues, rejections, throttling, GC,
 indexing pressure, Store queue/active work and CPU/IO pressure for diagnosis.
+Whole-host busy is accepted for this headroom claim only when runtime CPU count,
+sampler affinity and /proc/stat listed CPU count agree. Every known owned client
+PID must have >=90% CPU observation coverage; a missing process is unavailable.
 
-Crawler sustainable-rate bounds use the highest rate where all three rounds and
-both halves meet all-arrivals gates, and the next predeclared failing rate as an
+Crawler sustainable-rate bounds use the highest rate where all three rounds
+meet whole-stage all-arrivals gates, and the next predeclared failing rate as an
 upper bound. An upper bound caused by generator lag/host pressure is not a
 service overload bound. If no higher failing point exists, report a lower bound,
 not an invented maximum. If no point qualifies, report that outcome.
+
+Completed work and latency are retained in fixed ten-second completion-time
+buckets; offered/rejected work is assigned by scheduled arrival time, with a
+separate open drain bucket. No gate demands equal offered/completed counts in
+each sub-window: normal in-flight work crosses those boundaries. For capacity,
+second-half completion rate must be at least 90% of first-half rate. For crawler,
+using cumulative offered-completed-failed-rejected across regular buckets, the
+last regular bucket backlog must be no greater than the first-third backlog plus
+one second of the offered rate. Whole-stage accounting and SLO remain strict.
+The five-minute check applies the same rate-stability rule to every consecutive
+minute after the first minute; per-minute p99 upper bounds must also be <=5s.
+The final minute must also retain at least 90% of the first minute's completion
+rate, so repeated small decreases cannot conceal sustained degradation.
+Any failed/rejected/unknown work, invalid bucket offset or mismatched bucket sum
+invalidates that capacity check. Finite sampling can miss brief queue spikes;
+zero sampled queue is never interpreted as proof that no queue existed.
 
 Five-minute checks use the selected defaults only, 60s warmup +300s timed:
 for pure writes, the smallest concurrency satisfying the database CPU/plateau
