@@ -2,6 +2,30 @@
 
 This experiment tests whether Weir reduces database work at the same completed business throughput, or increases completed throughput at the same database CPU budget. Extra Weir CPU and total infrastructure cost are outside the question. The business repositories are unchanged; their existing worker rules are read-only fixture references. Sink is excluded and no new Lua helper API is introduced.
 
+## Direct-control finding
+
+**This experiment does not establish a throughput or database-load benefit over the native atomic control.** Disabling the observer produced a complete, error-free run: all nine stages completed 1600/1600 offered business products, with no rejection, timeout or unknown result. Every stage verified all 3841 seeded documents, and the complete offline audit and owned cleanup passed. The prior proxy-path failures did not recur; this does not identify their initiating cause or certify the proxy fixed under a real workload.
+
+Native and cap 0 met the predeclared all-arrivals limits in every round. Cap 16 completed the work but missed p99 and drain limits in **all three rounds**. The figures below are per-stage measurements, including full completion drain, not maximum capacity estimates.
+
+| Path | Round | Complete products/s | DB CPU (% of 1 CPU) | Sampled DB CPU ms/product | p99 upper bound (s) | Drain (s) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Native atomic bulk | 1 | 75.41 | 40.43 | 5.360 | 2.621 | 1.218 |
+| Native atomic bulk | 2 | 70.90 | 13.02 | 1.836 | 3.146 | 2.567 |
+| Native atomic bulk | 3 | 74.24 | 10.63 | 1.431 | 3.146 | 1.551 |
+| Weir cap 0 | 1 | 71.49 | 41.17 | 5.758 | 4.719 | 2.380 |
+| Weir cap 0 | 2 | 70.59 | 21.57 | 3.055 | 4.194 | 2.665 |
+| Weir cap 0 | 3 | 70.39 | 18.73 | 2.660 | 4.719 | 2.729 |
+| Weir cap 16 | 1 | 65.49 | 18.59 | 2.839 | 5.767 | 4.431 |
+| Weir cap 16 | 2 | 67.97 | 13.49 | 1.984 | 5.243 | 3.539 |
+| Weir cap 16 | 3 | 65.13 | 16.49 | 2.532 | 7.340 | 4.566 |
+
+Default Weir used more sampled database CPU per completed product than native in each paired round and completed 70.39–71.49 products/s versus native's 70.90–75.41. Cap 16 reduced CPU per product relative to cap 0 in each round, but completed only 65.13–67.97 products/s and increased p99 to 5.24–7.34 s and drain to 3.54–4.57 s. Its CPU advantage over native occurred only in the first round; in rounds two and three it used more CPU per product. Native CPU itself changed from 40.43% to 13.02% to 10.63%, showing substantial order/JIT/background variation. Observed adapter fill increased from 3.045 to 14.681 records per execution (4.82 times). These data support a batching/latency tradeoff, not a reliable savings multiplier or higher throughput at equal database load.
+
+This direct control tests the same new server at cap 0 versus 16 at one offered rate. It does not recover the invalidated old/new server comparison, isolate automatic no-op savings, compare equal achieved throughput through a matched-load sweep, or establish maximum sustainable throughput. Production source and business callers were not modified in response to these findings.
+
+![Direct connection: all rounds and acceptance status](plots/direct-control-two-step.png)
+
 ## Workload and controls
 
 Every path runs the same existing two-step product rules, followed by seller updates: product offer reconciliation, product merge, then seller merge, with query visibility after each of the three phases. The native control uses atomic server-side Painless updates in bulk requests. Weir runs the frozen Lua translation and returns ordinary documents. The generated page contains 20 products, each with two seller documents, existing and incoming offers, descriptions, scalar fields, unions and capped histories. A page succeeds only when every mutation is durably acknowledged and query-visible. Partial pages count as failed business products.
@@ -10,7 +34,7 @@ Four independent OS client processes share 32 goroutine workers in the formal ca
 
 All paths within a run share one exclusively owned Elasticsearch container: **1 CPU quota, 512 MiB JVM heap, 1536 MiB container memory**, two indices with one primary each, zero replicas, one-second refresh and request translog durability. Native allows four total conflict attempts, matching Weir's four attempts. Both initial and post-warmup resets settle for at least two quiet seconds. The same database survives the rotating path order, so persistent segments, JIT and background maintenance can still vary. Native round-to-round CPU drift is retained, not averaged away as proof of a benefit.
 
-Fixed-rate formal cases use 10 s warmup, 20 s arrivals and three rotating rounds. Throughput divides complete business products by the arrival interval plus all subsequent drain. Latency starts at the planned arrival and ends at visibility. The independent Go oracle reads every seeded document and checks every field/type; the offline auditor reconstructs the canonical expected hash from acknowledged page ordinals. A failed page may legitimately have written some records before another record fails: an oracle mismatch in such a stage is not evidence of a successful acknowledgement losing data.
+Fixed-rate formal cases use 10 s warmup, 20 s arrivals and three rotating rounds. Throughput divides complete business products by the arrival interval plus all subsequent drain. Latency starts at the planned arrival and ends at visibility. The independent Go oracle reads every seeded document and checks every field/type; the offline auditor reconstructs the canonical expected hash from acknowledged page ordinals only when the complete report is eligible for that audit. Incomplete runs exit with failure and do not receive full offline certification. A failed page may legitimately have written some records before another record fails: an oracle mismatch in such a stage is not evidence of a successful acknowledgement losing data.
 
 The predeclared measurement gate requires matching clean immutable receipts, the complete matrix, successful cleanup and field/offline audits, no failed/unknown/timed-out work, and at least 80% CPU sample coverage. The stricter all-arrivals gate also requires no rejection, all arrivals completed, p99 <=5 s, drain <=3 s and generator lag <=50 ms in all three rounds. These are experiment limits, not production SLOs. Histogram quantiles are inclusive upper bounds with at most 12.5% plus 1 microsecond bucket approximation. Database CPU is integrated from cumulative owned-container counters, clipped to the stage; missing intervals are not extrapolated.
 
@@ -37,7 +61,7 @@ Both proxy runs contain response-copy aborts (`use of closed network connection`
 
 ## Reproduce the analysis
 
-Raw artifacts are retained under `raw/` with deterministic gzip encoding. Each `files.json` stores uncompressed byte length/SHA-256 and compressed SHA-256. The machine-readable [manifest](manifest.json) binds every report to its workflow and immutable client. The generated [stage table](analysis/stages.csv) retains every stage, including setup/warmup failures, and [paired ratios](analysis/paired-rounds.csv) retain unfavorable and unqualified observations.
+Raw artifacts are retained under `raw/` with deterministic gzip encoding. Each `files.json` stores uncompressed byte length/SHA-256 and compressed SHA-256. The machine-readable [manifest](manifest.json) binds every report to its workflow and immutable client. The generated [stage table](analysis/stages.csv) retains all 60 stages (48 timed), including setup/warmup failures, and [paired ratios](analysis/paired-rounds.csv) retain unfavorable and unqualified observations.
 
 From the repository root, build the offline auditor and rerun the receipt, arithmetic, oracle and aggregation checks without contacting databases:
 

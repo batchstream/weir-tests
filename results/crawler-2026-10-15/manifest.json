@@ -28,6 +28,16 @@
       "report": "raw/main/crawler.json.gz",
       "fixture_manifest": "raw/main/manifest.json.gz",
       "cleanup": "raw/main/cleanup.json.gz"
+    },
+    {
+      "label": "direct-control",
+      "role": "cap",
+      "client_source": "d799170c06a625a400f1e32d9203b3fb816b463d",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38722843843",
+      "receipt": "raw/direct-control/crawler.receipt.json.gz",
+      "report": "raw/direct-control/crawler.json.gz",
+      "fixture_manifest": "raw/direct-control/manifest.json.gz",
+      "cleanup": "raw/direct-control/cleanup.json.gz"
     }
   ]
 }
