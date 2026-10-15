@@ -1,0 +1,24 @@
+{
+  "client_source": "2ef2675d2acb24308d1d7bd2dd798c6826ad7b83",
+  "entries": [
+    {
+      "label": "calibration-failed",
+      "role": "calibration",
+      "client_source": "e391cb59a7c7c80775d4c987f6bd598183a68cc4",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38717858422",
+      "receipt": "raw/calibration-failed/crawler.receipt.json.gz",
+      "report": "raw/calibration-failed/crawler.json.gz",
+      "fixture_manifest": "raw/calibration-failed/manifest.json.gz",
+      "cleanup": "raw/calibration-failed/cleanup.json.gz"
+    },
+    {
+      "label": "cap16",
+      "role": "cap",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38720284963",
+      "receipt": "raw/cap16/crawler.receipt.json.gz",
+      "report": "raw/cap16/crawler.json.gz",
+      "fixture_manifest": "raw/cap16/manifest.json.gz",
+      "cleanup": "raw/cap16/cleanup.json.gz"
+    }
+  ]
+}
