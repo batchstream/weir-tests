@@ -8,7 +8,7 @@ This experiment tests whether combining Search work across indices lowers measur
 | --- | --- |
 | Client and workflow | `8bdfe233f4baad325c66718a4cdec1c8c436a41a` in `batchstream/weir-tests` |
 | Baseline Weir | `0f6fac3edb462e088decff98b67560dae2c23c9a` in `batchstream/weir` |
-| Optimized Weir | Freeze the full commit SHA in `manifest.json` before dispatch; currently pending |
+| Optimized Weir | `b13318ffcfde662d5f77209ef88d689bdcd2433d` in `batchstream/weir` |
 | Both Weir execution limits | `max_in_flight=0` |
 | Native control | One document per cached atomic Painless `_update` |
 | Weir input | One document per SDK `Mutate` call |
@@ -29,11 +29,11 @@ Both paths use the same finite seeded working set and final-field oracle as the 
 
 ## Exact dispatch
 
-Dispatch the existing `crawler.yml` workflow at ref `8bdfe233f4baad325c66718a4cdec1c8c436a41a`. For each `RATE` in `16`, `48`, `96`, pass:
+Dispatch the existing `crawler.yml` workflow using the `main` branch only after verifying it resolves to `8bdfe233f4baad325c66718a4cdec1c8c436a41a`. GitHub rejects a raw commit SHA as a `workflow_dispatch` ref with HTTP 422; that unsuccessful attempt created no run. The successful dispatches used `--ref main`, and each returned run has `headSha=8bdfe233f4baad325c66718a4cdec1c8c436a41a`. Analysis still requires this exact client source in the receipt. For each `RATE` in `16`, `48`, `96`, pass:
 
 ```text
 current-source=0f6fac3edb462e088decff98b67560dae2c23c9a
-optimized-source=<full SHA frozen in manifest.json before dispatch>
+optimized-source=b13318ffcfde662d5f77209ef88d689bdcd2433d
 after-max-in-flight=0
 profiles=two-step
 input-shape=single
@@ -46,6 +46,8 @@ duration=20s
 warmup=10s
 rounds=3
 ```
+
+The dispatched primary runs are rate 16: `38732710889`, rate 48: `38732718361`, and rate 96: `38732725812`. The optimized source was fixed in those dispatch arguments; the manifest source and run IDs were committed immediately after dispatch, before observing their results. This is later than the initial plan's intended manifest commit before dispatch, and is recorded here rather than obscured. Rates, durations, limits, gates, and analysis logic remain as originally committed.
 
 Expected timed matrix: 3 workflows × 3 paths × 3 rounds = 27 stages. An aborted or overloaded run is retained with its original workflow URL and every available raw artifact; it is not silently replaced. Any operational retry must have a separately identified ledger entry and cannot erase the original attempt. The formal manifest contains the three planned primary runs; separately document and archive any additional attempt instead of substituting it without disclosure.
 
@@ -61,7 +63,7 @@ Do not equate configured CPU quota with actual database load. This fixed-rate ex
 
 ## Frozen analysis
 
-`analyze.py`, `summarize.py`, and `plot.py` are independent copies adapted from the previous single-record report. Prior historical result files remain unchanged. Source SHA injection is confined to `manifest.json.server_sources.optimized`; analysis accepts no source override and refuses to run until a distinct immutable SHA is frozen. After the three runs, add their exact workflow URLs and raw paths to the manifest. Regenerate into a new output directory with:
+`analyze.py`, `summarize.py`, and `plot.py` are independent copies adapted from the previous single-record report. Prior historical result files remain unchanged. Source SHA injection is confined to `manifest.json.server_sources.optimized`; analysis accepts no source override and refuses to run until a distinct immutable SHA is frozen. The three planned workflow URLs and raw paths are recorded in the manifest before their results are inspected. Regenerate into a new output directory with:
 
 ```sh
 python3 results/search-batching-2026-10-15/analyze.py \
