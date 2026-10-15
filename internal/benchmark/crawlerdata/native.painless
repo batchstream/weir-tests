@@ -1,0 +1,58 @@
+if (params.base) { ctx.op = 'noop'; return; }
+def current = ctx._source;
+def incoming = params.document;
+if (params.reconcile_only) {
+ for (def old : current.offers) {
+  old.expiry_detected_at = params.observed_at;
+  for (def fresh : incoming.offers) if (old.id == fresh.id) { old.product_price = fresh.product_price; old.expiry_detected_at = null; break; }
+ }
+ current.last_found_at = params.observed_at; ctx._source = current; return;
+}
+def result = new HashMap(current);
+for (def entry : incoming.entrySet()) {
+ def key = entry.getKey(); def value = entry.getValue();
+ if (['offers','stocks','solds','comments','addresses','contacts','tracking_ids'].contains(key)) continue;
+ if (['uids','allowed_countries','languages'].contains(key)) {
+  def values = new ArrayList(); if (result.containsKey(key)) values.addAll(result[key]);
+  for (def item : value) if (!values.contains(item)) values.add(item);
+  result[key] = values;
+ } else if (['available','sold_by_platform','has_paypal'].contains(key)) {
+  if (value == true) result[key] = true; else result.remove(key);
+ } else if (key == 'brand') { result[key] = value.toUpperCase(); }
+ else { result[key] = value; }
+}
+if (params.product) {
+ def uids = result.containsKey('uids') ? new ArrayList(result.uids) : new ArrayList();
+ if (!uids.contains(incoming.uid)) uids.add(incoming.uid); result.uids = uids;
+ def oldOffers = current.containsKey('offers') ? current.offers : new ArrayList();
+ if (params.reconcile_offers) {
+  for (def old : oldOffers) {
+   old.expiry_detected_at = params.observed_at;
+   for (def fresh : incoming.offers) if (old.id == fresh.id) { old.product_price = fresh.product_price; old.expiry_detected_at = null; break; }
+  }
+ }
+ def combined = new ArrayList(incoming.offers); combined.addAll(oldOffers);
+ def offers = new ArrayList(); def seen = new HashSet();
+ for (def value : combined) if (seen.add(value.uid)) offers.add(value);
+ if (offers.size() > 50) offers = new ArrayList(offers.subList(offers.size()-50,offers.size()));
+ result.offers = offers;
+}
+for (def field : ['stocks','solds','comments','addresses','contacts']) {
+ if (!incoming.containsKey(field)) continue;
+ def values = result.containsKey(field) ? new ArrayList(result[field]) : new ArrayList();
+ for (def item : incoming[field]) if (!values.contains(item)) values.add(item);
+ int limit = field == 'addresses' ? 10 : 20;
+ if (field != 'contacts' && values.size() > limit) values = new ArrayList(values.subList(values.size()-limit, values.size()));
+ result[field] = values;
+}
+if (incoming.containsKey('tracking_ids')) {
+ def tracking = result.containsKey('tracking_ids') ? new HashMap(result.tracking_ids) : new HashMap();
+ for (def entry : incoming.tracking_ids.entrySet()) {
+  def field = entry.getKey(); def values = tracking.containsKey(field) ? new ArrayList(tracking[field]) : new ArrayList();
+  for (def item : entry.getValue()) if (!values.contains(item)) values.add(item);
+  tracking[field] = values;
+ }
+ result.tracking_ids = tracking;
+}
+result.last_found_at = params.observed_at; result.remove('evicted_at');
+ctx._source = result;
