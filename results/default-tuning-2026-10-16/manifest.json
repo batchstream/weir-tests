@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "analysis_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+  "analysis_source": "65f54d7903ae277a739d2b0bb8129feac446f7c8",
   "analysis_inputs": [
     "results/batch-coverage-2026-10-15/analyze.py",
     "results/batch-mechanism-2026-10-15/analyze.py",
@@ -259,6 +259,16 @@
       "plan_path": "plans/default-wait-sensitivity-2026-10-16.json",
       "plan_sha256": "3ddd9f8bda45a694da942bd6db81017d108cd2e2eb5cfe92c44b9c593c04a8f3",
       "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38809800954"
+    },
+    {
+      "label": "confirm-pure-extended-q0125",
+      "phase": "confirmation",
+      "case_set": "confirm-pure-extended-q0125",
+      "client_source": "65f54d7903ae277a739d2b0bb8129feac446f7c8",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-pure-extended-q0125-2026-10-16.json",
+      "plan_sha256": "89bd5d403fead5814315428eb184f85797f40c10e0c7d8373a8129f06f271fb8",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38815775471"
     }
   ]
 }
