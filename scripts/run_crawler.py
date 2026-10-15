@@ -18,7 +18,10 @@ def main():
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
     if subprocess.check_output(['git', 'status', '--porcelain']):
         raise ValueError('benchmark source checkout must be clean')
-    command = [str(binary), '-profiles', os.environ['CRAWLER_PROFILES'], '-after-max-in-flight', os.environ['CRAWLER_MAX_IN_FLIGHT'], '-rates', os.environ['CRAWLER_RATES'],
+    modes = os.environ['CRAWLER_MODES']
+    if modes == 'both':
+        modes = 'fixed-rate,saturation'
+    command = [str(binary), '-modes', modes, '-profiles', os.environ['CRAWLER_PROFILES'], '-after-max-in-flight', os.environ['CRAWLER_MAX_IN_FLIGHT'], '-rates', os.environ['CRAWLER_RATES'],
                '-concurrency-levels', os.environ['CRAWLER_LEVELS'],
                '-page-size', os.environ['CRAWLER_PAGE_SIZE'],
                '-duration', os.environ['CRAWLER_DURATION'],

@@ -36,7 +36,9 @@ Four independently started OS clients each own a driver/SDK pool and multiple go
 
 Fixed-rate experiments schedule page arrivals from absolute timestamps, staggered across processes. Worker completions do not throttle the generator. Each worker has a bounded page queue; a full queue produces an explicit rejected product count. Generator lag, dispatch lag, queue peak, errors, timeouts and uncertain acknowledgements are retained. Latency starts at the planned arrival, includes client queueing and any server aggregation, and ends only after all page mutations are visible. Page latency is also each product's business-completion latency. Histograms include every dispatched page, including failed/timed-out pages; rejected arrivals have no visible completion and are reported separately rather than assigned a synthetic latency. Overloaded stages cannot claim a sustainable arrival rate or a successful-all-arrivals p99. Quantiles use the existing inclusive logarithmic histogram bounds (at most 12.5% plus 1 microsecond bucket approximation).
 
-Saturation experiments use continuously busy sequential workers. Their bounded client queue is still included in planned-to-visible latency. They are not open-loop rate experiments. The complete arrival interval plus every subsequent completion join/drain remains in the throughput denominator. Completions after the arrival interval are counted separately; neither admission nor queueing is counted as success. Warmup is excluded and every seeded record is reset before measurement without replacing the client pools.
+Saturation experiments use continuously busy sequential workers. Their bounded client queue is still included in planned-to-visible latency. They are not open-loop rate experiments. The complete arrival interval plus every subsequent completion join/drain remains in the throughput denominator. Completions after the arrival interval are counted separately; neither admission nor queueing is counted as success. Warmup is excluded and every seeded record is reset before measurement without replacing the client pools. Reset traffic uses bulk chunks bounded to 8 MiB including action metadata, and every item acknowledgement is checked before continuing; the document set and business workload are unchanged.
+
+The `-modes` flag independently selects `fixed-rate`, `saturation`, or `fixed-rate,saturation` (the default). `-rates none` explicitly disables rate cases; in fixed-rate-only mode at least one rate is required. The manual workflow exposes modes as fixed-rate, saturation, or both. Empty GitHub inputs may fall back to their declared defaults, so use `none` instead of an empty rates input when disabling rates. Run and offline audit share the same selected-case builder.
 
 Select three offered rates only after a short calibration: below, near and above the observed stable capacity. A high rate with rejections is an overload result, not a higher successful capacity. A claimed sustainable rate needs all three rounds without business failures, unknown writes, rejected arrivals or substantial generator lag, plus a declared latency/drain requirement. Do not infer a production capacity from a short preflight.
 
@@ -67,7 +69,7 @@ A small local functional run (not publishable performance evidence):
 
 ```sh
 .tools/weir-crawler -concurrency-levels 4 -client-processes 2 \
-  -page-size 2 -profiles combined,two-step -rates '' \
+  -page-size 2 -profiles combined,two-step -modes saturation -rates none \
   -rounds 1 -warmup 1s -duration 1s -output results/local/crawler-preflight.json
 ```
 

@@ -43,14 +43,16 @@ def field_delta(before, after, group, field):
 def rows(report):
     result = []
     parameters = report['Parameters']
-    expected_stages = len(parameters['Profiles']) * (len(parameters['Rates'] or []) + len(parameters['Concurrency'])) * parameters['Rounds'] * 3
+    modes = parameters.get('Modes') or ['fixed-rate', 'saturation']
+    case_count = (len(parameters['Rates'] or []) if 'fixed-rate' in modes else 0) + (len(parameters['Concurrency']) if 'saturation' in modes else 0)
+    expected_stages = len(parameters['Profiles']) * case_count * parameters['Rounds'] * 3
     report_clean = not report.get('incomplete') and not report.get('cleanup_error') and len(report['Stages']) == expected_stages
     for stage in report['Stages']:
         success = stage['Completed']
         cpu_ns, coverage, cpu_percent = cpu_cost(stage)
         before = index_totals(stage['DatabaseBefore'])
         after = index_totals(stage['DatabaseAfter'])
-        qualified = report_clean and stage['Verified'] and stage['ClientsExited'] and not stage['Failed'] and not stage['Indeterminate'] and not stage.get('VerificationError') and not stage.get('ClientExitErrors')
+        qualified = report_clean and stage['Verified'] and stage['ClientsExited'] and not stage['Failed'] and not stage['Indeterminate'] and not stage.get('verification_error') and not stage.get('client_exit_errors')
         stable = stage['Mode'] == 'fixed-rate' and qualified and not stage['Rejected'] and not stage['TimedOut'] and stage['GeneratorLagNS'] < 50_000_000
         row = dict(profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
                    workers=stage['Concurrency'], path=stage['Path'], round=stage['Round'],

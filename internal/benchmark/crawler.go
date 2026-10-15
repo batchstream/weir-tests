@@ -25,6 +25,7 @@ type CrawlerOptions struct {
 	Before, After, BeforeReceipt, AfterReceipt, Executable, Output string
 	Rates, Concurrency                                             []int
 	Profiles                                                       []string
+	Modes                                                          []string
 	Processes, PageSize, QueuePages, Rounds                        int
 	AfterMaxInFlight                                               int
 	CPUs                                                           float64
@@ -106,6 +107,13 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 			return nil, errors.New("crawler profile must be combined or two-step")
 		}
 	}
+	if len(opts.Modes) == 0 {
+		opts.Modes = []string{"fixed-rate", "saturation"}
+	}
+	cases, err := crawlerCases(opts)
+	if err != nil {
+		return nil, err
+	}
 	servers := map[string]crawlerServerReceipt{}
 	for name, pair := range map[string][2]string{"current": {opts.Before, opts.BeforeReceipt}, "optimized": {opts.After, opts.AfterReceipt}} {
 		data, err := os.ReadFile(pair[0])
@@ -177,17 +185,6 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 			return report, err
 		}
 	}
-	var cases []crawlerCase
-	for _, profile := range opts.Profiles {
-		for _, rate := range opts.Rates {
-			test := crawlerCase{Profile: profile, Mode: "fixed-rate", Workers: opts.Concurrency[len(opts.Concurrency)-1], Rate: rate}
-			cases = append(cases, test)
-		}
-		for _, workers := range opts.Concurrency {
-			test := crawlerCase{Profile: profile, Mode: "saturation", Workers: workers}
-			cases = append(cases, test)
-		}
-	}
 	paths := []string{"direct", "current", "optimized"}
 	for caseIndex, test := range cases {
 		for round := range opts.Rounds {
@@ -232,40 +229,135 @@ type crawlerResetOptions struct {
 	Workers, PageSize int
 }
 
+const crawlerResetBulkBytes = 8 << 20
+
+type crawlerResetIdentity struct {
+	ID, Index string
+	Product   bool
+}
+type crawlerResetBulkOptions struct {
+	URL     string
+	Body    []byte
+	Records []crawlerResetIdentity
+}
+
 func resetCrawler(ctx context.Context, client *http.Client, opts crawlerResetOptions) error {
-	base, namespace, workers, pageSize := opts.URL, opts.Namespace, opts.Workers, opts.PageSize
-	var body bytes.Buffer
-	for worker := range workers {
-		for record := range pageSize * 2 {
+	records := make([]crawlerResetIdentity, 0, opts.Workers*opts.PageSize*6+1)
+	for worker := range opts.Workers {
+		for record := range opts.PageSize * 2 {
 			for _, suffix := range []string{"product", "seller-0", "seller-1"} {
-				id := crawlerID(worker, record, suffix)
-				meta := map[string]any{"_index": crawlerIndex(namespace, suffix == "product"), "_id": id}
-				action := map[string]any{"index": meta}
-				_ = json.NewEncoder(&body).Encode(action)
-				_ = json.NewEncoder(&body).Encode(crawlerDocument(id, suffix == "product"))
+				identity := crawlerResetIdentity{ID: crawlerID(worker, record, suffix), Index: crawlerIndex(opts.Namespace, suffix == "product"), Product: suffix == "product"}
+				records = append(records, identity)
 			}
 		}
 	}
-	id := "shared-seller"
-	meta := map[string]any{"_index": crawlerIndex(namespace, false), "_id": id}
-	action := map[string]any{"index": meta}
-	_ = json.NewEncoder(&body).Encode(action)
-	_ = json.NewEncoder(&body).Encode(crawlerDocument(id, false))
-	request := crawlerHTTPRequest{Method: http.MethodPost, URL: base + "/_bulk?refresh=true", Body: body.Bytes()}
+	shared := crawlerResetIdentity{ID: "shared-seller", Index: crawlerIndex(opts.Namespace, false)}
+	records = append(records, shared)
+	var body bytes.Buffer
+	var chunk []crawlerResetIdentity
+	for _, record := range records {
+		var entry bytes.Buffer
+		encoder := json.NewEncoder(&entry)
+		metadata := map[string]any{"_index": record.Index, "_id": record.ID}
+		action := map[string]any{"index": metadata}
+		if err := encoder.Encode(action); err != nil {
+			return err
+		}
+		if err := encoder.Encode(crawlerDocument(record.ID, record.Product)); err != nil {
+			return err
+		}
+		if entry.Len() > crawlerResetBulkBytes {
+			return errors.New("crawler reset record exceeds the 8 MiB bulk budget")
+		}
+		if body.Len()+entry.Len() > crawlerResetBulkBytes {
+			bulk := crawlerResetBulkOptions{URL: opts.URL, Body: body.Bytes(), Records: chunk}
+			if err := resetCrawlerBulk(ctx, client, bulk); err != nil {
+				return err
+			}
+			body.Reset()
+			chunk = chunk[:0]
+		}
+		_, _ = body.Write(entry.Bytes())
+		chunk = append(chunk, record)
+	}
+	if len(chunk) == 0 {
+		return nil
+	}
+	bulk := crawlerResetBulkOptions{URL: opts.URL, Body: body.Bytes(), Records: chunk}
+	return resetCrawlerBulk(ctx, client, bulk)
+}
+
+func resetCrawlerBulk(ctx context.Context, client *http.Client, opts crawlerResetBulkOptions) error {
+	request := crawlerHTTPRequest{Method: http.MethodPost, URL: opts.URL + "/_bulk?refresh=true", Body: opts.Body}
 	raw, err := crawlerHTTP(ctx, client, request)
 	if err != nil {
 		return err
 	}
 	var reply struct {
-		Errors bool `json:"errors"`
+		Errors *bool `json:"errors"`
+		Items  []map[string]struct {
+			ID     string          `json:"_id"`
+			Index  string          `json:"_index"`
+			Status int             `json:"status"`
+			Result string          `json:"result"`
+			Error  json.RawMessage `json:"error"`
+			Shards struct {
+				Successful int `json:"successful"`
+				Failed     int `json:"failed"`
+			} `json:"_shards"`
+		} `json:"items"`
 	}
 	if err := json.Unmarshal(raw, &reply); err != nil {
 		return err
 	}
-	if reply.Errors {
-		return errors.New("crawler setup bulk failed")
+	if reply.Errors == nil || *reply.Errors || len(reply.Items) != len(opts.Records) {
+		return errors.New("crawler reset bulk acknowledgement count or errors mismatch")
+	}
+	for index, item := range reply.Items {
+		record := opts.Records[index]
+		result, ok := item["index"]
+		if !ok || len(item) != 1 || result.ID != record.ID || result.Index != record.Index || result.Status != 200 && result.Status != 201 || result.Result != "created" && result.Result != "updated" || len(result.Error) > 0 || result.Shards.Successful < 1 || result.Shards.Failed != 0 {
+			return fmt.Errorf("crawler reset bulk item %d lacks the expected durable index acknowledgement", index)
+		}
 	}
 	return nil
+}
+
+func crawlerCases(opts CrawlerOptions) ([]crawlerCase, error) {
+	modes := opts.Modes
+	if len(modes) == 0 {
+		modes = []string{"fixed-rate", "saturation"}
+	}
+	if len(opts.Concurrency) == 0 || len(opts.Profiles) == 0 || len(modes) > 2 {
+		return nil, errors.New("crawler matrix requires profiles, concurrency, and one or two modes")
+	}
+	seen := map[string]bool{}
+	for _, mode := range modes {
+		if mode != "fixed-rate" && mode != "saturation" || seen[mode] {
+			return nil, errors.New("crawler modes must be unique fixed-rate or saturation values")
+		}
+		seen[mode] = true
+	}
+	var cases []crawlerCase
+	for _, profile := range opts.Profiles {
+		for _, mode := range modes {
+			if mode == "fixed-rate" {
+				for _, rate := range opts.Rates {
+					test := crawlerCase{Profile: profile, Mode: mode, Workers: opts.Concurrency[len(opts.Concurrency)-1], Rate: rate}
+					cases = append(cases, test)
+				}
+			} else {
+				for _, workers := range opts.Concurrency {
+					test := crawlerCase{Profile: profile, Mode: mode, Workers: workers}
+					cases = append(cases, test)
+				}
+			}
+		}
+	}
+	if len(cases) == 0 {
+		return nil, errors.New("crawler matrix contains no cases; fixed-rate mode requires at least one rate")
+	}
+	return cases, nil
 }
 
 type crawlerStageOptions struct {

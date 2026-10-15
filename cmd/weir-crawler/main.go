@@ -44,14 +44,15 @@ func main() {
 		return
 	}
 	var opts benchmark.CrawlerOptions
-	var rates, levels, profiles string
+	var rates, levels, profiles, modes string
 	flag.StringVar(&opts.Before, "before", ".tools/weir-current", "immutable current Weir binary")
 	flag.StringVar(&opts.After, "after", ".tools/weir-optimized", "immutable optimized Weir binary")
 	flag.StringVar(&opts.BeforeReceipt, "before-receipt", ".tools/weir-current.receipt.json", "current server source and binary receipt")
 	flag.StringVar(&opts.AfterReceipt, "after-receipt", ".tools/weir-optimized.receipt.json", "optimized server source and binary receipt")
 	flag.StringVar(&opts.Output, "output", "results/local/crawler.json", "raw evidence report")
 	flag.StringVar(&profiles, "profiles", "two-step", "existing two-step crawler rules, combined rule, or both")
-	flag.StringVar(&rates, "rates", "20,80,160", "absolute offered product rates; empty disables fixed-rate cases")
+	flag.StringVar(&modes, "modes", "fixed-rate,saturation", "fixed-rate, saturation, or both comma-separated")
+	flag.StringVar(&rates, "rates", "20,80,160", "absolute offered product rates; none disables fixed-rate cases")
 	flag.StringVar(&levels, "concurrency-levels", "32,128", "total goroutine workers across OS client processes")
 	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "optimized server batch cap; zero is unlimited and omitted for the old server")
 	flag.IntVar(&opts.Processes, "client-processes", 4, "independent OS clients, one pool per process")
@@ -65,6 +66,10 @@ func main() {
 	flag.Parse()
 	var err error
 	opts.Profiles = strings.Split(profiles, ",")
+	opts.Modes = strings.Split(modes, ",")
+	if rates == "none" {
+		rates = ""
+	}
 	opts.Rates, err = positiveList(rates)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
