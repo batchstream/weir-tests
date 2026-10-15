@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "analysis_source": "b934c20ab3d09d6d2aa5bcdd0e6fac7ecfac26b5",
+  "previous_analysis_sha256": "805d79f73b6c2ca635c59d2dd9fc5da5e74d36f72c04987d2cc6fcf15ba805be",
+  "analysis_sha256": "50885e229b943bf1798dc1f35a8b52fb9911596d21a128e6a6292fdc077f199f",
+  "original_rows": 549,
+  "original_rows_exactly_unchanged": true,
+  "additional_rows": 18,
+  "additional_rows_all_usable": true,
+  "selection_exactly_unchanged": true,
+  "byte_selection_exactly_unchanged": true,
+  "workflow": "https://github.com/batchstream/weir-tests/actions/runs/38801128626",
+  "checks": 0,
+  "soak_plan_sha256": "c106945ab597622979a19330ad55b3f4f178e2321baa985944beab488c22b46b",
+  "threshold_changes": false,
+  "retries": 0
+}
