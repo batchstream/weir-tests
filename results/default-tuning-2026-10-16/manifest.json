@@ -198,6 +198,26 @@
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
       "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38782027979"
+    },
+    {
+      "label": "confirm-partial-independent-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-independent-q025",
+      "client_source": "aff25fe3ca1f9d636a279ff7ea63d4b2bfb0f786",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-capacity-independent-2026-10-16.json",
+      "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-crawler-independent-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-independent-q025",
+      "client_source": "aff25fe3ca1f9d636a279ff7ea63d4b2bfb0f786",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-capacity-independent-2026-10-16.json",
+      "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
+      "workflow_run": null
     }
   ]
 }
