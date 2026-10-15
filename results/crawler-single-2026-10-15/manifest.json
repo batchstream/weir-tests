@@ -1,0 +1,14 @@
+{
+  "client_source": "ad1879156c14028285f27f18794f1580e979af63",
+  "entries": [
+    {
+      "label": "calibration",
+      "role": "calibration",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38727143882",
+      "receipt": "raw/calibration/crawler.receipt.json.gz",
+      "report": "raw/calibration/crawler.json.gz",
+      "fixture_manifest": "raw/calibration/manifest.json.gz",
+      "cleanup": "raw/calibration/cleanup.json.gz"
+    }
+  ]
+}
