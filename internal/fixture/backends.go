@@ -153,17 +153,24 @@ func (c *Cluster) readySearch(ctx context.Context) error {
 			return errors.Join(err, last)
 		}
 	}
-	var health struct {
-		TimedOut bool   `json:"timed_out"`
-		Status   string `json:"status"`
-		Nodes    int    `json:"number_of_nodes"`
-	}
-	healthRequest := searchRequest{Method: http.MethodGet, URL: c.SearchURL + "/_cluster/health?wait_for_status=yellow&timeout=2s", Result: &health}
-	if err := searchJSON(ctx, client, healthRequest); err != nil {
-		return err
-	}
-	if health.TimedOut || health.Nodes != 1 || health.Status != "green" && health.Status != "yellow" {
-		return errors.New("Elasticsearch singleton did not become healthy")
+	for {
+		var health struct {
+			TimedOut bool   `json:"timed_out"`
+			Status   string `json:"status"`
+			Nodes    int    `json:"number_of_nodes"`
+		}
+		healthRequest := searchRequest{Method: http.MethodGet, URL: c.SearchURL + "/_cluster/health?wait_for_status=yellow&timeout=2s", Result: &health}
+		err := searchJSON(ctx, client, healthRequest)
+		if err == nil && !health.TimedOut && health.Nodes == 1 && (health.Status == "green" || health.Status == "yellow") {
+			break
+		}
+		if err == nil {
+			err = errors.New("Elasticsearch singleton did not become healthy")
+		}
+		last = err
+		if err := pause(ctx); err != nil {
+			return errors.Join(err, last)
+		}
 	}
 	var acknowledged struct {
 		Acknowledged bool `json:"acknowledged"`
