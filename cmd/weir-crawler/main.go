@@ -45,6 +45,7 @@ func main() {
 	}
 	var opts benchmark.CrawlerOptions
 	var rates, levels, profiles, modes string
+	flag.StringVar(&opts.HTTPObserver, "http-observer", "enabled", "enabled or disabled; disabled bypasses the observer for all paths and leaves HTTP counters unavailable")
 	flag.StringVar(&opts.Before, "before", ".tools/weir-current", "immutable current Weir binary")
 	flag.StringVar(&opts.After, "after", ".tools/weir-optimized", "immutable optimized Weir binary")
 	flag.StringVar(&opts.BeforeReceipt, "before-receipt", ".tools/weir-current.receipt.json", "current server source and binary receipt")

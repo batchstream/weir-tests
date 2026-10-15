@@ -43,6 +43,7 @@ def field_delta(before, after, group, field):
 def rows(report):
     result = []
     parameters = report['Parameters']
+    observer_mode = parameters.get('HTTPObserver') or 'enabled'
     modes = parameters.get('Modes') or ['fixed-rate', 'saturation']
     case_count = (len(parameters['Rates'] or []) if 'fixed-rate' in modes else 0) + (len(parameters['Concurrency']) if 'saturation' in modes else 0)
     expected_stages = len(parameters['Profiles']) * case_count * parameters['Rounds'] * 3
@@ -54,7 +55,7 @@ def rows(report):
         after = index_totals(stage['DatabaseAfter'])
         qualified = report_clean and stage['Verified'] and stage['ClientsExited'] and not stage['Failed'] and not stage['Indeterminate'] and not stage.get('verification_error') and not stage.get('client_exit_errors')
         stable = stage['Mode'] == 'fixed-rate' and qualified and not stage['Rejected'] and not stage['TimedOut'] and stage['GeneratorLagNS'] < 50_000_000
-        row = dict(profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
+        row = dict(http_observer=observer_mode,profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
                    workers=stage['Concurrency'], path=stage['Path'], round=stage['Round'],
                    qualified=qualified, stable_arrivals=stable, offered=stage['Offered'],
                    rejected=stage['Rejected'], completed=success, failed=stage['Failed'],
@@ -80,11 +81,13 @@ def rows(report):
                    verified_documents=stage['VerifiedDocuments'],
                    expected_documents_sha256=stage['ExpectedDocumentsSHA256'])
         for method in ('POST _bulk', 'POST _mget', 'POST _refresh', 'GET _refresh', 'GET monitor', 'GET index-metadata'):
-            counter = (stage['HTTPDelta'] or {}).get(method)
+            counter = (stage['HTTPDelta'] or {}).get(method) if observer_mode != 'disabled' else None
             prefix = method.replace(' ', '_')
-            row[prefix + '_requests'] = counter['Requests'] if counter else 0
-            row[prefix + '_request_bytes'] = counter['RequestBytes'] if counter else 0
-            row[prefix + '_response_bytes'] = counter['ResponseBytes'] if counter else 0
+            row[prefix + '_requests'] = counter['Requests'] if counter else (None if observer_mode == 'disabled' else 0)
+            row[prefix + '_request_bytes'] = counter['RequestBytes'] if counter else (None if observer_mode == 'disabled' else 0)
+            row[prefix + '_response_bytes'] = counter['ResponseBytes'] if counter else (None if observer_mode == 'disabled' else 0)
+            row[prefix + '_failed_requests'] = counter['Failed'] if counter else (None if observer_mode == 'disabled' else 0)
+            row[prefix + '_aborted_requests'] = counter.get('Aborted') if counter else (None if observer_mode == 'disabled' else 0)
         result.append(row)
     return result
 

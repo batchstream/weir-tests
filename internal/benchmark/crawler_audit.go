@@ -41,6 +41,9 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 		}
 	}
 	options := report.Parameters
+	if options.HTTPObserver != "" && options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
+		return errors.New("unknown HTTP observer mode")
+	}
 	if len(options.Concurrency) == 0 || options.PageSize < 1 || options.Processes < 1 {
 		return errors.New("invalid crawler report parameters")
 	}
@@ -151,8 +154,8 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				if stage.ExpectedDocumentsSHA256 != hex.EncodeToString(sum[:]) || stage.VerifiedDocuments != len(expected) {
 					return errors.New("crawler full-field expected hash is not reproducible from acknowledged pages")
 				}
-				if !reflect.DeepEqual(stage.HTTPDelta, crawlerHTTPDelta(stage.HTTPBefore, stage.HTTPAfter)) {
-					return errors.New("crawler physical HTTP delta mismatch")
+				if err := auditCrawlerHTTPObservation(stage, options.HTTPObserver); err != nil {
+					return err
 				}
 			}
 		}

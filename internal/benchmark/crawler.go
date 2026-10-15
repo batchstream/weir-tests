@@ -22,6 +22,7 @@ import (
 )
 
 type CrawlerOptions struct {
+	HTTPObserver                                                   string
 	Before, After, BeforeReceipt, AfterReceipt, Executable, Output string
 	Rates, Concurrency                                             []int
 	Profiles                                                       []string
@@ -86,6 +87,12 @@ type crawlerCase struct {
 }
 
 func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport, resultErr error) {
+	if opts.HTTPObserver == "" {
+		opts.HTTPObserver = "enabled"
+	}
+	if opts.HTTPObserver != "enabled" && opts.HTTPObserver != "disabled" {
+		return nil, errors.New("http-observer must be enabled or disabled")
+	}
 	if opts.AfterMaxInFlight < 0 || opts.AfterMaxInFlight > 4096 || opts.Warmup > time.Minute || opts.Processes < 1 || opts.Processes > 8 || opts.PageSize < 1 || opts.PageSize > 32 || opts.QueuePages < 1 || opts.QueuePages > 16 || opts.Rounds < 1 || opts.Rounds > 5 || opts.Warmup < time.Second || opts.Duration < time.Second || opts.Duration > 10*time.Minute || opts.Timeout < time.Second || opts.Timeout > time.Minute || len(opts.Concurrency) == 0 || len(opts.Concurrency) > 4 || len(opts.Rates) > 4 {
 		return nil, errors.New("invalid bounded crawler benchmark parameters")
 	}
@@ -166,16 +173,19 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		}
 		resultErr = errors.Join(resultErr, err)
 	}()
-	observer, err := startCrawlerObserver(cluster.SearchURL)
-	if err != nil {
-		return report, err
+	var observer *crawlerObserver
+	if opts.HTTPObserver == "enabled" {
+		observer, err = startCrawlerObserver(cluster.SearchURL)
+		if err != nil {
+			return report, err
+		}
+		defer func() {
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			resultErr = errors.Join(resultErr, observer.close(cleanupCtx))
+		}()
+		cluster.SearchURL = observer.URL
 	}
-	defer func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		resultErr = errors.Join(resultErr, observer.close(cleanupCtx))
-	}()
-	cluster.SearchURL = observer.URL
 	namespace := fmt.Sprintf("weircrawler_%d", time.Now().UnixNano())
 	client := &http.Client{Timeout: time.Minute}
 	defer client.CloseIdleConnections()
@@ -445,7 +455,9 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	if err != nil {
 		return stage, err
 	}
-	stage.HTTPBefore = opts.Observer.snapshot()
+	if opts.Observer != nil {
+		stage.HTTPBefore = opts.Observer.snapshot()
+	}
 	stage.ServerBefore = fetchServerMetrics(ctx, target.Diagnostics)
 	phase := crawlerPhase{Phase: "timed", StartNS: time.Now().Add(200 * time.Millisecond).UnixNano(), DurationNS: int64(config.Duration), ProductsPerSecond: opts.Case.Rate}
 	stage.StartedNS = phase.StartNS
@@ -513,8 +525,10 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	resources.MeasurementNS = stage.ElapsedNS
 	resources.qualify(90)
 	stage.Resources = resources
-	stage.HTTPAfter = opts.Observer.snapshot()
-	stage.HTTPDelta = crawlerHTTPDelta(stage.HTTPBefore, stage.HTTPAfter)
+	if opts.Observer != nil {
+		stage.HTTPAfter = opts.Observer.snapshot()
+		stage.HTTPDelta = crawlerHTTPDelta(stage.HTTPBefore, stage.HTTPAfter)
+	}
 	stage.DatabaseAfter, err = crawlerStats(ctx, opts.HTTP, opts.Cluster.SearchURL, opts.Namespace)
 	resultErr = errors.Join(resultErr, err)
 	stage.ServerAfter = fetchServerMetrics(ctx, target.Diagnostics)

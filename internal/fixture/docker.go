@@ -86,11 +86,18 @@ func (c *Cluster) docker(ctx context.Context, args ...string) ([]byte, error) {
 }
 
 // Command output is fully retained in logs and bounded when parsed in memory.
-type boundedOutput struct{ bytes.Buffer }
+type boundedOutput struct {
+	bytes.Buffer
+	limit int
+}
 
 func (b *boundedOutput) Write(p []byte) (int, error) {
 	count := len(p)
-	remaining := 64<<10 - b.Len()
+	limit := b.limit
+	if limit == 0 {
+		limit = 64 << 10
+	}
+	remaining := limit - b.Len()
 	if remaining > 0 {
 		if len(p) > remaining {
 			p = p[:remaining]
@@ -280,4 +287,41 @@ func processExitError(p *process) error {
 		return fmt.Errorf("fixture process exited with failure (%s): %w", p.logPath, p.err)
 	}
 	return nil
+}
+
+// captureSearchLog retains owned backend diagnostics without delaying removal
+// beyond its small independent timeout or treating missing logs as cleanup failure.
+func (c *Cluster) captureSearchLog(ctx context.Context, owned container) {
+	bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	var output boundedOutput
+	output.limit = 1 << 20
+	var captureErr error
+	state, err := c.inspectContainer(bounded, owned.ID)
+	if err != nil {
+		captureErr = err
+	} else if err := verifyOwned(state, owned, c.owner); err != nil {
+		captureErr = err
+	} else {
+		args := []string{"--config", filepath.Join(c.Directory, "docker-config"), "--host", c.dockerHost, "logs", "--tail", "1000", owned.ID}
+		command := exec.CommandContext(bounded, "docker", args...)
+		for _, entry := range os.Environ() {
+			if !strings.HasPrefix(entry, "DOCKER_CONTEXT=") && !strings.HasPrefix(entry, "DOCKER_HOST=") && !strings.HasPrefix(entry, "DOCKER_CONFIG=") {
+				command.Env = append(command.Env, entry)
+			}
+		}
+		command.Stdout = &output
+		command.Stderr = &output
+		captureErr = command.Run()
+	}
+	path := filepath.Join(c.Directory, "search-process.log")
+	if err := os.WriteFile(path, output.Bytes(), 0600); err != nil {
+		captureErr = errors.Join(captureErr, err)
+	}
+	errorText := ""
+	if captureErr != nil {
+		errorText = captureErr.Error()
+	}
+	receipt := map[string]any{"at_utc": time.Now().UTC().Format(time.RFC3339Nano), "container_id": owned.ID, "owner": c.owner, "tail_lines": 1000, "maximum_bytes": 1 << 20, "captured_bytes": output.Len(), "possibly_truncated": output.Len() == 1<<20, "timeout": "5s", "error": errorText}
+	_ = writeJSON(filepath.Join(c.Directory, "search-log-receipt.json"), receipt)
 }
