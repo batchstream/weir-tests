@@ -15,7 +15,6 @@ import (
 	"time"
 
 	weir "github.com/batchstream/weir-go"
-	"github.com/batchstream/weir-protocol/api/protocol"
 	"github.com/batchstream/weir-tests/internal/fixture"
 	"github.com/batchstream/weir-tests/internal/observe"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -24,8 +23,8 @@ import (
 const streamPendingRecords = 32
 
 // A ReadStream uses one Execute RPC with no other business RPCs active here.
-// Each owner's reservations are bounded by its transport record window and the
-// public protocol event size; these credits describe ownership rather than RSS.
+// Each owner's retained records fit its transport window. Byte reservations
+// reflect backend document limits and live results rather than a protocol cap.
 func streamReservations(ctx context.Context, nodes []fixture.Node, store string) (bool, error) {
 	idle := true
 	labels := map[string]string{"store": store}
@@ -46,10 +45,10 @@ func streamReservations(ctx context.Context, nodes []fixture.Node, store string)
 			values[name] = value
 			idle = idle && value == 0
 		}
-		if values["result_reserved_entries"] > streamPendingRecords || values["result_reserved_bytes"] > streamPendingRecords*protocol.MaxEvent ||
+		if values["result_reserved_entries"] > streamPendingRecords ||
 			values["pending_entries"] > values["result_reserved_entries"] || values["retained_results"] > values["result_reserved_entries"] ||
 			values["retained_result_reserved_bytes"] > values["result_reserved_bytes"] {
-			return false, fmt.Errorf("Store %s stream reservations exceeded transport/protocol ownership bounds: %v", store, values)
+			return false, fmt.Errorf("Store %s stream reservations exceeded transport ownership bounds: %v", store, values)
 		}
 	}
 	return idle, nil

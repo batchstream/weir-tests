@@ -19,12 +19,15 @@ import (
 )
 
 type acknowledgementPeer struct {
-	pb.UnimplementedStoreServiceServer
 	mode          string
 	calls         atomic.Int64
 	applied       atomic.Int64
 	document      []byte
 	firstMutation chan struct{}
+}
+
+func (p *acknowledgementPeer) ResolveStore(context.Context, *pb.ResolveStoreRequest) (*pb.ResolveStoreResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "test peer handles direct execution only")
 }
 
 func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.ExecuteRequest, pb.ExecuteResponse]) error {
