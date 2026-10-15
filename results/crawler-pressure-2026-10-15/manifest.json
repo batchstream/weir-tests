@@ -135,7 +135,74 @@
       "head_sha": "488b4575932265030b81312319b707e45649a028",
       "head_branch": "randy/crawler-pressure-client",
       "event": "workflow_dispatch"
+    },
+    {
+      "role": "formal",
+      "workers": 512,
+      "rate": 45,
+      "run_id": 38738557033,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738557033",
+      "created_utc": "2026-10-15T12:56:33Z",
+      "head_sha": "488b4575932265030b81312319b707e45649a028",
+      "head_branch": "randy/crawler-pressure-client",
+      "event": "workflow_dispatch"
+    },
+    {
+      "role": "formal",
+      "workers": 512,
+      "rate": 57,
+      "run_id": 38738565573,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738565573",
+      "created_utc": "2026-10-15T12:56:37Z",
+      "head_sha": "488b4575932265030b81312319b707e45649a028",
+      "head_branch": "randy/crawler-pressure-client",
+      "event": "workflow_dispatch"
+    },
+    {
+      "role": "formal",
+      "workers": 512,
+      "rate": 68,
+      "run_id": 38738575421,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738575421",
+      "created_utc": "2026-10-15T12:56:41Z",
+      "head_sha": "488b4575932265030b81312319b707e45649a028",
+      "head_branch": "randy/crawler-pressure-client",
+      "event": "workflow_dispatch"
     }
   ],
-  "formal_entries": []
+  "formal_entries": [
+    {
+      "label": "formal45",
+      "role": "formal",
+      "workers": 512,
+      "rate": 45,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738557033",
+      "receipt": "raw/formal45/crawler.receipt.json.gz",
+      "report": "raw/formal45/crawler.json.gz",
+      "fixture_manifest": "raw/formal45/manifest.json.gz",
+      "cleanup": "raw/formal45/cleanup.json.gz"
+    },
+    {
+      "label": "formal57",
+      "role": "formal",
+      "workers": 512,
+      "rate": 57,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738565573",
+      "receipt": "raw/formal57/crawler.receipt.json.gz",
+      "report": "raw/formal57/crawler.json.gz",
+      "fixture_manifest": "raw/formal57/manifest.json.gz",
+      "cleanup": "raw/formal57/cleanup.json.gz"
+    },
+    {
+      "label": "formal68",
+      "role": "formal",
+      "workers": 512,
+      "rate": 68,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738575421",
+      "receipt": "raw/formal68/crawler.receipt.json.gz",
+      "report": "raw/formal68/crawler.json.gz",
+      "fixture_manifest": "raw/formal68/manifest.json.gz",
+      "cleanup": "raw/formal68/cleanup.json.gz"
+    }
+  ]
 }

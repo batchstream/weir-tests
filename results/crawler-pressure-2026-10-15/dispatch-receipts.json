@@ -18,5 +18,38 @@
     "head_sha": "488b4575932265030b81312319b707e45649a028",
     "head_branch": "randy/crawler-pressure-client",
     "event": "workflow_dispatch"
+  },
+  {
+    "role": "formal",
+    "workers": 512,
+    "rate": 45,
+    "run_id": 38738557033,
+    "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738557033",
+    "created_utc": "2026-10-15T12:56:33Z",
+    "head_sha": "488b4575932265030b81312319b707e45649a028",
+    "head_branch": "randy/crawler-pressure-client",
+    "event": "workflow_dispatch"
+  },
+  {
+    "role": "formal",
+    "workers": 512,
+    "rate": 57,
+    "run_id": 38738565573,
+    "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738565573",
+    "created_utc": "2026-10-15T12:56:37Z",
+    "head_sha": "488b4575932265030b81312319b707e45649a028",
+    "head_branch": "randy/crawler-pressure-client",
+    "event": "workflow_dispatch"
+  },
+  {
+    "role": "formal",
+    "workers": 512,
+    "rate": 68,
+    "run_id": 38738575421,
+    "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38738575421",
+    "created_utc": "2026-10-15T12:56:41Z",
+    "head_sha": "488b4575932265030b81312319b707e45649a028",
+    "head_branch": "randy/crawler-pressure-client",
+    "event": "workflow_dispatch"
   }
 ]
