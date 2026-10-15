@@ -59,7 +59,7 @@ type crawlerClient struct {
 }
 
 func newCrawlerClient(ctx context.Context, config crawlerClientConfig) (*crawlerClient, error) {
-	transport := &http.Transport{Proxy: nil, MaxConnsPerHost: config.Threads, MaxIdleConnsPerHost: config.Threads, MaxIdleConns: config.Threads}
+	transport := &http.Transport{Proxy: nil, DisableCompression: true, MaxConnsPerHost: config.Threads, MaxIdleConnsPerHost: config.Threads, MaxIdleConns: config.Threads}
 	client := &crawlerClient{config: config, http: &http.Client{Transport: transport}}
 	if config.Path != "direct" {
 		opts := weir.OpenOptions{Seed: config.Seed, Stores: []string{"search"}}

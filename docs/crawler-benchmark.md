@@ -40,7 +40,7 @@ Select three offered rates only after a short calibration: below, near and above
 
 ## Database observations and evidence
 
-An owned loopback transparent HTTP observer sits between every path and the same database. It records actual physical methods/endpoints, request bodies and response bodies, with monitoring traffic labelled separately. HTTP byte counters exclude headers/framing. They measure database-facing traffic, not Lua/SDK upload bytes. The observer uses the same bounded transport for all paths; its extra loopback hop is an experiment limitation.
+An owned loopback transparent HTTP observer sits between every path and the same database. It records actual physical methods/endpoints, request bodies and response bodies, with monitoring traffic labelled separately. HTTP byte counters exclude headers/framing. They measure database-facing traffic, not Lua/SDK upload bytes. Both the native client and observer disable automatic HTTP compression, matching the Weir Search transport and preventing the observer from introducing database gzip work. The observer uses the same bounded transport for all paths; its extra loopback hop is an experiment limitation.
 
 Owned Docker cumulative cgroup counters provide database CPU, container network bytes, block I/O bytes and memory samples. The inspected CPU quota is retained. Elasticsearch `_stats` retains indexing/get/search/refresh/flush/merge/translog counters before and after the timed workload. Missing counters stay unavailable rather than becoming zero. Block bytes and filesystem counters do not prove I/O saturation.
 

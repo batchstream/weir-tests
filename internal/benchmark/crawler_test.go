@@ -110,3 +110,29 @@ func TestCrawlerSourcesRequireOnlyPlainDocumentReturns(t *testing.T) {
 		t.Fatal("product still skips the merge after reconciliation")
 	}
 }
+
+func TestCrawlerDatabaseTransportDoesNotIntroduceCompression(t *testing.T) {
+	handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if value := request.Header.Get("Accept-Encoding"); value != "" {
+			t.Errorf("database compression was introduced: %s", value)
+		}
+		_, _ = writer.Write([]byte(`{}`))
+	})
+	database := httptest.NewServer(handler)
+	defer database.Close()
+	observer, err := startCrawlerObserver(database.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = observer.close(t.Context()) }()
+	config := crawlerClientConfig{Path: "direct", SearchURL: observer.URL, Threads: 1}
+	client, err := newCrawlerClient(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.close()
+	request := crawlerHTTPRequest{Method: http.MethodPost, URL: observer.URL + "/_bulk", Body: []byte(`{}`)}
+	if _, err := crawlerHTTP(t.Context(), client.http, request); err != nil {
+		t.Fatal(err)
+	}
+}

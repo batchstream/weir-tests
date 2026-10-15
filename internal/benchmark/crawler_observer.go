@@ -66,7 +66,7 @@ func startCrawlerObserver(target string) (*crawlerObserver, error) {
 	}
 	observer := &crawlerObserver{totals: map[string]crawlerHTTPCount{}, URL: "http://" + listener.Addr().String()}
 	proxy := httputil.NewSingleHostReverseProxy(parsed)
-	observer.transport = &http.Transport{Proxy: nil, MaxConnsPerHost: 1024, MaxIdleConnsPerHost: 1024, MaxIdleConns: 1024, IdleConnTimeout: time.Minute}
+	observer.transport = &http.Transport{Proxy: nil, DisableCompression: true, MaxConnsPerHost: 1024, MaxIdleConnsPerHost: 1024, MaxIdleConns: 1024, IdleConnTimeout: time.Minute}
 	proxy.Transport = observer.transport
 	handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		body := &crawlerCountingBody{ReadCloser: request.Body}
