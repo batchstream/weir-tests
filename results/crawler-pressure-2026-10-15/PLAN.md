@@ -48,7 +48,7 @@ warmup=2s
 rounds=1
 ```
 
-Record each dispatch attempt, workflow URL, run ID, returned source SHA and dispatch time in the ledger before examining its result. Archive every available report, receipt, owned manifest, database log and cleanup file, with compressed and uncompressed SHA-256 plus uncompressed length. Keep incomplete matrices and failed attempts. Any operational retry is an additional identified attempt; it cannot erase an earlier run or replace the primary calibration silently.
+The primary calibration runs were dispatched at 12:43:32 UTC (512 workers, run `38736840274`) and 12:43:35 UTC (2048 workers, run `38736847759`) on 2026-10-15. Both returned `headSha=488b4575932265030b81312319b707e45649a028` on the frozen client branch. Their URLs and actual creation times are recorded in `manifest.json` and `dispatch-receipts.json` before observing their results. Record each additional dispatch attempt, workflow URL, run ID, returned source SHA and dispatch time in the ledger before examining its result. Archive every available report, receipt, owned manifest, database log and cleanup file, with compressed and uncompressed SHA-256 plus uncompressed length. Keep incomplete matrices and failed attempts. Any operational retry is an additional identified attempt; it cannot erase an earlier run or replace the primary calibration silently.
 
 ## Actual-pressure gate and prospective formal selection
 

@@ -1,0 +1,22 @@
+[
+  {
+    "role": "calibration",
+    "workers": 512,
+    "run_id": 38736840274,
+    "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736840274",
+    "created_utc": "2026-10-15T12:43:32Z",
+    "head_sha": "488b4575932265030b81312319b707e45649a028",
+    "head_branch": "randy/crawler-pressure-client",
+    "event": "workflow_dispatch"
+  },
+  {
+    "role": "calibration",
+    "workers": 2048,
+    "run_id": 38736847759,
+    "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736847759",
+    "created_utc": "2026-10-15T12:43:35Z",
+    "head_sha": "488b4575932265030b81312319b707e45649a028",
+    "head_branch": "randy/crawler-pressure-client",
+    "event": "workflow_dispatch"
+  }
+]

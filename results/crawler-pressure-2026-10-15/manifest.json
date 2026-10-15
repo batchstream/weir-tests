@@ -9,9 +9,13 @@
   },
   "controls": {
     "input_shape": "single",
-    "profiles": ["two-step"],
+    "profiles": [
+      "two-step"
+    ],
     "http_observer": "disabled",
-    "modes": ["fixed-rate"],
+    "modes": [
+      "fixed-rate"
+    ],
     "processes": 4,
     "page_size": 1,
     "queue_pages": 1,
@@ -24,8 +28,15 @@
     "pending_records": 4096
   },
   "calibration": {
-    "worker_levels": [512, 2048],
-    "rates": [96, 384, 768],
+    "worker_levels": [
+      512,
+      2048
+    ],
+    "rates": [
+      96,
+      384,
+      768
+    ],
     "duration_ns": 5000000000,
     "warmup_ns": 2000000000,
     "rounds": 1,
@@ -33,7 +44,10 @@
   },
   "selection_rule": {
     "path": "direct",
-    "worker_priority": [512, 2048],
+    "worker_priority": [
+      512,
+      2048
+    ],
     "require_complete_native_stage_audit": true,
     "allow_incomplete_other_stages_for_diagnostic_selection_only": true,
     "require_failed_unknown_timedout_zero": true,
@@ -59,8 +73,12 @@
       "label": "calibration512",
       "role": "calibration",
       "workers": 512,
-      "rates": [96, 384, 768],
-      "workflow_run": null,
+      "rates": [
+        96,
+        384,
+        768
+      ],
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736840274",
       "receipt": "raw/calibration512/crawler.receipt.json.gz",
       "report": "raw/calibration512/crawler.json.gz",
       "fixture_manifest": "raw/calibration512/manifest.json.gz",
@@ -70,14 +88,39 @@
       "label": "calibration2048",
       "role": "calibration",
       "workers": 2048,
-      "rates": [96, 384, 768],
-      "workflow_run": null,
+      "rates": [
+        96,
+        384,
+        768
+      ],
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736847759",
       "receipt": "raw/calibration2048/crawler.receipt.json.gz",
       "report": "raw/calibration2048/crawler.json.gz",
       "fixture_manifest": "raw/calibration2048/manifest.json.gz",
       "cleanup": "raw/calibration2048/cleanup.json.gz"
     }
   ],
-  "dispatch_attempts": [],
+  "dispatch_attempts": [
+    {
+      "role": "calibration",
+      "workers": 512,
+      "run_id": 38736840274,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736840274",
+      "created_utc": "2026-10-15T12:43:32Z",
+      "head_sha": "488b4575932265030b81312319b707e45649a028",
+      "head_branch": "randy/crawler-pressure-client",
+      "event": "workflow_dispatch"
+    },
+    {
+      "role": "calibration",
+      "workers": 2048,
+      "run_id": 38736847759,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38736847759",
+      "created_utc": "2026-10-15T12:43:35Z",
+      "head_sha": "488b4575932265030b81312319b707e45649a028",
+      "head_branch": "randy/crawler-pressure-client",
+      "event": "workflow_dispatch"
+    }
+  ],
   "formal_entries": []
 }
