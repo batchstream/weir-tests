@@ -82,7 +82,7 @@
       "native_conflict_retries": 0,
       "weir_expression_conflict_retries": 0,
       "weir_lua_total_attempts": null,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38748500292"
     },
     {
       "label": "formal-crawler",
@@ -98,7 +98,7 @@
       "native_conflict_retries": 3,
       "weir_expression_conflict_retries": null,
       "weir_lua_total_attempts": 4,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38748539400"
     }
   ],
   "dispatch_attempts": [
@@ -125,6 +125,34 @@
       "run_id": 38747800254,
       "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38747800254",
       "created_utc": "2026-10-15T14:02:01Z",
+      "head_sha": "c0f9d6159ce542e5678f81d5d5f02846a157cbad",
+      "head_branch": "randy/batch-mechanism-client",
+      "event": "workflow_dispatch",
+      "recorded_before_stage_result_inspection": true
+    },
+    {
+      "label": "formal-partial",
+      "role": "formal",
+      "profile": "partial-update",
+      "rate": 512,
+      "workers": 512,
+      "run_id": 38748500292,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38748500292",
+      "created_utc": "2026-10-15T14:06:48Z",
+      "head_sha": "c0f9d6159ce542e5678f81d5d5f02846a157cbad",
+      "head_branch": "randy/batch-mechanism-client",
+      "event": "workflow_dispatch",
+      "recorded_before_stage_result_inspection": true
+    },
+    {
+      "label": "formal-crawler",
+      "role": "formal",
+      "profile": "two-step",
+      "rate": 68,
+      "workers": 512,
+      "run_id": 38748539400,
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38748539400",
+      "created_utc": "2026-10-15T14:07:04Z",
       "head_sha": "c0f9d6159ce542e5678f81d5d5f02846a157cbad",
       "head_branch": "randy/batch-mechanism-client",
       "event": "workflow_dispatch",
