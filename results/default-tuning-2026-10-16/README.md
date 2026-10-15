@@ -201,6 +201,24 @@ The first 256-worker round has strong cold-state effects and its larger ratio
 is not used as the principal benefit claim. The original failed workflow is retained;
 there is no favorable performance retry or adaptive startup extension.
 
+## Longer wait sensitivity
+
+The preregistered 20/40/80/160 ms supplement holds count, bytes and execution
+limits fixed and measures both fixed-arrival profiles across three rounds.
+The [complete result](WAIT-SENSITIVITY-RESULT.md) is **inconclusive**: the
+20 ms crawler anchor's third-round backlog is 254, above 154 + 68 = 222, and
+the 160 ms crawler's first-round drain is 3.17392354 s, above 3 s. The selector
+requires a qualified repeated anchor, so it proposes no wait even though the
+40/80 ms rows pass their individual gates. This does not prove 20 ms wins or
+justify replacing it. The default remains the earlier finite-grid choice.
+
+All 417,600 arrivals complete with zero failed, unknown, timed-out or rejected
+operations and p99 at most 3.932159 s. Passing those checks does not erase the
+failed stability/drain gates. The [591-row audit](analysis-wait-sensitivity/analysis.json),
+[unchanged prior decisions](wait-sensitivity-equivalence.json), and
+[independent review](wait-sensitivity-independent-review.json) retain the full
+evidence. No substitute anchor or favorable rerun was dispatched.
+
 ## Reproduction and analysis corrections
 
 The [manifest](manifest.json) binds every workflow to its committed plan, plan
