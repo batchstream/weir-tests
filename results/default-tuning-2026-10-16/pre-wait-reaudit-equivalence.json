@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "analysis_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+  "manifest": "results/default-tuning-2026-10-16/manifest-before-wait-dispatch.json",
+  "manifest_sha256": "018c8bf6b81793475074350fca94fde3dc2d99334bd053adedc0de422022b5ed",
+  "prior_analysis_sha256": "50885e229b943bf1798dc1f35a8b52fb9911596d21a128e6a6292fdc077f199f",
+  "recomputed_analysis_sha256": "bfb94192bfcdb1dc6b2924e3b384438e92a20f983beefce9b300569868a0324f",
+  "workflows": 22,
+  "rows": 567,
+  "all_rows_exactly_unchanged": true,
+  "all_formal_decisions_exactly_unchanged": true,
+  "selection_exactly_unchanged": true,
+  "byte_selection_exactly_unchanged": true,
+  "complete_raw_reaudit": true,
+  "original_c0_auditor_unchanged": true
+}

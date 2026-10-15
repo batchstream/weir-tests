@@ -18,7 +18,8 @@ All primary native calls contain one record. Four independent OS processes own
 their driver/SDK connections and issue the same changes using disjoint keys.
 There is no client batching or Sink baseline. Search has one primary per index,
 zero replicas, request translog durability and a one-second refresh interval.
-Fixtures explicitly allow 4096 transport pending records; the four omitted batching
+Fixtures explicitly allow 4096 transport pending records per RPC. The Store
+queue retains its 1024-operation / 32 MiB default. The four omitted batching
 controls are the defaults under selection, rather than an entirely default server
 configuration. Queue and memory defaults are not selected by this study.
 Acknowledgement and query visibility match within each comparison. Every update
@@ -146,6 +147,9 @@ The initial confirmation does not establish a Weir maximum. At 0.25 CPU, the
 has a second/first-half completion ratio of 0.864. At one CPU, Weir's high
 concurrency fills the shared host while the database uses only about one-third
 of its quota. Host saturation is not database saturation.
+The [archived variability inspection](CAPACITY-VARIABILITY.md) retains CPU,
+GC and resource observations for the two unstable rounds without assigning an
+unproved cause or relaxing their failed stability gates.
 
 Six paired crawler/partial cases fail whole-case lifecycle qualification after
 native warmup timeouts and subsequent server startup failures; see
