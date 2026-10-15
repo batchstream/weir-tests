@@ -264,6 +264,16 @@ type durationMeasureOptions struct {
 }
 
 func measureDuration(ctx context.Context, options durationMeasureOptions) SaturationResult {
+	var beforeDatabase, afterDatabase *workload.DatabaseCounters
+	var counterErrors []string
+	if options.Sample && options.Paths != nil {
+		counters, err := options.Paths.DatabaseCounters(ctx)
+		if err != nil {
+			counterErrors = append(counterErrors, err.Error())
+		} else {
+			beforeDatabase = &counters
+		}
+	}
 	var metricsBefore observe.Snapshot
 	measureServer := options.Sample && options.Executor.Name() == "weir"
 	if measureServer {
@@ -386,9 +396,21 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 	if measureServer {
 		metricsAfter = fetchServerMetrics(ctx, options.Target.Diagnostics)
 	}
+	if options.Sample && options.Paths != nil {
+		counters, err := options.Paths.DatabaseCounters(ctx)
+		if err != nil {
+			counterErrors = append(counterErrors, err.Error())
+		} else {
+			afterDatabase = &counters
+		}
+	}
 	base := Result{Path: options.Executor.Name(), ElapsedNS: elapsed.Nanoseconds(), Evidence: options.Executor.Evidence()}
 	base.Evidence.ClientBatch = fmt.Sprintf("native database bulk / same-Store SDK batch, %d distinct records per request", options.State.batch)
 	result := SaturationResult{Result: base, Resources: resources}
+	result.DatabaseBefore = beforeDatabase
+	result.DatabaseAfter = afterDatabase
+	result.PhysicalCommandUnavailable = mergeCommandUnavailable(counterErrors...)
+	result.calculatePhysicalCommands()
 	if measureServer {
 		result.ServerMetrics = serverMetricDelta(metricsBefore, metricsAfter, options.State.dataset.Config.StoreName)
 	}

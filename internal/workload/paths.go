@@ -113,7 +113,7 @@ func Open(ctx context.Context, dataset *Dataset) (*Paths, error) {
 }
 
 func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
-	info := Evidence{ByteScope: "logical document bytes from APPLIED write acknowledgements and validated reads; excludes URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero", ClientBatch: "one logical operation per client call; no client bulk API", RetryPolicy: "no application retries"}
+	info := Evidence{ByteScope: "logical document bytes from APPLIED write acknowledgements and validated reads; excludes transform scripts, URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero", ClientBatch: "one logical operation per client call; no client bulk API", RetryPolicy: "no application retries"}
 	direct := &directPath{dataset: dataset, info: info}
 	if dataset.Config.Backend == "mongo" {
 		address, err := url.Parse(dataset.Config.MongoURI)
@@ -149,7 +149,7 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 		direct.info.Version = build.Version
 		direct.info.WritePolicy = "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency"
 		if dataset.Config.LuaMutations {
-			direct.info.WritePolicy = "one snapshot transaction per business mutation: FindOne, compute revision toggle, ReplaceOne, majority commit; no client bulk; pool=worker concurrency"
+			direct.info.WritePolicy = "one atomic UpdateOne aggregation pipeline per business mutation: $set revision=$subtract(int32(1), current revision); w=majority; no client read, transaction or bulk; pool=worker concurrency"
 		}
 		direct.info.RetryPolicy = "retryReads=false; retryWrites=false; maxAdaptiveRetries=0"
 		return direct, nil
@@ -180,7 +180,7 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 	direct.info.Version = root.Version.Number
 	direct.info.WritePolicy = "PUT _doc; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; POST _mget?realtime=true with one ID; no compression; connections=worker concurrency"
 	if dataset.Config.LuaMutations {
-		direct.info.WritePolicy = "single-ID real-time _mget, compute revision toggle, PUT _doc with observed if_seq_no/if_primary_term; pipeline=_none; refresh=false; wait_for_active_shards=1; timeout=1s; no client bulk"
+		direct.info.WritePolicy = "one POST _update Painless script per business mutation: ctx._source.revision=1-ctx._source.revision; retry_on_conflict=0; refresh=false; wait_for_active_shards=1; timeout=1s; no client read or bulk"
 	}
 	direct.info.RetryPolicy = "no application retries; business POST/PUT have no idempotency key and are not transparently replayed by http.Transport"
 	return direct, nil
@@ -486,7 +486,7 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 			request := &weir.AtomicTransformRequest{Resource: p.dataset.Resource(operation.Record), Lua: program}
 			opts := weir.AtomicTransformOptions{StoreName: p.dataset.Config.StoreName, Request: request}
 			result, err := p.client.AtomicTransform(ctx, opts)
-			return mutationOutcome(result, len(program.Source), err)
+			return mutationOutcome(result, 0, err)
 		}
 		document := &weir.Document{ContentType: p.dataset.ContentType(), Data: p.dataset.Document(operation)}
 		request := &weir.WriteRequest{Resource: p.dataset.Resource(operation.Record), Document: document}

@@ -184,6 +184,9 @@ func (d *Dataset) Validate(raw []byte, operation Operation) error {
 		if !ok || id != d.ID(operation.Record) {
 			return errors.New("persisted BSON _id mismatch")
 		}
+		if _, ok := bson.Raw(raw).Lookup("revision").Int32OK(); !ok {
+			return errors.New("persisted BSON revision must retain int32 type")
+		}
 		err = bson.Unmarshal(raw, &actual)
 	} else {
 		var fields map[string]json.RawMessage

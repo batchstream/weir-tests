@@ -228,6 +228,9 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 	t.Helper()
 	payload := &weir.Document{ContentType: "application/vnd.example.operation", Data: []byte("opaque request")}
 	native := &weir.NativeRequest{Resource: target.collection, Request: payload}
+	if target.name == "mongo" {
+		native.Resource = weir.EncodeSegment(target.mongo.Database().Name())
+	}
 	options := weir.NativeOptions{StoreName: target.name, Request: native, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
 	result, err := s.client.Native(s.ctx, options)
 	if err != nil || result == nil || result.Response != nil || result.Completion != weir.NativeNotStarted || result.Failure.GetCode() != weir.FailureUnsupported {
@@ -308,14 +311,34 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 	nativeMissing := &weir.NativeRequest{Resource: missing.collection}
 	if target.name == "mongo" {
 		command := bson.D{{Key: "count", Value: target.mongo.Name() + ".never_created"}}
+		nativeMissing.Resource = weir.EncodeSegment(target.mongo.Database().Name())
 		nativeMissing.Request = bsonDocument(t, command)
 	} else {
 		nativeMissing = nativeHTTPGet(t, missing.collection, "/_doc/absent")
 	}
-	nativeMissingOptions := weir.NativeOptions{StoreName: target.name, Request: nativeMissing, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
+	var nativeBody []byte
+	nativeMissingOptions := weir.NativeOptions{StoreName: target.name, Request: nativeMissing}
+	nativeMissingOptions.Consume = func(_ context.Context, _ *weir.NativeResponse, chunk []byte) error {
+		if len(nativeBody)+len(chunk) > 1<<20 {
+			return fmt.Errorf("Native response exceeded fixture bound")
+		}
+		nativeBody = append(nativeBody, chunk...)
+		return nil
+	}
 	missingResult, err := s.client.Native(s.ctx, nativeMissingOptions)
-	if err != nil || missingResult == nil || missingResult.Response != nil || missingResult.Completion != weir.NativeNotStarted || missingResult.Failure.GetCode() != weir.FailureTargetNotFound {
-		t.Fatalf("missing Native target: %v %v", missingResult, err)
+	if err != nil || missingResult == nil || missingResult.Response == nil || missingResult.Completion != weir.NativeResponseComplete || missingResult.Failure != nil {
+		t.Fatalf("missing Native target must retain the backend response: %v %v", missingResult, err)
+	}
+	if target.name == "mongo" {
+		raw := bson.Raw(nativeBody)
+		if raw.Validate() != nil || raw.Lookup("n").AsInt64() != 0 || raw.Lookup("ok").AsFloat64() != 1 {
+			t.Fatalf("Native count on missing MongoDB collection: %s", raw)
+		}
+	} else {
+		response, err := weir.ParseHTTPNativeResponse(missingResult.Response)
+		if err != nil || response.StatusCode != http.StatusNotFound {
+			t.Fatalf("Native missing Search index HTTP response: %v %v", response, err)
+		}
 	}
 	if target.name == "search" {
 		native := nativeHTTPGet(t, target.collection, "/_doc/absent")

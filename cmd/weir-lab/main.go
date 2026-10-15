@@ -76,7 +76,7 @@ func main() {
 	flag.IntVar(&opts.concurrency, "concurrency", 8, "client workers for finite diagnostics")
 	flag.IntVar(&opts.rounds, "rounds", 3, "alternating paired rounds")
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
-	flag.BoolVar(&opts.luaMutations, "lua-mutations", false, "single-record read-modify-write: native transaction/OCC versus Weir Lua; no client batching")
+	flag.BoolVar(&opts.luaMutations, "lua-mutations", false, "single-record mutation: native atomic update pipeline/server script versus Weir Lua; no client batching")
 	flag.StringVar(&opts.mode, "mode", "saturation", "saturation sends independent single requests from OS client processes; bulk-saturation measures bulk overhead; fixed is a finite diagnostic")
 	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 512 in single-request mode")
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")

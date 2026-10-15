@@ -147,7 +147,10 @@ class MatrixRunnerTests(unittest.TestCase):
                     receipt['server_binary_sha256'] = receipt['server_receipt']['sha256']
                     server_receipt_path = weir.with_suffix('.receipt.json')
                     server_receipt_path.write_text(json.dumps(receipt['server_receipt']))
-                    arguments = ['run_performance_matrix.py', '--backend', 'mongo', '--weir', str(weir), '--output', str(output)]
+                    arguments = ['run_performance_matrix.py', '--backend', 'mongo', '--weir', str(weir), '--output', str(output),
+                                 '--database-cpus', '1', '--concurrency-levels', '4,16,64,256',
+                                 '--client-processes', '4', '--records', '2048', '--payload-bytes', '512', '--rounds', '5',
+                                 '--bulk', '--bulk-concurrency-levels', '4,16']
                     if explicit:
                         arguments += ['--server-receipt', str(server_receipt_path)]
                     commands = []
@@ -171,9 +174,15 @@ class MatrixRunnerTests(unittest.TestCase):
                             mock.patch.object(runner.subprocess, 'run', side_effect=run_command), \
                             mock.patch.object(runner.subprocess, 'check_output', side_effect=['f' * 40, b'']):
                         runner.main()
-                    self.assertEqual(len(commands), 4)
+                    self.assertEqual(len(commands), 6)
                     for command in commands:
                         self.assertEqual('-server-receipt' in command, kind == 'local')
+                        self.assertEqual(command[command.index('-database-cpus') + 1], '1.0')
+                        self.assertEqual(command[command.index('-records') + 1], '2048')
+                        self.assertEqual(command[command.index('-payload-bytes') + 1], '512')
+                        self.assertEqual(command[command.index('-rounds') + 1], '5')
+                        expected_levels = '4,16' if command[command.index('-mode') + 1] == 'bulk-saturation' else '4,16,64,256'
+                        self.assertEqual(command[command.index('-concurrency-levels') + 1], expected_levels)
                         if kind == 'local':
                             self.assertEqual(command[command.index('-server-receipt') + 1], str(output.resolve() / 'server.receipt.json'))
                     saved = json.loads((output / 'read.receipt.json').read_text())

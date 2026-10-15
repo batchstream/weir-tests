@@ -87,8 +87,8 @@ make benchmark
 go run ./cmd/weir-lab -mode saturation \
   -weir .tools/weir -backend all -database-cpus 1 \
   -client-processes 4 \
-  -concurrency-levels 8,32,128 -batch-sizes 1 \
-  -records 2048 -payload-bytes 1024 -write-percent 0 \
+  -concurrency-levels 4,8,32,128,256 -batch-sizes 1 \
+  -records 8192 -payload-bytes 1024 -write-percent 0 \
   -rounds 3 -warmup-duration 10s -duration 20s \
   -output results/local/read
 ```
@@ -103,13 +103,20 @@ AB/BA order alternates across rounds. Failed calls or uncertain acknowledgements
 invalidate the comparison.
 
 For Lua read-modify-write, add `-lua-mutations -write-percent 100`. Each native
-MongoDB request uses a snapshot transaction with one read, revision computation,
-replacement and majority commit. Each native Search request uses one real-time
-read and a write conditioned on its observed sequence number and primary term.
+MongoDB request uses one atomic `UpdateOne` aggregation pipeline, with
+`$set: {revision: {$subtract: [int32(1), "$revision"]}}` and majority acknowledgement.
+Each native Search request uses one `POST _update` Painless script with
+`ctx._source.revision = 1 - ctx._source.revision` and `retry_on_conflict=0`.
+Neither baseline performs a client read or transaction. These are native controls
+for this fixed transformation, rather than a claim about arbitrary Lua programs.
 The SDK sends one Lua `AtomicTransform` per request with the same computation.
 The function updates `current.revision = 1 - current.revision` and returns the
-current document; existing BSON int32 revision fields retain their width.
+current document; independent postflight checks require the BSON revision to
+retain its int32 type and verify every field and final revision on both paths.
 Fixture documents are identical on both paths; Weir adds no document metadata.
+The logical request/result document-byte counters exclude scripts and commands,
+so they are zero for transform-only calls. Backend reads and replacements still
+contribute to the measured network and CPU costs.
 
 Repeat with `-backend-batch-limit 1` to disable server aggregation. Keep other
 settings identical and use a fresh output directory. The dispatch workflow can
@@ -120,7 +127,9 @@ Reports retain per-round throughput, pooled latency histograms, client process
 identities, start lag, CPU/RSS, database CPU/memory/I/O/network samples and raw
 Weir metrics. Metrics report stream completions, terminal records, queue wait,
 adapter time, rejections and operations per adapter invocation. MongoDB also
-records physical command deltas. Adapter invocations can split by namespace,
+records selected business-command deltas at the timed boundaries for both
+single-record and bulk calls. These counters exclude handshakes and monitoring
+commands. Adapter invocations can split by namespace,
 action and byte limits; their counts are distinct from database wire commands.
 Missing samples and reset counters are reported as unavailable.
 `business_operation_timeouts` counts failed logical operations whose request context
@@ -169,12 +178,17 @@ prove Linux database saturation or a production capacity limit.
 
 `scripts/run_performance_matrix.py` serializes read, mixed (10%), write and Lua
 cases at total concurrency 8/32, with three alternating native/Weir rounds,
-2s warmup and 5s measurement for native MongoDB, or 20s warmup and 20s
+10s warmup and 20s measurement for MongoDB, or 20s warmup and 20s
 measurement for Elasticsearch per stage. Longer Search stages gave better
 resource sampling coverage and avoided a short-run regression that did not
 reproduce in the adjacent longer comparison. These are measurement defaults;
 the server batching and transport defaults remain 32 records.
-`--warmup-duration` and `--duration` allow explicit overrides. It retains exact commands, client source
+`--warmup-duration`, `--duration`, `--database-cpus`, `--concurrency-levels`,
+`--client-processes`, `--records`, `--payload-bytes` and `--rounds` expose the
+experiment controls. Docker databases default to an enforced 1 CPU quota and an
+8192-document hot working set.
+`--bulk-concurrency-levels` separately controls bulk comparisons, whose maximum
+concurrency is 64. It retains exact commands, client source
 snapshots, binary hashes, JSON/Markdown reports and copied fixture cleanup/log
 evidence. The runner uses an explicit `--server-receipt` or automatically loads
 the adjacent `.receipt.json`, passing frozen local receipts to the lab while
@@ -235,8 +249,12 @@ an explicit flag; credential-bearing URLs are rejected.
 
 CI runs offline unit/race/vet and dependency checks, real multi-node integration,
 and verified ordinary and Lua comparison smoke tests on both databases.
-`saturation.yml` runs read/mixed/write matrices on PRs and accepts CPU quota,
-concurrency and grouping controls on dispatch. Workflow artifacts preserve raw
+`saturation.yml` runs only on explicit dispatch and accepts write percentage, CPU quota,
+concurrency, backend, workload mode, records per call and grouping controls on
+dispatch. Its default independent-client curve is 4/8/32/128/256, with three
+alternating rounds and 10s warmup plus 20s measurement per path. Supplemental
+`bulk-saturation` runs require explicit concurrency at most 64 and a batch size
+such as 32. Workflow artifacts preserve raw
 reports and owned-resource cleanup receipts.
 
 Generated measurements belong in ignored output directories under `results/`.

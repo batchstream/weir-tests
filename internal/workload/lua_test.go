@@ -11,57 +11,42 @@ import (
 	"testing"
 )
 
-func TestNativeSearchTransformConditionsWriteOnObservedVersion(t *testing.T) {
+func TestNativeSearchTransformUsesOneAtomicServerScript(t *testing.T) {
 	dataset := testDataset(t, "search")
 	dataset.Config.LuaMutations = true
 	operation := Operation{Record: 2, Write: true, Revision: 1}
-	var reads, writes atomic.Int32
+	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.Method == http.MethodPost {
-			reads.Add(1)
-			var body struct {
-				IDs []string `json:"ids"`
-			}
-			if json.NewDecoder(request.Body).Decode(&body) != nil || len(body.IDs) != 1 || body.IDs[0] != dataset.ID(operation.Record) || request.URL.Path != "/"+dataset.Config.Namespace+"/_mget" || request.URL.Query().Get("realtime") != "true" {
-				t.Error("native transform did not issue exactly one real-time point read")
-			}
-			previous := operation
-			previous.Revision = 0
-			fmt.Fprintf(writer, `{"docs":[{"_index":%q,"_id":%q,"found":true,"_seq_no":7,"_primary_term":2,"_source":%s}]}`, dataset.Config.Namespace, dataset.ID(operation.Record), dataset.Document(previous))
-			return
+		calls.Add(1)
+		if request.Method != http.MethodPost || request.URL.Path != "/"+dataset.Config.Namespace+"/_update/"+dataset.ID(operation.Record) || request.URL.Query().Get("retry_on_conflict") != "0" || request.URL.Query().Get("refresh") != "false" || request.URL.Query().Get("wait_for_active_shards") != "1" || request.URL.Query().Get("timeout") != "1s" {
+			t.Error("native transform lost its single-update or acknowledgement policy")
 		}
-		writes.Add(1)
-		if request.Method != http.MethodPut || request.URL.Query().Get("if_seq_no") != "7" || request.URL.Query().Get("if_primary_term") != "2" || request.URL.Query().Get("pipeline") != "_none" || request.URL.Query().Get("refresh") != "false" || request.URL.Query().Get("wait_for_active_shards") != "1" || request.URL.Query().Get("timeout") != "1s" {
-			t.Error("native transform lost its version or acknowledgement policy")
+		var body struct {
+			Script struct {
+				Lang   string `json:"lang"`
+				Source string `json:"source"`
+			} `json:"script"`
 		}
-		raw, err := io.ReadAll(request.Body)
-		if err != nil || dataset.Validate(raw, operation) != nil {
-			t.Error("native transform changed business document shape or produced the wrong revision", err)
+		if json.NewDecoder(request.Body).Decode(&body) != nil || body.Script.Lang != "painless" || body.Script.Source != "ctx._source.revision = 1 - ctx._source.revision" {
+			t.Error("native transform did not compute the revision from the server document")
 		}
 		fmt.Fprintf(writer, `{"_index":%q,"_id":%q,"result":"updated","_shards":{"successful":1,"failed":0}}`, dataset.Config.Namespace, dataset.ID(operation.Record))
 	}))
 	defer server.Close()
 	path := &directPath{dataset: dataset, search: server.Client(), baseURL: server.URL}
 	result := path.Execute(t.Context(), operation)
-	if result.Status != Success || !result.Applied || reads.Load() != 1 || writes.Load() != 1 {
-		t.Fatal("native RMW was not one read and one acknowledged conditional write", result, reads.Load(), writes.Load())
+	if result.Status != Success || !result.Applied || calls.Load() != 1 || result.RequestBytes != 0 || result.ResponseBytes != 0 {
+		t.Fatal("native RMW was not one acknowledged atomic update without document transfer", result, calls.Load())
 	}
 }
 
-func TestNativeSearchTransformLostWriteAcknowledgementIsNotReplayed(t *testing.T) {
+func TestNativeSearchTransformLostAcknowledgementIsNotReplayed(t *testing.T) {
 	dataset := testDataset(t, "search")
 	dataset.Config.LuaMutations = true
 	operation := Operation{Record: 2, Write: true, Revision: 1}
-	var reads, writes atomic.Int32
+	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.Method == http.MethodPost {
-			reads.Add(1)
-			previous := operation
-			previous.Revision = 0
-			fmt.Fprintf(writer, `{"docs":[{"_index":%q,"_id":%q,"found":true,"_seq_no":7,"_primary_term":2,"_source":%s}]}`, dataset.Config.Namespace, dataset.ID(operation.Record), dataset.Document(previous))
-			return
-		}
-		writes.Add(1)
+		calls.Add(1)
 		_, _ = io.Copy(io.Discard, request.Body)
 		connection, _, err := writer.(http.Hijacker).Hijack()
 		if err != nil {
@@ -73,8 +58,43 @@ func TestNativeSearchTransformLostWriteAcknowledgementIsNotReplayed(t *testing.T
 	defer server.Close()
 	path := &directPath{dataset: dataset, search: server.Client(), baseURL: server.URL}
 	result := path.Execute(t.Context(), operation)
-	if result.Status != Indeterminate || result.Applied || reads.Load() != 1 || writes.Load() != 1 {
-		t.Fatal("lost write acknowledgement invented success or replayed RMW", result, reads.Load(), writes.Load())
+	if result.Status != Indeterminate || result.Applied || calls.Load() != 1 {
+		t.Fatal("lost acknowledgement invented success or replayed the toggle", result, calls.Load())
+	}
+}
+
+func TestNativeSearchTransformRequiresCompleteAcknowledgement(t *testing.T) {
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   Status
+	}{
+		{name: "conflict", status: http.StatusConflict, body: `{}`, want: Failed},
+		{name: "missing", status: http.StatusNotFound, body: `{}`, want: Failed},
+		{name: "server failure", status: http.StatusServiceUnavailable, body: `{}`, want: Indeterminate},
+		{name: "wrong record", status: http.StatusOK, body: `{"_index":"%s","_id":"other","result":"updated","_shards":{"successful":1,"failed":0}}`, want: Indeterminate},
+		{name: "noop", status: http.StatusOK, body: `{"_index":"%s","_id":"record-00000002","result":"noop","_shards":{"successful":1,"failed":0}}`, want: Indeterminate},
+		{name: "shard failure", status: http.StatusOK, body: `{"_index":"%s","_id":"record-00000002","result":"updated","_shards":{"successful":0,"failed":1}}`, want: Indeterminate},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			dataset := testDataset(t, "search")
+			dataset.Config.LuaMutations = true
+			var calls atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				calls.Add(1)
+				writer.WriteHeader(test.status)
+				fmt.Fprint(writer, strings.ReplaceAll(test.body, "%s", dataset.Config.Namespace))
+			}))
+			defer server.Close()
+			path := &directPath{dataset: dataset, search: server.Client(), baseURL: server.URL}
+			operation := Operation{Record: 2, Write: true, Revision: 1}
+			result := path.Execute(t.Context(), operation)
+			if result.Status != test.want || result.Applied || calls.Load() != 1 {
+				t.Fatal("failed update acknowledgement was accepted or replayed", result, calls.Load())
+			}
+		})
 	}
 }
 
