@@ -1,0 +1,98 @@
+[
+  {
+    "path": "weir-current.receipt.json.gz",
+    "gzip_sha256": "d9a33e639f498ee3248e664fd2021951c0f5641d47dea6917a7ff95a00825c5b",
+    "sha256": "efe3cf842c1de6cdea463557c3b02d15c05e835f77a0b9341567f70ab967973c",
+    "bytes": 3274
+  },
+  {
+    "path": "weir-optimized.receipt.json.gz",
+    "gzip_sha256": "4986477e02014fc7c259e5b5313a44117e7e05af77a2404a8de10313fd1a3b6e",
+    "sha256": "19585a80155f0b646f37c34d97b14720346d875bfedd0685903150b3d60e8ad0",
+    "bytes": 3274
+  },
+  {
+    "path": "crawler-observations.csv.gz",
+    "gzip_sha256": "29eefe3a18705c8d137265149f7af59cd212259e9a59acdbf787556ee111c846",
+    "sha256": "8d348aefc9583ac54d2b8a8caad3a9f11535f96d7106bfb4bd0966b7e83cb2e6",
+    "bytes": 5282
+  },
+  {
+    "path": "crawler-observations.json.gz",
+    "gzip_sha256": "b070c8078bffe7f556b8d66dc648b8211d54bcab82c697eff618fbbaa6cd43fd",
+    "sha256": "71d297e39ac06834ba6ca00214dbf9362e38ba7bcaac1c37f01ea9b2d64dc3d4",
+    "bytes": 26005
+  },
+  {
+    "path": "crawler.json.gz",
+    "gzip_sha256": "99abe7cf58d736789a4c074fdd3c7cde5d6184f3865f74711d172bc10216cea2",
+    "sha256": "66c97bbd7840e7accf4ed174ef1e2a97e6527fdf26d5c4c5ade2dde527dd2392",
+    "bytes": 111580911
+  },
+  {
+    "path": "crawler.log.gz",
+    "gzip_sha256": "0e2db220224ce97058f966bd8cc3856a7e2422e21f8af19787c54dfec3abf006",
+    "sha256": "f3b14b36d5e19685b7817a1feb121f9fc2cdd69397df750d0712ef9d4c975495",
+    "bytes": 1173
+  },
+  {
+    "path": "crawler.receipt.json.gz",
+    "gzip_sha256": "f85f5d69a51c49805a5dac0ce2a429710954f4c6def32850d53b357c1f0a864a",
+    "sha256": "c49bda368ea4ad5aee3ca509b4cf4859b90e2f5e0259beb9a2ba4898b4269e97",
+    "bytes": 11010
+  },
+  {
+    "path": "cleanup.json.gz",
+    "gzip_sha256": "df1d8983cac0b917c9ec6691d200ac88eb56d990232710914c549e5fc9b4060c",
+    "sha256": "6ec6ed2b4c526a4ca3d85e2052dd2818094d591a266e896eac097dfb5d45ad7f",
+    "bytes": 535
+  },
+  {
+    "path": "docker-engine.json.gz",
+    "gzip_sha256": "69ac0b324e1c18ce27ef7ac8164af3275d92763a58a5ec72b93d223661434f82",
+    "sha256": "11fc7610a989da3656f433f8ef86f4d7d789f39a1e89cf77c1042ca989373e14",
+    "bytes": 115
+  },
+  {
+    "path": "manifest.json.gz",
+    "gzip_sha256": "9d056957d1e8149bc6a01efdbaa8e0f82bab19dbf2f56da1845d082ce78e7fbe",
+    "sha256": "208fa0120bcde195ceb1b19c36c3c33612873814b1159e154b88c469a259666b",
+    "bytes": 1246
+  },
+  {
+    "path": "node-0-config.json.gz",
+    "gzip_sha256": "773266682cb85604a5bd3825db942eedb874bf921be5b9bce6e7448c892dda4b",
+    "sha256": "2ca45236d496271b0f75ccde8a5d08ed621a4b6f7364731c9b43fd84a70e2ae6",
+    "bytes": 379
+  },
+  {
+    "path": "node-0-process.log.gz",
+    "gzip_sha256": "2462364426f3844ea563bda3322df177fc39cd14bb5e5522d9f82ae60a560be4",
+    "sha256": "069b5ac7f4c5e9ddb120fc127083fe449e145ae42aa81bf23e37141d5f23b0aa",
+    "bytes": 2596
+  },
+  {
+    "path": "node-0-routes.json.gz",
+    "gzip_sha256": "8ad641aefba04a5de908972b87f9470527fd0d22f00b53d3078935fe6c7c0230",
+    "sha256": "07771483d54a79e8d2ebd18dfad2a2310ef5d017e58942ab960e41884779dde1",
+    "bytes": 246
+  },
+  {
+    "path": "search-log-receipt.json.gz",
+    "gzip_sha256": "752eac334f74b4b683d59f750a92399e6b80facd193d930920d546dc56ceb40e",
+    "sha256": "108e68f1d587a67eded40b223d60cc0aa0cf5358d93d940233f1a23bfe02b448",
+    "bytes": 317
+  },
+  {
+    "path": "search-process.log.gz",
+    "gzip_sha256": "172b7bdba1ffd5d68e8fd3c0ebf569ba366986bae414d13adfc460dc1590667c",
+    "sha256": "51f0216432e24238513d806bd87d157b707914c971875113fa03573f7e0a262f",
+    "bytes": 199236
+  },
+  {
+    "path": "workflow-run.json.gz",
+    "gzip_sha256": "275f3b99bc1ae1f681a44ae4d3d8b34d46e5f730c8877d410c9ef7495226cf49",
+    "sha256": "7bf0267eedaf7d86a5c0dcb28815730d33ed5ea79d04de875f0bd4ee0e93d0b3",
+    "bytes": 352
+  }
+]

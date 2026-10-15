@@ -17,5 +17,9 @@
   "bytes_differ": true,
   "all_stage_group_comparison_and_selection_values_identical": true,
   "historical_match_flag_for_rebuild": false,
-  "numeric_gates_unchanged": true
+  "numeric_gates_unchanged": true,
+  "runs_checked": 5,
+  "stage_slots_checked": 45,
+  "timed_observations_checked": 43,
+  "formal_stages_checked": 27
 }
