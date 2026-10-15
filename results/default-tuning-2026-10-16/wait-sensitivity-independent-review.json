@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "reviewer": "/root/review_default_results_fresh",
+  "checked_utc": "2026-10-15T22:09:05.162451+00:00",
+  "raw_commit": "542df18c1d49c33bb8c576d05a4c481b569c48cd",
+  "frozen_analysis_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+  "analysis_path": "/Users/liran/Projects/liran/go/weir-tests/results/default-tuning-2026-10-16/analysis-wait-sensitivity/analysis.json",
+  "analysis_sha256": "c899adcb0efeae634750a994d19ce2bf8f86d4c02a76215829a89ef5eb20adec",
+  "prior_analysis_path": "/Users/liran/Projects/liran/go/weir-tests/results/default-tuning-2026-10-16/analysis-startup-corrected-confirmation/analysis.json",
+  "prior_analysis_sha256": "50885e229b943bf1798dc1f35a8b52fb9911596d21a128e6a6292fdc077f199f",
+  "choice_sha256": "27330f70a877c6184db81de455b2c5a03b4f5b19892727509d906d8fb79b88ae",
+  "checks": {
+    "old_rows_567_full_equality": true,
+    "old_runs_22_full_equality": true,
+    "old_selection_byte_selection_formal_and_complete_inventory_unchanged": true,
+    "new_rows_24_prior_independent_projection_equality": true,
+    "projection_fields_per_row": 25,
+    "new_rows_24_full_frozen_Cwait_recompute_equality": true,
+    "reused_independently_passed_original_C0_audits": 8,
+    "cached_audits_bound_to_exact_immutable_raw_report": true,
+    "complete_choice_equality": true,
+    "choice_input_and_selector_sha256_valid": true,
+    "all_14_analysis_inputs_loaded_from_frozen_Cwait": true
+  },
+  "active_changes_during_review": [
+    "results/default-tuning-2026-10-16/analyze.py",
+    "results/default-tuning-2026-10-16/derive_soak_plan.py"
+  ],
+  "active_changes_note": "Parent-authorized Cext activation edits began after frozen full analysis completed; review loaded committed Cwait bytes in memory.",
+  "outcome": "inconclusive",
+  "selected_wait_ms": null,
+  "anchor_qualified": false,
+  "disqualifications": [
+    {
+      "case_id": "wait-crawler-q1-w20ms",
+      "round": 3,
+      "reason": "unstable backlog",
+      "backlog": [
+        163,
+        154,
+        147,
+        136,
+        194,
+        254
+      ],
+      "final": 254,
+      "maximum_allowed": 222
+    },
+    {
+      "case_id": "wait-crawler-q1-w160ms",
+      "round": 1,
+      "reason": "drain exceeds 3 seconds",
+      "drain_s": 3.17392354
+    }
+  ],
+  "repository_mutated_by_reviewer": false
+}
