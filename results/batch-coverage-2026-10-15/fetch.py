@@ -14,7 +14,8 @@ result=subprocess.run(['gh','run','download',run_id,'--repo','batchstream/weir-t
 if result.returncode:raise SystemExit(result.returncode)
 inventory=[]
 for source in sorted(temporary.rglob('*')):
-    if source.is_symlink() or not source.is_file():continue
+    if source.is_symlink():raise SystemExit('symlink in artifact; not read')
+    if not source.is_file():continue
     if source.name.startswith('.env') or source.suffix in ('.key','.pem') or source.name=='credentials' or '.ssh' in source.parts:
         raise SystemExit('forbidden file in artifact; not read')
     relative=source.relative_to(temporary).as_posix()+'.gz'
