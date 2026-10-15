@@ -29,7 +29,8 @@
       "duration_ns": 5000000000,
       "rounds": 1,
       "planned_timed_stages": 24,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38757498973",
+      "run_id": 38757498973
     },
     {
       "label": "diagnostic-partial",
@@ -44,7 +45,8 @@
       "duration_ns": 5000000000,
       "rounds": 1,
       "planned_timed_stages": 3,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38757510460",
+      "run_id": 38757510460
     },
     {
       "label": "diagnostic-crawler",
@@ -59,7 +61,8 @@
       "duration_ns": 5000000000,
       "rounds": 1,
       "planned_timed_stages": 3,
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38757522402",
+      "run_id": 38757522402
     },
     {
       "label": "formal-write",
