@@ -7,9 +7,15 @@ changes. Lua remains in the single Weir process.
 
 ## Candidate and measurement boundaries
 
-Server source: `6c40957ec7352c867bc92b9b032db0d754956853` in `batchstream/weir`.
-The client/workflow source identity will be frozen in a follow-up source ledger
-commit before dispatch, because this file cannot contain its own commit hash.
+Server source: `b9dfbc207022e0e8ab76118c58cef59e8bac33f3` in `batchstream/weir`.
+Client/workflow/original auditor source:
+`3e180ebd886d44d5d936d9a5f5192f8295a3f2d1` in `batchstream/weir-tests`.
+The initial server `6c40957ec7352c867bc92b9b032db0d754956853` was replaced before
+dispatch after independent review found a deadline assumption in a new scheduler
+test. Only that test changed; the production Go code is identical. The fixed test
+separates caller cancellation from a test-only wait timeout. Source and settings
+are now frozen; subsequent plan, evidence and analysis commits do not replace the
+declared original client/auditor.
 
 The fixed candidate is 128 operations, 8 MiB aggregation, 5 ms collection and 16
 simultaneous adapter executions. It is a test hypothesis, not a selected universal
