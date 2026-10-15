@@ -4,6 +4,11 @@ Independent blackbox integration tests and database throughput comparisons for
 [Weir](https://github.com/batchstream/weir). This module uses the published
 Go SDK and public protocol. It imports no server packages.
 
+The executed [2026-10-15 value benchmark](results/value-2026-10-15/README.md)
+publishes 94 paired real-database comparisons, all rounds, raw evidence and
+offline analysis. It identifies the high-concurrency aggregation benefits and
+the low-concurrency/native-bulk counterexamples.
+
 The SDK, protocol, server revision, Go toolchain and database artifacts are
 locked in [versions.json](versions.json). Server binaries are built separately
 from verified immutable module source. Explicit local builds for before/after
