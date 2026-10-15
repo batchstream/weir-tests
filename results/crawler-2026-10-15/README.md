@@ -2,6 +2,10 @@
 
 This experiment tests whether Weir reduces database work at the same completed business throughput, or increases completed throughput at the same database CPU budget. Extra Weir CPU and total infrastructure cost are outside the question. The business repositories are unchanged; their existing worker rules are read-only fixture references. Sink is excluded and no new Lua helper API is introduced.
 
+## Scope correction: already-batched client control
+
+The measured client generated a complete 20-product page before submission and sent product and seller groups in bulk on both paths. The actual reference worker concurrently invokes individual `IndexProduct` and `IndexOffer` calls; concurrency does not itself provide each caller with a ready batch or a cross-process aggregator. Therefore the findings below apply to an already-batched client and cannot establish or refute Weir's value for independently arriving distributed single-record updates. The follow-up [single-record experiment plan](../crawler-single-2026-10-15/PLAN.md) corrects that primary baseline. These original raw results remain unchanged.
+
 ## Direct-control finding
 
 **This experiment does not establish a throughput or database-load benefit over the native atomic control.** Disabling the observer produced a complete, error-free run: all nine stages completed 1600/1600 offered business products, with no rejection, timeout or unknown result. Every stage verified all 3841 seeded documents, and the complete offline audit and owned cleanup passed. The prior proxy-path failures did not recur; this does not identify their initiating cause or certify the proxy fixed under a real workload.

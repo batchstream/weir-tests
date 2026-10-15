@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ import (
 )
 
 type crawlerClientConfig struct {
+	InputShape                                                     string
 	Path, Profile, SearchURL, Seed, Namespace                      string
 	Offset, Threads, PageSize, Processes, ProcessIndex, QueuePages int
 	TimeoutNS                                                      int64
@@ -31,10 +33,11 @@ type crawlerJob struct {
 	ScheduledNS int64
 }
 type crawlerWorkerResult struct {
-	RequestedMutations                                                                uint64 `json:"requested_logical_mutations"`
-	AppliedPages                                                                      []int  `json:"applied_pages"`
-	PID                                                                               int    `json:"pid"`
-	Worker                                                                            int    `json:"worker"`
+	ApplicationRequests                                                               crawlerApplicationCounts `json:"application_requests"`
+	RequestedMutations                                                                uint64                   `json:"requested_logical_mutations"`
+	AppliedPages                                                                      []int                    `json:"applied_pages"`
+	PID                                                                               int                      `json:"pid"`
+	Worker                                                                            int                      `json:"worker"`
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
 	QueuePeak                                                                         int                       `json:"queue_peak_pages"`
 	MaxGeneratorLagNS                                                                 int64                     `json:"max_generator_lag_ns"`
@@ -48,9 +51,12 @@ type crawlerWorkerResult struct {
 	Expected                                                                          map[string]map[string]any `json:"expected_documents,omitempty"`
 }
 type crawlerReply struct {
-	Phase   string
-	PID     int
-	Workers []crawlerWorkerResult
+	InputShape          string
+	NativePoolLimit     int
+	ApplicationRequests crawlerApplicationCounts
+	Phase               string
+	PID                 int
+	Workers             []crawlerWorkerResult
 }
 type crawlerClient struct {
 	config crawlerClientConfig
@@ -59,7 +65,17 @@ type crawlerClient struct {
 }
 
 func newCrawlerClient(ctx context.Context, config crawlerClientConfig) (*crawlerClient, error) {
-	transport := &http.Transport{Proxy: nil, DisableCompression: true, MaxConnsPerHost: config.Threads, MaxIdleConnsPerHost: config.Threads, MaxIdleConns: config.Threads}
+	if config.InputShape == "" {
+		config.InputShape = "page"
+	}
+	if config.InputShape != "single" && config.InputShape != "page" || config.InputShape == "single" && config.PageSize != 1 {
+		return nil, errors.New("input-shape single requires page-size 1")
+	}
+	pool := config.Threads
+	if config.InputShape == "single" {
+		pool *= 3
+	}
+	transport := &http.Transport{Proxy: nil, DisableCompression: true, MaxConnsPerHost: pool, MaxIdleConnsPerHost: pool, MaxIdleConns: pool}
 	client := &crawlerClient{config: config, http: &http.Client{Transport: transport}}
 	if config.Path != "direct" {
 		opts := weir.OpenOptions{Seed: config.Seed, Stores: []string{"search"}}
@@ -105,7 +121,7 @@ func crawlerHTTP(ctx context.Context, client *http.Client, requestOptions crawle
 	return raw, nil
 }
 
-func (c *crawlerClient) execute(ctx context.Context, mutations []crawlerMutation) (bool, error) {
+func (c *crawlerClient) execute(ctx context.Context, mutations []crawlerMutation, ledger *crawlerApplicationLedger) (bool, error) {
 	products := make([]crawlerMutation, 0, c.config.PageSize)
 	sellers := make([]crawlerMutation, 0, len(mutations)-c.config.PageSize)
 	for _, mutation := range mutations {
@@ -121,40 +137,63 @@ func (c *crawlerClient) execute(ctx context.Context, mutations []crawlerMutation
 			first[index].ReconcileOnly = true
 			products[index].Reconcile = false
 		}
-		unknown, err := c.executeMutations(ctx, first)
+		unknown, err := c.executeMutations(ctx, first, ledger)
 		if err != nil {
 			return unknown, err
 		}
 	}
-	unknown, err := c.executeMutations(ctx, products)
+	unknown, err := c.executeMutations(ctx, products, ledger)
 	if err != nil {
 		return unknown, err
 	}
-	return c.executeMutations(ctx, sellers)
+	if c.config.InputShape != "single" {
+		return c.executeMutations(ctx, sellers, ledger)
+	}
+	type sellerResult struct {
+		unknown bool
+		err     error
+	}
+	results := make(chan sellerResult, len(sellers))
+	for _, seller := range sellers {
+		go func() {
+			one := []crawlerMutation{seller}
+			unknown, err := c.executeMutations(ctx, one, ledger)
+			result := sellerResult{unknown: unknown, err: err}
+			results <- result
+		}()
+	}
+	var failures []error
+	unknown = false
+	for range sellers {
+		result := <-results
+		unknown = unknown || result.unknown
+		if result.err != nil {
+			failures = append(failures, result.err)
+		}
+	}
+	return unknown, errors.Join(failures...)
 }
 
-func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawlerMutation) (bool, error) {
+func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawlerMutation, ledger *crawlerApplicationLedger) (bool, error) {
+	if ledger == nil {
+		return false, errors.New("application request ledger is required")
+	}
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+	if c.config.InputShape == "single" && len(mutations) != 1 {
+		return false, errors.New("single-record application call contains a client batch")
+	}
+	if c.sdk == nil && c.config.InputShape == "single" {
+		return c.executeSingleNative(ctx, mutations[0], ledger)
+	}
 	if c.sdk != nil {
-		requests := make([]*weir.MutateRequest, len(mutations))
-		for index, mutation := range mutations {
-			source := crawlerCommon + crawlerOffer
-			if mutation.Product {
-				source = crawlerCommon + crawlerProduct
-				if mutation.ReconcileOnly {
-					source = strings.Replace(source, "        reconcile(current, incoming)", "        return reconcile(current, incoming)", 1)
-				}
-			}
-			raw, err := json.Marshal(mutation)
-			if err != nil {
-				return false, err
-			}
-			input := &weir.Document{ContentType: "application/json", Data: raw}
-			program := &weir.LuaTransform{Source: []byte(source), Input: input}
-			visibility := &weir.MutationOptions{Visibility: weir.MutationQueryVisible}
-			request := &weir.MutateRequest{Resource: crawlerIndex(c.config.Namespace, mutation.Product) + "/s:" + mutation.ID, Action: weir.MutationAtomicTransform, Lua: program, Options: visibility}
-			requests[index] = request
+		requests, err := crawlerWeirRequests(c.config, mutations)
+		if err != nil {
+			return false, err
 		}
 		opts := weir.MutateOptions{StoreName: "search", Requests: requests}
+		ledger.record(len(requests))
 		replies, err := c.sdk.Mutate(ctx, opts)
 		unknown := len(replies) != len(requests)
 		var failures []error
@@ -184,6 +223,7 @@ func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawle
 		_ = json.NewEncoder(&body).Encode(payload)
 	}
 	requestOptions := crawlerHTTPRequest{Method: http.MethodPost, URL: c.config.SearchURL + "/_bulk?refresh=wait_for&wait_for_active_shards=1&timeout=10s", Body: body.Bytes()}
+	ledger.record(len(mutations))
 	raw, err := crawlerHTTP(ctx, c.http, requestOptions)
 	if err != nil {
 		return true, err
@@ -219,6 +259,64 @@ func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawle
 	return false, nil
 }
 
+func crawlerWeirRequests(config crawlerClientConfig, mutations []crawlerMutation) ([]*weir.MutateRequest, error) {
+	if config.InputShape == "single" && len(mutations) != 1 {
+		return nil, errors.New("single-record SDK call contains a client batch")
+	}
+	requests := make([]*weir.MutateRequest, len(mutations))
+	for index, mutation := range mutations {
+		source := crawlerCommon + crawlerOffer
+		if mutation.Product {
+			source = crawlerCommon + crawlerProduct
+			if mutation.ReconcileOnly {
+				source = strings.Replace(source, "        reconcile(current, incoming)", "        return reconcile(current, incoming)", 1)
+			}
+		}
+		raw, err := json.Marshal(mutation)
+		if err != nil {
+			return nil, err
+		}
+		input := &weir.Document{ContentType: "application/json", Data: raw}
+		program := &weir.LuaTransform{Source: []byte(source), Input: input}
+		visibility := &weir.MutationOptions{Visibility: weir.MutationQueryVisible}
+		request := &weir.MutateRequest{Resource: crawlerIndex(config.Namespace, mutation.Product) + "/s:" + mutation.ID, Action: weir.MutationAtomicTransform, Lua: program, Options: visibility}
+		requests[index] = request
+	}
+	return requests, nil
+}
+
+func (c *crawlerClient) executeSingleNative(ctx context.Context, mutation crawlerMutation, ledger *crawlerApplicationLedger) (bool, error) {
+	script := map[string]any{"lang": "painless", "source": crawlerNative, "params": mutation}
+	payload := map[string]any{"script": script}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return false, err
+	}
+	query := url.Values{"refresh": {"wait_for"}, "wait_for_active_shards": {"1"}, "timeout": {"10s"}, "retry_on_conflict": {"3"}}
+	request := crawlerHTTPRequest{Method: http.MethodPost, URL: c.config.SearchURL + "/" + crawlerIndex(c.config.Namespace, mutation.Product) + "/_update/" + url.PathEscape(mutation.ID) + "?" + query.Encode(), Body: body}
+	ledger.record(1)
+	raw, err := crawlerHTTP(ctx, c.http, request)
+	if err != nil {
+		return true, err
+	}
+	var reply struct {
+		ID     string `json:"_id"`
+		Index  string `json:"_index"`
+		Result string `json:"result"`
+		Shards struct {
+			Successful *int `json:"successful"`
+			Failed     *int `json:"failed"`
+		} `json:"_shards"`
+	}
+	if err := json.Unmarshal(raw, &reply); err != nil {
+		return true, err
+	}
+	if reply.ID != mutation.ID || reply.Index != crawlerIndex(c.config.Namespace, mutation.Product) || reply.Result != "updated" && reply.Result != "noop" || reply.Shards.Successful == nil || reply.Shards.Failed == nil || *reply.Shards.Failed != 0 || reply.Result == "updated" && *reply.Shards.Successful < 1 {
+		return true, errors.New("native single update lacks its complete durable acknowledgement")
+	}
+	return false, nil
+}
+
 // RunCrawlerWorker is entered only by the explicit crawler CLI's owned child processes.
 func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) error {
 	decoder := json.NewDecoder(io.LimitReader(input, 1<<20))
@@ -228,6 +326,12 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 	if err := decoder.Decode(&config); err != nil {
 		return err
 	}
+	if config.InputShape == "" {
+		config.InputShape = "page"
+	}
+	if config.InputShape != "single" && config.InputShape != "page" || config.InputShape == "single" && config.PageSize != 1 {
+		return errors.New("invalid crawler input shape")
+	}
 	if config.Threads < 1 || config.Threads > 128 || config.Processes < 1 || config.PageSize < 1 || config.PageSize > 32 || config.QueuePages < 1 || config.QueuePages > 16 || config.TimeoutNS <= 0 || config.TimeoutNS > int64(time.Minute) || config.Offset < 0 {
 		return errors.New("invalid crawler client bounds")
 	}
@@ -236,7 +340,14 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 		return err
 	}
 	defer client.close()
-	ready := crawlerReply{Phase: "ready", PID: os.Getpid()}
+	pool := 0
+	if config.Path == "direct" {
+		pool = config.Threads
+		if config.InputShape == "single" {
+			pool *= 3
+		}
+	}
+	ready := crawlerReply{Phase: "ready", PID: os.Getpid(), InputShape: client.config.InputShape, NativePoolLimit: pool}
 	if err := encoder.Encode(ready); err != nil {
 		return err
 	}
@@ -255,7 +366,11 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 			expected.Workers[index].Expected = replies[index].Expected
 			replies[index].Expected = nil
 		}
-		reply := crawlerReply{Phase: phase, PID: os.Getpid(), Workers: replies}
+		var applicationCounts crawlerApplicationCounts
+		for _, worker := range replies {
+			mergeCrawlerApplicationCounts(&applicationCounts, worker.ApplicationRequests)
+		}
+		reply := crawlerReply{Phase: phase, PID: os.Getpid(), Workers: replies, InputShape: client.config.InputShape, NativePoolLimit: pool, ApplicationRequests: applicationCounts}
 		if err := encoder.Encode(reply); err != nil {
 			return err
 		}
@@ -282,6 +397,7 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 			defer workers.Done()
 			result := crawlerWorkerResult{PID: os.Getpid(), Worker: c.config.Offset + index, Expected: map[string]map[string]any{}}
 			var latency, service histogram
+			var applications crawlerApplicationLedger
 			for job := range queue {
 				dispatch := time.Now()
 				lag := dispatch.UnixNano() - job.ScheduledNS
@@ -295,7 +411,7 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 					if c.config.Profile == "two-step" {
 						result.RequestedMutations += uint64(c.config.PageSize)
 					}
-					unknown, err = c.execute(operationCtx, mutations)
+					unknown, err = c.execute(operationCtx, mutations, &applications)
 				}
 				cancel()
 				finished := time.Now()
@@ -330,6 +446,7 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 					result.Expected[mutation.ID] = crawlerMerge(current, mutation)
 				}
 			}
+			result.ApplicationRequests = applications.snapshot()
 			result.Latency = latency.summary()
 			result.ServiceLatency = service.summary()
 			result.Buckets = latency.buckets

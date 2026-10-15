@@ -23,6 +23,7 @@ import (
 
 type CrawlerOptions struct {
 	HTTPObserver                                                   string
+	InputShape                                                     string
 	Before, After, BeforeReceipt, AfterReceipt, Executable, Output string
 	Rates, Concurrency                                             []int
 	Profiles                                                       []string
@@ -49,6 +50,9 @@ type CrawlerReport struct {
 	CleanupError             string `json:"cleanup_error,omitempty"`
 }
 type crawlerStage struct {
+	WarmupClients                                                                     []crawlerReply
+	InputShape                                                                        string
+	ApplicationRequests                                                               crawlerApplicationCounts
 	BeforeWarmupSettling, BeforeMeasurementSettling                                   crawlerSettling
 	Profile                                                                           string
 	RequestedMutations                                                                uint64
@@ -87,8 +91,14 @@ type crawlerCase struct {
 }
 
 func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport, resultErr error) {
+	if opts.InputShape == "" {
+		opts.InputShape = "single"
+	}
+	if opts.InputShape != "single" && opts.InputShape != "page" || opts.InputShape == "single" && opts.PageSize != 1 {
+		return nil, errors.New("input-shape single requires page-size 1")
+	}
 	if opts.HTTPObserver == "" {
-		opts.HTTPObserver = "enabled"
+		opts.HTTPObserver = "disabled"
 	}
 	if opts.HTTPObserver != "enabled" && opts.HTTPObserver != "disabled" {
 		return nil, errors.New("http-observer must be enabled or disabled")
@@ -115,7 +125,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		}
 	}
 	if len(opts.Modes) == 0 {
-		opts.Modes = []string{"fixed-rate", "saturation"}
+		opts.Modes = []string{"fixed-rate"}
 	}
 	cases, err := crawlerCases(opts)
 	if err != nil {
@@ -147,7 +157,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		servers[name] = server
 	}
 	origins := map[string]string{"original_pse": "7f36b501cded06a1bcc7484575346bb9c4d6311b", "optimized_pse": "8725e4743c6ddba66132874e0e0fe9d393ab4a85", "weir_lua_translation_base": "283940ef442b479440e45b39c86988351b92d7b5"}
-	report = &CrawlerReport{BusinessSources: origins, Schema: 1, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Three-way same-runner rotation; native atomic Elasticsearch scripted bulk versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; 1 shared no-change seller per 100 pages, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
+	report = &CrawlerReport{BusinessSources: origins, Schema: 1, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Three-way same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
 	defer func() {
 		if resultErr != nil {
 			report.Incomplete = resultErr.Error()
@@ -382,7 +392,7 @@ type crawlerStageOptions struct {
 
 func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawlerStage, resultErr error) {
 	config := opts.Options
-	stage = crawlerStage{Profile: opts.Case.Profile, Path: opts.Path, Mode: opts.Case.Mode, Round: opts.Round, Concurrency: opts.Case.Workers, ProductsPerSecond: opts.Case.Rate, ServerPID: opts.Cluster.Nodes[0].ProcessID}
+	stage = crawlerStage{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, Mode: opts.Case.Mode, Round: opts.Round, Concurrency: opts.Case.Workers, ProductsPerSecond: opts.Case.Rate, ServerPID: opts.Cluster.Nodes[0].ProcessID}
 	binary := config.Before
 	if opts.Path == "optimized" {
 		binary = config.After
@@ -414,7 +424,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 		stage.ClientsExited = len(clients) == config.Processes && len(stage.ClientExitErrors) == 0
 	}()
 	for process := range config.Processes {
-		clientConfig := crawlerClientConfig{Profile: opts.Case.Profile, Path: opts.Path, SearchURL: opts.Cluster.SearchURL, Seed: opts.Cluster.Nodes[0].Application, Namespace: opts.Namespace, Offset: process * (opts.Case.Workers / config.Processes), Threads: opts.Case.Workers / config.Processes, PageSize: config.PageSize, Processes: config.Processes, ProcessIndex: process, QueuePages: config.QueuePages, TimeoutNS: int64(config.Timeout)}
+		clientConfig := crawlerClientConfig{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, SearchURL: opts.Cluster.SearchURL, Seed: opts.Cluster.Nodes[0].Application, Namespace: opts.Namespace, Offset: process * (opts.Case.Workers / config.Processes), Threads: opts.Case.Workers / config.Processes, PageSize: config.PageSize, Processes: config.Processes, ProcessIndex: process, QueuePages: config.QueuePages, TimeoutNS: int64(config.Timeout)}
 		client, err := startCrawlerProcess(ctx, config.Executable, clientConfig)
 		if err != nil {
 			return stage, err
@@ -426,6 +436,12 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	if err != nil {
 		return stage, err
 	}
+	for replyIndex := range warmReplies {
+		for workerIndex := range warmReplies[replyIndex].Workers {
+			warmReplies[replyIndex].Workers[workerIndex].Expected = nil
+		}
+	}
+	stage.WarmupClients = warmReplies
 	for _, reply := range warmReplies {
 		for _, worker := range reply.Workers {
 			if worker.Failed > 0 {
@@ -538,6 +554,9 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 		}
 	}
 	stage.Clients = replies
+	for _, reply := range replies {
+		mergeCrawlerApplicationCounts(&stage.ApplicationRequests, reply.ApplicationRequests)
+	}
 	var latency, service histogram
 	expected := map[string]map[string]any{}
 	// Verify every seeded record, including untouched records and records rejected at admission.
