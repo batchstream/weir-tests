@@ -23,6 +23,11 @@ CANDIDATE_CAPACITY_REGISTRATION = dict(
     candidate_capacity_supplement='results/default-tuning-2026-10-16/CANDIDATE-CAPACITY-SUPPLEMENT.md',
     candidate_capacity_supplement_source='f7b01989520378d8794915361c1790b4f0eaec5a',
     candidate_capacity_supplement_sha256='769672a99683520d6ec6a522277d2d3befab2c060951fc66d92bf5ee0a8a2ada')
+PURE_QUOTA_PARENT = 'confirm-pure-q0125'
+PURE_QUOTA_REGISTRATION = dict(
+    pure_capacity_quota_supplement='results/default-tuning-2026-10-16/PURE-CAPACITY-QUOTA-SUPPLEMENT.md',
+    pure_capacity_quota_supplement_source='f50bddd0537866354b564e3607202fe3c460faaa',
+    pure_capacity_quota_supplement_sha256='e52d8433f9939174987451470fa075d8419e01acad9a58ed7db65ab5eaff1e89')
 
 
 def require(condition, message):
@@ -63,7 +68,16 @@ def validate_context(options):
         if independent_profile is not None:
             require(all(plan['metadata'].get(key) == value for key, value in CANDIDATE_CAPACITY_REGISTRATION.items()), 'candidate-only parent lacks the fixed supplement source/hash registration')
         require(entry['case_set'] in plan['case_sets'], 'confirmation parent case-set is missing')
-        for case in plan['case_sets'][entry['case_set']]:
+        cases = plan['case_sets'][entry['case_set']]
+        if entry['case_set'] == PURE_QUOTA_PARENT:
+            require(all(plan['metadata'].get(key) == value for key, value in PURE_QUOTA_REGISTRATION.items()), 'additional pure parent lacks the fixed supplement source/hash registration')
+            expected_case = dict(kind='write', id='default-pure-q0125', backend='search',
+                                 database_cpus=.125, client_processes=4, rounds=3,
+                                 warmup='60s', duration='60s', payload_bytes=1024, records=8192,
+                                 write_percent=100, lua_mutations=False, levels=[256, 512, 1024],
+                                 batching=None, expected_batching=controls)
+            require(cases == [expected_case], 'additional pure parent case differs from registration')
+        for case in cases:
             if independent_profile is not None:
                 require(case['kind'] == 'crawler' and case['profile'] == independent_profile, 'candidate-only parent profile differs from registration')
             if case['kind'] == 'crawler':
@@ -95,7 +109,7 @@ def build_plan(options):
     for result in formal['cpu_capacity']:
         label = result['label']
         require(label in entries, 'capacity parent workflow absent')
-        if entries[label]['case_set'] not in POLICY['pure_case_sets']:
+        if entries[label]['case_set'] not in POLICY['pure_case_sets'] and entries[label]['case_set'] != PURE_QUOTA_PARENT:
             retained.append(dict(label=label, case_id=result['case_id'], reason='Not a 1 KiB primary capacity case; addendum/regression excluded'))
             continue
         case = parent_case(context, label, result['case_id'])

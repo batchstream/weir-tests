@@ -1,6 +1,8 @@
 import copy
 import importlib.util
+import json
 from pathlib import Path
+import subprocess
 import unittest
 
 spec = importlib.util.spec_from_file_location('soak_generator_test', Path(__file__).with_name('derive_soak_plan.py'))
@@ -68,6 +70,23 @@ def add_independent_parents(inputs):
         inputs['analysis']['formal']['crawler_rate_bounds'].append(result)
 
 
+def add_pure_quota_parent(inputs):
+    label = 'confirm-pure-q0125'
+    plan = copy.deepcopy(inputs['plans']['confirm-pure-q025'])
+    cases = plan['case_sets'].pop('confirm-pure-q025')
+    cases[0].update(id='default-pure-q0125', database_cpus=.125, levels=[256, 512, 1024])
+    plan['case_sets'][label] = cases
+    plan['metadata'].update(generator.PURE_QUOTA_REGISTRATION)
+    inputs['plans'][label] = plan
+    entry = dict(label=label, phase='confirmation', case_set=label, server_source=inputs['server_source'])
+    inputs['manifest']['entries'].append(entry)
+    inputs['analysis']['runs'].append(dict(label=label, available=True))
+    result = copy.deepcopy(inputs['analysis']['formal']['cpu_capacity'][0])
+    result.update(label=label, case_id='default-pure-q0125')
+    result['decision']['database_cpus'] = .125
+    inputs['analysis']['formal']['cpu_capacity'].append(result)
+
+
 class SoakGeneratorTests(unittest.TestCase):
     def test_original_derivation_policy_is_unchanged(self):
         expected = dict(version=1, max_checks=3,
@@ -100,6 +119,85 @@ class SoakGeneratorTests(unittest.TestCase):
         self.assertEqual(plan['case_sets']['soak-pure'][0]['database_cpus'], .25)
         retained = plan['metadata']['qualified_and_skipped']
         self.assertTrue(any(point.get('database_cpus') == 1 and point.get('workers') == 128 and point['selected'] is False for point in retained))
+
+    def test_registered_pure_quota_uses_original_workers_then_quota_order(self):
+        inputs = fixture()
+        add_pure_quota_parent(inputs)
+        plan = generator.build_plan(inputs)
+        self.assertEqual(plan['case_sets']['soak-pure'][0]['database_cpus'], 1)
+        self.assertEqual(plan['case_sets']['soak-pure'][0]['levels'], [128])
+        inputs['analysis']['formal']['cpu_capacity'][1]['decision']['paths'][0]['points'][0]['workers'] = 512
+        plan = generator.build_plan(inputs)
+        self.assertEqual(plan['metadata']['checks'], 3)
+        self.assertEqual(plan['case_sets']['soak-pure'][0]['database_cpus'], .125)
+        self.assertEqual(plan['case_sets']['soak-pure'][0]['levels'], [512])
+        retained = plan['metadata']['qualified_and_skipped']
+        self.assertTrue(any(point.get('label') == 'confirm-pure-q025' and point.get('selected') is False for point in retained))
+
+    def test_registered_pure_quota_requires_frozen_supplement_metadata(self):
+        expected = dict(
+            pure_capacity_quota_supplement='results/default-tuning-2026-10-16/PURE-CAPACITY-QUOTA-SUPPLEMENT.md',
+            pure_capacity_quota_supplement_source='f50bddd0537866354b564e3607202fe3c460faaa',
+            pure_capacity_quota_supplement_sha256='e52d8433f9939174987451470fa075d8419e01acad9a58ed7db65ab5eaff1e89')
+        self.assertEqual(generator.PURE_QUOTA_REGISTRATION, expected)
+        for key in expected:
+            for replacement in (None, 'unregistered'):
+                inputs = fixture()
+                add_pure_quota_parent(inputs)
+                metadata = inputs['plans']['confirm-pure-q0125']['metadata']
+                if replacement is None:
+                    metadata.pop(key)
+                else:
+                    metadata[key] = replacement
+                with self.subTest(key=key, replacement=replacement), self.assertRaises(ValueError):
+                    generator.build_plan(inputs)
+
+    def test_prospective_pure_plan_matches_the_committed_supplement(self):
+        repository = Path(__file__).resolve().parents[2]
+        plan = json.loads((repository / 'plans/default-pure-capacity-q0125-2026-10-16.json').read_bytes())
+        registration = generator.PURE_QUOTA_REGISTRATION
+        raw = subprocess.check_output(['git', 'show', registration['pure_capacity_quota_supplement_source'] + ':' + registration['pure_capacity_quota_supplement']], cwd=repository)
+        self.assertEqual(generator.sha(raw), registration['pure_capacity_quota_supplement_sha256'])
+        self.assertTrue(all(plan['metadata'][key] == value for key, value in registration.items()))
+        self.assertEqual(plan['metadata']['soak_derivation'], generator.POLICY)
+        self.assertEqual(plan['metadata']['inventory']['confirm-pure-q0125']['timed_stages'], 18)
+        self.assertEqual(plan['metadata']['inventory']['confirm-pure-q0125']['warmup_and_timed_minutes'], 36)
+        controls = plan['metadata']['selected_controls']
+        entry = dict(label='confirm-pure-q0125', phase='confirmation', case_set='confirm-pure-q0125', server_source=plan['server_source'])
+        source = dict(complete_inventory=True, runs=[dict(label=entry['label'], available=True)],
+                      selection=dict(selected=controls), byte_selection=dict(selected=controls['max_bytes']))
+        options = dict(analysis=source, manifest=dict(entries=[entry]), plans={entry['label']: plan},
+                       controls=controls, server_source=plan['server_source'])
+        self.assertEqual(generator.validate_context(options), {entry['label']: entry})
+
+    def test_registered_pure_quota_requires_the_entire_registered_case_shape(self):
+        mutations = dict(database_cpus=.2, levels=[128, 512, 1024], rounds=1, warmup='30s',
+                         duration='30s', client_processes=8, payload_bytes=65536, records=2048,
+                         write_percent=10, lua_mutations=True, backend='mongo', id='unregistered',
+                         batching={}, hidden_control=True)
+        for key, value in mutations.items():
+            inputs = fixture()
+            add_pure_quota_parent(inputs)
+            inputs['plans']['confirm-pure-q0125']['case_sets']['confirm-pure-q0125'][0][key] = value
+            with self.subTest(field=key), self.assertRaises(ValueError):
+                generator.build_plan(inputs)
+
+    def test_other_pure_quota_names_stay_excluded_and_failed_decisions_stay_invalid(self):
+        inputs = fixture()
+        add_pure_quota_parent(inputs)
+        entry = inputs['manifest']['entries'][-1]
+        entry['case_set'] = 'confirm-pure-unregistered'
+        cases = inputs['plans'][entry['label']]['case_sets'].pop('confirm-pure-q0125')
+        inputs['plans'][entry['label']]['case_sets'][entry['case_set']] = cases
+        plan = generator.build_plan(inputs)
+        self.assertEqual(plan['case_sets']['soak-pure'][0]['database_cpus'], 1)
+        retained = plan['metadata']['qualified_and_skipped']
+        self.assertTrue(any(point.get('label') == entry['label'] and 'excluded' in point.get('reason', '') for point in retained))
+        inputs = fixture()
+        add_pure_quota_parent(inputs)
+        inputs['analysis']['formal']['cpu_capacity'][-1]['decision']['paths'][0]['points'][0]['decisions'][0]['passed'] = False
+        with self.assertRaises(ValueError):
+            generator.build_plan(inputs)
 
     def test_no_qualified_gate_means_no_check(self):
         inputs = fixture()
