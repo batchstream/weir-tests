@@ -236,15 +236,16 @@ def process_write(options):
                         require(stats['_shards']['failed'] == 0 and set(stats['indices']) == {dataset['namespace']}, 'Search index observation identity differs')
                 if path == 'weir':
                     metrics = stage['server_metrics']
-                    row.update(prior.phase_observations(dict(ServerBefore=metrics['before'], ServerAfter=metrics['after'])))
                     row['adapter_batch_mean'] = metrics.get('timed_adapter_batch_average')
-                    if backend == 'search' and case['write_percent'] == 100:
-                        require(row['search_bulk_records'] == stage['writes'], 'actual framed writes differ from completed calls')
-                    row['http_body_buckets'] = [x for x in row['search_metric_deltas'] if x['name'] == 'weir_search_http_request_body_bytes_bucket' and x['labels'].get('operation') == 'bulk']
-                    if entry['case_set'] == 'select-bytes':
-                        matching = [x for x in row['http_body_buckets'] if float(x['labels']['le']) == row['max_bytes']]
-                        require(len(matching) == 1 and matching[0]['delta'] == row['search_bulk_attempts'], 'byte target histogram does not contain every actual bulk attempt')
-                        row['byte_target_observed_bound'] = True
+                    if backend == 'search':
+                        row.update(prior.phase_observations(dict(ServerBefore=metrics['before'], ServerAfter=metrics['after'])))
+                        if case['write_percent'] == 100:
+                            require(row['search_bulk_records'] == stage['writes'], 'actual framed writes differ from completed calls')
+                        row['http_body_buckets'] = [x for x in row['search_metric_deltas'] if x['name'] == 'weir_search_http_request_body_bytes_bucket' and x['labels'].get('operation') == 'bulk']
+                        if entry['case_set'] == 'select-bytes':
+                            matching = [x for x in row['http_body_buckets'] if float(x['labels']['le']) == row['max_bytes']]
+                            require(len(matching) == 1 and matching[0]['delta'] == row['search_bulk_attempts'], 'byte target histogram does not contain every actual bulk attempt')
+                            row['byte_target_observed_bound'] = True
                 pools = [child.get('time_buckets') for child in stage['client_processes']]
                 totals = dict(completed=stage['succeeded'], failed=stage['errors'] + stage['indeterminate'], unknown=stage['indeterminate'], timed_out=stage['business_operation_timeouts'], offered=stage['attempted'], rejected=0)
                 row['time_buckets'] = capacity_rules.merge_buckets(dict(pools=pools, duration=runner.duration_ns(case['duration']), histogram=helpers.histogram, latency=stage['latency'], totals=totals))

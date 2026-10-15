@@ -80,6 +80,18 @@ class SelectionTests(unittest.TestCase):
 
 
 class RawPreflightTests(unittest.TestCase):
+    def test_real_mongo_read_has_no_search_http_observations(self):
+        manifest = json.loads((FOLDER / 'manifest.json').read_text())
+        entry = next(item for item in manifest['entries'] if item['case_set'] == 'select-mongo-read')
+        plan = json.loads(analysis.committed(analysis.REPO, entry['client_source'], entry['plan_path']))
+        case = next(item for item in plan['case_sets'][entry['case_set']] if item['id'] == 'c128-w5ms-s16')
+        folder = FOLDER / 'raw' / entry['label']
+        receipt = analysis.load(analysis.prior.one(folder, case['id'] + '/receipt.json.gz'))
+        rows = analysis.process_write(dict(folder=folder, entry=entry, case=case, receipt=receipt))
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(row['usable'] for row in rows), [row['error'] for row in rows])
+        self.assertTrue(all('search_metric_deltas' not in row for row in rows))
+
     def test_real_pure_child_fields_and_completion_bins(self):
         raw = gzip.decompress((FOLDER / 'preflight/local/write-locked/search.json.gz').read_bytes())
         report = json.loads(raw)
