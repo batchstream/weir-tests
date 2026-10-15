@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "analysis_source": "175272e0e8479cea6f2a03c215e285910e466376",
+  "analysis_source": "b934c20ab3d09d6d2aa5bcdd0e6fac7ecfac26b5",
   "analysis_inputs": [
     "results/batch-coverage-2026-10-15/analyze.py",
     "results/batch-mechanism-2026-10-15/analyze.py",
@@ -8,6 +8,7 @@
     "results/crawler-pressure-2026-10-15/summarize.py",
     "results/default-tuning-2026-10-16/analyze.py",
     "results/default-tuning-2026-10-16/capacity_rules.py",
+    "results/default-tuning-2026-10-16/derive_soak_plan.py",
     "results/default-tuning-2026-10-16/selection_rules.py",
     "scripts/build_local_server.py",
     "scripts/performance_evidence.py",

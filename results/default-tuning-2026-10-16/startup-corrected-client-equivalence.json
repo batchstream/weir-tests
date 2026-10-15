@@ -1,0 +1,17 @@
+{
+  "original_client": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+  "preparation_source": "2220c18eae4cbe5d079753155638f44cc7dc649b",
+  "corrected_client": "b934c20ab3d09d6d2aa5bcdd0e6fac7ecfac26b5",
+  "go_input_sha256": "04f24af9ef92f51d1059abc98b22b19d6e362df39d19f6f3027f6444b69b8094",
+  "go_inputs": 77,
+  "registered_preparation_difference_only": true,
+  "unchanged_embedded_inputs": {
+    "internal/benchmark/crawlerdata/common.lua": "3a4d8705b9dbfdecafb1b032b2bec370af6683de495999be51f799d28c1904a3",
+    "internal/benchmark/crawlerdata/product.lua": "fc2a2adb62ecd9b80905598395f58e3a1ecbe5934c472a45b887b913e69d8a2f",
+    "internal/benchmark/crawlerdata/offer.lua": "2749abe2529ff87cde5c6fc8eced31601f721c3b45d0e6dafa0d5d09ad86a60d",
+    "internal/benchmark/crawlerdata/native.painless": "a7e56e6179f68e1b7d4534c7664ce1638d35a4688f1fbf92c7692c2132844ce7"
+  },
+  "original_auditor_sha256": "77c39f5d863668117c56baf96babdedfee0e172a300e35c073f3d13e30647bdc",
+  "analysis_inputs": 14,
+  "old_21_workflow_source_proof_passed": true
+}
