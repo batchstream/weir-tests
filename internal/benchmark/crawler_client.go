@@ -332,7 +332,7 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 	if config.InputShape != "single" && config.InputShape != "page" || config.InputShape == "single" && config.PageSize != 1 {
 		return errors.New("invalid crawler input shape")
 	}
-	if config.Threads < 1 || config.Threads > 128 || config.Processes < 1 || config.PageSize < 1 || config.PageSize > 32 || config.QueuePages < 1 || config.QueuePages > 16 || config.TimeoutNS <= 0 || config.TimeoutNS > int64(time.Minute) || config.Offset < 0 {
+	if config.Threads < 1 || config.Threads > 512 || config.Processes < 1 || config.PageSize < 1 || config.PageSize > 32 || config.QueuePages < 1 || config.QueuePages > 16 || config.TimeoutNS <= 0 || config.TimeoutNS > int64(time.Minute) || config.Offset < 0 {
 		return errors.New("invalid crawler client bounds")
 	}
 	client, err := newCrawlerClient(ctx, config)

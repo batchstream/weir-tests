@@ -48,7 +48,7 @@ on:
         default: '4,16,48'
         type: string
       concurrency-levels:
-        description: Total goroutine workers divided between four OS clients
+        description: Total workers across four OS clients (max 2048; fixed-rate uses the largest level)
         required: true
         default: '128'
         type: string

@@ -107,8 +107,8 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		return nil, errors.New("invalid bounded crawler benchmark parameters")
 	}
 	for _, workers := range opts.Concurrency {
-		if workers%opts.Processes != 0 || workers < opts.Processes || workers > 256 {
-			return nil, errors.New("crawler concurrency must divide between processes and be <=256")
+		if workers%opts.Processes != 0 || workers < opts.Processes || workers > 2048 || workers/opts.Processes > 512 {
+			return nil, errors.New("crawler concurrency must divide between processes, be <=2048 total and <=512 per process")
 		}
 	}
 	for _, rate := range opts.Rates {
