@@ -218,6 +218,16 @@
       "plan_path": "plans/default-capacity-independent-2026-10-16.json",
       "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
       "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38783516132"
+    },
+    {
+      "label": "confirm-pure-q0125",
+      "phase": "confirmation",
+      "case_set": "confirm-pure-q0125",
+      "client_source": "4e006be57c93fcb2277171969a463c87792f5440",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-pure-capacity-q0125-2026-10-16.json",
+      "plan_sha256": "c49feba787eecd18ab72e0fdb4eb7828c5b547643aa7d0ec93ac7ccfb2a2715d",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38797232567"
     }
   ]
 }
