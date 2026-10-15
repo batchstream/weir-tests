@@ -87,7 +87,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781896048"
     },
     {
       "label": "confirm-pure-q1",
@@ -97,7 +97,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781905182"
     },
     {
       "label": "confirm-partial-q025",
@@ -107,7 +107,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781913918"
     },
     {
       "label": "confirm-crawler-q025",
@@ -117,7 +117,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781924237"
     },
     {
       "label": "confirm-partial-lower-q025",
@@ -127,7 +127,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781940338"
     },
     {
       "label": "confirm-crawler-lower-q025",
@@ -137,7 +137,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781949346"
     },
     {
       "label": "confirm-partial-q1",
@@ -147,7 +147,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781959707"
     },
     {
       "label": "confirm-crawler-q1",
@@ -157,7 +157,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781972310"
     },
     {
       "label": "confirm-search-read",
@@ -167,7 +167,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781984909"
     },
     {
       "label": "confirm-mongo-read",
@@ -177,7 +177,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781997307"
     },
     {
       "label": "confirm-mongo-regression",
@@ -187,7 +187,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38782016330"
     },
     {
       "label": "confirm-search-large-body",
@@ -197,7 +197,7 @@
       "server_source": "084572d79b7a53230801297f90ca2363fd864913",
       "plan_path": "plans/default-confirmation-2026-10-16.json",
       "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38782027979"
     }
   ]
 }
