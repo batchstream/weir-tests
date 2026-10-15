@@ -457,17 +457,19 @@ def measurement_source_proof(manifest):
     entries = {entry['label']: entry for entry in manifest['entries']}
     require(len(entries) == len(manifest['entries']), 'duplicate source-proof workflow label')
     require(sum(entry['case_set'] == soak_derivation.STARTUP_PARENT for entry in entries.values()) <= 1, 'startup correction permits only one confirmation attempt')
+    require(sum(entry['case_set'] == soak_derivation.EXTENDED_PARENT for entry in entries.values()) <= 1, 'extended concurrency permits only one confirmation attempt')
+    require(sum(entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' for entry in entries.values()) <= 1, 'the registered budget permits only one pure soak attempt')
     for name in WAIT_CASE_SETS:
         require(sum(entry['case_set'] == name for entry in entries.values()) <= 1, 'wait sensitivity permits only one attempt per registered cohort')
     require(all(entry['phase'] != 'wait_sensitivity' or entry['case_set'] in WAIT_CASE_SETS for entry in entries.values()), 'unregistered wait sensitivity cohort')
-    extended = extended_source_proof() if any(entry['case_set'] in WAIT_CASE_SETS for entry in entries.values()) else None
     plans = {}
     for label, entry in entries.items():
         raw = committed(REPO, entry['client_source'], entry['plan_path'])
         require(checksum(raw) == entry['plan_sha256'], 'source-proof plan hash differs')
         plans[label] = json.loads(raw)
-    corrected_soaks = [entry for label, entry in entries.items() if entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plans[label].get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION)]
-    require(len(corrected_soaks) <= 1, 'startup correction permits only one derived pure soak attempt')
+    extended_soaks = [entry for label, entry in entries.items() if entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plans[label].get('metadata', {}) for key in soak_derivation.EXTENDED_REGISTRATION)]
+    needs_extended = any(entry['case_set'] in WAIT_CASE_SETS or entry['case_set'] == soak_derivation.EXTENDED_PARENT for entry in entries.values()) or bool(extended_soaks)
+    extended = extended_source_proof() if needs_extended else None
     for label, entry in entries.items():
         tree, _ = prior.source_snapshot(REPO, entry['client_source'])
         for path in EMBEDDED_INPUTS:
@@ -477,9 +479,14 @@ def measurement_source_proof(manifest):
         plan = plans[label]
         corrected_soak = entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION)
         corrected = entry['case_set'] == soak_derivation.STARTUP_PARENT or corrected_soak
+        extended_parent = entry['case_set'] == soak_derivation.EXTENDED_PARENT or entry in extended_soaks
         if entry['case_set'] in WAIT_CASE_SETS:
             require(tree == extended, 'wait-sensitivity client Go tree differs from Cext')
             validate_wait_plan(entry, plan)
+        elif extended_parent:
+            require(tree == extended, 'extended-concurrency client Go tree differs from Cext')
+            extended_options = dict(entry=entry, plan=plan, entries=entries, plans=plans, repository=REPO)
+            soak_derivation.validate_extended_plan(extended_options)
         elif corrected:
             require(tree == preparation, 'startup-correction client Go tree differs from Cprep')
             correction_options = dict(entry=entry, plan=plan, entries=entries, plans=plans)
@@ -559,7 +566,7 @@ def formal_results(options):
     return result
 
 
-def validate_startup_soak_derivation(options):
+def validate_registered_soak_derivation(options):
     manifest, rows, runs = (options[key] for key in ('manifest', 'rows', 'runs'))
     corrected = []
     for entry in manifest['entries']:
@@ -569,9 +576,12 @@ def validate_startup_soak_derivation(options):
         require(checksum(raw) == entry['plan_sha256'], 'derived soak plan hash differs')
         plan = json.loads(raw)
         if any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION):
-            corrected.append(plan)
+            corrected.append((plan, 'startup_preparation_parent', soak_derivation.STARTUP_REGISTRATION))
+        elif any(key in plan.get('metadata', {}) for key in soak_derivation.EXTENDED_REGISTRATION):
+            corrected.append((plan, 'extended_concurrency_parent', soak_derivation.EXTENDED_REGISTRATION))
     if not corrected:
         return
+    require(len(corrected) == 1, 'the registered budget permits only one pure soak attempt')
     entries = [entry for entry in manifest['entries'] if entry['phase'] != 'soak']
     parent_manifest = dict(manifest, entries=entries)
     labels = {entry['label'] for entry in entries}
@@ -590,10 +600,10 @@ def validate_startup_soak_derivation(options):
     derivation_options = dict(analysis=actual, manifest=parent_manifest, plans=plans,
                               controls=soak_derivation.STARTUP_CONTROLS, server_source=soak_derivation.STARTUP_SERVER)
     expected = soak_derivation.build_plan(derivation_options)
-    require('startup_preparation_parent' in expected['metadata'], 'raw-audited parent is unqualified or another pure point wins the registered order')
-    fields = tuple(soak_derivation.STARTUP_REGISTRATION) + ('phase', 'soak_derivation', 'selected_controls', 'checks',
-             'qualified_and_skipped', 'skipped_workloads', 'retry_failed_soak', 'startup_preparation_parent')
-    for plan in corrected:
+    for plan, proof_key, registration in corrected:
+        require(proof_key in expected['metadata'], 'raw-audited parent is unqualified or another pure point wins the registered order')
+        fields = tuple(registration) + ('phase', 'soak_derivation', 'selected_controls', 'checks',
+                 'qualified_and_skipped', 'skipped_workloads', 'retry_failed_soak', proof_key)
         require(plan['case_sets'] == expected['case_sets'] and plan['server_source'] == expected['server_source'] and
                 all(plan['metadata'].get(key) == expected['metadata'].get(key) for key in fields),
                 'corrected soak differs from the derivation recomputed from audited parent rows')
@@ -623,7 +633,7 @@ def main():
     selection = rules.choose(dict(rows=[r for r in rows if r['phase'] == 'selection'], plan=plan))
     byte_selection = rules.choose_bytes([r for r in rows if r['phase'] == 'selection'])
     derivation_options = dict(manifest=manifest, rows=rows, runs=runs, selection=selection, byte_selection=byte_selection)
-    validate_startup_soak_derivation(derivation_options)
+    validate_registered_soak_derivation(derivation_options)
     result = dict(schema=1, runs=runs, rows=rows, selection=selection, byte_selection=byte_selection, formal=formal_results(dict(manifest=manifest, rows=rows)), complete_inventory=all(run['available'] for run in runs), analysis_sha256=checksum(Path(__file__).read_bytes()), selection_rules_sha256=checksum((FOLDER / 'selection_rules.py').read_bytes()))
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / 'analysis.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')

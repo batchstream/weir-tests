@@ -199,10 +199,10 @@ class PreparationSourceTests(unittest.TestCase):
                            selection=inputs['selection'], byte_selection=inputs['byte_selection'])
             with self.subTest(mutation=mutation), mock.patch.object(analysis, 'committed', side_effect=[raw, inputs['parent_raw'], inputs['parent_raw']]):
                 if mutation == 'valid':
-                    analysis.validate_startup_soak_derivation(options)
+                    analysis.validate_registered_soak_derivation(options)
                 else:
                     with self.assertRaises(ValueError):
-                        analysis.validate_startup_soak_derivation(options)
+                        analysis.validate_registered_soak_derivation(options)
 
     def test_frozen_preparation_diff_and_all_embeds_match_registration(self):
         tree = analysis.preparation_source_proof()
@@ -263,8 +263,10 @@ class PreparationSourceTests(unittest.TestCase):
         analysis.measurement_source_proof(manifest)
         _, source = analysis.prior.source_snapshot(analysis.REPO, analysis.soak_derivation.PREPARATION_SOURCE)
         original_tree, original = analysis.prior.source_snapshot(analysis.REPO, analysis.soak_derivation.ORIGINAL_SOURCE)
+        legacy = next(entry for entry in manifest['entries'] if entry['case_set'] == 'confirm-pure-q025')
+        legacy_manifest = dict(entries=[legacy])
         with mock.patch.object(analysis, 'preparation_source_proof', return_value='f' * 64), mock.patch.object(analysis.prior, 'source_snapshot', side_effect=[(original_tree, original), ('e' * 64, source)]), self.assertRaises(ValueError):
-            analysis.measurement_source_proof(manifest)
+            analysis.measurement_source_proof(legacy_manifest)
 
     def test_exact_derived_pure_soak_can_use_cprep_with_its_bound_parent(self):
         derivation = analysis.soak_derivation

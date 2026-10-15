@@ -47,6 +47,16 @@ PURE_QUOTA_SHAPE = dict(kind='write', backend='search', database_cpus=.125, clie
                        write_percent=100, lua_mutations=False, levels=[256, 512, 1024], batching=None)
 STARTUP_CONTROLS = dict(max_operations=128, max_bytes=4194304, max_wait='20ms', max_in_flight=16)
 STARTUP_SERVER = '084572d79b7a53230801297f90ca2363fd864913'
+EXTENDED_PARENT = 'confirm-pure-extended-q0125'
+EXTENDED_CASE_ID = 'default-pure-extended-q0125'
+EXTENDED_PLAN = 'plans/default-pure-extended-q0125-2026-10-16.json'
+EXTENDED_DESCRIPTION = 'Registered final extended concurrency study; all prior negative evidence retained'
+EXTENDED_REGISTRATION = dict(
+    extended_concurrency_supplement='results/default-tuning-2026-10-16/EXTENDED-CONCURRENCY-SUPPLEMENT.md',
+    extended_concurrency_supplement_source='5f8f1c1b369652d3e53bd7c7b118c3b438f743da',
+    extended_concurrency_supplement_sha256='a2da5f8791913ce5efd010c84d1e120268f5029c08d29d74e19867d0f553db68',
+    client_go_reference='f06a346a8e0f37f0f8b2ae6539d9a7ce6dff5b27')
+EXTENDED_SHAPE = dict(PURE_QUOTA_SHAPE, levels=[1024, 2048], warmup='300s', duration='180s')
 
 
 def require(condition, message):
@@ -91,6 +101,46 @@ def validate_startup_plan(options):
     require(plan['case_sets'].get('soak-pure') == [expected], 'startup soak shape differs')
 
 
+def validate_extended_plan(options):
+    entry, plan, entries, plans = (options[key] for key in ('entry', 'plan', 'entries', 'plans'))
+    metadata = plan['metadata']
+    require(all(metadata.get(key) == value for key, value in EXTENDED_REGISTRATION.items()), 'extended concurrency registration differs')
+    repository = options.get('repository', Path(__file__).resolve().parents[2])
+    document = subprocess.check_output(['git', 'show', EXTENDED_REGISTRATION['extended_concurrency_supplement_source'] + ':' + EXTENDED_REGISTRATION['extended_concurrency_supplement']], cwd=repository)
+    require(sha(document) == EXTENDED_REGISTRATION['extended_concurrency_supplement_sha256'], 'extended concurrency document bytes differ')
+    require(metadata.get('soak_derivation') == POLICY, 'extended concurrency changes the registered derivation policy')
+    require(plan['server_source'] == entry['server_source'] == STARTUP_SERVER and metadata.get('selected_controls') == STARTUP_CONTROLS, 'extended concurrency server or selected defaults differ')
+    require(type(plan.get('schema')) is int and plan['schema'] == 1, 'extended concurrency plan schema differs')
+    expected = dict(EXTENDED_SHAPE, id=EXTENDED_CASE_ID, expected_batching=STARTUP_CONTROLS)
+    if entry['phase'] == 'confirmation' and entry['case_set'] == EXTENDED_PARENT:
+        require(entry['plan_path'] == EXTENDED_PLAN, 'extended confirmation plan path differs')
+        inventory = {EXTENDED_PARENT: dict(cases=1, timed_stages=12, warmup_and_timed_minutes=96.0)}
+        expected_metadata = dict(EXTENDED_REGISTRATION, phase='independent_confirmation',
+                                 selected_controls=STARTUP_CONTROLS, soak_derivation=POLICY, inventory=inventory)
+        expected_cases = {EXTENDED_PARENT: [expected]}
+        expected_plan = dict(schema=1, server_source=STARTUP_SERVER, description=EXTENDED_DESCRIPTION,
+                             metadata=expected_metadata, case_sets=expected_cases)
+        require(json.dumps(plan, sort_keys=True) == json.dumps(expected_plan, sort_keys=True), 'extended confirmation shape or metadata differs')
+        return
+    require(entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure', 'extended source is not registered for this cohort')
+    require(metadata.get('phase') == 'soak' and metadata.get('retry_failed_soak') is False and type(metadata.get('checks')) is int and 1 <= metadata['checks'] <= POLICY['max_checks'], 'extended soak changes the registered phase/check/retry policy')
+    metadata_fields = set(EXTENDED_REGISTRATION) | {'phase', 'soak_derivation', 'selected_controls', 'input_sha256', 'checks', 'qualified_and_skipped', 'skipped_workloads', 'retry_failed_soak', 'extended_concurrency_parent'}
+    require(set(metadata) == metadata_fields and metadata['checks'] == len(plan['case_sets']) and set(plan['case_sets']) <= {'soak-pure', 'soak-partial', 'soak-crawler'}, 'extended soak metadata or check inventory differs')
+    proof = metadata.get('extended_concurrency_parent')
+    fields = {'label', 'case_set', 'case_id', 'client_source', 'plan_path', 'plan_sha256', 'workers'}
+    require(isinstance(proof, dict) and set(proof) == fields, 'extended soak lacks exact parent proof')
+    require(proof['case_set'] == EXTENDED_PARENT and proof['case_id'] == EXTENDED_CASE_ID and type(proof['workers']) is int and proof['workers'] == 1024, 'extended soak parent reference is not registered')
+    require(proof['label'] in entries and proof['label'] in plans, 'extended soak parent is absent from confirmation inventory')
+    parent = entries[proof['label']]
+    require(parent['phase'] == 'confirmation' and all(parent.get(key) == proof[key] for key in ('label', 'case_set', 'client_source', 'plan_path', 'plan_sha256')), 'extended soak parent identity differs')
+    parent_options = dict(entry=parent, plan=plans[proof['label']], entries=entries, plans=plans, repository=repository)
+    validate_extended_plan(parent_options)
+    selected = [point for point in metadata.get('qualified_and_skipped', []) if point.get('selected') is True and 'workers' in point]
+    require(len(selected) == 1 and all(selected[0].get(key) == proof[key] for key in ('label', 'case_id', 'workers')) and selected[0].get('database_cpus') == .125, 'extended soak did not select its registered parent')
+    expected.update(id='soak-pure', levels=[1024], rounds=1, warmup='60s', duration='300s')
+    require(json.dumps(plan['case_sets'].get('soak-pure'), sort_keys=True) == json.dumps([expected], sort_keys=True), 'extended soak shape differs')
+
+
 def validate_context(options):
     analysis, manifest, plans, controls = (options[key] for key in ('analysis', 'manifest', 'plans', 'controls'))
     require(analysis.get('complete_inventory') is True, 'full audited confirmation inventory required')
@@ -102,6 +152,7 @@ def validate_context(options):
     entries = {entry['label']: entry for entry in manifest['entries']}
     require(len(entries) == len(manifest['entries']), 'duplicate workflow label')
     require(sum(entry['case_set'] == STARTUP_PARENT for entry in entries.values()) <= 1, 'startup correction permits only one confirmation attempt')
+    require(sum(entry['case_set'] == EXTENDED_PARENT for entry in entries.values()) <= 1, 'extended concurrency permits only one confirmation attempt')
     runs = analysis['runs']
     require(len(runs) == len(entries) and {run['label'] for run in runs} == set(entries) and all(run.get('available') is True for run in runs), 'analysis/manifest workflow inventories differ or are incomplete')
     for label, entry in entries.items():
@@ -116,6 +167,9 @@ def validate_context(options):
             require(all(plan['metadata'].get(key) == value for key, value in CANDIDATE_CAPACITY_REGISTRATION.items()), 'candidate-only parent lacks the fixed supplement source/hash registration')
         require(entry['case_set'] in plan['case_sets'], 'confirmation parent case-set is missing')
         cases = plan['case_sets'][entry['case_set']]
+        if entry['case_set'] == EXTENDED_PARENT:
+            extended_options = dict(entry=entry, plan=plan, entries=entries, plans=plans)
+            validate_extended_plan(extended_options)
         registration = PURE_PARENTS.get(entry['case_set'])
         if registration is not None:
             require(all(plan['metadata'].get(key) == value for key, value in registration['registration'].items()), 'additional pure parent lacks the fixed supplement source/hash registration')
@@ -140,7 +194,12 @@ def parent_case(options, label, case_id):
     matches = [case for case in cases if case['id'] == case_id]
     require(len(matches) == 1, 'missing/duplicate parent case')
     case = matches[0]
-    require(case['batching'] is None and case['expected_batching'] == options['controls'] and case['client_processes'] == 4 and case['rounds'] == 3 and case['warmup'] == case['duration'] == '60s', 'parent is not the registered omitted-default three-round confirmation')
+    require(case['batching'] is None and case['expected_batching'] == options['controls'] and case['client_processes'] == 4 and case['rounds'] == 3, 'parent is not the registered omitted-default three-round confirmation')
+    if entry['case_set'] == EXTENDED_PARENT:
+        extended_options = dict(entry=entry, plan=options['plans'][label], entries=options['entries'], plans=options['plans'])
+        validate_extended_plan(extended_options)
+    else:
+        require(case['warmup'] == case['duration'] == '60s', 'ordinary parent is not the registered sixty-second confirmation')
     return case
 
 
@@ -156,7 +215,7 @@ def build_plan(options):
     for result in formal['cpu_capacity']:
         label = result['label']
         require(label in entries, 'capacity parent workflow absent')
-        if entries[label]['case_set'] not in POLICY['pure_case_sets'] and entries[label]['case_set'] not in PURE_PARENTS:
+        if entries[label]['case_set'] not in POLICY['pure_case_sets'] and entries[label]['case_set'] not in PURE_PARENTS and entries[label]['case_set'] != EXTENDED_PARENT:
             retained.append(dict(label=label, case_id=result['case_id'], reason='Not a 1 KiB primary capacity case; addendum/regression excluded'))
             continue
         case = parent_case(context, label, result['case_id'])
@@ -169,11 +228,12 @@ def build_plan(options):
                 continue
             require(three_passed(point['decisions']) and point['workers'] in case['levels'], 'capacity point lacks three qualified rounds')
             candidate = dict(label=label, case_id=case['id'], workers=point['workers'], database_cpus=case['database_cpus'], case=case)
-            if entries[label]['case_set'] == STARTUP_PARENT:
-                require(point['workers'] in (256, 512), 'startup parent has no following registered concurrency')
+            if entries[label]['case_set'] in (STARTUP_PARENT, EXTENDED_PARENT):
+                extended = entries[label]['case_set'] == EXTENDED_PARENT
+                require(point['workers'] in ((1024,) if extended else (256, 512)), 'registered pure parent has no following concurrency')
                 proof = {key: entries[label][key] for key in ('label', 'case_set', 'client_source', 'plan_path', 'plan_sha256')}
                 proof.update(case_id=case['id'], workers=point['workers'])
-                candidate['startup_parent'] = proof
+                candidate['extended_parent' if extended else 'startup_parent'] = proof
             pure.append(candidate)
     for result in formal['crawler_rate_bounds']:
         label, decision = result['label'], result['decision']
@@ -220,7 +280,7 @@ def build_plan(options):
         case_sets[name] = [case]
     qualified = pure + [point for candidates in crawlers.values() for point in candidates]
     for point in qualified:
-        visible = {key: value for key, value in point.items() if key not in ('case', 'startup_parent')}
+        visible = {key: value for key, value in point.items() if key not in ('case', 'startup_parent', 'extended_parent')}
         visible['selected'] = any(point is candidate for _, candidate in chosen)
         visible['reason'] = 'Selected by preregistered order' if visible['selected'] else 'Qualified but later in preregistered order; not another check'
         retained.append(visible)
@@ -228,11 +288,18 @@ def build_plan(options):
     if chosen and chosen[0][0] == 'soak-pure' and 'startup_parent' in chosen[0][1]:
         metadata.update(STARTUP_REGISTRATION)
         metadata['startup_preparation_parent'] = copy.deepcopy(chosen[0][1]['startup_parent'])
+    elif chosen and chosen[0][0] == 'soak-pure' and 'extended_parent' in chosen[0][1]:
+        metadata.update(EXTENDED_REGISTRATION)
+        metadata['extended_concurrency_parent'] = copy.deepcopy(chosen[0][1]['extended_parent'])
     plan = dict(schema=1, server_source=options['server_source'], description='Derived five-minute checks of qualified omitted defaults; no dispatch or retries', metadata=metadata, case_sets=case_sets)
     if 'startup_preparation_parent' in metadata:
         entry = dict(label='soak-pure', phase='soak', case_set='soak-pure', server_source=options['server_source'])
         startup_options = dict(entry=entry, plan=plan, entries=entries, plans=options['plans'])
         validate_startup_plan(startup_options)
+    elif 'extended_concurrency_parent' in metadata:
+        entry = dict(label='soak-pure', phase='soak', case_set='soak-pure', server_source=options['server_source'])
+        extended_options = dict(entry=entry, plan=plan, entries=entries, plans=options['plans'])
+        validate_extended_plan(extended_options)
     return plan
 
 
