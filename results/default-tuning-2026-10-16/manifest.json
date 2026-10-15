@@ -78,6 +78,126 @@
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
       "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772934705"
+    },
+    {
+      "label": "confirm-pure-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-pure-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-pure-q1",
+      "phase": "confirmation",
+      "case_set": "confirm-pure-q1",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-partial-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-crawler-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-partial-lower-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-lower-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-crawler-lower-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-lower-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-partial-q1",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-q1",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-crawler-q1",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-q1",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-search-read",
+      "phase": "confirmation",
+      "case_set": "confirm-search-read",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-mongo-read",
+      "phase": "confirmation",
+      "case_set": "confirm-mongo-read",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-mongo-regression",
+      "phase": "confirmation",
+      "case_set": "confirm-mongo-regression",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
+    },
+    {
+      "label": "confirm-search-large-body",
+      "phase": "confirmation",
+      "case_set": "confirm-search-large-body",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": null
     }
   ]
 }
