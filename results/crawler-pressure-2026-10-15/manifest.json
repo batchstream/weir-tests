@@ -1,0 +1,83 @@
+{
+  "experiment": "crawler-pressure-2026-10-15",
+  "predeclared_utc": "2026-10-15T12:40:23Z",
+  "client_source": "488b4575932265030b81312319b707e45649a028",
+  "client_ref": "randy/crawler-pressure-client",
+  "server_sources": {
+    "current": "0f6fac3edb462e088decff98b67560dae2c23c9a",
+    "optimized": "745501319ae59a16351294c2eaed58019288c3ad"
+  },
+  "controls": {
+    "input_shape": "single",
+    "profiles": ["two-step"],
+    "http_observer": "disabled",
+    "modes": ["fixed-rate"],
+    "processes": 4,
+    "page_size": 1,
+    "queue_pages": 1,
+    "timeout_ns": 10000000000,
+    "after_max_in_flight": 0,
+    "database_cpus": 1,
+    "database_memory_bytes": 1610612736,
+    "database_heap_bytes": 536870912,
+    "batch_size": 32,
+    "pending_records": 4096
+  },
+  "calibration": {
+    "worker_levels": [512, 2048],
+    "rates": [96, 384, 768],
+    "duration_ns": 5000000000,
+    "warmup_ns": 2000000000,
+    "rounds": 1,
+    "planned_timed_stages": 18
+  },
+  "selection_rule": {
+    "path": "direct",
+    "worker_priority": [512, 2048],
+    "require_complete_native_stage_audit": true,
+    "allow_incomplete_other_stages_for_diagnostic_selection_only": true,
+    "require_failed_unknown_timedout_zero": true,
+    "maximum_generator_lag_ns": 50000000,
+    "require_existing_sustained_cpu_saturation": true,
+    "cpu_threshold_percent": 90,
+    "minimum_cpu_intervals": 5,
+    "minimum_cpu_coverage": 0.8,
+    "minimum_fraction_measurement_at_cpu_threshold": 0.8,
+    "rank": "highest native completed QPS including drain; tie lower offered rate",
+    "q": "floor(selected native completed QPS including drain)",
+    "formal_rates": "sorted unique max(1,floor(0.8*Q)), max(1,Q), max(1,floor(1.2*Q))",
+    "no_eligible_native_stage": "retain diagnostic evidence; do not dispatch formal or claim CPU capacity"
+  },
+  "formal": {
+    "duration_ns": 20000000000,
+    "warmup_ns": 10000000000,
+    "rounds": 3,
+    "selection": null
+  },
+  "entries": [
+    {
+      "label": "calibration512",
+      "role": "calibration",
+      "workers": 512,
+      "rates": [96, 384, 768],
+      "workflow_run": null,
+      "receipt": "raw/calibration512/crawler.receipt.json.gz",
+      "report": "raw/calibration512/crawler.json.gz",
+      "fixture_manifest": "raw/calibration512/manifest.json.gz",
+      "cleanup": "raw/calibration512/cleanup.json.gz"
+    },
+    {
+      "label": "calibration2048",
+      "role": "calibration",
+      "workers": 2048,
+      "rates": [96, 384, 768],
+      "workflow_run": null,
+      "receipt": "raw/calibration2048/crawler.receipt.json.gz",
+      "report": "raw/calibration2048/crawler.json.gz",
+      "fixture_manifest": "raw/calibration2048/manifest.json.gz",
+      "cleanup": "raw/calibration2048/cleanup.json.gz"
+    }
+  ],
+  "dispatch_attempts": [],
+  "formal_entries": []
+}
