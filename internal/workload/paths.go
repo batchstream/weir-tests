@@ -206,7 +206,7 @@ func (p *directPath) create(ctx context.Context) error {
 		}
 		return nil
 	}
-	body := []byte(`{"settings":{"number_of_shards":1,"number_of_replicas":0},"mappings":{"properties":{"fixture_id":{"type":"keyword"},"revision":{"type":"integer"},"padding":{"type":"keyword","index":false,"doc_values":false}}}}`)
+	body := []byte(`{"settings":{"number_of_shards":1,"number_of_replicas":0,"refresh_interval":"1s","translog.durability":"request"},"mappings":{"properties":{"fixture_id":{"type":"keyword"},"revision":{"type":"integer"},"padding":{"type":"keyword","index":false,"doc_values":false}}}}`)
 	status, _, err := p.request(ctx, http.MethodPut, "/"+p.dataset.Config.Namespace, body)
 	if err != nil || status != http.StatusOK {
 		return errors.New("exclusive Search index creation failed; refusing adoption")

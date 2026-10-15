@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/batchstream/weir-tests/internal/fixture"
+	"github.com/batchstream/weir-tests/internal/observe"
 	"github.com/batchstream/weir-tests/internal/workload"
 )
 
@@ -25,6 +26,7 @@ type ResourceSample struct {
 	CPUBudgetPercent     *float64                  `json:"database_cpu_budget_percent,omitempty"`
 	CPUTimeNS            *int64                    `json:"database_cpu_time_ns,omitempty"`
 	CPUClockNS           int64                     `json:"database_cpu_counter_clock_unix_ns,omitempty"`
+	CPUThrottling        *CPUThrottling            `json:"database_cpu_throttling,omitempty"`
 	MemoryBytes          uint64                    `json:"database_memory_bytes"`
 	BlockReadBytes       uint64                    `json:"container_block_read_bytes"`
 	BlockWriteBytes      uint64                    `json:"container_block_write_bytes"`
@@ -34,6 +36,10 @@ type ResourceSample struct {
 	WeirCPUTimeNS        *int64                    `json:"weir_cpu_time_ns,omitempty"`
 	WeirMemoryBytes      uint64                    `json:"weir_memory_bytes,omitempty"`
 	ClientProcesses      []ProcessResource         `json:"client_processes,omitempty"`
+	Host                 HostResources             `json:"host"`
+	Store                []observe.Metric          `json:"store_gauges,omitempty"`
+	StoreSampleAt        string                    `json:"store_sample_at_utc,omitempty"`
+	StoreSampleError     string                    `json:"store_sample_unavailable,omitempty"`
 	Database             workload.DatabaseCounters `json:"database_counters"`
 	DatabaseCounterError string                    `json:"database_counter_error,omitempty"`
 	Error                string                    `json:"error,omitempty"`
@@ -107,11 +113,13 @@ func resourceHTTPClient(target fixture.ResourceTarget) (*http.Client, error) {
 }
 
 type resourceSampleOptions struct {
-	Target     fixture.ResourceTarget
-	Paths      *workload.Paths
-	Client     *http.Client
-	Started    time.Time
-	ClientPIDs []int
+	Target       fixture.ResourceTarget
+	Paths        *workload.Paths
+	Client       *http.Client
+	Started      time.Time
+	ClientPIDs   []int
+	SearchURL    string
+	SearchClient *http.Client
 }
 
 type ProcessResource struct {
@@ -119,6 +127,13 @@ type ProcessResource struct {
 	CPUTimeNS   int64  `json:"cpu_time_ns"`
 	MemoryBytes uint64 `json:"memory_bytes"`
 	Error       string `json:"error,omitempty"`
+}
+
+type CPUThrottling struct {
+	Periods          *uint64 `json:"periods,omitempty"`
+	ThrottledPeriods *uint64 `json:"throttled_periods,omitempty"`
+	ThrottledTimeNS  *uint64 `json:"throttled_time_ns,omitempty"`
+	Unavailable      string  `json:"unavailable,omitempty"`
 }
 
 func sampleResources(ctx context.Context, options resourceSampleOptions) ResourceSample {
@@ -141,6 +156,7 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		sample.Error = "database resource identity unavailable"
 	}
 	sample.ElapsedNS = time.Since(options.Started).Nanoseconds()
+	sample.Host = sampleHostResources("/proc")
 	if len(options.ClientPIDs) == 0 {
 		clientCPU, _, err := processStats(ctx, os.Getpid())
 		if err == nil {
@@ -170,6 +186,28 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		} else {
 			sample.DatabaseCounterError = err.Error()
 		}
+	} else if options.SearchURL != "" && options.SearchClient != nil {
+		counters, err := workload.SearchDatabaseCounters(ctx, options.SearchClient, options.SearchURL)
+		if err != nil {
+			sample.DatabaseCounterError = err.Error()
+		} else {
+			sample.Database = counters
+		}
+	}
+	if target.Diagnostics != "" {
+		snapshot := fetchServerMetrics(ctx, target.Diagnostics)
+		sample.StoreSampleAt, sample.StoreSampleError = snapshot.At, snapshot.Error
+		seen := make(map[string]bool)
+		for _, metric := range snapshot.Metrics {
+			switch metric.Name {
+			case "weir_store_pending_entries", "weir_store_pending_reserved_bytes", "weir_store_active_executions", "weir_store_active_executions_limit", "weir_store_batch_max_wait_seconds", "weir_store_publishers":
+				sample.Store = append(sample.Store, metric)
+				seen[metric.Name] = true
+			}
+		}
+		if len(seen) != 6 && sample.StoreSampleError == "" {
+			sample.StoreSampleError = "one or more fixed Store gauges missing from diagnostic sample"
+		}
 	}
 	return sample
 }
@@ -198,6 +236,11 @@ func sampleDocker(ctx context.Context, client *http.Client, container string) (R
 			Usage struct {
 				Total *int64 `json:"total_usage"`
 			} `json:"cpu_usage"`
+			Throttling struct {
+				Periods          *uint64 `json:"periods"`
+				ThrottledPeriods *uint64 `json:"throttled_periods"`
+				ThrottledTimeNS  *uint64 `json:"throttled_time"`
+			} `json:"throttling_data"`
 		} `json:"cpu_stats"`
 		Memory struct {
 			Usage uint64 `json:"usage"`
@@ -220,6 +263,11 @@ func sampleDocker(ctx context.Context, client *http.Client, container string) (R
 		return sample, errors.New("Docker Engine cumulative CPU counter unavailable")
 	}
 	sample.CPUTimeNS = stats.CPU.Usage.Total
+	throttling := &CPUThrottling{Periods: stats.CPU.Throttling.Periods, ThrottledPeriods: stats.CPU.Throttling.ThrottledPeriods, ThrottledTimeNS: stats.CPU.Throttling.ThrottledTimeNS}
+	sample.CPUThrottling = throttling
+	if sample.CPUThrottling.Periods == nil || sample.CPUThrottling.ThrottledPeriods == nil || sample.CPUThrottling.ThrottledTimeNS == nil {
+		sample.CPUThrottling.Unavailable = "Docker cumulative throttling counters incomplete"
+	}
 	sample.MemoryBytes = stats.Memory.Usage
 	for _, entry := range stats.Block.Bytes {
 		switch strings.ToLower(entry.Op) {
