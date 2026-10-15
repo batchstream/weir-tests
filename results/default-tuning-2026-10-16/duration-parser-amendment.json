@@ -14,5 +14,7 @@
   "observed_error": "duration requires one explicit ns/us/ms/s/m unit",
   "cause": "Go Duration.String emits 1m0s for the same 60s value; the raw parameter comparison reused the plan single-unit parser",
   "correction_scope": "Parse only two raw write duration fields as exact compound Go durations; keep plan syntax, values, thresholds, selection/capacity rules, original Go auditor and all measured data unchanged",
-  "new_experiments_or_retries": false
+  "new_experiments_or_retries": false,
+  "parser_fix_source": "175272e0e8479cea6f2a03c215e285910e466376",
+  "corrected_analysis": "analysis-confirmation-parser-fix/analysis.json"
 }
