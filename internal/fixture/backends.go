@@ -131,8 +131,6 @@ func (c *Cluster) checkMongoStartup(ctx context.Context, startup mongoStartup) e
 }
 
 func (c *Cluster) readySearch(ctx context.Context) error {
-	readyCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
-	defer cancel()
 	client := loopbackHTTPClient()
 	defer client.CloseIdleConnections()
 	var last error
@@ -143,7 +141,7 @@ func (c *Cluster) readySearch(ctx context.Context) error {
 			} `json:"version"`
 		}
 		versionRequest := searchRequest{Method: http.MethodGet, URL: c.SearchURL + "/", Result: &result}
-		err := searchJSON(readyCtx, client, versionRequest)
+		err := searchJSON(ctx, client, versionRequest)
 		if err == nil {
 			if result.Version.Number != SearchVersion {
 				return fmt.Errorf("Elasticsearch version %q differs from pinned %s", result.Version.Number, SearchVersion)
@@ -151,7 +149,7 @@ func (c *Cluster) readySearch(ctx context.Context) error {
 			break
 		}
 		last = err
-		if err := pause(readyCtx); err != nil {
+		if err := pause(ctx); err != nil {
 			return errors.Join(err, last)
 		}
 	}
@@ -161,7 +159,7 @@ func (c *Cluster) readySearch(ctx context.Context) error {
 		Nodes    int    `json:"number_of_nodes"`
 	}
 	healthRequest := searchRequest{Method: http.MethodGet, URL: c.SearchURL + "/_cluster/health?wait_for_status=yellow&timeout=2s", Result: &health}
-	if err := searchJSON(readyCtx, client, healthRequest); err != nil {
+	if err := searchJSON(ctx, client, healthRequest); err != nil {
 		return err
 	}
 	if health.TimedOut || health.Nodes != 1 || health.Status != "green" && health.Status != "yellow" {
@@ -175,7 +173,7 @@ func (c *Cluster) readySearch(ctx context.Context) error {
 	// Cluster-state publication can exceed a readiness probe at small CPU quotas.
 	// The complete startup context and this request still bound the wait.
 	client.Timeout = time.Minute
-	if err := searchJSON(readyCtx, client, templateRequest); err != nil {
+	if err := searchJSON(ctx, client, templateRequest); err != nil {
 		return err
 	}
 	if !acknowledged.Acknowledged {
