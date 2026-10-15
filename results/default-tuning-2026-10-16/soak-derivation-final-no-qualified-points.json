@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+  "description": "Derived five-minute checks of qualified omitted defaults; no dispatch or retries",
+  "metadata": {
+    "phase": "soak",
+    "soak_derivation": {
+      "version": 1,
+      "max_checks": 3,
+      "pure_case_sets": [
+        "confirm-pure-q025",
+        "confirm-pure-q1"
+      ],
+      "pure_order": [
+        "workers_ascending",
+        "database_cpus_ascending",
+        "label_ascending",
+        "case_id_ascending"
+      ],
+      "crawler_order": [
+        "lower_rate_descending",
+        "database_cpus_ascending",
+        "label_ascending"
+      ],
+      "crawler_profiles": [
+        "partial-update",
+        "two-step"
+      ],
+      "warmup": "60s",
+      "duration": "300s",
+      "rounds": 1,
+      "client_processes": 4,
+      "rerun_failed_soak": false
+    },
+    "selected_controls": {
+      "max_operations": 128,
+      "max_bytes": 4194304,
+      "max_wait": "20ms",
+      "max_in_flight": 16
+    },
+    "input_sha256": {
+      "analysis": "6132ba3c8e25ab1987284f007e4c81ebe4e279620fc71c5f58191c63badd0550",
+      "manifest": "ea13331dc376ee54659b19903bd69fd823a18745f45263c06a8a556527255057",
+      "selected": "9b74206fc1f1488753a11cc3cde32cb15f0e8442c691add3ad769ae422842a76"
+    },
+    "checks": 0,
+    "qualified_and_skipped": [
+      {
+        "label": "confirm-partial-q025",
+        "profile": "partial-update",
+        "reason": "No qualified lower bound with an immediate genuine service-overload upper bound"
+      },
+      {
+        "label": "confirm-crawler-q025",
+        "profile": "two-step",
+        "reason": "No qualified lower bound with an immediate genuine service-overload upper bound"
+      },
+      {
+        "label": "confirm-partial-lower-q025",
+        "profile": "partial-update",
+        "reason": "No qualified lower bound with an immediate genuine service-overload upper bound"
+      },
+      {
+        "label": "confirm-crawler-lower-q025",
+        "profile": "two-step",
+        "reason": "No qualified lower bound with an immediate genuine service-overload upper bound"
+      },
+      {
+        "label": "confirm-partial-independent-q025",
+        "profile": "partial-update",
+        "rate": 32,
+        "reason": "Qualified rate is below the highest qualified rate; no replacement soak"
+      },
+      {
+        "label": "confirm-partial-independent-q025",
+        "profile": "partial-update",
+        "reason": "No qualified lower bound with an immediate genuine service-overload upper bound"
+      },
+      {
+        "label": "confirm-crawler-independent-q025",
+        "profile": "two-step",
+        "reason": "No qualified lower bound with an immediate genuine service-overload upper bound"
+      }
+    ],
+    "skipped_workloads": [
+      "soak-pure",
+      "soak-partial",
+      "soak-crawler"
+    ],
+    "retry_failed_soak": false
+  },
+  "case_sets": {}
+}

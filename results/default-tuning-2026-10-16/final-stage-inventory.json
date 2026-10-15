@@ -1,0 +1,158 @@
+{
+  "schema": 1,
+  "planned_timed_stages": 657,
+  "audit_rows": 591,
+  "note": "Audit rows include invalid outcomes; planned stages include work that never started. Neither count is a passed-stage count.",
+  "workflows": [
+    {
+      "label": "select-pure",
+      "phase": "selection",
+      "planned_timed_stages": 40,
+      "audit_rows": 40
+    },
+    {
+      "label": "select-partial",
+      "phase": "selection",
+      "planned_timed_stages": 40,
+      "audit_rows": 40
+    },
+    {
+      "label": "select-crawler",
+      "phase": "selection",
+      "planned_timed_stages": 40,
+      "audit_rows": 40
+    },
+    {
+      "label": "select-search-read",
+      "phase": "selection",
+      "planned_timed_stages": 80,
+      "audit_rows": 80
+    },
+    {
+      "label": "select-mongo-read",
+      "phase": "selection",
+      "planned_timed_stages": 80,
+      "audit_rows": 80
+    },
+    {
+      "label": "select-bytes",
+      "phase": "selection",
+      "planned_timed_stages": 8,
+      "audit_rows": 8
+    },
+    {
+      "label": "confirm-pure-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 18,
+      "audit_rows": 18
+    },
+    {
+      "label": "confirm-pure-q1",
+      "phase": "confirmation",
+      "planned_timed_stages": 18,
+      "audit_rows": 18
+    },
+    {
+      "label": "confirm-partial-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 36,
+      "audit_rows": 18
+    },
+    {
+      "label": "confirm-crawler-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 30,
+      "audit_rows": 12
+    },
+    {
+      "label": "confirm-partial-lower-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 24,
+      "audit_rows": 24
+    },
+    {
+      "label": "confirm-crawler-lower-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 18,
+      "audit_rows": 18
+    },
+    {
+      "label": "confirm-partial-q1",
+      "phase": "confirmation",
+      "planned_timed_stages": 6,
+      "audit_rows": 6
+    },
+    {
+      "label": "confirm-crawler-q1",
+      "phase": "confirmation",
+      "planned_timed_stages": 6,
+      "audit_rows": 6
+    },
+    {
+      "label": "confirm-search-read",
+      "phase": "confirmation",
+      "planned_timed_stages": 24,
+      "audit_rows": 24
+    },
+    {
+      "label": "confirm-mongo-read",
+      "phase": "confirmation",
+      "planned_timed_stages": 24,
+      "audit_rows": 24
+    },
+    {
+      "label": "confirm-mongo-regression",
+      "phase": "confirmation",
+      "planned_timed_stages": 36,
+      "audit_rows": 36
+    },
+    {
+      "label": "confirm-search-large-body",
+      "phase": "confirmation",
+      "planned_timed_stages": 12,
+      "audit_rows": 12
+    },
+    {
+      "label": "confirm-partial-independent-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 24,
+      "audit_rows": 24
+    },
+    {
+      "label": "confirm-crawler-independent-q025",
+      "phase": "confirmation",
+      "planned_timed_stages": 21,
+      "audit_rows": 21
+    },
+    {
+      "label": "confirm-pure-q0125",
+      "phase": "confirmation",
+      "planned_timed_stages": 18,
+      "audit_rows": 0
+    },
+    {
+      "label": "confirm-pure-q0125-startup-fix",
+      "phase": "confirmation",
+      "planned_timed_stages": 18,
+      "audit_rows": 18
+    },
+    {
+      "label": "wait-partial-q1",
+      "phase": "wait_sensitivity",
+      "planned_timed_stages": 12,
+      "audit_rows": 12
+    },
+    {
+      "label": "wait-crawler-q1",
+      "phase": "wait_sensitivity",
+      "planned_timed_stages": 12,
+      "audit_rows": 12
+    },
+    {
+      "label": "confirm-pure-extended-q0125",
+      "phase": "confirmation",
+      "planned_timed_stages": 12,
+      "audit_rows": 0
+    }
+  ]
+}

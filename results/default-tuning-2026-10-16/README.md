@@ -219,6 +219,28 @@ failed stability/drain gates. The [591-row audit](analysis-wait-sensitivity/anal
 [independent review](wait-sensitivity-independent-review.json) retain the full
 evidence. No substitute anchor or favorable rerun was dispatched.
 
+## Final registered capacity attempt
+
+The [last registered attempt](FINAL-REGISTERED-CAPACITY-RESULT.md) declared
+1024/2048 workers, three rounds and fixed 300 s warmup plus 180 s measurement
+per path. Its planned 96 minutes did not run: the fixture's Elasticsearch health
+GET timed out while awaiting headers, before any Weir/client, warmup or timed
+stage. All 400 raw files were committed before interpretation; owned-container
+cleanup succeeded. This is zero additional performance evidence, not a capacity
+upper bound. The finite study stops without a replacement run or new quota.
+
+Subsequent bounded health-polling and crawler-diagnostic fixes have local Go
+unit/race coverage; they were not used by a new performance run. The original
+defaults remain a measured finite choice, and a stable maximum is unproved.
+
+The [final 25-workflow audit](analysis-final-registered-capacity/analysis.json)
+contains 591 audit rows. Every prior row, selection result and formal decision
+is [exactly unchanged](final-analysis-equivalence.json). The original derivation
+[still selects zero sustained checks](soak-derivation-final-no-qualified-points.json),
+so none was dispatched. The [registered inventory](final-stage-inventory.json)
+contains 657 planned timed stages; audit rows include invalid outcomes and
+planned stages include work that never started. Neither number is a pass count.
+
 ## Reproduction and analysis corrections
 
 The [manifest](manifest.json) binds every workflow to its committed plan, plan
@@ -239,7 +261,7 @@ confirms all original 501 rows and both selectors are unchanged, with 48 recover
 rows. No measured data, selection threshold, capacity gate or original auditor
 was changed by either correction.
 
-The preparation-cohort source audit is separately frozen at
+The historical preparation-cohort source audit is separately frozen at
 `b934c20ab3d09d6d2aa5bcdd0e6fac7ecfac26b5`. It verifies the exact fixture-only
 correction, every client's embedded workload bytes and the original C0 auditor.
 Conditional sustained eligibility is recomputed from audited parent rows using
@@ -251,6 +273,16 @@ python3 results/default-tuning-2026-10-16/analyze.py \
   --manifest results/default-tuning-2026-10-16/manifest-before-startup-corrected-dispatch.json \
   --auditor .tools/default-selection-auditor --output /tmp/weir-confirmation-audit
 python3 -m unittest discover -s results/default-tuning-2026-10-16 -p '*_test.py'
+```
+
+The final audit uses frozen analysis source
+`65f54d7903ae277a739d2b0bb8129feac446f7c8` and the complete 25-workflow
+[manifest](manifest.json):
+
+```sh
+python3 results/default-tuning-2026-10-16/analyze.py \
+  --manifest results/default-tuning-2026-10-16/manifest.json \
+  --auditor .tools/default-selection-auditor --output /tmp/weir-final-default-audit
 ```
 
 The auditor build receipt identifies its original source and binary SHA256, built
