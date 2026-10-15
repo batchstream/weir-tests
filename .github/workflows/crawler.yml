@@ -24,32 +24,38 @@ on:
         default: two-step
         type: choice
         options: [two-step, combined, 'combined,two-step']
+      input-shape:
+        description: Single-record native updates and SDK calls or explicit page-batch control
+        required: true
+        default: single
+        type: choice
+        options: [single, page]
       http-observer:
         description: Enable HTTP ledger or bypass observer on every path for direct control
         required: true
-        default: enabled
+        default: disabled
         type: choice
         options: [enabled, disabled]
       modes:
         description: Run fixed-rate cases, saturation cases, or both independently
         required: true
-        default: both
+        default: fixed-rate
         type: choice
         options: [fixed-rate, saturation, both]
       rates:
         description: Offered product rates (use none to disable fixed-rate cases)
         required: false
-        default: '20,80,160'
+        default: '4,16,48'
         type: string
       concurrency-levels:
         description: Total goroutine workers divided between four OS clients
         required: true
-        default: '32,128'
+        default: '128'
         type: string
       page-size:
         description: Products/page (two seller mutations per product)
         required: true
-        default: '20'
+        default: '1'
         type: string
       duration:
         description: Arrival duration per stage (use 5s for calibration, 20s for measurement)
@@ -108,6 +114,7 @@ jobs:
           GOSUMDB: 'off'
           CRAWLER_MAX_IN_FLIGHT: ${{ inputs.after-max-in-flight }}
           CRAWLER_PROFILES: ${{ inputs.profiles }}
+          CRAWLER_INPUT_SHAPE: ${{ inputs.input-shape }}
           CRAWLER_HTTP_OBSERVER: ${{ inputs.http-observer }}
           CRAWLER_MODES: ${{ inputs.modes }}
           CRAWLER_RATES: ${{ inputs.rates }}

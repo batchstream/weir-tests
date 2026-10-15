@@ -130,7 +130,8 @@ func TestCrawlerExecutionFollowsPSEProductThenSellerPhases(t *testing.T) {
 			}
 			defer client.close()
 			mutations := crawlerPage(0, 1, 2)
-			unknown, err := client.execute(t.Context(), mutations)
+			var ledger crawlerApplicationLedger
+			unknown, err := client.execute(t.Context(), mutations, &ledger)
 			if err != nil || unknown {
 				t.Fatal(err, unknown)
 			}

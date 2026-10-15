@@ -41,6 +41,9 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 		}
 	}
 	options := report.Parameters
+	if options.InputShape != "" && options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
+		return errors.New("invalid crawler input shape")
+	}
 	if options.HTTPObserver != "" && options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
 		return errors.New("unknown HTTP observer mode")
 	}
@@ -90,6 +93,7 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				}
 				expected["shared-seller"] = crawlerDocument("shared-seller", false)
 				var offered, rejected, completed, failed, unknown, timedout, late, within, mutations uint64
+				var stageApplications crawlerApplicationCounts
 				var latency, service histogram
 				seenPIDs := map[int]bool{}
 				seenWorkers := map[int]bool{}
@@ -97,6 +101,22 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 					if reply.Phase != "timed" || reply.PID < 1 || seenPIDs[reply.PID] || len(reply.Workers) != stage.Concurrency/options.Processes {
 						return errors.New("crawler client identity or goroutine count mismatch")
 					}
+					if options.InputShape != "" {
+						if reply.InputShape != options.InputShape || stage.InputShape != options.InputShape {
+							return errors.New("crawler child input shape mismatch")
+						}
+						pool := 0
+						if stage.Path == "direct" {
+							pool = stage.Concurrency / options.Processes
+							if options.InputShape == "single" {
+								pool *= 3
+							}
+						}
+						if reply.NativePoolLimit != pool {
+							return errors.New("native application connection-pool limit mismatch")
+						}
+					}
+					var childApplications crawlerApplicationCounts
 					seenPIDs[reply.PID] = true
 					for index, worker := range reply.Workers {
 						if worker.PID != reply.PID || worker.Worker != process*(stage.Concurrency/options.Processes)+index || seenWorkers[worker.Worker] {
@@ -109,13 +129,31 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 						if worker.QueuePeak > options.QueuePages || worker.QueuePeak < 0 {
 							return errors.New("crawler worker queue exceeded its bound")
 						}
+						if options.InputShape != "" {
+							if err := auditCrawlerApplicationCounts(worker.ApplicationRequests, options.InputShape); err != nil {
+								return err
+							}
+							if worker.ApplicationRequests.Records != worker.RequestedMutations {
+								return errors.New("successful worker application records differ from logical mutations")
+							}
+							mergeCrawlerApplicationCounts(&childApplications, worker.ApplicationRequests)
+						}
+						var acknowledgedLogical uint64
 						for index, page := range worker.AppliedPages {
 							if page < 0 || index > 0 && page <= worker.AppliedPages[index-1] {
 								return errors.New("crawler acknowledged pages are out of order")
 							}
-							for _, mutation := range crawlerPage(worker.Worker, page, options.PageSize) {
+							pageMutations := crawlerPage(worker.Worker, page, options.PageSize)
+							acknowledgedLogical += uint64(len(pageMutations))
+							if stage.Profile == "two-step" {
+								acknowledgedLogical += uint64(options.PageSize)
+							}
+							for _, mutation := range pageMutations {
 								expected[mutation.ID] = crawlerMerge(expected[mutation.ID], mutation)
 							}
+						}
+						if options.InputShape != "" && worker.RequestedMutations != acknowledgedLogical {
+							return errors.New("logical mutation count differs from acknowledged business pages")
 						}
 						child := histogram{buckets: worker.Buckets, count: worker.Latency.Samples, max: worker.Latency.MaxNS}
 						childService := histogram{buckets: worker.ServiceBuckets, count: worker.ServiceLatency.Samples, max: worker.ServiceLatency.MaxNS}
@@ -137,6 +175,17 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 						late += worker.Late
 						within += worker.WithinWindow
 						mutations += worker.RequestedMutations
+					}
+					if options.InputShape != "" {
+						if !reflect.DeepEqual(childApplications, reply.ApplicationRequests) {
+							return errors.New("crawler child application request counts mismatch")
+						}
+						mergeCrawlerApplicationCounts(&stageApplications, childApplications)
+					}
+				}
+				if options.InputShape != "" {
+					if !reflect.DeepEqual(stageApplications, stage.ApplicationRequests) {
+						return errors.New("crawler stage application request counts mismatch")
 					}
 				}
 				if offered != stage.Offered || rejected != stage.Rejected || completed != stage.Completed || failed != stage.Failed || unknown != stage.Indeterminate || timedout != stage.TimedOut || late != stage.Late || within != stage.WithinWindow || mutations != stage.RequestedMutations {
