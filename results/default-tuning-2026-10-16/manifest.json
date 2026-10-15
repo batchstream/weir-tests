@@ -27,7 +27,7 @@
       "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772880878"
     },
     {
       "label": "select-partial",
@@ -37,7 +37,7 @@
       "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772893533"
     },
     {
       "label": "select-crawler",
@@ -47,7 +47,7 @@
       "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772903417"
     },
     {
       "label": "select-search-read",
@@ -57,7 +57,7 @@
       "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772913406"
     },
     {
       "label": "select-mongo-read",
@@ -67,7 +67,7 @@
       "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772924115"
     },
     {
       "label": "select-bytes",
@@ -77,7 +77,7 @@
       "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
       "plan_path": "plans/default-tuning-2026-10-16.json",
       "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
-      "workflow_run": null
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772934705"
     }
   ]
 }

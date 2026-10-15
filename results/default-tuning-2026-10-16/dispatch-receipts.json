@@ -1,0 +1,110 @@
+[
+  {
+    "label": "select-pure",
+    "requested_at": "2026-10-15T16:54:26.625245+00:00",
+    "request": {
+      "ref": "randy/default-selection-client",
+      "inputs": {
+        "plan-path": "plans/default-tuning-2026-10-16.json",
+        "case-set": "select-pure"
+      }
+    },
+    "head_sha": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+    "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "dispatch_exit_code": 0,
+    "dispatch_output": "",
+    "run_id": 38772880878,
+    "url": "https://github.com/batchstream/weir-tests/actions/runs/38772880878",
+    "created_at": "2026-10-15T16:54:29Z"
+  },
+  {
+    "label": "select-partial",
+    "requested_at": "2026-10-15T16:54:31.912380+00:00",
+    "request": {
+      "ref": "randy/default-selection-client",
+      "inputs": {
+        "plan-path": "plans/default-tuning-2026-10-16.json",
+        "case-set": "select-partial"
+      }
+    },
+    "head_sha": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+    "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "dispatch_exit_code": 0,
+    "dispatch_output": "",
+    "run_id": 38772893533,
+    "url": "https://github.com/batchstream/weir-tests/actions/runs/38772893533",
+    "created_at": "2026-10-15T16:54:35Z"
+  },
+  {
+    "label": "select-crawler",
+    "requested_at": "2026-10-15T16:54:36.560765+00:00",
+    "request": {
+      "ref": "randy/default-selection-client",
+      "inputs": {
+        "plan-path": "plans/default-tuning-2026-10-16.json",
+        "case-set": "select-crawler"
+      }
+    },
+    "head_sha": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+    "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "dispatch_exit_code": 0,
+    "dispatch_output": "",
+    "run_id": 38772903417,
+    "url": "https://github.com/batchstream/weir-tests/actions/runs/38772903417",
+    "created_at": "2026-10-15T16:54:39Z"
+  },
+  {
+    "label": "select-search-read",
+    "requested_at": "2026-10-15T16:54:40.617409+00:00",
+    "request": {
+      "ref": "randy/default-selection-client",
+      "inputs": {
+        "plan-path": "plans/default-tuning-2026-10-16.json",
+        "case-set": "select-search-read"
+      }
+    },
+    "head_sha": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+    "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "dispatch_exit_code": 0,
+    "dispatch_output": "",
+    "run_id": 38772913406,
+    "url": "https://github.com/batchstream/weir-tests/actions/runs/38772913406",
+    "created_at": "2026-10-15T16:54:43Z"
+  },
+  {
+    "label": "select-mongo-read",
+    "requested_at": "2026-10-15T16:54:45.495933+00:00",
+    "request": {
+      "ref": "randy/default-selection-client",
+      "inputs": {
+        "plan-path": "plans/default-tuning-2026-10-16.json",
+        "case-set": "select-mongo-read"
+      }
+    },
+    "head_sha": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+    "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "dispatch_exit_code": 0,
+    "dispatch_output": "",
+    "run_id": 38772924115,
+    "url": "https://github.com/batchstream/weir-tests/actions/runs/38772924115",
+    "created_at": "2026-10-15T16:54:48Z"
+  },
+  {
+    "label": "select-bytes",
+    "requested_at": "2026-10-15T16:54:50.152554+00:00",
+    "request": {
+      "ref": "randy/default-selection-client",
+      "inputs": {
+        "plan-path": "plans/default-tuning-2026-10-16.json",
+        "case-set": "select-bytes"
+      }
+    },
+    "head_sha": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+    "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "dispatch_exit_code": 0,
+    "dispatch_output": "",
+    "run_id": 38772934705,
+    "url": "https://github.com/batchstream/weir-tests/actions/runs/38772934705",
+    "created_at": "2026-10-15T16:54:52Z"
+  }
+]
