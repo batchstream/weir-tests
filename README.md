@@ -9,6 +9,11 @@ publishes 94 paired real-database comparisons, all rounds, raw evidence and
 offline analysis. It identifies the high-concurrency aggregation benefits and
 the low-concurrency/native-bulk counterexamples.
 
+The [crawler benchmark](docs/crawler-benchmark.md) adds explicit same-runner
+native/current/optimized Search comparisons using PSE product and seller merges,
+open-loop offered rates, durable query-visible completion, database work per
+completed product, and a separate two-call versus combined-merge ablation.
+
 The SDK, protocol, server revision, Go toolchain and database artifacts are
 locked in [versions.json](versions.json). Server binaries are built separately
 from verified immutable module source. Explicit local builds for before/after

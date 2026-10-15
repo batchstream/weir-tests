@@ -32,14 +32,16 @@ const ownerLabel = "io.batchstream.weir-tests.owner"
 type Options struct {
 	WeirBinary string
 	// MongoBinary explicitly selects a native pinned mongod; empty uses Docker.
-	MongoBinary    string
-	Backends       []string
-	OwnerCount     int
-	DiscoveryOnly  bool
-	BatchSize      int
-	PendingRecords int
-	ExchangeBytes  int
-	DatabaseCPUs   float64
+	MongoBinary         string
+	Backends            []string
+	OwnerCount          int
+	DiscoveryOnly       bool
+	BatchSize           int
+	MaxInFlight         int
+	SearchRetryAttempts int
+	PendingRecords      int
+	ExchangeBytes       int
+	DatabaseCPUs        float64
 }
 
 type Node struct {
@@ -159,7 +161,7 @@ func validateOptions(options Options) (Options, error) {
 	if options.OwnerCount < 1 || options.OwnerCount > 8 {
 		return options, errors.New("OwnerCount must be between 1 and 8")
 	}
-	if options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
+	if options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
 		return options, errors.New("invalid batching, transport or exchange limit")
 	}
 	return options, nil
@@ -264,11 +266,19 @@ func (c *Cluster) writeConfiguration(index int) error {
 			if backend == "mongo" {
 				adapter["mongodb"] = map[string]any{"uri": c.MongoURI}
 			} else {
-				adapter["search"] = map[string]any{"url": c.SearchURL}
+				searchOptions := map[string]any{"url": c.SearchURL}
+				if c.options.SearchRetryAttempts > 0 {
+					searchOptions["retry_attempts"] = c.options.SearchRetryAttempts
+				}
+				adapter["search"] = searchOptions
 			}
 			store := map[string]any{"name": backend, "backend": adapter}
 			if c.options.BatchSize > 0 {
-				store["batching"] = map[string]any{"max_operations": c.options.BatchSize}
+				batching := map[string]any{"max_operations": c.options.BatchSize}
+				if c.options.MaxInFlight > 0 {
+					batching["max_in_flight"] = c.options.MaxInFlight
+				}
+				store["batching"] = batching
 			}
 			stores = append(stores, store)
 		}
@@ -462,6 +472,46 @@ func (c *Cluster) RestartNode(ctx context.Context, index int) error {
 		}
 	}
 	return c.startNode(ctx, index)
+}
+
+type ServerReplacement struct {
+	Binary      string
+	MaxInFlight int
+}
+
+// ReplaceServer restarts only the owned nodes, retaining the exact same database.
+// The caller records immutable binary receipts and stage identities separately.
+func (c *Cluster) ReplaceServer(ctx context.Context, replacement ServerReplacement) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed {
+		return errors.New("fixture is closed")
+	}
+	options := c.options
+	options.WeirBinary = replacement.Binary
+	options.MaxInFlight = replacement.MaxInFlight
+	validated, err := validateOptions(options)
+	if err != nil {
+		return err
+	}
+	for _, process := range c.processes {
+		if err := stopProcess(ctx, process); err != nil {
+			return err
+		}
+	}
+	c.options = validated
+	for index := range c.Nodes {
+		if err := c.writeConfiguration(index); err != nil {
+			return err
+		}
+		if err := c.startNode(ctx, index); err != nil {
+			return err
+		}
+	}
+	if err := c.waitDiscovery(ctx); err != nil {
+		return err
+	}
+	return c.writeManifest()
 }
 
 // Close is repeatable. It retains logs and configuration; it only removes
