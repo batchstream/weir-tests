@@ -68,6 +68,12 @@ throughput improvement at comparable actual database load. They do not yet prove
 a sustainable maximum: the next concurrency still gains more than 10% in two
 rounds, and its third round fails half-window stability.
 
+The database request measurements also show the aggregation mechanism: Weir's
+three 512-worker rounds average 117.565/115.523/118.597 records per attempted bulk,
+with 2692/2329/2768 bulk attempts completing 316485/269052/328276 records. Native
+still submits one record per call. Reducing request overhead does not remove the
+database's per-document indexing work.
+
 ## Comparable completed crawler throughput, lower database load
 
 The original two-step Lua product/seller dependencies remain intact. Each
@@ -110,6 +116,20 @@ comparable throughput rather than maximum capacity.
   in each round; native rejects 4608/3072/2625. These native failures invalidate
   a same-throughput CPU-saving comparison and remain negative evidence.
 
+The read guard compares the new defaults with explicit legacy Weir settings.
+The absolute read-only comparison with native calls has these three-round ranges:
+
+| Backend | Total workers | Default Weir/native completed QPS | Default Weir p99 ms |
+| --- | ---: | ---: | ---: |
+| Search | 4 | 0.326–0.394× | 4.607–5.119 |
+| Search | 128 | 0.682–0.709× | 61.439–65.535 |
+| Mongo | 4 | 0.418–0.447× | 2.303–2.815 |
+| Mongo | 128 | 1.236–1.289× | 32.767 |
+
+The extra service hop has a substantial cost in the low-concurrency read cases.
+The measured adoption case is collecting concurrent writes and reducing database
+CPU for the crawler; the table retains the read-only counterexamples.
+
 ## Capacity remains a separate qualification
 
 The initial confirmation does not establish a Weir maximum. At 0.25 CPU, the
@@ -130,10 +150,25 @@ The [original soak derivation](soak-derivation-no-qualified-points.json) consequ
 selects **zero checks**, and none was dispatched from those results. Its
 [receipt](soak-derivation-no-qualified-points-receipt.json) and all failed gates
 remain immutable. A separately preregistered
-[one-eighth-CPU pure-write study](PURE-CAPACITY-QUOTA-SUPPLEMENT.md) tests whether
-the original plateau/headroom gates can be met below the shared-host bottleneck.
-Its results and any eligible five-minute check are pending; no result from a
-different quota replaces the original negative capacity result.
+[one-eighth-CPU pure-write study](PURE-CAPACITY-QUOTA-SUPPLEMENT.md) failed during
+fixture preparation: the Elasticsearch JVM was still initializing at the nested
+180-second readiness deadline. No Weir/client process, warmup or timed stage
+started. All 399 retained files and the successful owned-container cleanup remain
+in `raw/confirm-pure-q0125/`. The
+[21-workflow audit](analysis-pure-quota-extension/analysis.json) preserves all 549
+previous rows unchanged, adds this preparation failure with zero performance
+rows, and [still derives zero soak checks](soak-derivation-after-preparation-failure.json).
+The startup failure cannot establish a capacity upper bound.
+
+A separately registered [preparation correction](STARTUP-PREPARATION-CORRECTION.md)
+removes that duplicate timeout and inherits the existing eight-minute whole-fixture
+deadline. Its production source change is confined to the fixture's `readySearch`
+function; a virtual-time regression fails at three minutes on the old code and
+passes at the parent's eight-minute deadline after the fix. Weir, database quota,
+per-request deadlines, measurement code, embedded workloads and numerical gates
+remain unchanged. This named correction cohort and any eligible conditional
+five-minute pure check remain pending. The original failed workflow is retained;
+there is no favorable performance retry or adaptive startup extension.
 
 ## Reproduction and analysis corrections
 
@@ -155,9 +190,16 @@ confirms all original 501 rows and both selectors are unchanged, with 48 recover
 rows. No measured data, selection threshold, capacity gate or original auditor
 was changed by either correction.
 
+The preparation-cohort source audit is separately frozen at
+`b934c20ab3d09d6d2aa5bcdd0e6fac7ecfac26b5`. It verifies the exact fixture-only
+correction, every client's embedded workload bytes and the original C0 auditor.
+Conditional sustained eligibility is recomputed from audited parent rows using
+the original capacity and derivation rules. The following command audits the
+21 retained workflows before the new correction cohort's dispatch:
+
 ```sh
 python3 results/default-tuning-2026-10-16/analyze.py \
-  --manifest results/default-tuning-2026-10-16/analysis-confirmation-parser-fix/manifest.json \
+  --manifest results/default-tuning-2026-10-16/manifest-before-startup-corrected-dispatch.json \
   --auditor .tools/default-selection-auditor --output /tmp/weir-confirmation-audit
 python3 -m unittest discover -s results/default-tuning-2026-10-16 -p '*_test.py'
 ```
