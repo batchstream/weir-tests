@@ -239,6 +239,26 @@
       "plan_path": "plans/default-pure-capacity-q0125-startup-fix-2026-10-16.json",
       "plan_sha256": "038107d2d1f880ce71647f9c1de7efd37ae23f451f866bbc3e586a1429a17ae4",
       "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38801128626"
+    },
+    {
+      "label": "wait-partial-q1",
+      "phase": "wait_sensitivity",
+      "case_set": "wait-partial-q1",
+      "client_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-wait-sensitivity-2026-10-16.json",
+      "plan_sha256": "3ddd9f8bda45a694da942bd6db81017d108cd2e2eb5cfe92c44b9c593c04a8f3",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38809781452"
+    },
+    {
+      "label": "wait-crawler-q1",
+      "phase": "wait_sensitivity",
+      "case_set": "wait-crawler-q1",
+      "client_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-wait-sensitivity-2026-10-16.json",
+      "plan_sha256": "3ddd9f8bda45a694da942bd6db81017d108cd2e2eb5cfe92c44b9c593c04a8f3",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38809800954"
     }
   ]
 }
