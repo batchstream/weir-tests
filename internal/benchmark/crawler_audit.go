@@ -14,7 +14,7 @@ import (
 // AuditCrawlerReport checks arithmetic and reconstructs all expected persisted fields
 // from acknowledged page ordinals without a database or a benchmark process.
 func AuditCrawlerReport(report *CrawlerReport) error {
-	if report == nil || report.Schema != 1 || report.Incomplete != "" || report.CleanupError != "" {
+	if report == nil || report.Schema != crawlerReportSchema || report.Incomplete != "" || report.CleanupError != "" {
 		return errors.New("crawler report is incomplete or cleanup failed")
 	}
 	sources := crawlerSources()
@@ -45,17 +45,17 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 			return errors.New("crawler server receipt has invalid immutable identity")
 		}
 	}
-	if slices.Contains(report.Parameters.Profiles, "partial-update") && report.Servers["current"].SHA256 != report.Servers["optimized"].SHA256 {
-		return errors.New("partial-update mechanism used different server binaries")
-	}
 	options := report.Parameters
+	if err := normalizeCrawlerControls(&options); err != nil {
+		return err
+	}
 	if options.InputShape != "" && options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
 		return errors.New("invalid crawler input shape")
 	}
 	if options.HTTPObserver != "" && options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
 		return errors.New("unknown HTTP observer mode")
 	}
-	if options.AfterBatchMaxWait < 0 || options.AfterBatchMaxWait > time.Second || slices.Contains(options.Profiles, "partial-update") && (len(options.Profiles) != 1 || options.InputShape != "single" || options.AfterMaxInFlight != 0) {
+	if slices.Contains(options.Profiles, "partial-update") && (len(options.Profiles) != 1 || options.InputShape != "single") {
 		return errors.New("invalid partial-update mechanism or batch wait parameters")
 	}
 	if len(options.Concurrency) == 0 || options.PageSize < 1 || options.Processes < 1 {
@@ -83,16 +83,15 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				if !stage.BeforeWarmupSettling.Settled || !stage.BeforeMeasurementSettling.Settled || stage.BeforeWarmupSettling.RequiredQuietNS < int64(2*time.Second) || stage.BeforeMeasurementSettling.RequiredQuietNS < int64(2*time.Second) || !stage.Verified || !stage.ClientsExited || stage.VerificationError != "" || len(stage.ClientExitErrors) != 0 || stage.Failed != 0 || stage.Indeterminate != 0 || stage.TimedOut != 0 || stage.ElapsedNS <= 0 || len(stage.Clients) != options.Processes {
 					return fmt.Errorf("crawler stage %d is unqualified", stageIndex)
 				}
+				if err := auditCrawlerServerConfiguration(stage, options); err != nil {
+					return err
+				}
+				if err := auditCrawlerLiveControls(stage, options); err != nil {
+					return err
+				}
 				server := "current"
 				if path == "optimized" {
 					server = "optimized"
-				}
-				waitNS := int64(0)
-				if path == "optimized" {
-					waitNS = int64(options.AfterBatchMaxWait)
-				}
-				if stage.BatchMaxWaitNS != waitNS {
-					return errors.New("crawler stage batch max wait differs from declared path")
 				}
 				if stage.ServerSHA256 != report.Servers[server].SHA256 {
 					return errors.New("crawler stage used a different server binary")
@@ -105,7 +104,7 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 					for record := range options.PageSize * 2 {
 						for _, suffix := range []string{"product", "seller-0", "seller-1"} {
 							id := crawlerID(worker, record, suffix)
-							expected[id] = crawlerDocument(id, suffix == "product")
+							expected[id] = crawlerSeedDocument(id, suffix == "product", options.SeedPaddingBytes)
 						}
 					}
 				}
@@ -116,6 +115,9 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				seenPIDs := map[int]bool{}
 				seenWorkers := map[int]bool{}
 				for process, reply := range stage.Clients {
+					if reply.Visibility != options.Visibility || reply.SeedPaddingBytes != options.SeedPaddingBytes {
+						return errors.New("crawler child visibility or seed payload differs from declared controls")
+					}
 					if reply.Phase != "timed" || reply.PID < 1 || seenPIDs[reply.PID] || len(reply.Workers) != stage.Concurrency/options.Processes {
 						return errors.New("crawler client identity or goroutine count mismatch")
 					}

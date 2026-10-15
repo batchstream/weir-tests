@@ -88,6 +88,14 @@ func crawlerDocument(id string, product bool) map[string]any {
 	return doc
 }
 
+func crawlerSeedDocument(id string, product bool, paddingBytes int) map[string]any {
+	document := crawlerDocument(id, product)
+	if product && paddingBytes > 0 {
+		document["benchmark_padding"] = strings.Repeat("x", paddingBytes)
+	}
+	return document
+}
+
 func crawlerPage(worker, page, size int) []crawlerMutation {
 	mutations := make([]crawlerMutation, 0, size*3)
 	variant := (page / 2) % 2

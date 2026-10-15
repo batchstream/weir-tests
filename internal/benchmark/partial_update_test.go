@@ -13,6 +13,7 @@ import (
 	"time"
 
 	weir "github.com/batchstream/weir-go"
+	"github.com/batchstream/weir-tests/internal/observe"
 )
 
 func TestPartialUpdateNativeAndWeirUseIdenticalSingleDocWithoutLua(t *testing.T) {
@@ -87,15 +88,15 @@ func TestPartialUpdateChangesEveryRepeatedKeyAndPreservesOtherFields(t *testing.
 }
 
 func TestPartialUpdateRejectsPageAndMixedProfilesBeforeFixtures(t *testing.T) {
-	for _, invalid := range []string{"page", "mixed", "negative-wait", "large-wait", "adapter-cap"} {
+	for _, invalid := range []string{"page", "mixed", "negative-wait", "large-wait", "large-adapter-cap"} {
 		opts := CrawlerOptions{InputShape: "single", Profiles: []string{"partial-update"}, Processes: 1, PageSize: 1, QueuePages: 1, Rounds: 1, Concurrency: []int{1}, Rates: []int{1}, Warmup: time.Second, Duration: time.Second, Timeout: time.Second}
 		switch invalid {
 		case "page":
 			opts.InputShape = "page"
 		case "mixed":
 			opts.Profiles = []string{"partial-update", "two-step"}
-		case "adapter-cap":
-			opts.AfterMaxInFlight = 16
+		case "large-adapter-cap":
+			opts.AfterMaxInFlight = 4097
 		case "negative-wait":
 			opts.AfterBatchMaxWait = -time.Millisecond
 		case "large-wait":
@@ -115,12 +116,17 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 	raw, _ := json.Marshal(receipt)
 	server := crawlerServerReceipt{SHA256: digest, Receipt: raw}
 	servers := map[string]crawlerServerReceipt{"current": server, "optimized": server}
-	opts := CrawlerOptions{InputShape: "single", HTTPObserver: "disabled", Profiles: []string{"partial-update"}, Modes: []string{"fixed-rate"}, Concurrency: []int{1}, Rates: []int{1}, Processes: 1, PageSize: 1, QueuePages: 1, Rounds: 1, CPUs: 1, AfterBatchMaxWait: 20 * time.Millisecond}
+	optimizedSource, optimizedDigest := strings.Repeat("3", 40), strings.Repeat("4", 64)
+	optimizedIdentity := map[string]any{"revision": optimizedSource}
+	optimizedReceipt := map[string]any{"source": optimizedSource, "sha256": optimizedDigest, "source_dirty": false, "identity": optimizedIdentity}
+	optimizedRaw, _ := json.Marshal(optimizedReceipt)
+	servers["optimized"] = crawlerServerReceipt{SHA256: optimizedDigest, Receipt: optimizedRaw}
+	opts := CrawlerOptions{InputShape: "single", HTTPObserver: "disabled", Profiles: []string{"partial-update"}, Modes: []string{"fixed-rate"}, Concurrency: []int{1}, Rates: []int{1}, Processes: 1, PageSize: 1, QueuePages: 1, Rounds: 1, CPUs: 1, AfterBatchMaxWait: 20 * time.Millisecond, Visibility: "application_acknowledged", SeedPaddingBytes: 8192, AfterBatchMaxOperations: 64, AfterBatchMaxBytes: 65536, AfterMaxInFlight: 4}
 	expected := map[string]map[string]any{"shared-seller": crawlerDocument("shared-seller", false)}
 	for record := range 2 {
 		for _, suffix := range []string{"product", "seller-0", "seller-1"} {
 			id := crawlerID(0, record, suffix)
-			expected[id] = crawlerDocument(id, suffix == "product")
+			expected[id] = crawlerSeedDocument(id, suffix == "product", opts.SeedPaddingBytes)
 		}
 	}
 	mutation := partialUpdateMutation(0, 2)
@@ -132,18 +138,28 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 	counts := crawlerApplicationCounts{Requests: 1, Records: 1, MinimumRecords: 1, MaximumRecords: 1, RecordsPerRequest: map[int]uint64{1: 1}}
 	settled := crawlerSettling{Settled: true, RequiredQuietNS: int64(2 * time.Second)}
 	quota := &DatabaseCPUQuota{RequestedCPUs: 1, ObservedCPUs: 1}
-	report := &CrawlerReport{Schema: 1, Parameters: opts, Servers: servers, Sources: partialUpdateSources()}
+	report := &CrawlerReport{Schema: crawlerReportSchema, Parameters: opts, Servers: servers, Sources: partialUpdateSources()}
 	for index, path := range []string{"direct", "current", "optimized"} {
 		worker := crawlerWorkerResult{PID: index + 100, Worker: 0, Offered: 1, Completed: 1, WithinWindow: 1, AppliedPages: []int{2}, RequestedMutations: 1, ApplicationRequests: counts, Latency: latency.summary(), ServiceLatency: latency.summary(), Buckets: latency.buckets, ServiceBuckets: latency.buckets}
 		pool := 0
 		if path == "direct" {
 			pool = 3
 		}
-		reply := crawlerReply{Phase: "timed", PID: worker.PID, Workers: []crawlerWorkerResult{worker}, InputShape: "single", NativePoolLimit: pool, ApplicationRequests: counts}
+		reply := crawlerReply{Visibility: opts.Visibility, SeedPaddingBytes: opts.SeedPaddingBytes, Phase: "timed", PID: worker.PID, Workers: []crawlerWorkerResult{worker}, InputShape: "single", NativePoolLimit: pool, ApplicationRequests: counts}
 		stage := crawlerStage{Profile: "partial-update", InputShape: "single", Path: path, Mode: "fixed-rate", Round: 1, Concurrency: 1, ProductsPerSecond: 1, Offered: 1, Completed: 1, WithinWindow: 1, ElapsedNS: int64(time.Second), CompletedProductsPerSecond: 1, ServerSHA256: digest, CPUQuota: quota, BeforeWarmupSettling: settled, BeforeMeasurementSettling: settled, Verified: true, ClientsExited: true, Clients: []crawlerReply{reply}, VerifiedDocuments: len(expected), ExpectedDocumentsSHA256: hex.EncodeToString(sum[:]), ApplicationRequests: counts, RequestedMutations: 1, ScheduledToVisible: latency.summary(), DispatchToVisible: latency.summary()}
+		stage.ServerConfiguration = crawlerTestConfiguration(t, opts, path)
 		if path == "optimized" {
 			stage.BatchMaxWaitNS = int64(opts.AfterBatchMaxWait)
+			stage.ServerSHA256 = optimizedDigest
 		}
+		inFlight := float64(0)
+		if path == "optimized" {
+			inFlight = float64(opts.AfterMaxInFlight)
+		}
+		waitMetric := observe.Metric{Name: "weir_store_batch_max_wait_seconds", Labels: map[string]string{"store": "search"}, Value: float64(stage.BatchMaxWaitNS) / 1e9}
+		capMetric := observe.Metric{Name: "weir_store_active_executions_limit", Labels: map[string]string{"store": "search"}, Value: inFlight}
+		snapshot := observe.Snapshot{Metrics: []observe.Metric{waitMetric, capMetric}}
+		stage.ServerBefore, stage.ServerAfter = snapshot, snapshot
 		report.Stages = append(report.Stages, stage)
 	}
 	if err := AuditCrawlerReport(report); err != nil {

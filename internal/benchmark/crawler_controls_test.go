@@ -44,7 +44,8 @@ func TestCrawlerResetChunksCompleteFixtureWithinByteBudget(t *testing.T) {
 				return
 			}
 			var doc struct {
-				UID string `json:"uid"`
+				UID     string `json:"uid"`
+				Padding string `json:"benchmark_padding"`
 			}
 			if err := decoder.Decode(&doc); err != nil {
 				t.Error(err)
@@ -53,6 +54,13 @@ func TestCrawlerResetChunksCompleteFixtureWithinByteBudget(t *testing.T) {
 			key := metadata.Index.Index + "/" + metadata.Index.ID
 			if seen[key] || doc.UID != metadata.Index.ID {
 				t.Error("reset duplicated or changed a document", key, doc.UID)
+			}
+			padding := 0
+			if metadata.Index.Index == "fixture-products" {
+				padding = 8192
+			}
+			if len(doc.Padding) != padding {
+				t.Error("reset did not preserve the declared product payload", key, len(doc.Padding))
 			}
 			seen[key] = true
 			shards := map[string]any{"successful": 1, "failed": 0}
@@ -65,7 +73,7 @@ func TestCrawlerResetChunksCompleteFixtureWithinByteBudget(t *testing.T) {
 	})
 	server := httptest.NewServer(handler)
 	defer server.Close()
-	opts := crawlerResetOptions{URL: server.URL, Namespace: "fixture", Workers: 32, PageSize: 20}
+	opts := crawlerResetOptions{URL: server.URL, Namespace: "fixture", Workers: 32, PageSize: 20, SeedPaddingBytes: 8192}
 	if err := resetCrawler(t.Context(), server.Client(), opts); err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +177,7 @@ func TestCrawlerAuditUsesExactSelectedModeMatrix(t *testing.T) {
 			}
 			stages[0] = crawlerStage{Path: "direct", Mode: mode, Profile: "two-step", Round: 1, Concurrency: workers, ProductsPerSecond: rate}
 			servers := map[string]crawlerServerReceipt{"current": server, "optimized": server}
-			report := &CrawlerReport{Schema: 1, Sources: crawlerSources(), Servers: servers, Parameters: opts, Stages: stages}
+			report := &CrawlerReport{Schema: crawlerReportSchema, Sources: crawlerSources(), Servers: servers, Parameters: opts, Stages: stages}
 			err := AuditCrawlerReport(report)
 			if err == nil || !strings.Contains(err.Error(), "unqualified") {
 				t.Fatal("audit did not use the exact selected matrix", err)

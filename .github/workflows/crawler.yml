@@ -16,14 +16,34 @@ on:
         description: Optimized adapter batch cap (0 unlimited; explicit experiment only)
         required: true
         default: '0'
-        type: choice
-        options: ['0', '4', '16']
+        type: string
       after-batch-max-wait:
         description: Optimized batching max_wait; explicit collection window
         required: true
         default: '0s'
         type: choice
-        options: ['0s', '20ms']
+        options: ['0s', '5ms', '20ms']
+      after-batch-max-operations:
+        description: Optimized batching max_operations (1 through 1024)
+        required: true
+        default: '32'
+        type: string
+      after-batch-max-bytes:
+        description: Optimized batching max_bytes in bytes (up to 33554432)
+        required: true
+        default: '8388608'
+        type: string
+      visibility:
+        description: Completion policy; application_acknowledged requires partial-update
+        required: true
+        default: query_visible
+        type: choice
+        options: [query_visible, application_acknowledged]
+      seed-padding-bytes:
+        description: Additional untouched partial-update product payload bytes
+        required: true
+        default: '0'
+        type: string
       profiles:
         description: Crawler business rules or exclusive partial-update batching mechanism
         required: true
@@ -64,7 +84,7 @@ on:
         default: '1'
         type: string
       duration:
-        description: Arrival duration per stage (use 5s for calibration, 20s for measurement)
+        description: Arrival duration per stage (use 120s for formal steady-state diagnostics)
         required: true
         default: '20s'
         type: string
@@ -120,6 +140,10 @@ jobs:
           GOSUMDB: 'off'
           CRAWLER_MAX_IN_FLIGHT: ${{ inputs.after-max-in-flight }}
           CRAWLER_BATCH_MAX_WAIT: ${{ inputs.after-batch-max-wait }}
+          CRAWLER_BATCH_MAX_OPERATIONS: ${{ inputs.after-batch-max-operations }}
+          CRAWLER_BATCH_MAX_BYTES: ${{ inputs.after-batch-max-bytes }}
+          CRAWLER_VISIBILITY: ${{ inputs.visibility }}
+          CRAWLER_SEED_PADDING_BYTES: ${{ inputs.seed-padding-bytes }}
           CRAWLER_PROFILES: ${{ inputs.profiles }}
           CRAWLER_INPUT_SHAPE: ${{ inputs.input-shape }}
           CRAWLER_HTTP_OBSERVER: ${{ inputs.http-observer }}

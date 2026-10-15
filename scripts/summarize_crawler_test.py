@@ -23,6 +23,15 @@ class SearchPhaseMetricsTest(unittest.TestCase):
         deltas = search_metric_deltas(dict(ServerBefore=before, ServerAfter=after))
         self.assertEqual(deltas, [dict(name='weir_search_http_request_records_bucket', labels=labels, delta=5)])
 
+    def test_attempted_http_body_bytes_are_retained_without_inventing_missing_values(self):
+        name = 'weir_search_http_request_body_bytes_sum'
+        labels = dict(operation='bulk', visibility='none')
+        before = dict(metrics=[dict(name=name, labels=labels, value=100)])
+        after = dict(metrics=[dict(name=name, labels=labels, value=612)])
+        deltas = search_metric_deltas(dict(ServerBefore=before, ServerAfter=after))
+        self.assertEqual(search_metric_sum(deltas, name, dict(operation='bulk')), 512)
+        self.assertIsNone(search_metric_sum(deltas, name, dict(operation='mget')))
+
     def test_counters_sum_observed_outcomes_and_preserve_missing_series(self):
         name = 'weir_search_http_requests_total'
         metrics = [dict(name=name, labels=dict(operation='bulk', outcome='success', visibility='wait_for'), value=2), dict(name=name, labels=dict(operation='bulk', outcome='http_error', visibility='wait_for'), value=1)]

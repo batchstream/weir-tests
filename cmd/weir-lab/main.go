@@ -51,6 +51,9 @@ type labOptions struct {
 	serverReceipt     string
 	clientProcesses   int
 	backendBatchLimit int
+	backendBatchBytes int
+	backendBatchWait  time.Duration
+	backendInFlight   int
 	luaMutations      bool
 }
 
@@ -82,6 +85,9 @@ func main() {
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
 	flag.IntVar(&opts.clientProcesses, "client-processes", 4, "independent client OS processes; each level is evenly divided into concurrent workers and its own connection pool")
 	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 0, "batching.max_operations override; 0 uses server default, 1 disables aggregation")
+	flag.IntVar(&opts.backendBatchBytes, "backend-batch-bytes", 0, "batching.max_bytes override; 0 uses server default")
+	flag.DurationVar(&opts.backendBatchWait, "backend-batch-wait", 0, "batching.max_wait collection window")
+	flag.IntVar(&opts.backendInFlight, "backend-max-in-flight", 0, "batching.max_in_flight; 0 allows unlimited executions")
 	flag.DurationVar(&opts.warmupDuration, "warmup-duration", 10*time.Second, "untimed warmup per saturation stage")
 	flag.DurationVar(&opts.duration, "duration", 20*time.Second, "timed duration per saturation stage, including completion joins")
 	flag.Float64Var(&opts.databaseCPUs, "database-cpus", 1, "enforced CPU quota for each owned Docker database; native Mongo uses all host CPUs")
@@ -157,6 +163,9 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.backendBatchLimit < 0 || opts.backendBatchLimit > 1024 || opts.pendingRecords < 0 || opts.pendingRecords > 4096 || opts.exchangeBytes < 0 || opts.exchangeBytes > 1<<30 || opts.exchangeBytes > 0 && opts.exchangeBytes < 4<<20 {
 		return errors.New("invalid batching, pending-records or exchange-bytes override")
 	}
+	if opts.backendBatchBytes < 0 || opts.backendBatchBytes > 32<<20 || opts.backendBatchWait < 0 || opts.backendBatchWait > time.Second || opts.backendInFlight < 0 || opts.backendInFlight > 4096 || opts.backendBatchLimit == 0 && (opts.backendBatchBytes > 0 || opts.backendBatchWait > 0 || opts.backendInFlight > 0) {
+		return errors.New("batch byte, wait and concurrency overrides require an explicit batch limit and valid bounds")
+	}
 	maxWorkers := 32
 	if opts.mode != "fixed" {
 		maxWorkers = 64
@@ -187,9 +196,12 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		"topology":                                    "native client and Weir on one host; dedicated database Docker containers with loopback ports",
 		"client_operation_timeout":                    businessTimeout.String(),
 		"weir_batching_max_operations_override":       fmt.Sprint(opts.backendBatchLimit),
+		"weir_batching_max_bytes_override":            fmt.Sprint(opts.backendBatchBytes),
+		"weir_batching_max_wait_override":             opts.backendBatchWait.String(),
+		"weir_batching_max_in_flight_override":        fmt.Sprint(opts.backendInFlight),
 		"weir_transport_max_pending_records_override": fmt.Sprint(opts.pendingRecords),
 		"weir_backend_max_exchange_bytes_override":    fmt.Sprint(opts.exchangeBytes),
-		"host_cpus":                                   fmt.Sprint(runtime.NumCPU()),
+		"host_cpus": fmt.Sprint(runtime.NumCPU()),
 	}
 	identityRaw, err := exec.CommandContext(ctx, binary, "version").Output()
 	if err != nil {
@@ -265,6 +277,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		provenance["database_docker_cpu_quota"] = fmt.Sprint(opts.databaseCPUs)
 	}
 	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, BatchSize: opts.backendBatchLimit, PendingRecords: opts.pendingRecords, ExchangeBytes: opts.exchangeBytes, DatabaseCPUs: opts.databaseCPUs}
+	start.BatchBytes, start.BatchMaxWait, start.MaxInFlight = opts.backendBatchBytes, opts.backendBatchWait, opts.backendInFlight
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
 		return err
