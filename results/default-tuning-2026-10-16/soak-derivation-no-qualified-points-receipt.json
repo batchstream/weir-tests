@@ -1,0 +1,10 @@
+{
+  "status": "not_dispatched",
+  "checks": 0,
+  "reason": "No Weir pure point satisfies all original CPU/plateau/stability/headroom gates and no crawler lower bound has a genuine immediate overload upper bound",
+  "analysis_source": "175272e0e8479cea6f2a03c215e285910e466376",
+  "analysis_sha256": "24f252f3f172e39116bbd7bbcd36ae44d55b819e30a9ecb3147bb6e71290a66f",
+  "plan_sha256": "c903c9482592decb8311fc6093beff3e9d3f3fa98a9471ecbc5a353a42e94eac",
+  "retries": 0,
+  "threshold_changes": false
+}
