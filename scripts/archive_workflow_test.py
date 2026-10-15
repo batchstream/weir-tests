@@ -1,6 +1,7 @@
 import argparse
 import gzip
 import hashlib
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -140,6 +141,21 @@ class WorkflowArchiveTest(unittest.TestCase):
             self.assertIsNone(receipt['exit_code'])
             self.assertEqual(receipt['stdout'], 'partial output')
             self.assertIn('300 seconds', receipt['error'])
+
+    def test_cli_partial_download_exits_unsuccessfully_after_retaining_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            options = self.options(Path(directory))
+            arguments = ['archive_workflow.py', '--run', str(options.run), '--source', options.source,
+                         '--output', str(options.output)]
+            result = subprocess.CompletedProcess(['gh'], 1, stdout='', stderr='artifact not available')
+            with patch('sys.argv', arguments), patch('sys.stdout', new_callable=io.StringIO) as stdout, \
+                    patch.object(archive_workflow.subprocess, 'check_output', return_value=self.metadata()), \
+                    patch.object(archive_workflow.subprocess, 'run', return_value=result):
+                with self.assertRaises(SystemExit):
+                    archive_workflow.main()
+            self.assertFalse(json.loads(stdout.getvalue())['artifact_download_complete'])
+            self.verify(options.output)
+            self.assertTrue((options.output / 'workflow.json.gz').is_file())
 
 
 if __name__ == '__main__':
