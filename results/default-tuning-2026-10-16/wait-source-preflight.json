@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "status": "source_preflight_passed_before_dispatch",
+  "analysis_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+  "client_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+  "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+  "plan_sha256": "3ddd9f8bda45a694da942bd6db81017d108cd2e2eb5cfe92c44b9c593c04a8f3",
+  "prospective_case_sets": [
+    "wait-partial-q1",
+    "wait-crawler-q1"
+  ],
+  "analysis_inputs": [
+    "results/batch-coverage-2026-10-15/analyze.py",
+    "results/batch-mechanism-2026-10-15/analyze.py",
+    "results/crawler-pressure-2026-10-15/analyze.py",
+    "results/crawler-pressure-2026-10-15/summarize.py",
+    "results/default-tuning-2026-10-16/analyze.py",
+    "results/default-tuning-2026-10-16/capacity_rules.py",
+    "results/default-tuning-2026-10-16/derive_soak_plan.py",
+    "results/default-tuning-2026-10-16/selection_rules.py",
+    "scripts/build_local_server.py",
+    "scripts/performance_evidence.py",
+    "scripts/run_crawler.py",
+    "scripts/run_tuning_plan.py",
+    "scripts/run_write_batching.py",
+    "scripts/summarize_crawler.py"
+  ],
+  "known_old_workflows": 22,
+  "performance_observations_read": false
+}
