@@ -31,6 +31,8 @@ type CrawlerOptions struct {
 	Rates, Concurrency                                             []int
 	Profiles                                                       []string
 	Modes                                                          []string
+	Paths                                                          []string
+	AfterUseDefaults, CaptureEffectiveConfig                       bool
 	Processes, PageSize, QueuePages, Rounds                        int
 	AfterMaxInFlight                                               int
 	AfterBatchMaxOperations, AfterBatchMaxBytes, SeedPaddingBytes  int
@@ -70,6 +72,7 @@ type crawlerStage struct {
 	BatchMaxWaitNS                                                                    int64
 	ServerSHA256                                                                      string
 	ServerConfiguration                                                               json.RawMessage
+	ServerEffectiveConfiguration                                                      string
 	StartedNS, ElapsedNS, DrainNS                                                     int64
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
 	CompletedProductsPerSecond                                                        float64
@@ -169,11 +172,11 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		servers[name] = server
 	}
 	origins := map[string]string{"original_pse": "7f36b501cded06a1bcc7484575346bb9c4d6311b", "optimized_pse": "8725e4743c6ddba66132874e0e0fe9d393ab4a85", "weir_lua_translation_base": "283940ef442b479440e45b39c86988351b92d7b5"}
-	report = &CrawlerReport{BusinessSources: origins, Schema: crawlerReportSchema, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Three-way same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
+	report = &CrawlerReport{BusinessSources: origins, Schema: crawlerReportSchema, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Declared-path same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
 	if slices.Contains(opts.Profiles, "partial-update") {
 		report.BusinessSources = nil
 		report.Sources = partialUpdateSources()
-		report.Method = "Mechanism control, not a PSE-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Three-way same-runner rotation with frozen source/binary receipts and declared batch operations/bytes/in-flight/wait controls. Explicit application_acknowledged/refresh=false or query_visible/refresh=wait_for completion; request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
+		report.Method = "Mechanism control, not a PSE-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Declared-path same-runner rotation with frozen source/binary receipts and declared batch operations/bytes/in-flight/wait controls. Explicit application_acknowledged/refresh=false or query_visible/refresh=wait_for completion; request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
 	}
 	defer func() {
 		if resultErr != nil {
@@ -222,7 +225,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 			return report, err
 		}
 	}
-	paths := []string{"direct", "current", "optimized"}
+	paths := opts.Paths
 	for caseIndex, test := range cases {
 		for round := range opts.Rounds {
 			for offset := range paths {
@@ -237,6 +240,9 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 					replacement.BatchBytes = opts.AfterBatchMaxBytes
 					replacement.MaxInFlight = opts.AfterMaxInFlight
 					replacement.BatchMaxWait = opts.AfterBatchMaxWait
+					if opts.AfterUseDefaults {
+						replacement.BatchSize, replacement.BatchBytes, replacement.MaxInFlight, replacement.BatchMaxWait = 0, 0, 0, 0
+					}
 				}
 				if err := cluster.ReplaceServer(ctx, replacement); err != nil {
 					return report, err
@@ -432,6 +438,12 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	if err := auditCrawlerServerConfiguration(stage, config); err != nil {
 		return stage, err
 	}
+	if config.CaptureEffectiveConfig {
+		stage.ServerEffectiveConfiguration, err = opts.Cluster.EffectiveConfiguration(ctx, 0)
+		if err != nil {
+			return stage, err
+		}
+	}
 	reset := crawlerResetOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace, Workers: config.Concurrency[len(config.Concurrency)-1], PageSize: config.PageSize, SeedPaddingBytes: config.SeedPaddingBytes}
 	settle := crawlerSettleOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace}
 	if err := resetCrawler(ctx, opts.HTTP, reset); err != nil {
@@ -524,7 +536,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 		defer sampling.Done()
 		for {
 			sampleCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-			sampleOpts := resourceSampleOptions{Target: target, Client: monitor, Started: start}
+			sampleOpts := resourceSampleOptions{Target: target, Client: monitor, Started: start, SearchURL: opts.Cluster.SearchURL, SearchClient: opts.HTTP}
 			for _, client := range clients {
 				sampleOpts.ClientPIDs = append(sampleOpts.ClientPIDs, client.command.Process.Pid)
 			}
@@ -560,7 +572,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	stage.DrainNS = max(0, stage.ElapsedNS-phase.DurationNS)
 	close(stop)
 	sampling.Wait()
-	lastOpts := resourceSampleOptions{Target: target, Client: monitor, Started: start}
+	lastOpts := resourceSampleOptions{Target: target, Client: monitor, Started: start, SearchURL: opts.Cluster.SearchURL, SearchClient: opts.HTTP}
 	resources.Samples = append(resources.Samples, sampleResources(ctx, lastOpts))
 	resources.MeasurementNS = stage.ElapsedNS
 	resources.qualify(90)

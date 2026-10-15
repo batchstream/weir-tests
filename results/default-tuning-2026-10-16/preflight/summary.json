@@ -1,0 +1,34 @@
+{
+  "scope": "Owned Darwin/arm64 loopback correctness preflight; excluded from parameter selection, performance comparisons and capacity gates",
+  "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+  "write": {
+    "schema": 4,
+    "stages": 4,
+    "full_persisted_oracle": true,
+    "effective_config_and_four_live_controls": true,
+    "index_settings_and_pressure_snapshots": true,
+    "time_bucket_audit": true,
+    "owned_cleanup": true
+  },
+  "crawler": {
+    "schema": 3,
+    "stages": 2,
+    "paths": [
+      "direct",
+      "optimized"
+    ],
+    "profile": "two-step",
+    "full_persisted_oracle": true,
+    "offline_go_audit": true,
+    "effective_config_and_four_live_controls": true,
+    "sampled_node_pressure": true,
+    "time_bucket_audit": true,
+    "owned_cleanup": true
+  },
+  "retained_failure": {
+    "file": "local/write.log.gz",
+    "phase": "before fixture creation",
+    "reason": "Public locked-module receipt was passed to the optional CLI flag reserved for frozen-local source receipts; corrected call omits this flag"
+  },
+  "files": 28
+}

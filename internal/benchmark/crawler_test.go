@@ -91,6 +91,9 @@ func TestCrawlerOpenLoopKeepsArrivalsIndependentAndCountsRejectedPages(t *testin
 		if result.QueuePeak > 1 {
 			t.Fatal("unbounded queue")
 		}
+		if err := auditCrawlerTimeBuckets(result, phase.DurationNS, config.PageSize); err != nil {
+			t.Fatal("offered/rejected/completed and drained temporal evidence did not reconcile", err)
+		}
 	}
 	if offered != 150 || rejected == 0 || completed == 0 || offered != rejected+completed || time.Since(started) > time.Second {
 		t.Fatal("generator became closed-loop or lost admissions", offered, rejected, completed, time.Since(started))

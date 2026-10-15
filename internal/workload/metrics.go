@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -20,7 +21,13 @@ type DatabaseCounters struct {
 	Connections        *uint64           `json:"current_connections,omitempty"`
 	Commands           map[string]uint64 `json:"physical_command_totals,omitempty"`
 	CommandUnavailable string            `json:"physical_command_observation_unavailable,omitempty"`
+	SearchNodeStats    json.RawMessage   `json:"search_node_stats,omitempty"`
+	SearchIndexStats   json.RawMessage   `json:"search_index_stats,omitempty"`
+	SearchSettings     json.RawMessage   `json:"search_index_settings,omitempty"`
+	SearchUnavailable  string            `json:"search_pressure_observation_unavailable,omitempty"`
 }
+
+const searchNodeProjection = "nodes.*.fs.io_stats.total.read_kilobytes,nodes.*.fs.io_stats.total.write_kilobytes,nodes.*.fs.io_stats.total.operations,nodes.*.fs.io_stats.total.io_time_in_millis,nodes.*.transport.rx_size_in_bytes,nodes.*.transport.tx_size_in_bytes,nodes.*.http.current_open,nodes.*.thread_pool.write,nodes.*.thread_pool.write_coordination,nodes.*.indexing_pressure.memory,nodes.*.jvm.gc.collectors,nodes.*.jvm.mem.heap_used_in_bytes,nodes.*.jvm.mem.heap_max_in_bytes"
 
 type mongoCommandCounter struct {
 	Total *uint64 `bson:"total"`
@@ -81,16 +88,38 @@ func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) 
 		}
 		return reply.counters(), nil
 	}
+	return SearchDatabaseCounters(ctx, p.direct.search, p.direct.baseURL)
+}
+
+// SearchDatabaseCounters projects fixed scalar or fixed-schema pressure fields;
+// it never reads the unbounded HTTP client history or arbitrary index settings.
+func SearchDatabaseCounters(ctx context.Context, client *http.Client, baseURL string) (DatabaseCounters, error) {
+	var counters DatabaseCounters
+	if client == nil || baseURL == "" {
+		return counters, errors.New("owned Search monitoring client and endpoint required")
+	}
 	// HTTP client history grows as each independent process opens new pools.
 	// Project only the scalar counters used by the monitor, never that history.
-	projection := "nodes.*.fs.io_stats.total.read_kilobytes,nodes.*.fs.io_stats.total.write_kilobytes,nodes.*.transport.rx_size_in_bytes,nodes.*.transport.tx_size_in_bytes,nodes.*.http.current_open"
-	path := "/_nodes/stats/fs,transport,http?filter_path=" + projection
-	status, raw, err := p.direct.request(ctx, http.MethodGet, path, nil)
+	path := "/_nodes/stats/fs,transport,http,thread_pool,indexing_pressure,jvm?filter_path=" + searchNodeProjection
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+path, nil)
 	if err != nil {
 		return counters, err
 	}
+	response, err := client.Do(request)
+	if err != nil {
+		return counters, err
+	}
+	defer response.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(response.Body, (256<<10)+1))
+	if err != nil || len(raw) > 256<<10 {
+		return counters, errors.New("projected Search node statistics unavailable or exceed 256 KiB")
+	}
 	var reply struct {
 		Nodes map[string]struct {
+			ThreadPool       map[string]json.RawMessage `json:"thread_pool"`
+			IndexingPressure struct {
+				Memory json.RawMessage `json:"memory"`
+			} `json:"indexing_pressure"`
 			HTTP struct {
 				CurrentOpen *uint64 `json:"current_open"`
 			} `json:"http"`
@@ -108,7 +137,7 @@ func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) 
 			} `json:"fs"`
 		} `json:"nodes"`
 	}
-	if status != http.StatusOK || json.Unmarshal(raw, &reply) != nil || len(reply.Nodes) != 1 {
+	if response.StatusCode != http.StatusOK || json.Unmarshal(raw, &reply) != nil || len(reply.Nodes) != 1 {
 		return counters, errors.New("resource evidence requires exactly one Elasticsearch node")
 	}
 	for _, node := range reply.Nodes {
@@ -129,8 +158,69 @@ func (p *Paths) DatabaseCounters(ctx context.Context) (DatabaseCounters, error) 
 			unavailable = append(unavailable, "Elasticsearch filesystem write bytes unavailable")
 		}
 		counters.StorageUnavailable = strings.Join(unavailable, "; ")
+		if len(node.ThreadPool["write"]) == 0 || string(node.ThreadPool["write"]) == "null" {
+			counters.SearchUnavailable = "Elasticsearch write thread pool unavailable; "
+		} else {
+			var write map[string]*uint64
+			if json.Unmarshal(node.ThreadPool["write"], &write) != nil || write["threads"] == nil || write["active"] == nil || write["queue"] == nil || write["rejected"] == nil || write["completed"] == nil {
+				counters.SearchUnavailable = "Elasticsearch write thread pool counters incomplete; "
+			}
+		}
+		if len(node.IndexingPressure.Memory) == 0 || string(node.IndexingPressure.Memory) == "null" {
+			counters.SearchUnavailable += "Elasticsearch indexing pressure memory unavailable"
+		} else {
+			var pressure struct {
+				Current map[string]*uint64 `json:"current"`
+				Total   map[string]*uint64 `json:"total"`
+				Limit   *uint64            `json:"limit_in_bytes"`
+			}
+			if json.Unmarshal(node.IndexingPressure.Memory, &pressure) != nil || pressure.Current["all_in_bytes"] == nil || pressure.Total["coordinating_rejections"] == nil || pressure.Total["primary_rejections"] == nil || pressure.Total["replica_rejections"] == nil || pressure.Limit == nil {
+				counters.SearchUnavailable += "Elasticsearch indexing pressure counters incomplete"
+			}
+		}
 	}
+	counters.SearchNodeStats = raw
 	counters.IOScope = "Elasticsearch host device I/O bytes where available, including other processes; transport network excludes client HTTP traffic; Docker network is the complete container measurement"
 	counters.CommandUnavailable = "Elasticsearch node statistics do not count physical client HTTP commands; adapter invocation counts are separate"
+	return counters, nil
+}
+
+// DatabaseSnapshot adds owned-index evidence at stage boundaries only. The
+// per-second monitor uses DatabaseCounters and does not re-read settings.
+func (p *Paths) DatabaseSnapshot(ctx context.Context) (DatabaseCounters, error) {
+	counters, err := p.DatabaseCounters(ctx)
+	if err != nil || p.direct.mongo != nil {
+		return counters, err
+	}
+	index := p.direct.dataset.Config.Namespace
+	status, raw, err := p.direct.request(ctx, http.MethodGet, "/"+index+"/_settings?include_defaults=true&flat_settings=true", nil)
+	if err != nil || status != http.StatusOK {
+		return counters, errors.New("owned Search index settings unavailable")
+	}
+	var settings map[string]struct {
+		Settings map[string]string `json:"settings"`
+	}
+	if json.Unmarshal(raw, &settings) != nil || len(settings) != 1 {
+		return counters, errors.New("owned Search index settings identity unavailable")
+	}
+	observed, found := settings[index]
+	if !found || observed.Settings["index.refresh_interval"] != "1s" || observed.Settings["index.translog.durability"] != "request" || observed.Settings["index.number_of_shards"] != "1" || observed.Settings["index.number_of_replicas"] != "0" {
+		return counters, errors.New("owned Search effective refresh, durability or shard policy differs")
+	}
+	counters.SearchSettings = raw
+	status, raw, err = p.direct.request(ctx, http.MethodGet, "/"+index+"/_stats/indexing,get,search,refresh,flush,merge,translog?level=indices", nil)
+	if err != nil || status != http.StatusOK {
+		return counters, errors.New("owned Search index statistics unavailable")
+	}
+	var stats struct {
+		Shards struct {
+			Failed *int `json:"failed"`
+		} `json:"_shards"`
+		Indices map[string]json.RawMessage `json:"indices"`
+	}
+	if json.Unmarshal(raw, &stats) != nil || stats.Shards.Failed == nil || *stats.Shards.Failed != 0 || len(stats.Indices) != 1 || len(stats.Indices[index]) == 0 || string(stats.Indices[index]) == "null" {
+		return counters, errors.New("owned Search index statistics identity or shard failure differs")
+	}
+	counters.SearchIndexStats = raw
 	return counters, nil
 }

@@ -179,8 +179,8 @@ func validateSaturation(options SaturationOptions) error {
 	if options.Dataset == nil || options.Paths == nil || options.Rounds < 1 || options.Rounds > 10 || options.Warmup < time.Second || options.Duration < 5*time.Second || options.Duration > 10*time.Minute || options.OperationTimeout <= 0 || options.OperationTimeout > time.Minute || options.WritePercent < 0 || options.WritePercent > 100 || options.CPUThreshold < 50 || options.CPUThreshold > 100 || options.Resources.AllocatedCPUs <= 0 {
 		return errors.New("invalid saturation benchmark parameters")
 	}
-	if len(options.Concurrency) < 2 || len(options.Concurrency) > 12 || len(options.BatchSizes) < 1 || len(options.BatchSizes) > 8 {
-		return errors.New("saturation requires 2 through 12 concurrency levels and 1 through 8 batch sizes")
+	if len(options.Concurrency) < 1 || len(options.Concurrency) > 12 || len(options.BatchSizes) < 1 || len(options.BatchSizes) > 8 {
+		return errors.New("saturation requires 1 through 12 concurrency levels and 1 through 8 batch sizes; one level cannot demonstrate a plateau")
 	}
 	previous := 0
 	for _, workers := range options.Concurrency {

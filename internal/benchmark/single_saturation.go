@@ -69,7 +69,9 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 	}
 	provenance["go"], provenance["client_os_arch"] = runtime.Version(), runtime.GOOS+"/"+runtime.GOARCH
 	provenance["client_process_model"] = "independent OS client processes; one SDK/driver pool each; sequential single-request goroutine workers; total native pool limit equals total client concurrency"
-	report := &SaturationReport{Schema: 3, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: params, Provenance: provenance, CPUQuota: quota, Method: "independent OS client processes send one record per native call or streaming SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain"}
+	provenance["resource_observation_schema"] = "2: host cumulative CPU ticks/PSI and sampler affinity; Docker cumulative CPU throttling; sampled Store gauges; projected Search pressure/GC and boundary effective settings/index stats"
+	provenance["timed_completion_bucket_schema"] = "1: fixed 10s completion windows from planned phase start; offered arrivals by scheduled offset; separate open completion tail; pooled 256-bin latency histograms; failed includes unknown"
+	report := &SaturationReport{Schema: 4, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: params, Provenance: provenance, CPUQuota: quota, Method: "independent OS client processes send one record per native call or streaming SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; Search uses explicit refresh_interval=1s, translog.durability=request, one primary and zero replicas; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain"}
 	if options.Dataset.Config.LuaMutations {
 		report.Method = strings.Replace(report.Method, "native FindOne/ReplaceOne or single-ID mget/PUT", "native single-record atomic MongoDB update pipeline or Elasticsearch server-side update script; SDK Lua AtomicTransform computes the same revision toggle from the current source", 1)
 	}
@@ -153,7 +155,7 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 		}
 	}
 	var metricsBefore ServerMetrics
-	beforeDatabase, counterErr := options.Paths.DatabaseCounters(ctx)
+	beforeDatabase, counterErr := options.Paths.DatabaseSnapshot(ctx)
 	if counterErr == nil {
 		result.DatabaseBefore = &beforeDatabase
 	} else {
@@ -232,7 +234,7 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	if readErr != nil {
 		return result, readErr
 	}
-	afterDatabase, counterErr := options.Paths.DatabaseCounters(ctx)
+	afterDatabase, counterErr := options.Paths.DatabaseSnapshot(ctx)
 	if counterErr == nil {
 		result.DatabaseAfter = &afterDatabase
 	} else {
@@ -410,6 +412,9 @@ func readClientPhase(ctx context.Context, clients []*ownedClient, command client
 			errorsByClient[index] = err
 			if reply.Result != nil {
 				results[index] = *reply.Result
+				if reply.Result.PhaseDurationNS != command.DurationNS {
+					errorsByClient[index] = errors.Join(err, errors.New("owned client time-bucket duration differs from command"))
+				}
 			}
 		}()
 	}

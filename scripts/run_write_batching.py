@@ -11,6 +11,27 @@ from performance_evidence import validate_report_provenance, validate_server_rec
 from build_local_server import freeze_source
 
 
+def planned_command(case, output):
+    command = ['.tools/weir-lab', '-mode', 'saturation', '-backend', case['backend'],
+               '-weir', '.tools/write-weir', '-server-receipt', '.tools/write-weir.receipt.json',
+               '-client-processes', str(case['client_processes']),
+               '-concurrency-levels', ','.join(map(str, case['levels'])), '-batch-sizes', '1',
+               '-records', str(case['records']), '-payload-bytes', str(case['payload_bytes']),
+               '-write-percent', str(case['write_percent']), '-database-cpus', str(case['database_cpus']),
+               '-pending-records', '4096', '-rounds', str(case['rounds']),
+               '-warmup-duration', case['warmup'], '-duration', case['duration'],
+               '-capture-effective-config', '-output', str(output)]
+    batch = case['batching']
+    if batch is not None:
+        command += ['-backend-batch-limit', str(batch['max_operations']),
+                    '-backend-batch-bytes', str(batch['max_bytes']),
+                    '-backend-batch-wait', batch['max_wait'],
+                    '-backend-max-in-flight', str(batch['max_in_flight'])]
+    if case.get('lua_mutations', False):
+        command.append('-lua-mutations')
+    return command
+
+
 def cases(phase):
     if phase == 'calibration':
         return [

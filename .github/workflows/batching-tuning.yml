@@ -1,0 +1,98 @@
+name: Finite batching default tuning
+
+on:
+  workflow_dispatch:
+    inputs:
+      plan-path:
+        description: Committed repository JSON plan path
+        required: true
+        type: string
+      case-set:
+        description: Finite case set declared in the committed plan
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GOENV: 'off'
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  declared-cases:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Validate the committed finite plan before preparation
+        id: plan
+        env:
+          PLAN_PATH: ${{ inputs.plan-path }}
+          CASE_SET: ${{ inputs.case-set }}
+        run: |
+          source=$(python3 scripts/run_tuning_plan.py --plan "$PLAN_PATH" --case-set "$CASE_SET" --inspect)
+          echo "server_source=$source" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: batchstream/weir
+          ref: ${{ steps.plan.outputs.server_source }}
+          path: .tools/write-source
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - name: Prepare immutable source, modules and exclusively owned fixtures
+        env:
+          SERVER_SOURCE: ${{ steps.plan.outputs.server_source }}
+        run: |
+          python3 - <<'PY'
+          import os, subprocess, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from download_modules import download_modules
+          actual = subprocess.check_output(['git', '-C', '.tools/write-source', 'rev-parse', 'HEAD'], text=True).strip()
+          if actual != os.environ['SERVER_SOURCE']:
+              raise SystemExit('server source differs from the committed plan')
+          download_modules(Path.cwd())
+          download_modules(Path('.tools/write-source').resolve())
+          PY
+          python3 scripts/prepare_images.py
+          python3 scripts/build_local_server.py --source .tools/write-source --output .tools/write-weir
+          go build -trimpath -buildvcs=false -o .tools/weir-lab ./cmd/weir-lab
+          go build -trimpath -buildvcs=false -o .tools/weir-crawler ./cmd/weir-crawler
+      - name: Execute every declared case and retain overload failures
+        env:
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+          PLAN_PATH: ${{ inputs.plan-path }}
+          CASE_SET: ${{ inputs.case-set }}
+        run: |
+          python3 scripts/run_tuning_plan.py --plan "$PLAN_PATH" --case-set "$CASE_SET"
+          git diff --exit-code
+      - name: Preserve all positive and negative evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: batching-tuning-${{ github.sha }}-${{ inputs.case-set }}
+          path: |
+            results/local/batching-tuning/
+            .tools/write-weir.receipt.json
+            .tools/write-weir.source/
+            /tmp/weir-tests-*/manifest.json
+            /tmp/weir-tests-*/cleanup.json
+            /tmp/weir-tests-*/*config.json
+            /tmp/weir-tests-*/*routes.json
+            /tmp/weir-tests-*/*effective.yaml
+            /tmp/weir-tests-*/*process.log
+            /tmp/weir-tests-*/docker-engine.json
+          retention-days: 30

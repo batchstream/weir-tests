@@ -122,6 +122,7 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 	optimizedRaw, _ := json.Marshal(optimizedReceipt)
 	servers["optimized"] = crawlerServerReceipt{SHA256: optimizedDigest, Receipt: optimizedRaw}
 	opts := CrawlerOptions{InputShape: "single", HTTPObserver: "disabled", Profiles: []string{"partial-update"}, Modes: []string{"fixed-rate"}, Concurrency: []int{1}, Rates: []int{1}, Processes: 1, PageSize: 1, QueuePages: 1, Rounds: 1, CPUs: 1, AfterBatchMaxWait: 20 * time.Millisecond, Visibility: "application_acknowledged", SeedPaddingBytes: 8192, AfterBatchMaxOperations: 64, AfterBatchMaxBytes: 65536, AfterMaxInFlight: 4}
+	opts.Duration = time.Second
 	expected := map[string]map[string]any{"shared-seller": crawlerDocument("shared-seller", false)}
 	for record := range 2 {
 		for _, suffix := range []string{"product", "seller-0", "seller-1"} {
@@ -141,6 +142,12 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 	report := &CrawlerReport{Schema: crawlerReportSchema, Parameters: opts, Servers: servers, Sources: partialUpdateSources()}
 	for index, path := range []string{"direct", "current", "optimized"} {
 		worker := crawlerWorkerResult{PID: index + 100, Worker: 0, Offered: 1, Completed: 1, WithinWindow: 1, AppliedPages: []int{2}, RequestedMutations: 1, ApplicationRequests: counts, Latency: latency.summary(), ServiceLatency: latency.summary(), Buckets: latency.buckets, ServiceBuckets: latency.buckets}
+		worker.TimeBuckets = newTimeBuckets(int64(opts.Duration), true)
+		worker.TimeBuckets[0].Offered = 1
+		worker.TimeBuckets[0].Completed = 1
+		worker.TimeBuckets[0].Latency = latency.summary()
+		worker.TimeBuckets[0].Buckets = latency.buckets
+		finishTimeBuckets(worker.TimeBuckets)
 		pool := 0
 		if path == "direct" {
 			pool = 3

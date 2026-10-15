@@ -44,7 +44,7 @@ func main() {
 		return
 	}
 	var opts benchmark.CrawlerOptions
-	var rates, levels, profiles, modes string
+	var rates, levels, profiles, modes, paths string
 	flag.StringVar(&opts.InputShape, "input-shape", "single", "single (one record per native update/SDK call, page-size 1) or explicit page batch control")
 	flag.StringVar(&opts.HTTPObserver, "http-observer", "disabled", "enabled or disabled; disabled bypasses the observer for all paths and leaves HTTP counters unavailable")
 	flag.StringVar(&opts.Before, "before", ".tools/weir-current", "immutable current Weir binary")
@@ -54,6 +54,9 @@ func main() {
 	flag.StringVar(&opts.Output, "output", "results/local/crawler.json", "raw evidence report")
 	flag.StringVar(&profiles, "profiles", "two-step", "two-step or combined crawler rules, or exclusive partial-update batching mechanism control")
 	flag.StringVar(&modes, "modes", "fixed-rate", "fixed-rate, saturation, or both comma-separated")
+	flag.StringVar(&paths, "paths", "direct,current,optimized", "unique measured native/current/optimized paths in rotating order")
+	flag.BoolVar(&opts.AfterUseDefaults, "after-use-defaults", false, "omit optimized batching configuration; after controls declare expected effective defaults for audit only")
+	flag.BoolVar(&opts.CaptureEffectiveConfig, "capture-effective-config", false, "retain owned effective configuration and require all four live batching controls")
 	flag.StringVar(&rates, "rates", "4,16,48", "absolute offered product rates; none disables fixed-rate cases")
 	flag.StringVar(&levels, "concurrency-levels", "128", "total goroutine workers across OS clients: <=2048 total, <=512 per process; fixed-rate uses only the largest level")
 	flag.StringVar(&opts.Visibility, "visibility", "query_visible", "query_visible or application_acknowledged (partial-update only); identical native and SDK completion")
@@ -74,6 +77,7 @@ func main() {
 	var err error
 	opts.Profiles = strings.Split(profiles, ",")
 	opts.Modes = strings.Split(modes, ",")
+	opts.Paths = strings.Split(paths, ",")
 	if rates == "none" {
 		rates = ""
 	}

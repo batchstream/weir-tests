@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/bits"
 	"runtime"
 	"sync"
 	"time"
@@ -315,16 +314,7 @@ type histogram struct {
 
 func (h *histogram) add(duration time.Duration) {
 	ns := max(int64(duration), 0)
-	us := uint64(ns / 1000)
-	if ns%1000 != 0 {
-		us++
-	}
-	index := 0
-	if us > 0 {
-		exponent := bits.Len64(us) - 1
-		base := uint64(1) << exponent
-		index = min(255, 1+exponent*8+int((us-base)*8/base))
-	}
+	index := histogramBucketIndex(ns)
 	h.buckets[index]++
 	h.count++
 	h.max = max(h.max, ns)
