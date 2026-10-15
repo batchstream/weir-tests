@@ -14,6 +14,7 @@ import tempfile
 
 FOLDER = Path(__file__).resolve().parent
 REPO = FOLDER.parents[1]
+EMBEDDED_INPUTS = tuple('internal/benchmark/crawlerdata/' + name for name in ('common.lua', 'product.lua', 'offer.lua', 'native.painless'))
 sys.path.insert(0, str(REPO / 'scripts'))
 
 
@@ -28,6 +29,7 @@ def module(name, path):
 prior = module('default_previous_coverage', FOLDER.parent / 'batch-coverage-2026-10-15/analyze.py')
 rules = module('default_selection_rules', FOLDER / 'selection_rules.py')
 capacity_rules = module('default_capacity_rules', FOLDER / 'capacity_rules.py')
+soak_derivation = module('default_soak_derivation', FOLDER / 'derive_soak_plan.py')
 runner = module('default_plan_runner', REPO / 'scripts/run_tuning_plan.py')
 helpers = prior.helpers
 require, load = helpers.require, helpers.load
@@ -343,6 +345,63 @@ def process_run(options):
     return result
 
 
+def preparation_source_proof():
+    base, prep = soak_derivation.ORIGINAL_SOURCE, soak_derivation.PREPARATION_SOURCE
+    _, before = prior.source_snapshot(REPO, base)
+    tree, after = prior.source_snapshot(REPO, prep)
+    before = {item['path']: item['sha256'] for item in before}
+    after = {item['path']: item['sha256'] for item in after}
+    backend = 'internal/fixture/backends.go'
+    test = 'internal/fixture/backends_deadline_test.go'
+    changed = {name for name in set(before) | set(after) if before.get(name) != after.get(name)}
+    require(changed == {backend, test} and test not in before, 'preparation correction changes other Go/module inputs')
+    registration = soak_derivation.STARTUP_REGISTRATION
+    require(after[backend] == registration['preparation_backends_sha256'] and after[test] == registration['preparation_test_sha256'], 'preparation correction file hashes differ')
+    original = committed(REPO, base, backend).decode()
+    corrected = committed(REPO, prep, backend).decode()
+    marker = 'func (c *Cluster) readySearch(ctx context.Context) error {\n'
+    prefix, body = original.split(marker, 1)
+    body, suffix = body.split('\n}\n', 1)
+    deadline = '\treadyCtx, cancel := context.WithTimeout(ctx, 180*time.Second)\n\tdefer cancel()\n'
+    require(body.startswith(deadline), 'original Search readiness deadline differs')
+    expected = prefix + marker + body[len(deadline):].replace('readyCtx', 'ctx') + '\n}\n' + suffix
+    require(corrected == expected, 'preparation correction is not the registered mechanical context edit')
+    require(checksum(committed(REPO, prep, test)) == registration['preparation_test_sha256'], 'preparation regression-test bytes differ')
+    for path in EMBEDDED_INPUTS:
+        require(committed(REPO, base, path) == committed(REPO, prep, path), 'preparation correction changes embedded input: ' + path)
+    return tree
+
+
+def measurement_source_proof(manifest):
+    baseline, _ = prior.source_snapshot(REPO, soak_derivation.ORIGINAL_SOURCE)
+    preparation = preparation_source_proof()
+    entries = {entry['label']: entry for entry in manifest['entries']}
+    require(len(entries) == len(manifest['entries']), 'duplicate source-proof workflow label')
+    require(sum(entry['case_set'] == soak_derivation.STARTUP_PARENT for entry in entries.values()) <= 1, 'startup correction permits only one confirmation attempt')
+    plans = {}
+    for label, entry in entries.items():
+        raw = committed(REPO, entry['client_source'], entry['plan_path'])
+        require(checksum(raw) == entry['plan_sha256'], 'source-proof plan hash differs')
+        plans[label] = json.loads(raw)
+    corrected_soaks = [entry for label, entry in entries.items() if entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plans[label].get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION)]
+    require(len(corrected_soaks) <= 1, 'startup correction permits only one derived pure soak attempt')
+    for label, entry in entries.items():
+        tree, _ = prior.source_snapshot(REPO, entry['client_source'])
+        for path in EMBEDDED_INPUTS:
+            original = subprocess.check_output(['git', 'show', soak_derivation.ORIGINAL_SOURCE + ':' + path], cwd=REPO)
+            actual = subprocess.check_output(['git', 'show', entry['client_source'] + ':' + path], cwd=REPO)
+            require(original == actual, 'measurement client changes embedded input: ' + path)
+        plan = plans[label]
+        corrected_soak = entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION)
+        corrected = entry['case_set'] == soak_derivation.STARTUP_PARENT or corrected_soak
+        if corrected:
+            require(tree == preparation, 'startup-correction client Go tree differs from Cprep')
+            correction_options = dict(entry=entry, plan=plan, entries=entries, plans=plans)
+            soak_derivation.validate_startup_plan(correction_options)
+        else:
+            require(tree == baseline, 'measurement and original auditor Go inputs differ')
+
+
 def source_proof(options):
     manifest, auditor = options['manifest'], options['auditor']
     source = manifest['analysis_source']
@@ -355,14 +414,12 @@ def source_proof(options):
         require(candidate.read_bytes() == committed(REPO, source, name), 'analysis input differs from frozen source: ' + name)
     receipt = load(FOLDER / 'auditor-build.json')
     require(receipt['base_source'] == manifest['selection_client'] and receipt['unmodified_source_archive'] and receipt['binary_sha256'] == checksum(auditor.read_bytes()), 'original auditor receipt differs')
+    require(receipt['base_source'] == soak_derivation.ORIGINAL_SOURCE and receipt['binary_sha256'] == '77c39f5d863668117c56baf96babdedfee0e172a300e35c073f3d13e30647bdc' and receipt['source_archive_sha256'] == 'cfde0883cb2c26ca4f806c88be271bd7961525b957f8e7fbde7464ef146eeff2', 'original C0 auditor identity changed')
     scope = receipt['source_archive_scope']
     require(scope == ['cmd', 'internal', 'go.mod', 'go.sum'], 'original auditor source scope differs')
     archive = subprocess.check_output(['git', 'archive', '--format=tar', receipt['base_source'], '--', *scope], cwd=REPO)
     require(checksum(archive) == receipt['source_archive_sha256'], 'original auditor source archive differs')
-    tree, _ = prior.source_snapshot(REPO, receipt['base_source'])
-    for entry in manifest['entries']:
-        other, _ = prior.source_snapshot(REPO, entry['client_source'])
-        require(tree == other, 'measurement and original auditor Go inputs differ')
+    measurement_source_proof(manifest)
 
 
 def analysis_inputs():
@@ -416,6 +473,46 @@ def formal_results(options):
     return result
 
 
+def validate_startup_soak_derivation(options):
+    manifest, rows, runs = (options[key] for key in ('manifest', 'rows', 'runs'))
+    corrected = []
+    for entry in manifest['entries']:
+        if entry['phase'] != 'soak' or entry['case_set'] != 'soak-pure':
+            continue
+        raw = committed(REPO, entry['client_source'], entry['plan_path'])
+        require(checksum(raw) == entry['plan_sha256'], 'derived soak plan hash differs')
+        plan = json.loads(raw)
+        if any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION):
+            corrected.append(plan)
+    if not corrected:
+        return
+    entries = [entry for entry in manifest['entries'] if entry['phase'] != 'soak']
+    parent_manifest = dict(manifest, entries=entries)
+    labels = {entry['label'] for entry in entries}
+    parent_runs = [run for run in runs if run['label'] in labels]
+    plans = {}
+    for entry in entries:
+        if entry['phase'] != 'confirmation':
+            continue
+        raw = committed(REPO, entry['client_source'], entry['plan_path'])
+        require(checksum(raw) == entry['plan_sha256'], 'raw-audited parent plan hash differs')
+        plans[entry['label']] = json.loads(raw)
+    formal_options = dict(manifest=parent_manifest, rows=rows)
+    actual = dict(complete_inventory=all(run['available'] for run in parent_runs), runs=parent_runs,
+                  selection=options['selection'], byte_selection=options['byte_selection'],
+                  formal=formal_results(formal_options))
+    derivation_options = dict(analysis=actual, manifest=parent_manifest, plans=plans,
+                              controls=soak_derivation.STARTUP_CONTROLS, server_source=soak_derivation.STARTUP_SERVER)
+    expected = soak_derivation.build_plan(derivation_options)
+    require('startup_preparation_parent' in expected['metadata'], 'raw-audited parent is unqualified or another pure point wins the registered order')
+    fields = tuple(soak_derivation.STARTUP_REGISTRATION) + ('phase', 'soak_derivation', 'selected_controls', 'checks',
+             'qualified_and_skipped', 'skipped_workloads', 'retry_failed_soak', 'startup_preparation_parent')
+    for plan in corrected:
+        require(plan['case_sets'] == expected['case_sets'] and plan['server_source'] == expected['server_source'] and
+                all(plan['metadata'].get(key) == expected['metadata'].get(key) for key in fields),
+                'corrected soak differs from the derivation recomputed from audited parent rows')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, default=FOLDER / 'manifest.json')
@@ -439,6 +536,8 @@ def main():
     plan = json.loads(committed(REPO, manifest['selection_client'], manifest['selection_plan']))
     selection = rules.choose(dict(rows=[r for r in rows if r['phase'] == 'selection'], plan=plan))
     byte_selection = rules.choose_bytes([r for r in rows if r['phase'] == 'selection'])
+    derivation_options = dict(manifest=manifest, rows=rows, runs=runs, selection=selection, byte_selection=byte_selection)
+    validate_startup_soak_derivation(derivation_options)
     result = dict(schema=1, runs=runs, rows=rows, selection=selection, byte_selection=byte_selection, formal=formal_results(dict(manifest=manifest, rows=rows)), complete_inventory=all(run['available'] for run in runs), analysis_sha256=checksum(Path(__file__).read_bytes()), selection_rules_sha256=checksum((FOLDER / 'selection_rules.py').read_bytes()))
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / 'analysis.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')

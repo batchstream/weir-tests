@@ -28,6 +28,25 @@ PURE_QUOTA_REGISTRATION = dict(
     pure_capacity_quota_supplement='results/default-tuning-2026-10-16/PURE-CAPACITY-QUOTA-SUPPLEMENT.md',
     pure_capacity_quota_supplement_source='f50bddd0537866354b564e3607202fe3c460faaa',
     pure_capacity_quota_supplement_sha256='e52d8433f9939174987451470fa075d8419e01acad9a58ed7db65ab5eaff1e89')
+ORIGINAL_SOURCE = 'dc7c798a83d2d1700c3ff5b13f678f8af1e55d37'
+PREPARATION_SOURCE = '2220c18eae4cbe5d079753155638f44cc7dc649b'
+STARTUP_PARENT = 'confirm-pure-q0125-startup-fix'
+STARTUP_REGISTRATION = dict(
+    startup_preparation_correction='results/default-tuning-2026-10-16/STARTUP-PREPARATION-CORRECTION.md',
+    startup_preparation_correction_source='ebf806f263bc47db45c120bdbbcaee35390dd234',
+    startup_preparation_correction_sha256='5afd761ed613cc9b6c0fdae1aa376d59d0463818203286975a50fe7edbc86c5e',
+    preparation_source=PREPARATION_SOURCE,
+    preparation_backends_sha256='3c29e2474c7e521fc75ea9eb95b4ab3c3946bd69d792fd38fc86e6f029adcea8',
+    preparation_test_sha256='e79a64c1685c71ba6ba74851824700892d36d42e116eb5bcf3211990c4b398a3')
+PURE_PARENTS = {
+    PURE_QUOTA_PARENT: dict(case_id='default-pure-q0125', registration=PURE_QUOTA_REGISTRATION),
+    STARTUP_PARENT: dict(case_id='default-pure-q0125-startup-fix', registration=STARTUP_REGISTRATION),
+}
+PURE_QUOTA_SHAPE = dict(kind='write', backend='search', database_cpus=.125, client_processes=4,
+                       rounds=3, warmup='60s', duration='60s', payload_bytes=1024, records=8192,
+                       write_percent=100, lua_mutations=False, levels=[256, 512, 1024], batching=None)
+STARTUP_CONTROLS = dict(max_operations=128, max_bytes=4194304, max_wait='20ms', max_in_flight=16)
+STARTUP_SERVER = '084572d79b7a53230801297f90ca2363fd864913'
 
 
 def require(condition, message):
@@ -45,6 +64,33 @@ def committed(repository, source, path):
     return subprocess.check_output(['git', 'show', source + ':' + path], cwd=repository)
 
 
+def validate_startup_plan(options):
+    entry, plan, entries, plans = (options[key] for key in ('entry', 'plan', 'entries', 'plans'))
+    metadata = plan['metadata']
+    require(all(metadata.get(key) == value for key, value in STARTUP_REGISTRATION.items()), 'startup correction registration differs')
+    require(metadata.get('soak_derivation') == POLICY, 'startup correction changes the registered derivation policy')
+    require(plan['server_source'] == entry['server_source'] == STARTUP_SERVER and metadata['selected_controls'] == STARTUP_CONTROLS, 'startup correction server or selected defaults differ')
+    expected = dict(PURE_QUOTA_SHAPE, id=PURE_PARENTS[STARTUP_PARENT]['case_id'], expected_batching=STARTUP_CONTROLS)
+    if entry['phase'] == 'confirmation' and entry['case_set'] == STARTUP_PARENT:
+        require(metadata.get('phase') == 'independent_confirmation' and plan['case_sets'].get(STARTUP_PARENT) == [expected], 'startup confirmation shape differs')
+        return
+    require(entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure', 'startup source is not registered for this cohort')
+    require(metadata.get('phase') == 'soak' and metadata.get('retry_failed_soak') is False and type(metadata.get('checks')) is int and 1 <= metadata['checks'] <= POLICY['max_checks'], 'startup soak changes the registered phase/check/retry policy')
+    proof = metadata.get('startup_preparation_parent')
+    fields = {'label', 'case_set', 'case_id', 'client_source', 'plan_path', 'plan_sha256', 'workers'}
+    require(isinstance(proof, dict) and set(proof) == fields, 'startup soak lacks exact parent proof')
+    require(proof['case_set'] == STARTUP_PARENT and proof['case_id'] == expected['id'] and type(proof['workers']) is int and proof['workers'] in (256, 512), 'startup soak parent reference is not registered')
+    require(proof['label'] in entries and proof['label'] in plans, 'startup soak parent is absent from confirmation inventory')
+    parent = entries[proof['label']]
+    require(parent['phase'] == 'confirmation' and all(parent.get(key) == proof[key] for key in ('label', 'case_set', 'client_source', 'plan_path', 'plan_sha256')), 'startup soak parent identity differs')
+    parent_options = dict(entry=parent, plan=plans[proof['label']], entries=entries, plans=plans)
+    validate_startup_plan(parent_options)
+    selected = [point for point in metadata.get('qualified_and_skipped', []) if point.get('selected') is True and 'workers' in point]
+    require(len(selected) == 1 and all(selected[0].get(key) == proof[key] for key in ('label', 'case_id', 'workers')) and selected[0].get('database_cpus') == .125, 'startup soak did not select its registered parent')
+    expected.update(id='soak-pure', levels=[proof['workers']], rounds=1, duration='300s')
+    require(plan['case_sets'].get('soak-pure') == [expected], 'startup soak shape differs')
+
+
 def validate_context(options):
     analysis, manifest, plans, controls = (options[key] for key in ('analysis', 'manifest', 'plans', 'controls'))
     require(analysis.get('complete_inventory') is True, 'full audited confirmation inventory required')
@@ -55,6 +101,7 @@ def validate_context(options):
     require(re.fullmatch('[0-9a-f]{40}', options['server_source']), 'full immutable selected-default server required')
     entries = {entry['label']: entry for entry in manifest['entries']}
     require(len(entries) == len(manifest['entries']), 'duplicate workflow label')
+    require(sum(entry['case_set'] == STARTUP_PARENT for entry in entries.values()) <= 1, 'startup correction permits only one confirmation attempt')
     runs = analysis['runs']
     require(len(runs) == len(entries) and {run['label'] for run in runs} == set(entries) and all(run.get('available') is True for run in runs), 'analysis/manifest workflow inventories differ or are incomplete')
     for label, entry in entries.items():
@@ -69,14 +116,14 @@ def validate_context(options):
             require(all(plan['metadata'].get(key) == value for key, value in CANDIDATE_CAPACITY_REGISTRATION.items()), 'candidate-only parent lacks the fixed supplement source/hash registration')
         require(entry['case_set'] in plan['case_sets'], 'confirmation parent case-set is missing')
         cases = plan['case_sets'][entry['case_set']]
-        if entry['case_set'] == PURE_QUOTA_PARENT:
-            require(all(plan['metadata'].get(key) == value for key, value in PURE_QUOTA_REGISTRATION.items()), 'additional pure parent lacks the fixed supplement source/hash registration')
-            expected_case = dict(kind='write', id='default-pure-q0125', backend='search',
-                                 database_cpus=.125, client_processes=4, rounds=3,
-                                 warmup='60s', duration='60s', payload_bytes=1024, records=8192,
-                                 write_percent=100, lua_mutations=False, levels=[256, 512, 1024],
-                                 batching=None, expected_batching=controls)
+        registration = PURE_PARENTS.get(entry['case_set'])
+        if registration is not None:
+            require(all(plan['metadata'].get(key) == value for key, value in registration['registration'].items()), 'additional pure parent lacks the fixed supplement source/hash registration')
+            expected_case = dict(PURE_QUOTA_SHAPE, id=registration['case_id'], expected_batching=controls)
             require(cases == [expected_case], 'additional pure parent case differs from registration')
+            if entry['case_set'] == STARTUP_PARENT:
+                startup_options = dict(entry=entry, plan=plan, entries=entries, plans=plans)
+                validate_startup_plan(startup_options)
         for case in cases:
             if independent_profile is not None:
                 require(case['kind'] == 'crawler' and case['profile'] == independent_profile, 'candidate-only parent profile differs from registration')
@@ -109,7 +156,7 @@ def build_plan(options):
     for result in formal['cpu_capacity']:
         label = result['label']
         require(label in entries, 'capacity parent workflow absent')
-        if entries[label]['case_set'] not in POLICY['pure_case_sets'] and entries[label]['case_set'] != PURE_QUOTA_PARENT:
+        if entries[label]['case_set'] not in POLICY['pure_case_sets'] and entries[label]['case_set'] not in PURE_PARENTS:
             retained.append(dict(label=label, case_id=result['case_id'], reason='Not a 1 KiB primary capacity case; addendum/regression excluded'))
             continue
         case = parent_case(context, label, result['case_id'])
@@ -121,7 +168,13 @@ def build_plan(options):
             if not point['capacity_qualified']:
                 continue
             require(three_passed(point['decisions']) and point['workers'] in case['levels'], 'capacity point lacks three qualified rounds')
-            pure.append(dict(label=label, case_id=case['id'], workers=point['workers'], database_cpus=case['database_cpus'], case=case))
+            candidate = dict(label=label, case_id=case['id'], workers=point['workers'], database_cpus=case['database_cpus'], case=case)
+            if entries[label]['case_set'] == STARTUP_PARENT:
+                require(point['workers'] in (256, 512), 'startup parent has no following registered concurrency')
+                proof = {key: entries[label][key] for key in ('label', 'case_set', 'client_source', 'plan_path', 'plan_sha256')}
+                proof.update(case_id=case['id'], workers=point['workers'])
+                candidate['startup_parent'] = proof
+            pure.append(candidate)
     for result in formal['crawler_rate_bounds']:
         label, decision = result['label'], result['decision']
         require(label in entries, 'crawler parent workflow absent')
@@ -167,12 +220,19 @@ def build_plan(options):
         case_sets[name] = [case]
     qualified = pure + [point for candidates in crawlers.values() for point in candidates]
     for point in qualified:
-        visible = {key: value for key, value in point.items() if key != 'case'}
+        visible = {key: value for key, value in point.items() if key not in ('case', 'startup_parent')}
         visible['selected'] = any(point is candidate for _, candidate in chosen)
         visible['reason'] = 'Selected by preregistered order' if visible['selected'] else 'Qualified but later in preregistered order; not another check'
         retained.append(visible)
     metadata = dict(phase='soak', soak_derivation=copy.deepcopy(POLICY), selected_controls=dict(options['controls']), input_sha256=options.get('input_sha256', {}), checks=len(chosen), qualified_and_skipped=retained, skipped_workloads=[name for name in ('soak-pure', 'soak-partial', 'soak-crawler') if name not in case_sets], retry_failed_soak=False)
+    if chosen and chosen[0][0] == 'soak-pure' and 'startup_parent' in chosen[0][1]:
+        metadata.update(STARTUP_REGISTRATION)
+        metadata['startup_preparation_parent'] = copy.deepcopy(chosen[0][1]['startup_parent'])
     plan = dict(schema=1, server_source=options['server_source'], description='Derived five-minute checks of qualified omitted defaults; no dispatch or retries', metadata=metadata, case_sets=case_sets)
+    if 'startup_preparation_parent' in metadata:
+        entry = dict(label='soak-pure', phase='soak', case_set='soak-pure', server_source=options['server_source'])
+        startup_options = dict(entry=entry, plan=plan, entries=entries, plans=options['plans'])
+        validate_startup_plan(startup_options)
     return plan
 
 

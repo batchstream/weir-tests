@@ -87,7 +87,130 @@ def add_pure_quota_parent(inputs):
     inputs['analysis']['formal']['cpu_capacity'].append(result)
 
 
+def add_startup_parent(inputs):
+    inputs['controls'].update(generator.STARTUP_CONTROLS)
+    inputs['analysis']['selection']['selected'].update(generator.STARTUP_CONTROLS)
+    inputs['analysis']['byte_selection']['selected'] = inputs['controls']['max_bytes']
+    inputs['server_source'] = generator.STARTUP_SERVER
+    for entry in inputs['manifest']['entries']:
+        entry['server_source'] = generator.STARTUP_SERVER
+    for plan in inputs['plans'].values():
+        plan['server_source'] = generator.STARTUP_SERVER
+    path = 'plans/default-pure-capacity-q0125-startup-fix-2026-10-16.json'
+    raw = (Path(__file__).resolve().parents[2] / path).read_bytes()
+    plan = json.loads(raw)
+    label = generator.STARTUP_PARENT
+    entry = dict(label=label, phase='confirmation', case_set=label, server_source=generator.STARTUP_SERVER,
+                 client_source=generator.PREPARATION_SOURCE, plan_path=path, plan_sha256=generator.sha(raw))
+    inputs['manifest']['entries'].append(entry)
+    inputs['plans'][label] = plan
+    inputs['analysis']['runs'].append(dict(label=label, available=True))
+    result = copy.deepcopy(inputs['analysis']['formal']['cpu_capacity'][0])
+    result.update(label=label, case_id=generator.PURE_PARENTS[label]['case_id'])
+    result['decision']['database_cpus'] = .125
+    result['decision']['paths'][0]['points'][0]['decisions'] = [dict(round=rd, passed=True, reasons=[]) for rd in (1, 2, 3)]
+    inputs['analysis']['formal']['cpu_capacity'].append(result)
+
+
 class SoakGeneratorTests(unittest.TestCase):
+    def test_startup_correction_cannot_be_repeated_under_another_label(self):
+        inputs = fixture()
+        add_startup_parent(inputs)
+        entry = copy.deepcopy(inputs['manifest']['entries'][-1])
+        entry['label'] = 'another-startup-attempt'
+        inputs['manifest']['entries'].append(entry)
+        inputs['analysis']['runs'].append(dict(label=entry['label'], available=True))
+        inputs['plans'][entry['label']] = copy.deepcopy(inputs['plans'][generator.STARTUP_PARENT])
+        with self.assertRaises(ValueError):
+            generator.build_plan(inputs)
+
+    def test_startup_registration_propagates_only_from_the_selected_parent(self):
+        inputs = fixture()
+        add_startup_parent(inputs)
+        plan = generator.build_plan(inputs)
+        self.assertNotIn('startup_preparation_parent', plan['metadata'])
+        self.assertFalse(any(key in plan['metadata'] for key in generator.STARTUP_REGISTRATION))
+        inputs['analysis']['formal']['cpu_capacity'][1]['decision']['paths'][0]['points'][0]['workers'] = 512
+        plan = generator.build_plan(inputs)
+        proof = plan['metadata']['startup_preparation_parent']
+        self.assertEqual(proof['case_set'], generator.STARTUP_PARENT)
+        self.assertEqual(proof['workers'], 512)
+        self.assertTrue(all(plan['metadata'][key] == value for key, value in generator.STARTUP_REGISTRATION.items()))
+        entry = dict(label='soak-pure', phase='soak', case_set='soak-pure', server_source=generator.STARTUP_SERVER)
+        entries = {entry['label']: entry for entry in inputs['manifest']['entries']}
+        options = dict(entry=entry, plan=plan, entries=entries, plans=inputs['plans'])
+        generator.validate_startup_plan(options)
+
+    def test_startup_confirmation_requires_every_fixed_registration_field(self):
+        for key in generator.STARTUP_REGISTRATION:
+            for replacement in (None, 'forged'):
+                inputs = fixture()
+                add_startup_parent(inputs)
+                metadata = inputs['plans'][generator.STARTUP_PARENT]['metadata']
+                if replacement is None:
+                    metadata.pop(key)
+                else:
+                    metadata[key] = replacement
+                with self.subTest(key=key, replacement=replacement), self.assertRaises(ValueError):
+                    generator.build_plan(inputs)
+
+    def test_startup_confirmation_cannot_change_shape_or_use_last_point_for_soak(self):
+        for mutation in ('quota', 'levels', 'explicit', 'last-point', 'failed-round'):
+            inputs = fixture()
+            add_startup_parent(inputs)
+            case = inputs['plans'][generator.STARTUP_PARENT]['case_sets'][generator.STARTUP_PARENT][0]
+            point = inputs['analysis']['formal']['cpu_capacity'][-1]['decision']['paths'][0]['points'][0]
+            if mutation == 'quota':
+                case['database_cpus'] = .2
+            elif mutation == 'levels':
+                case['levels'] = [128, 512, 1024]
+            elif mutation == 'explicit':
+                case['batching'] = dict(inputs['controls'])
+            elif mutation == 'last-point':
+                point['workers'] = 1024
+            else:
+                point['decisions'][0]['passed'] = False
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                generator.build_plan(inputs)
+
+    def test_startup_soak_rejects_wrong_parent_registration_and_shape(self):
+        for mutation in ('parent-label', 'parent-case', 'parent-source', 'parent-plan', 'extra-proof', 'unselected', 'registration', 'quota', 'workers', 'duration', 'rounds', 'cohort'):
+            inputs = fixture()
+            add_startup_parent(inputs)
+            inputs['analysis']['formal']['cpu_capacity'][1]['decision']['paths'][0]['points'][0]['workers'] = 512
+            plan = generator.build_plan(inputs)
+            proof, case = plan['metadata']['startup_preparation_parent'], plan['case_sets']['soak-pure'][0]
+            entry = dict(label='soak-pure', phase='soak', case_set='soak-pure', server_source=generator.STARTUP_SERVER)
+            if mutation == 'parent-label':
+                proof['label'] = 'confirm-pure-q025'
+            elif mutation == 'parent-case':
+                proof['case_id'] = 'default-pure-q0125'
+            elif mutation == 'parent-source':
+                proof['client_source'] = generator.ORIGINAL_SOURCE
+            elif mutation == 'parent-plan':
+                proof['plan_sha256'] = '0' * 64
+            elif mutation == 'extra-proof':
+                proof['decisions'] = [dict(round=rd, passed=True, reasons=[]) for rd in (1, 2, 3)]
+            elif mutation == 'unselected':
+                for point in plan['metadata']['qualified_and_skipped']:
+                    point['selected'] = False
+            elif mutation == 'registration':
+                plan['metadata']['preparation_source'] = generator.ORIGINAL_SOURCE
+            elif mutation == 'quota':
+                case['database_cpus'] = .2
+            elif mutation == 'workers':
+                case['levels'] = [1024]
+            elif mutation == 'duration':
+                case['duration'] = '60s'
+            elif mutation == 'rounds':
+                case['rounds'] = 3
+            else:
+                entry['case_set'] = 'soak-crawler'
+            entries = {entry['label']: entry for entry in inputs['manifest']['entries']}
+            options = dict(entry=entry, plan=plan, entries=entries, plans=inputs['plans'])
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                generator.validate_startup_plan(options)
+
     def test_original_derivation_policy_is_unchanged(self):
         expected = dict(version=1, max_checks=3,
                         pure_case_sets=['confirm-pure-q025', 'confirm-pure-q1'],

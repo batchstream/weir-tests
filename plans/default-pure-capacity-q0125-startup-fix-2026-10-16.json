@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+  "description": "One registered startup-preparation correction cohort; identical fixed 0.125-CPU measurement design",
+  "metadata": {
+    "startup_preparation_correction": "results/default-tuning-2026-10-16/STARTUP-PREPARATION-CORRECTION.md",
+    "startup_preparation_correction_source": "ebf806f263bc47db45c120bdbbcaee35390dd234",
+    "startup_preparation_correction_sha256": "5afd761ed613cc9b6c0fdae1aa376d59d0463818203286975a50fe7edbc86c5e",
+    "preparation_source": "2220c18eae4cbe5d079753155638f44cc7dc649b",
+    "preparation_backends_sha256": "3c29e2474c7e521fc75ea9eb95b4ab3c3946bd69d792fd38fc86e6f029adcea8",
+    "preparation_test_sha256": "e79a64c1685c71ba6ba74851824700892d36d42e116eb5bcf3211990c4b398a3",
+    "phase": "independent_confirmation",
+    "selected_controls": {
+      "max_operations": 128,
+      "max_bytes": 4194304,
+      "max_wait": "20ms",
+      "max_in_flight": 16
+    },
+    "soak_derivation": {
+      "version": 1,
+      "max_checks": 3,
+      "pure_case_sets": [
+        "confirm-pure-q025",
+        "confirm-pure-q1"
+      ],
+      "pure_order": [
+        "workers_ascending",
+        "database_cpus_ascending",
+        "label_ascending",
+        "case_id_ascending"
+      ],
+      "crawler_order": [
+        "lower_rate_descending",
+        "database_cpus_ascending",
+        "label_ascending"
+      ],
+      "crawler_profiles": [
+        "partial-update",
+        "two-step"
+      ],
+      "warmup": "60s",
+      "duration": "300s",
+      "rounds": 1,
+      "client_processes": 4,
+      "rerun_failed_soak": false
+    },
+    "inventory": {
+      "confirm-pure-q0125-startup-fix": {
+        "cases": 1,
+        "timed_stages": 18,
+        "warmup_and_timed_minutes": 36
+      }
+    },
+    "p99_slo_seconds": 5
+  },
+  "case_sets": {
+    "confirm-pure-q0125-startup-fix": [
+      {
+        "kind": "write",
+        "backend": "search",
+        "database_cpus": 0.125,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "levels": [
+          256,
+          512,
+          1024
+        ],
+        "batching": null,
+        "id": "default-pure-q0125-startup-fix",
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ]
+  }
+}
