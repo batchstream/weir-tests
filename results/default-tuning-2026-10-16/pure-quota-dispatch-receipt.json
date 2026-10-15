@@ -1,0 +1,18 @@
+{
+  "label": "confirm-pure-q0125",
+  "requested_at": "2026-10-15T19:51:11.286800+00:00",
+  "request": {
+    "ref": "randy/default-pure-capacity-client",
+    "inputs": {
+      "plan-path": "plans/default-pure-capacity-q0125-2026-10-16.json",
+      "case-set": "confirm-pure-q0125"
+    }
+  },
+  "head_sha": "4e006be57c93fcb2277171969a463c87792f5440",
+  "plan_sha256": "c49feba787eecd18ab72e0fdb4eb7828c5b547643aa7d0ec93ac7ccfb2a2715d",
+  "dispatch_exit_code": 0,
+  "dispatch_output": "",
+  "run_id": 38797232567,
+  "url": "https://github.com/batchstream/weir-tests/actions/runs/38797232567",
+  "created_at": "2026-10-15T19:51:13Z"
+}

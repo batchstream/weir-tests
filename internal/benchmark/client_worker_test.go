@@ -109,6 +109,37 @@ func TestChildConfigurationAndAcknowledgementCannotHideMissingCalls(t *testing.T
 	}
 }
 
+func TestSingleClientSeparatesTotalAndPerProcessWorkerBounds(t *testing.T) {
+	dataset := workload.Config{Records: 8192}
+	config := clientConfig{Dataset: dataset, Path: "weir", Threads: 512, TotalWorkers: 2048, TimeoutNS: int64(time.Second)}
+	for process := range 4 {
+		config.WorkerOffset = process * config.Threads
+		if err := validateClientConfig(config); err != nil {
+			t.Fatal("valid four-process worker range rejected", process, err)
+		}
+	}
+	config.Threads, config.WorkerOffset = 1024, 1024
+	if err := validateClientConfig(config); err != nil {
+		t.Fatal("per-process boundary rejected", err)
+	}
+	config.Threads, config.WorkerOffset = 1025, 0
+	if err := validateClientConfig(config); err == nil {
+		t.Fatal("per-process worker bound was raised with the total bound")
+	}
+	config.Threads, config.TotalWorkers = 512, 2049
+	if err := validateClientConfig(config); err == nil {
+		t.Fatal("unbounded total workers accepted")
+	}
+	config.TotalWorkers, config.WorkerOffset = 2048, 1537
+	if err := validateClientConfig(config); err == nil {
+		t.Fatal("worker range past the total accepted")
+	}
+	config.WorkerOffset, config.Dataset.Records = 0, 2047
+	if err := validateClientConfig(config); err == nil {
+		t.Fatal("fewer records than total workers accepted")
+	}
+}
+
 func TestBusinessReportPoolsLatencyAndKeepsUnderfullObservations(t *testing.T) {
 	var fast, slow histogram
 	for range 100 {

@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "analysis_source": "65f54d7903ae277a739d2b0bb8129feac446f7c8",
+  "raw_commit": "e8c439d31f43596f4fc75d1c920f9a14d36b3623",
+  "prior_analysis_sha256": "c899adcb0efeae634750a994d19ce2bf8f86d4c02a76215829a89ef5eb20adec",
+  "analysis_sha256": "6132ba3c8e25ab1987284f007e4c81ebe4e279620fc71c5f58191c63badd0550",
+  "workflows": 25,
+  "audit_rows": 591,
+  "new_performance_rows": 0,
+  "all_591_rows_exactly_unchanged": true,
+  "all_prior_24_runs_exactly_unchanged": true,
+  "formal_exactly_unchanged": true,
+  "selection_exactly_unchanged": true,
+  "byte_selection_exactly_unchanged": true,
+  "wait_choice_exactly_unchanged": true,
+  "derived_soak_checks": 0
+}

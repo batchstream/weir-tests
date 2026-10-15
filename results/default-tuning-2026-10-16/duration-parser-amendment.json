@@ -1,0 +1,20 @@
+{
+  "kind": "raw-Go-duration-parser-correction",
+  "original_analysis_source": "14a3cb6f70ddfbd70e4acf8b300a68a12523b9ef",
+  "original_analysis": "analysis-confirmation/analysis.json",
+  "original_analysis_sha256": "b55051528ada9f774bc1bc698d35e26a83f5bb42141dabbde797ccfb18090a3a",
+  "preliminary_and_strict_analysis_identical": true,
+  "original_manifest": "analysis-confirmation/manifest.json",
+  "affected_case_ids": [
+    "default-pure-q025",
+    "default-pure-q1",
+    "default-search-large-body-q1",
+    "legacy-search-large-body-q1"
+  ],
+  "observed_error": "duration requires one explicit ns/us/ms/s/m unit",
+  "cause": "Go Duration.String emits 1m0s for the same 60s value; the raw parameter comparison reused the plan single-unit parser",
+  "correction_scope": "Parse only two raw write duration fields as exact compound Go durations; keep plan syntax, values, thresholds, selection/capacity rules, original Go auditor and all measured data unchanged",
+  "new_experiments_or_retries": false,
+  "parser_fix_source": "175272e0e8479cea6f2a03c215e285910e466376",
+  "corrected_analysis": "analysis-confirmation-parser-fix/analysis.json"
+}

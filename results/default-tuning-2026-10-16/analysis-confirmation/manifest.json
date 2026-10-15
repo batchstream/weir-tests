@@ -1,0 +1,223 @@
+{
+  "schema": 1,
+  "analysis_source": "14a3cb6f70ddfbd70e4acf8b300a68a12523b9ef",
+  "analysis_inputs": [
+    "results/batch-coverage-2026-10-15/analyze.py",
+    "results/batch-mechanism-2026-10-15/analyze.py",
+    "results/crawler-pressure-2026-10-15/analyze.py",
+    "results/crawler-pressure-2026-10-15/summarize.py",
+    "results/default-tuning-2026-10-16/analyze.py",
+    "results/default-tuning-2026-10-16/capacity_rules.py",
+    "results/default-tuning-2026-10-16/selection_rules.py",
+    "scripts/build_local_server.py",
+    "scripts/performance_evidence.py",
+    "scripts/run_crawler.py",
+    "scripts/run_tuning_plan.py",
+    "scripts/run_write_batching.py",
+    "scripts/summarize_crawler.py"
+  ],
+  "selection_client": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+  "selection_plan": "plans/default-tuning-2026-10-16.json",
+  "entries": [
+    {
+      "label": "select-pure",
+      "phase": "selection",
+      "case_set": "select-pure",
+      "client_source": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+      "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+      "plan_path": "plans/default-tuning-2026-10-16.json",
+      "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772880878"
+    },
+    {
+      "label": "select-partial",
+      "phase": "selection",
+      "case_set": "select-partial",
+      "client_source": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+      "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+      "plan_path": "plans/default-tuning-2026-10-16.json",
+      "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772893533"
+    },
+    {
+      "label": "select-crawler",
+      "phase": "selection",
+      "case_set": "select-crawler",
+      "client_source": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+      "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+      "plan_path": "plans/default-tuning-2026-10-16.json",
+      "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772903417"
+    },
+    {
+      "label": "select-search-read",
+      "phase": "selection",
+      "case_set": "select-search-read",
+      "client_source": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+      "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+      "plan_path": "plans/default-tuning-2026-10-16.json",
+      "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772913406"
+    },
+    {
+      "label": "select-mongo-read",
+      "phase": "selection",
+      "case_set": "select-mongo-read",
+      "client_source": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+      "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+      "plan_path": "plans/default-tuning-2026-10-16.json",
+      "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772924115"
+    },
+    {
+      "label": "select-bytes",
+      "phase": "selection",
+      "case_set": "select-bytes",
+      "client_source": "dc7c798a83d2d1700c3ff5b13f678f8af1e55d37",
+      "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+      "plan_path": "plans/default-tuning-2026-10-16.json",
+      "plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38772934705"
+    },
+    {
+      "label": "confirm-pure-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-pure-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781896048"
+    },
+    {
+      "label": "confirm-pure-q1",
+      "phase": "confirmation",
+      "case_set": "confirm-pure-q1",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781905182"
+    },
+    {
+      "label": "confirm-partial-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781913918"
+    },
+    {
+      "label": "confirm-crawler-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781924237"
+    },
+    {
+      "label": "confirm-partial-lower-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-lower-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781940338"
+    },
+    {
+      "label": "confirm-crawler-lower-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-lower-q025",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781949346"
+    },
+    {
+      "label": "confirm-partial-q1",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-q1",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781959707"
+    },
+    {
+      "label": "confirm-crawler-q1",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-q1",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781972310"
+    },
+    {
+      "label": "confirm-search-read",
+      "phase": "confirmation",
+      "case_set": "confirm-search-read",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781984909"
+    },
+    {
+      "label": "confirm-mongo-read",
+      "phase": "confirmation",
+      "case_set": "confirm-mongo-read",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38781997307"
+    },
+    {
+      "label": "confirm-mongo-regression",
+      "phase": "confirmation",
+      "case_set": "confirm-mongo-regression",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38782016330"
+    },
+    {
+      "label": "confirm-search-large-body",
+      "phase": "confirmation",
+      "case_set": "confirm-search-large-body",
+      "client_source": "682e725df1a81e29f4d4983d8711df1989c4adad",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-confirmation-2026-10-16.json",
+      "plan_sha256": "d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38782027979"
+    },
+    {
+      "label": "confirm-partial-independent-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-partial-independent-q025",
+      "client_source": "aff25fe3ca1f9d636a279ff7ea63d4b2bfb0f786",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-capacity-independent-2026-10-16.json",
+      "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38783506953"
+    },
+    {
+      "label": "confirm-crawler-independent-q025",
+      "phase": "confirmation",
+      "case_set": "confirm-crawler-independent-q025",
+      "client_source": "aff25fe3ca1f9d636a279ff7ea63d4b2bfb0f786",
+      "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+      "plan_path": "plans/default-capacity-independent-2026-10-16.json",
+      "plan_sha256": "eb755481b49b5dc28d6712156d2cd35d72bef2a6bd1e0facef5f6d95f4c26a18",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38783516132"
+    }
+  ]
+}

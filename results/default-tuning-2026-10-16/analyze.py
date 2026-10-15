@@ -1,17 +1,37 @@
 #!/usr/bin/env python3
 """Audit the prospective tuning inventory and apply frozen selection/capacity rules."""
 import argparse
+from fractions import Fraction
 import hashlib
 import importlib.util
 import json
 import math
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
 
 FOLDER = Path(__file__).resolve().parent
 REPO = FOLDER.parents[1]
+EMBEDDED_INPUTS = tuple('internal/benchmark/crawlerdata/' + name for name in ('common.lua', 'product.lua', 'offer.lua', 'native.painless'))
+EXTENDED_SOURCE = 'f06a346a8e0f37f0f8b2ae6539d9a7ce6dff5b27'
+WAIT_PLAN = 'plans/default-wait-sensitivity-2026-10-16.json'
+WAIT_SERVER = '084572d79b7a53230801297f90ca2363fd864913'
+WAIT_CASE_SETS = {'wait-partial-q1': ('confirm-partial-q1', [20, 80, 40, 160]),
+                  'wait-crawler-q1': ('confirm-crawler-q1', [160, 40, 80, 20])}
+WAIT_REGISTRATION = dict(
+    phase='wait_sensitivity',
+    parent_confirmation_plan='plans/default-confirmation-2026-10-16.json',
+    parent_confirmation_source='682e725df1a81e29f4d4983d8711df1989c4adad',
+    parent_confirmation_sha256='d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb',
+    wait_sensitivity_supplement='results/default-tuning-2026-10-16/WAIT-SENSITIVITY-SUPPLEMENT.md',
+    wait_sensitivity_supplement_source='5969c629970861f6f99e0d816c73192b90454ae9',
+    wait_sensitivity_supplement_sha256='af98e75b0360963602fd72a01ae602ef70b94483d2983da53240a24a054b2acc',
+    wait_selector='results/default-tuning-2026-10-16/wait_sensitivity_rules.py',
+    wait_selector_source='fc85cd52c1d923b6b093f52b41ffa3a82c872769',
+    wait_selector_sha256='0e6fd50e43a587149965a579304c64e281e6693cdfa36837bdff961aab07609d',
+    client_go_reference=EXTENDED_SOURCE)
 sys.path.insert(0, str(REPO / 'scripts'))
 
 
@@ -26,6 +46,7 @@ def module(name, path):
 prior = module('default_previous_coverage', FOLDER.parent / 'batch-coverage-2026-10-15/analyze.py')
 rules = module('default_selection_rules', FOLDER / 'selection_rules.py')
 capacity_rules = module('default_capacity_rules', FOLDER / 'capacity_rules.py')
+soak_derivation = module('default_soak_derivation', FOLDER / 'derive_soak_plan.py')
 runner = module('default_plan_runner', REPO / 'scripts/run_tuning_plan.py')
 helpers = prior.helpers
 require, load = helpers.require, helpers.load
@@ -33,6 +54,21 @@ require, load = helpers.require, helpers.load
 
 def checksum(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def reported_duration_ns(value):
+    require(isinstance(value, str), 'reported duration must be a nonnegative Go duration string')
+    parts = re.findall(r'([0-9]+(?:\.[0-9]+)?)(ns|us|µs|μs|ms|s|m|h)', value)
+    require(parts and ''.join(number + unit for number, unit in parts) == value, 'invalid reported Go duration')
+    factors = {'ns': 1, 'us': 1000, 'µs': 1000, 'μs': 1000, 'ms': 1000000,
+               's': 1000000000, 'm': 60000000000, 'h': 3600000000000}
+    total = 0
+    for number, unit in parts:
+        component = Fraction(number) * factors[unit]
+        require(component.denominator == 1, 'reported duration has fractional nanoseconds')
+        total += component.numerator
+        require(total <= 9223372036854775807, 'reported duration overflows int64 nanoseconds')
+    return total
 
 
 def committed(repository, source, name):
@@ -207,7 +243,7 @@ def process_write(options):
     prior.evidence.validate_report_provenance(report, receipt)
     runner.audit_live_batching(report, case)
     params, dataset = report['parameters'], report['parameters']['dataset']
-    require(params['concurrency_levels'] == case['levels'] and params['batch_sizes'] == [1] and params['paired_rounds'] == case['rounds'] and params['requested_write_percent'] == case['write_percent'] and params['client_process_count'] == case['client_processes'] and params['records_per_business_request'] == 1 and runner.duration_ns(params['warmup_duration']) == runner.duration_ns(case['warmup']) and runner.duration_ns(params['measurement_duration']) == runner.duration_ns(case['duration']), 'write workload parameters differ')
+    require(params['concurrency_levels'] == case['levels'] and params['batch_sizes'] == [1] and params['paired_rounds'] == case['rounds'] and params['requested_write_percent'] == case['write_percent'] and params['client_process_count'] == case['client_processes'] and params['records_per_business_request'] == 1 and reported_duration_ns(params['warmup_duration']) == runner.duration_ns(case['warmup']) and reported_duration_ns(params['measurement_duration']) == runner.duration_ns(case['duration']), 'write workload parameters differ')
     require(dataset['backend'] == backend and dataset['records'] == case['records'] and dataset['padding_bytes'] == case['payload_bytes'] and bool(dataset.get('lua_mutations')) == case.get('lua_mutations', False), 'write dataset differs')
     require(report['provenance'].get('weir_effective_config'), 'effective configuration missing')
     container = fixture_proof(dict(folder=folder, directory=report['provenance']['fixture_logs'], binary=receipt['server_binary_sha256'], backend=backend))
@@ -236,15 +272,16 @@ def process_write(options):
                         require(stats['_shards']['failed'] == 0 and set(stats['indices']) == {dataset['namespace']}, 'Search index observation identity differs')
                 if path == 'weir':
                     metrics = stage['server_metrics']
-                    row.update(prior.phase_observations(dict(ServerBefore=metrics['before'], ServerAfter=metrics['after'])))
                     row['adapter_batch_mean'] = metrics.get('timed_adapter_batch_average')
-                    if backend == 'search' and case['write_percent'] == 100:
-                        require(row['search_bulk_records'] == stage['writes'], 'actual framed writes differ from completed calls')
-                    row['http_body_buckets'] = [x for x in row['search_metric_deltas'] if x['name'] == 'weir_search_http_request_body_bytes_bucket' and x['labels'].get('operation') == 'bulk']
-                    if entry['case_set'] == 'select-bytes':
-                        matching = [x for x in row['http_body_buckets'] if float(x['labels']['le']) == row['max_bytes']]
-                        require(len(matching) == 1 and matching[0]['delta'] == row['search_bulk_attempts'], 'byte target histogram does not contain every actual bulk attempt')
-                        row['byte_target_observed_bound'] = True
+                    if backend == 'search':
+                        row.update(prior.phase_observations(dict(ServerBefore=metrics['before'], ServerAfter=metrics['after'])))
+                        if case['write_percent'] == 100:
+                            require(row['search_bulk_records'] == stage['writes'], 'actual framed writes differ from completed calls')
+                        row['http_body_buckets'] = [x for x in row['search_metric_deltas'] if x['name'] == 'weir_search_http_request_body_bytes_bucket' and x['labels'].get('operation') == 'bulk']
+                        if entry['case_set'] == 'select-bytes':
+                            matching = [x for x in row['http_body_buckets'] if float(x['labels']['le']) == row['max_bytes']]
+                            require(len(matching) == 1 and matching[0]['delta'] == row['search_bulk_attempts'], 'byte target histogram does not contain every actual bulk attempt')
+                            row['byte_target_observed_bound'] = True
                 pools = [child.get('time_buckets') for child in stage['client_processes']]
                 totals = dict(completed=stage['succeeded'], failed=stage['errors'] + stage['indeterminate'], unknown=stage['indeterminate'], timed_out=stage['business_operation_timeouts'], offered=stage['attempted'], rejected=0)
                 row['time_buckets'] = capacity_rules.merge_buckets(dict(pools=pools, duration=runner.duration_ns(case['duration']), histogram=helpers.histogram, latency=stage['latency'], totals=totals))
@@ -325,6 +362,139 @@ def process_run(options):
     return result
 
 
+def preparation_source_proof():
+    base, prep = soak_derivation.ORIGINAL_SOURCE, soak_derivation.PREPARATION_SOURCE
+    _, before = prior.source_snapshot(REPO, base)
+    tree, after = prior.source_snapshot(REPO, prep)
+    before = {item['path']: item['sha256'] for item in before}
+    after = {item['path']: item['sha256'] for item in after}
+    backend = 'internal/fixture/backends.go'
+    test = 'internal/fixture/backends_deadline_test.go'
+    changed = {name for name in set(before) | set(after) if before.get(name) != after.get(name)}
+    require(changed == {backend, test} and test not in before, 'preparation correction changes other Go/module inputs')
+    registration = soak_derivation.STARTUP_REGISTRATION
+    require(after[backend] == registration['preparation_backends_sha256'] and after[test] == registration['preparation_test_sha256'], 'preparation correction file hashes differ')
+    original = committed(REPO, base, backend).decode()
+    corrected = committed(REPO, prep, backend).decode()
+    marker = 'func (c *Cluster) readySearch(ctx context.Context) error {\n'
+    prefix, body = original.split(marker, 1)
+    body, suffix = body.split('\n}\n', 1)
+    deadline = '\treadyCtx, cancel := context.WithTimeout(ctx, 180*time.Second)\n\tdefer cancel()\n'
+    require(body.startswith(deadline), 'original Search readiness deadline differs')
+    expected = prefix + marker + body[len(deadline):].replace('readyCtx', 'ctx') + '\n}\n' + suffix
+    require(corrected == expected, 'preparation correction is not the registered mechanical context edit')
+    require(checksum(committed(REPO, prep, test)) == registration['preparation_test_sha256'], 'preparation regression-test bytes differ')
+    for path in EMBEDDED_INPUTS:
+        require(committed(REPO, base, path) == committed(REPO, prep, path), 'preparation correction changes embedded input: ' + path)
+    return tree
+
+
+def extended_source_proof():
+    preparation = soak_derivation.PREPARATION_SOURCE
+    _, before = prior.source_snapshot(REPO, preparation)
+    tree, after = prior.source_snapshot(REPO, EXTENDED_SOURCE)
+    before = {item['path']: item['sha256'] for item in before}
+    after = {item['path']: item['sha256'] for item in after}
+    replacements = {
+        'cmd/weir-lab/main.go': [
+            ('at most 1024 in single-request mode', 'at most 2048 in single-request mode'),
+            ('opts.warmupDuration > time.Minute', 'opts.warmupDuration > 5*time.Minute'),
+            ('maxLevel = 1024', 'maxLevel = 2048'),
+            ('level%opts.clientProcesses != 0 {', 'level%opts.clientProcesses != 0 || level/opts.clientProcesses > 1024 {'),
+            ('concurrency levels must divide evenly into client processes', 'concurrency levels must divide evenly into at most 1024 workers per client process'),
+            ('maxWorkers = 1024', 'maxWorkers = 2048')],
+        'internal/benchmark/client_worker.go': [('c.TotalWorkers > 1024', 'c.TotalWorkers > 2048')],
+        'internal/workload/dataset.go': [('config.Concurrency > 1024', 'config.Concurrency > 2048')]}
+    tests = {
+        'cmd/weir-lab/main_test.go': '6df5196e1f99a82957f33b256c94c23420cbcb6add30fd8abea5f6c357722411',
+        'internal/benchmark/client_worker_test.go': 'af663765b76eb1112c34921aeed0b513398aca53253f078e98a3785a6d89770c',
+        'internal/workload/dataset_test.go': 'e7cde1ee7c226ab07bb39d8db96a34a320571344c3bc6f447640fe28e39ec13e'}
+    changed = {name for name in set(before) | set(after) if before.get(name) != after.get(name)}
+    require(changed == set(replacements) | set(tests), 'extended admission changes other Go/module inputs')
+    for path, edits in replacements.items():
+        expected = committed(REPO, preparation, path).decode()
+        for original, replacement in edits:
+            require(expected.count(original) == 1, 'extended admission original guard differs: ' + path)
+            expected = expected.replace(original, replacement)
+        require(committed(REPO, EXTENDED_SOURCE, path).decode() == expected, 'extended admission changes measurement beyond registered guards: ' + path)
+    require(all(after[path] == digest for path, digest in tests.items()), 'extended admission regression-test hashes differ')
+    for path in EMBEDDED_INPUTS:
+        require(committed(REPO, preparation, path) == committed(REPO, EXTENDED_SOURCE, path), 'extended admission changes embedded input: ' + path)
+    return tree
+
+
+def validate_wait_plan(entry, plan):
+    require(entry['phase'] == 'wait_sensitivity' and entry['case_set'] in WAIT_CASE_SETS and entry['plan_path'] == WAIT_PLAN and entry['server_source'] == WAIT_SERVER, 'wait source is not registered for this cohort/plan/server')
+    parent_raw = committed(REPO, WAIT_REGISTRATION['parent_confirmation_source'], WAIT_REGISTRATION['parent_confirmation_plan'])
+    require(checksum(parent_raw) == WAIT_REGISTRATION['parent_confirmation_sha256'], 'wait parent confirmation plan differs')
+    parent = json.loads(parent_raw)
+    for name in ('wait_sensitivity_supplement', 'wait_selector'):
+        raw = committed(REPO, WAIT_REGISTRATION[name + '_source'], WAIT_REGISTRATION[name])
+        require(checksum(raw) == WAIT_REGISTRATION[name + '_sha256'], 'wait registration bytes differ: ' + name)
+    anchor = dict(max_operations=128, max_bytes=4194304, max_wait='20ms', max_in_flight=16)
+    case_sets, inventory = {}, {}
+    for name, (parent_name, waits) in WAIT_CASE_SETS.items():
+        cases = []
+        for wait in waits:
+            batch = dict(anchor, max_wait=str(wait) + 'ms')
+            expected_batch = dict(batch)
+            case = dict(parent['case_sets'][parent_name][0], id=name + '-w' + str(wait) + 'ms',
+                        paths=['optimized'], batching=batch, expected_batching=expected_batch)
+            cases.append(case)
+        case_sets[name] = cases
+        inventory[name] = dict(cases=4, timed_stages=12, warmup_and_timed_minutes=24.0)
+    metadata = dict(WAIT_REGISTRATION, anchor_controls=anchor,
+                    candidate_waits_ms=[20, 40, 80, 160], inventory=inventory)
+    expected = dict(schema=1, server_source=WAIT_SERVER,
+                    description='Registered four-wait sensitivity; original workload semantics and all failures retained',
+                    metadata=metadata, case_sets=case_sets)
+    require(json.dumps(plan, sort_keys=True) == json.dumps(expected, sort_keys=True), 'wait plan differs from the fixed registered workload/controls/order/metadata')
+
+
+def measurement_source_proof(manifest):
+    baseline, _ = prior.source_snapshot(REPO, soak_derivation.ORIGINAL_SOURCE)
+    preparation = preparation_source_proof()
+    entries = {entry['label']: entry for entry in manifest['entries']}
+    require(len(entries) == len(manifest['entries']), 'duplicate source-proof workflow label')
+    require(sum(entry['case_set'] == soak_derivation.STARTUP_PARENT for entry in entries.values()) <= 1, 'startup correction permits only one confirmation attempt')
+    require(sum(entry['case_set'] == soak_derivation.EXTENDED_PARENT for entry in entries.values()) <= 1, 'extended concurrency permits only one confirmation attempt')
+    require(sum(entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' for entry in entries.values()) <= 1, 'the registered budget permits only one pure soak attempt')
+    for name in WAIT_CASE_SETS:
+        require(sum(entry['case_set'] == name for entry in entries.values()) <= 1, 'wait sensitivity permits only one attempt per registered cohort')
+    require(all(entry['phase'] != 'wait_sensitivity' or entry['case_set'] in WAIT_CASE_SETS for entry in entries.values()), 'unregistered wait sensitivity cohort')
+    plans = {}
+    for label, entry in entries.items():
+        raw = committed(REPO, entry['client_source'], entry['plan_path'])
+        require(checksum(raw) == entry['plan_sha256'], 'source-proof plan hash differs')
+        plans[label] = json.loads(raw)
+    extended_soaks = [entry for label, entry in entries.items() if entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plans[label].get('metadata', {}) for key in soak_derivation.EXTENDED_REGISTRATION)]
+    needs_extended = any(entry['case_set'] in WAIT_CASE_SETS or entry['case_set'] == soak_derivation.EXTENDED_PARENT for entry in entries.values()) or bool(extended_soaks)
+    extended = extended_source_proof() if needs_extended else None
+    for label, entry in entries.items():
+        tree, _ = prior.source_snapshot(REPO, entry['client_source'])
+        for path in EMBEDDED_INPUTS:
+            original = subprocess.check_output(['git', 'show', soak_derivation.ORIGINAL_SOURCE + ':' + path], cwd=REPO)
+            actual = subprocess.check_output(['git', 'show', entry['client_source'] + ':' + path], cwd=REPO)
+            require(original == actual, 'measurement client changes embedded input: ' + path)
+        plan = plans[label]
+        corrected_soak = entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION)
+        corrected = entry['case_set'] == soak_derivation.STARTUP_PARENT or corrected_soak
+        extended_parent = entry['case_set'] == soak_derivation.EXTENDED_PARENT or entry in extended_soaks
+        if entry['case_set'] in WAIT_CASE_SETS:
+            require(tree == extended, 'wait-sensitivity client Go tree differs from Cext')
+            validate_wait_plan(entry, plan)
+        elif extended_parent:
+            require(tree == extended, 'extended-concurrency client Go tree differs from Cext')
+            extended_options = dict(entry=entry, plan=plan, entries=entries, plans=plans, repository=REPO)
+            soak_derivation.validate_extended_plan(extended_options)
+        elif corrected:
+            require(tree == preparation, 'startup-correction client Go tree differs from Cprep')
+            correction_options = dict(entry=entry, plan=plan, entries=entries, plans=plans)
+            soak_derivation.validate_startup_plan(correction_options)
+        else:
+            require(tree == baseline, 'measurement and original auditor Go inputs differ')
+
+
 def source_proof(options):
     manifest, auditor = options['manifest'], options['auditor']
     source = manifest['analysis_source']
@@ -337,14 +507,12 @@ def source_proof(options):
         require(candidate.read_bytes() == committed(REPO, source, name), 'analysis input differs from frozen source: ' + name)
     receipt = load(FOLDER / 'auditor-build.json')
     require(receipt['base_source'] == manifest['selection_client'] and receipt['unmodified_source_archive'] and receipt['binary_sha256'] == checksum(auditor.read_bytes()), 'original auditor receipt differs')
+    require(receipt['base_source'] == soak_derivation.ORIGINAL_SOURCE and receipt['binary_sha256'] == '77c39f5d863668117c56baf96babdedfee0e172a300e35c073f3d13e30647bdc' and receipt['source_archive_sha256'] == 'cfde0883cb2c26ca4f806c88be271bd7961525b957f8e7fbde7464ef146eeff2', 'original C0 auditor identity changed')
     scope = receipt['source_archive_scope']
     require(scope == ['cmd', 'internal', 'go.mod', 'go.sum'], 'original auditor source scope differs')
     archive = subprocess.check_output(['git', 'archive', '--format=tar', receipt['base_source'], '--', *scope], cwd=REPO)
     require(checksum(archive) == receipt['source_archive_sha256'], 'original auditor source archive differs')
-    tree, _ = prior.source_snapshot(REPO, receipt['base_source'])
-    for entry in manifest['entries']:
-        other, _ = prior.source_snapshot(REPO, entry['client_source'])
-        require(tree == other, 'measurement and original auditor Go inputs differ')
+    measurement_source_proof(manifest)
 
 
 def analysis_inputs():
@@ -360,7 +528,7 @@ def formal_results(options):
     manifest, rows = options['manifest'], options['rows']
     capacity, rate_bounds, sustained, comparisons = [], [], [], []
     for entry in manifest['entries']:
-        if entry['phase'] == 'selection':
+        if entry['phase'] in ('selection', 'wait_sensitivity'):
             continue
         plan = json.loads(committed(REPO, entry['client_source'], entry['plan_path']))
         cases = plan['case_sets'][entry['case_set']]
@@ -398,6 +566,49 @@ def formal_results(options):
     return result
 
 
+def validate_registered_soak_derivation(options):
+    manifest, rows, runs = (options[key] for key in ('manifest', 'rows', 'runs'))
+    corrected = []
+    for entry in manifest['entries']:
+        if entry['phase'] != 'soak' or entry['case_set'] != 'soak-pure':
+            continue
+        raw = committed(REPO, entry['client_source'], entry['plan_path'])
+        require(checksum(raw) == entry['plan_sha256'], 'derived soak plan hash differs')
+        plan = json.loads(raw)
+        if any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION):
+            corrected.append((plan, 'startup_preparation_parent', soak_derivation.STARTUP_REGISTRATION))
+        elif any(key in plan.get('metadata', {}) for key in soak_derivation.EXTENDED_REGISTRATION):
+            corrected.append((plan, 'extended_concurrency_parent', soak_derivation.EXTENDED_REGISTRATION))
+    if not corrected:
+        return
+    require(len(corrected) == 1, 'the registered budget permits only one pure soak attempt')
+    entries = [entry for entry in manifest['entries'] if entry['phase'] != 'soak']
+    parent_manifest = dict(manifest, entries=entries)
+    labels = {entry['label'] for entry in entries}
+    parent_runs = [run for run in runs if run['label'] in labels]
+    plans = {}
+    for entry in entries:
+        if entry['phase'] != 'confirmation':
+            continue
+        raw = committed(REPO, entry['client_source'], entry['plan_path'])
+        require(checksum(raw) == entry['plan_sha256'], 'raw-audited parent plan hash differs')
+        plans[entry['label']] = json.loads(raw)
+    formal_options = dict(manifest=parent_manifest, rows=rows)
+    actual = dict(complete_inventory=all(run['available'] for run in parent_runs), runs=parent_runs,
+                  selection=options['selection'], byte_selection=options['byte_selection'],
+                  formal=formal_results(formal_options))
+    derivation_options = dict(analysis=actual, manifest=parent_manifest, plans=plans,
+                              controls=soak_derivation.STARTUP_CONTROLS, server_source=soak_derivation.STARTUP_SERVER)
+    expected = soak_derivation.build_plan(derivation_options)
+    for plan, proof_key, registration in corrected:
+        require(proof_key in expected['metadata'], 'raw-audited parent is unqualified or another pure point wins the registered order')
+        fields = tuple(registration) + ('phase', 'soak_derivation', 'selected_controls', 'checks',
+                 'qualified_and_skipped', 'skipped_workloads', 'retry_failed_soak', proof_key)
+        require(plan['case_sets'] == expected['case_sets'] and plan['server_source'] == expected['server_source'] and
+                all(plan['metadata'].get(key) == expected['metadata'].get(key) for key in fields),
+                'corrected soak differs from the derivation recomputed from audited parent rows')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, default=FOLDER / 'manifest.json')
@@ -421,6 +632,8 @@ def main():
     plan = json.loads(committed(REPO, manifest['selection_client'], manifest['selection_plan']))
     selection = rules.choose(dict(rows=[r for r in rows if r['phase'] == 'selection'], plan=plan))
     byte_selection = rules.choose_bytes([r for r in rows if r['phase'] == 'selection'])
+    derivation_options = dict(manifest=manifest, rows=rows, runs=runs, selection=selection, byte_selection=byte_selection)
+    validate_registered_soak_derivation(derivation_options)
     result = dict(schema=1, runs=runs, rows=rows, selection=selection, byte_selection=byte_selection, formal=formal_results(dict(manifest=manifest, rows=rows)), complete_inventory=all(run['available'] for run in runs), analysis_sha256=checksum(Path(__file__).read_bytes()), selection_rules_sha256=checksum((FOLDER / 'selection_rules.py').read_bytes()))
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / 'analysis.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')

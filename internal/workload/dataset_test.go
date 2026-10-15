@@ -173,6 +173,45 @@ func TestWorkloadBoundsAndOwnedNamespace(t *testing.T) {
 	}
 }
 
+func TestDatasetAllows2048DisjointWorkersWithinSeededRecords(t *testing.T) {
+	config := Config{Backend: "search", StoreName: "search", Namespace: "weirtest_0123456789abcdef01234567", Records: 8192, PayloadBytes: 1, Concurrency: 2048}
+	dataset, err := New(config)
+	if err != nil {
+		t.Fatal("bounded extended worker dataset rejected", err)
+	}
+	opts := PlanOptions{Operations: config.Records, WritePercent: 100}
+	plan, err := dataset.Plan(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	owners := make(map[int]int)
+	for worker, operations := range plan.Workers {
+		if len(operations) != 4 {
+			t.Fatal("extended worker lost its operation allocation", worker, len(operations))
+		}
+		for _, operation := range operations {
+			if operation.Record < worker*4 || operation.Record >= (worker+1)*4 {
+				t.Fatal("extended worker used another worker's ID range", worker, operation.Record)
+			}
+			if previous, found := owners[operation.Record]; found && previous != worker {
+				t.Fatal("extended workers shared a record", worker, previous, operation.Record)
+			}
+			owners[operation.Record] = worker
+		}
+	}
+	if len(plan.Workers) != 2048 || len(owners) < 2048 || plan.Count != opts.Operations {
+		t.Fatal("extended worker plan omitted workers or operations", len(plan.Workers), len(owners), plan.Count)
+	}
+	config.Concurrency = 2049
+	if _, err := New(config); err == nil {
+		t.Fatal("unbounded dataset concurrency accepted")
+	}
+	config.Concurrency, config.Records = 2048, 2047
+	if _, err := New(config); err == nil {
+		t.Fatal("fewer records than workers accepted")
+	}
+}
+
 func TestMongoValidationRejectsChangedRevisionType(t *testing.T) {
 	dataset := testDataset(t, "mongo")
 	operation := Operation{Record: 2, Revision: 1}

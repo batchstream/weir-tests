@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "reviewer": "/root/review_default_results_fresh",
+  "checked_utc": "2026-10-15T22:18:38.232200+00:00",
+  "scope": "Interim documentation review only; running capacity workflow performance not inspected; final capacity evidence and final PR heads remain pending",
+  "decision": "cleared_after_one_document_precision_fix",
+  "weir_reviewed_source": "a0da79e7a7d6e2a7ae479894f8f86dcc18b53d22",
+  "weir_initial_source": "9fe1ab35bce489575bc75fb89f51b448c473787a",
+  "weir_implementation_source": "084572d79b7a53230801297f90ca2363fd864913",
+  "tests_readme_source": "3f26af124a545c9c9d217935f9448ad6f8303784",
+  "tests_results_source": "cd8b3971e78ba0535153ce83337f87f179cb7625",
+  "checks": {
+    "wait_inconclusive_and_null_proposal_correct": true,
+    "anchor_backlog_254_above_222_retained": true,
+    "drain_3_17392354_above_3_retained": true,
+    "all_417600_arrivals_and_p99_3_932159_seconds_correct": true,
+    "q0125_three_round_QPS_CPU_p99_and_ratios_match_frozen_591_rows": true,
+    "old_negative_cases_and_read_regressions_retained": true,
+    "merge_refresh_whole_stage_totals_exist_but_half_window_time_series_absent": true,
+    "no_GC_merge_or_disk_cause_established": true,
+    "original_capacity_failures_and_zero_soaks_retained": true,
+    "final_capacity_marked_pending": true,
+    "weir_Go_module_inputs_unchanged_from_084572d": true,
+    "no_running_capacity_results_read": true
+  },
+  "links": {
+    "immutable_github_occurrences": 21,
+    "immutable_github_unique": 16,
+    "local_target_and_anchor_occurrences": 45,
+    "local_target_and_anchor_unique": 38,
+    "validation": "Immutable commit objects and exact paths plus local target/heading existence verified from Git; unchanged non-immutable and external links outside this check"
+  },
+  "resolved_findings": [
+    {
+      "priority": 2,
+      "file": "docs/value-proof.md",
+      "original_line": 177,
+      "original_source": "9fe1ab35bce489575bc75fb89f51b448c473787a",
+      "issue": "No late young-GC increase contradicted q025 163 to 174 ms",
+      "resolution": "Exact 332 to 46 ms and 163 to 174 ms retained; neither establishes GC as cause",
+      "resolved_source": "a0da79e7a7d6e2a7ae479894f8f86dcc18b53d22"
+    }
+  ],
+  "remaining_findings": [],
+  "repository_mutated_by_reviewer": false
+}

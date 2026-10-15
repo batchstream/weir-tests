@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "analysis_source": "d619907dbad944c59995939dd0f3ccd5d731906f",
+  "prior_rows": 567,
+  "new_rows": 24,
+  "prior_analysis_sha256": "bfb94192bfcdb1dc6b2924e3b384438e92a20f983beefce9b300569868a0324f",
+  "analysis_sha256": "c899adcb0efeae634750a994d19ce2bf8f86d4c02a76215829a89ef5eb20adec",
+  "all_prior_rows_exactly_unchanged": true,
+  "all_prior_runs_exactly_unchanged": true,
+  "formal_exactly_unchanged": true,
+  "selection_exactly_unchanged": true,
+  "byte_selection_exactly_unchanged": true
+}

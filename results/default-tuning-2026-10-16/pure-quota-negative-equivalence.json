@@ -1,0 +1,12 @@
+{
+  "analysis_source": "175272e0e8479cea6f2a03c215e285910e466376",
+  "old_rows": 549,
+  "unchanged_rows": 549,
+  "added_rows": 0,
+  "new_workflow": "https://github.com/batchstream/weir-tests/actions/runs/38797232567",
+  "new_workflow_outcome": "fixture preparation failed before warmup or timed work",
+  "measurement_report_available": false,
+  "selection_unchanged": true,
+  "byte_selection_unchanged": true,
+  "analysis_sha256": "805d79f73b6c2ca635c59d2dd9fc5da5e74d36f72c04987d2cc6fcf15ba805be"
+}

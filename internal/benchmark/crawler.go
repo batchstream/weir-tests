@@ -179,7 +179,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		report.Method = "Mechanism control, not a PSE-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Declared-path same-runner rotation with frozen source/binary receipts and declared batch operations/bytes/in-flight/wait controls. Explicit application_acknowledged/refresh=false or query_visible/refresh=wait_for completion; request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
 	}
 	defer func() {
-		if resultErr != nil {
+		if resultErr != nil && report.Incomplete == "" {
 			report.Incomplete = resultErr.Error()
 		}
 		raw, err := json.MarshalIndent(report, "", "  ")

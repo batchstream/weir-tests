@@ -1,0 +1,12 @@
+{
+  "Path": "github.com/batchstream/weir",
+  "Version": "v0.2.1-0.20261015175329-084572d79b7a",
+  "Sum": "h1:Ps64JPpCBICsw3DcBSk1s6i/4BObV5EvvxVs0ETeKoc=",
+  "GoModSum": "h1:OcWFhPdABGBwg9l4VYRoxHWnqTS85VNluyS2HDG6pMY=",
+  "Origin": {
+    "VCS": "git",
+    "URL": "https://github.com/batchstream/weir",
+    "Hash": "084572d79b7a53230801297f90ca2363fd864913"
+  },
+  "verification": "go mod download with public proxy.golang.org and sum.golang.org; Origin.Hash equals selected default source"
+}

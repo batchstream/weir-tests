@@ -122,7 +122,7 @@ func RunClientWorker(ctx context.Context, input io.Reader, output io.Writer) (re
 }
 
 func validateClientConfig(c clientConfig) error {
-	if (c.Path != "direct" && c.Path != "weir") || c.Threads < 1 || c.Threads > 1024 || c.TotalWorkers < c.Threads || c.TotalWorkers > 1024 || c.WorkerOffset < 0 || c.WorkerOffset+c.Threads > c.TotalWorkers || c.Dataset.Records < c.TotalWorkers || c.WritePercent < 0 || c.WritePercent > 100 || c.TimeoutNS <= 0 || c.TimeoutNS > int64(time.Minute) {
+	if (c.Path != "direct" && c.Path != "weir") || c.Threads < 1 || c.Threads > 1024 || c.TotalWorkers < c.Threads || c.TotalWorkers > 2048 || c.WorkerOffset < 0 || c.WorkerOffset+c.Threads > c.TotalWorkers || c.Dataset.Records < c.TotalWorkers || c.WritePercent < 0 || c.WritePercent > 100 || c.TimeoutNS <= 0 || c.TimeoutNS > int64(time.Minute) {
 		return errors.New("invalid independent client configuration")
 	}
 	return nil

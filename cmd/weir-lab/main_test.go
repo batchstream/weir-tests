@@ -20,19 +20,29 @@ func TestConcurrencyAndBatchListsRejectEmptyDuplicateOrInvalidEntries(t *testing
 	}
 }
 
-func TestSingleDiagnosticLevelAllows1024WorkersBeforeBinaryLookup(t *testing.T) {
+func TestSingleAdmissionBoundsBeforeBinaryLookup(t *testing.T) {
 	opts := labOptions{mode: "saturation", backend: "search", databaseCPUs: 1,
-		levels: "1024", batches: "1", clientProcesses: 4, duration: 5 * time.Second,
-		warmupDuration: time.Second, operations: 1, records: 2048, payload: 1,
+		levels: "1024,2048", batches: "1", clientProcesses: 4, duration: 180 * time.Second,
+		warmupDuration: 5 * time.Minute, operations: 1, records: 8192, payload: 1,
 		rounds: 1, writePercent: 100, binary: filepath.Join(t.TempDir(), "missing-weir")}
 	err := runLab(t.Context(), opts)
 	if err == nil || !strings.Contains(err.Error(), "prepare the locked Weir executable") {
-		t.Fatal("valid bounded single-level diagnostic was rejected or started external work", err)
+		t.Fatal("valid bounded single-request ladder was rejected or started external work", err)
 	}
-	opts.levels = "1028"
+	opts.levels = "2052"
 	err = runLab(t.Context(), opts)
-	if err == nil || !strings.Contains(err.Error(), "strictly increase through 1024") {
+	if err == nil || !strings.Contains(err.Error(), "strictly increase through 2048") {
 		t.Fatal("unbounded client concurrency passed validation", err)
+	}
+	opts.levels, opts.clientProcesses = "1024,2048", 1
+	err = runLab(t.Context(), opts)
+	if err == nil || !strings.Contains(err.Error(), "at most 1024 workers per client process") {
+		t.Fatal("unbounded per-process concurrency reached binary lookup", err)
+	}
+	opts.clientProcesses, opts.warmupDuration = 4, 5*time.Minute+time.Second
+	err = runLab(t.Context(), opts)
+	if err == nil || !strings.Contains(err.Error(), "invalid saturation matrix or durations") {
+		t.Fatal("excessive warmup passed validation", err)
 	}
 }
 
