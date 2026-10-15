@@ -35,6 +35,12 @@ is retained. Eleven protective candidates qualified, seven entered the 5%
 throughput frontier, and one remained in the CPU plateau. The byte rule chose
 4 MiB, the smaller target in the joint 4/8 MiB plateau.
 
+The experiment follows Elastic's guidance to increase bulk size and producer
+concurrency until throughput plateaus, choosing smaller batches when tied and
+watching resource pressure. That guidance calls for measurement with the target
+data; it does not prescribe one globally optimal batch size. See
+[Elastic's indexing recommendations](https://www.elastic.co/guide/en/elasticsearch/reference/current/tune-for-indexing-speed.html/).
+
 The original independent confirmation inventory has 14 workflows and 297 planned
 stages, in addition to 288 selection stages. It covers two database quotas,
 three-round pure-write concurrency ladders, two crawler rate ladders with lower
