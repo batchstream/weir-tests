@@ -44,20 +44,13 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 	if len(options.Concurrency) == 0 || options.PageSize < 1 || options.Processes < 1 {
 		return errors.New("invalid crawler report parameters")
 	}
-	expectedStages := len(options.Profiles) * (len(options.Rates) + len(options.Concurrency)) * options.Rounds * 3
+	cases, err := crawlerCases(options)
+	if err != nil {
+		return err
+	}
+	expectedStages := len(cases) * options.Rounds * 3
 	if len(report.Stages) != expectedStages {
 		return errors.New("crawler stage matrix is incomplete")
-	}
-	var cases []crawlerCase
-	for _, profile := range options.Profiles {
-		for _, rate := range options.Rates {
-			test := crawlerCase{Profile: profile, Mode: "fixed-rate", Workers: options.Concurrency[len(options.Concurrency)-1], Rate: rate}
-			cases = append(cases, test)
-		}
-		for _, workers := range options.Concurrency {
-			test := crawlerCase{Profile: profile, Mode: "saturation", Workers: workers}
-			cases = append(cases, test)
-		}
 	}
 	paths := []string{"direct", "current", "optimized"}
 	stageIndex := 0
