@@ -99,6 +99,11 @@ def identities(bundle, manifest):
     require(fixture['binary_sha256'] == receipt['servers'][0]['sha256'], 'fixture binary differs')
     expected = [(PATHS[(round_index+offset)%3], round_index+1) for round_index in range(entry['rounds']) for offset in range(3)]
     require(len(report['Stages']) <= len(expected) and (len(report['Stages']) == len(expected) or report.get('incomplete')), 'unexpected stage matrix')
+    last_wait = 20*10**6 if expected[-1][0] == 'optimized' else 0
+    require(fixture['options']['BatchMaxWait'] == last_wait, 'final fixture collection wait differs')
+    routes = bundle['routes']['stores']
+    require(len(routes) == 1 and routes[0]['name'] == 'search' and routes[0]['batching'].get('max_in_flight', 0) == 0 and routes[0]['batching']['max_operations'] == 32 and helpers.duration(routes[0]['batching'].get('max_wait', '0s')) == last_wait, 'final raw route configuration differs')
+    require(bundle['config']['transport']['max_pending_records'] == 4096, 'raw transport configuration differs')
     return expected
 
 
@@ -178,6 +183,10 @@ def diagnostic_counts(stage, deltas):
             observed = (stage['HTTPDelta'] or {}).get(route, {}).get('Requests', 0)
             # An unused phase can have no initialized metric series; it stays unavailable.
             checks.append(dict(metric=operation+' attempts', internal=internal, observer=observed, equal=(internal == observed) if internal is not None else None))
+        for operation in ('mget', 'bulk'):
+            records_count = observations.search_metric_sum(deltas, 'weir_search_http_request_records_count', dict(operation=operation))
+            attempts = observations.search_metric_sum(deltas, 'weir_search_http_requests_total', dict(operation=operation))
+            checks.append(dict(metric=operation+' framed request count versus HTTP attempts', internal=records_count, observer=attempts, equal=(records_count == attempts) if records_count is not None and attempts is not None else None))
         if stage['Profile'] == 'partial-update':
             records = observations.search_metric_sum(deltas, 'weir_search_http_request_records_sum', dict(operation='bulk'))
             checks.append(dict(metric='partial framed bulk records versus submitted calls', internal=records, observer=stage['ApplicationRequests']['records'], equal=records == stage['ApplicationRequests']['records']))
@@ -233,7 +242,8 @@ def main():
         archive_count = helpers.verify_archive(folder)
         dispatch = [item for item in manifest['dispatch_attempts'] if item['workflow_run'] == entry['workflow_run']]
         require(len(dispatch) == 1 and dispatch[0]['head_sha'] == CLIENT and dispatch[0]['head_branch'] == manifest['client_ref'] and dispatch[0]['label'] == entry['label'] and dispatch[0]['rate'] == entry['rate'], 'dispatch ledger differs')
-        bundle = dict(entry=entry, **{name: load(folder/file) for name, file in dict(report='crawler.json.gz', receipt='crawler.receipt.json.gz', fixture='manifest.json.gz', cleanup='cleanup.json.gz', workflow='workflow-run.json.gz').items()})
+        bundle = dict(entry=entry, **{name: load(folder/file) for name, file in dict(report='crawler.json.gz', receipt='crawler.receipt.json.gz', fixture='manifest.json.gz', cleanup='cleanup.json.gz', workflow='workflow-run.json.gz', routes='node-0-routes.json.gz', config='node-0-config.json.gz').items()})
+        require(bundle['workflow']['createdAt'] == dispatch[0]['created_utc'] and bundle['workflow']['headSha'] == dispatch[0]['head_sha'], 'actual workflow creation/source differs from dispatch ledger')
         report = bundle['report']
         provenance_error = None
         try:
