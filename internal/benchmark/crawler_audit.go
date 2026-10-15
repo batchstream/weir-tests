@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"time"
 )
 
@@ -16,8 +17,12 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 	if report == nil || report.Schema != 1 || report.Incomplete != "" || report.CleanupError != "" {
 		return errors.New("crawler report is incomplete or cleanup failed")
 	}
-	if !reflect.DeepEqual(report.Sources, crawlerSources()) {
-		return errors.New("crawler report Lua/native fixture hashes differ from this auditor")
+	sources := crawlerSources()
+	if slices.Contains(report.Parameters.Profiles, "partial-update") {
+		sources = partialUpdateSources()
+	}
+	if !reflect.DeepEqual(report.Sources, sources) {
+		return errors.New("crawler report workload fixture hashes differ from this auditor")
 	}
 	for _, name := range []string{"current", "optimized"} {
 		server, ok := report.Servers[name]
@@ -40,12 +45,18 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 			return errors.New("crawler server receipt has invalid immutable identity")
 		}
 	}
+	if slices.Contains(report.Parameters.Profiles, "partial-update") && report.Servers["current"].SHA256 != report.Servers["optimized"].SHA256 {
+		return errors.New("partial-update mechanism used different server binaries")
+	}
 	options := report.Parameters
 	if options.InputShape != "" && options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
 		return errors.New("invalid crawler input shape")
 	}
 	if options.HTTPObserver != "" && options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
 		return errors.New("unknown HTTP observer mode")
+	}
+	if options.AfterBatchMaxWait < 0 || options.AfterBatchMaxWait > time.Second || slices.Contains(options.Profiles, "partial-update") && (len(options.Profiles) != 1 || options.InputShape != "single" || options.AfterMaxInFlight != 0) {
+		return errors.New("invalid partial-update mechanism or batch wait parameters")
 	}
 	if len(options.Concurrency) == 0 || options.PageSize < 1 || options.Processes < 1 {
 		return errors.New("invalid crawler report parameters")
@@ -75,6 +86,13 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				server := "current"
 				if path == "optimized" {
 					server = "optimized"
+				}
+				waitNS := int64(0)
+				if path == "optimized" {
+					waitNS = int64(options.AfterBatchMaxWait)
+				}
+				if stage.BatchMaxWaitNS != waitNS {
+					return errors.New("crawler stage batch max wait differs from declared path")
 				}
 				if stage.ServerSHA256 != report.Servers[server].SHA256 {
 					return errors.New("crawler stage used a different server binary")
@@ -143,13 +161,23 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 							if page < 0 || index > 0 && page <= worker.AppliedPages[index-1] {
 								return errors.New("crawler acknowledged pages are out of order")
 							}
-							pageMutations := crawlerPage(worker.Worker, page, options.PageSize)
+							var pageMutations []crawlerMutation
+							if stage.Profile == "partial-update" {
+								mutation := partialUpdateMutation(worker.Worker, page)
+								pageMutations = []crawlerMutation{mutation}
+							} else {
+								pageMutations = crawlerPage(worker.Worker, page, options.PageSize)
+							}
 							acknowledgedLogical += uint64(len(pageMutations))
 							if stage.Profile == "two-step" {
 								acknowledgedLogical += uint64(options.PageSize)
 							}
 							for _, mutation := range pageMutations {
-								expected[mutation.ID] = crawlerMerge(expected[mutation.ID], mutation)
+								if stage.Profile == "partial-update" {
+									expected[mutation.ID] = partialUpdateMerge(expected[mutation.ID], mutation)
+								} else {
+									expected[mutation.ID] = crawlerMerge(expected[mutation.ID], mutation)
+								}
 							}
 						}
 						if options.InputShape != "" && worker.RequestedMutations != acknowledgedLogical {

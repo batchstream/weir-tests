@@ -3,6 +3,7 @@
 import argparse
 import csv
 import json
+import math
 from pathlib import Path
 
 
@@ -40,6 +41,50 @@ def field_delta(before, after, group, field):
     return last - first
 
 
+SEARCH_METRICS = (
+    'weir_search_http_requests_total',
+    'weir_search_http_request_duration_seconds_',
+    'weir_search_http_request_records_',
+    'weir_search_lua_evaluation_duration_seconds_',
+)
+
+
+def search_metric_deltas(stage):
+    """Keep labeled counters/buckets; records count framed attempts, not acknowledgements."""
+    snapshots = [stage.get('ServerBefore') or {}, stage.get('ServerAfter') or {}]
+    if any(snapshot.get('error') for snapshot in snapshots):
+        return None
+    indexed = []
+    for snapshot in snapshots:
+        metrics = {}
+        for metric in snapshot.get('metrics') or []:
+            name = metric['name']
+            if not any(name.startswith(prefix) for prefix in SEARCH_METRICS):
+                continue
+            labels = tuple(sorted((metric.get('labels') or {}).items()))
+            key = (name, labels)
+            if key in metrics:
+                raise ValueError('duplicate Search metric series')
+            metrics[key] = metric['value']
+        indexed.append(metrics)
+    if not any(indexed):
+        return None
+    result = []
+    for name, labels in sorted(indexed[0].keys() | indexed[1].keys()):
+        first = indexed[0].get((name, labels))
+        last = indexed[1].get((name, labels))
+        delta = last - first if first is not None and last is not None and math.isfinite(first) and math.isfinite(last) and last >= first else None
+        result.append(dict(name=name, labels=dict(labels), delta=delta))
+    return result
+
+
+def search_metric_sum(deltas, name, labels):
+    if deltas is None:
+        return None
+    matches = [metric['delta'] for metric in deltas if metric['name'] == name and all(metric['labels'].get(key) == value for key, value in labels.items())]
+    return sum(matches) if matches and all(value is not None for value in matches) else None
+
+
 def rows(report):
     result = []
     parameters = report['Parameters']
@@ -56,7 +101,7 @@ def rows(report):
         after = index_totals(stage['DatabaseAfter'])
         qualified = report_clean and stage['Verified'] and stage['ClientsExited'] and not stage['Failed'] and not stage['Indeterminate'] and not stage.get('verification_error') and not stage.get('client_exit_errors')
         stable = stage['Mode'] == 'fixed-rate' and qualified and not stage['Rejected'] and not stage['TimedOut'] and stage['GeneratorLagNS'] < 50_000_000
-        row = dict(input_shape=input_shape,http_observer=observer_mode,profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
+        row = dict(logical_unit='partial_update' if stage['Profile'] == 'partial-update' else 'crawler_product',input_shape=input_shape,http_observer=observer_mode,batch_max_wait_ms=stage.get('BatchMaxWaitNS', 0) / 1e6,profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
                    workers=stage['Concurrency'], path=stage['Path'], round=stage['Round'],
                    qualified=qualified, stable_arrivals=stable, offered=stage['Offered'],
                    rejected=stage['Rejected'], completed=success, failed=stage['Failed'],
@@ -95,6 +140,28 @@ def rows(report):
             row[prefix + '_response_bytes'] = counter['ResponseBytes'] if counter else (None if observer_mode == 'disabled' else 0)
             row[prefix + '_failed_requests'] = counter['Failed'] if counter else (None if observer_mode == 'disabled' else 0)
             row[prefix + '_aborted_requests'] = counter.get('Aborted') if counter else (None if observer_mode == 'disabled' else 0)
+        deltas = search_metric_deltas(stage)
+        row['search_metric_deltas'] = json.dumps(deltas, sort_keys=True) if deltas is not None else None
+        for operation in ('metadata', 'mget', 'bulk', 'refresh', 'search', 'other'):
+            labels = dict(operation=operation)
+            prefix = 'search_' + operation
+            row[prefix + '_http_requests'] = search_metric_sum(deltas, 'weir_search_http_requests_total', labels)
+            count = search_metric_sum(deltas, 'weir_search_http_request_duration_seconds_count', labels)
+            seconds = search_metric_sum(deltas, 'weir_search_http_request_duration_seconds_sum', labels)
+            row[prefix + '_http_duration_count'] = count
+            row[prefix + '_http_duration_seconds'] = seconds
+            row[prefix + '_http_duration_mean_ms'] = seconds * 1000 / count if seconds is not None and count else None
+            if operation in ('mget', 'bulk'):
+                records_count = search_metric_sum(deltas, 'weir_search_http_request_records_count', labels)
+                records_sum = search_metric_sum(deltas, 'weir_search_http_request_records_sum', labels)
+                row[prefix + '_wire_records_count'] = records_count
+                row[prefix + '_wire_records_sum'] = records_sum
+                row[prefix + '_wire_records_mean'] = records_sum / records_count if records_sum is not None and records_count else None
+        lua_count = search_metric_sum(deltas, 'weir_search_lua_evaluation_duration_seconds_count', {})
+        lua_seconds = search_metric_sum(deltas, 'weir_search_lua_evaluation_duration_seconds_sum', {})
+        row['search_lua_duration_count'] = lua_count
+        row['search_lua_duration_seconds'] = lua_seconds
+        row['search_lua_duration_mean_ms'] = lua_seconds * 1000 / lua_count if lua_seconds is not None and lua_count else None
         result.append(row)
     return result
 

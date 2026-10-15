@@ -122,6 +122,9 @@ func crawlerHTTP(ctx context.Context, client *http.Client, requestOptions crawle
 }
 
 func (c *crawlerClient) execute(ctx context.Context, mutations []crawlerMutation, ledger *crawlerApplicationLedger) (bool, error) {
+	if c.config.Profile == "partial-update" {
+		return c.executeMutations(ctx, mutations, ledger)
+	}
 	products := make([]crawlerMutation, 0, c.config.PageSize)
 	sellers := make([]crawlerMutation, 0, len(mutations)-c.config.PageSize)
 	for _, mutation := range mutations {
@@ -265,6 +268,14 @@ func crawlerWeirRequests(config crawlerClientConfig, mutations []crawlerMutation
 	}
 	requests := make([]*weir.MutateRequest, len(mutations))
 	for index, mutation := range mutations {
+		if config.Profile == "partial-update" {
+			request, err := partialUpdateRequest(config, mutation)
+			if err != nil {
+				return nil, err
+			}
+			requests[index] = request
+			continue
+		}
 		source := crawlerCommon + crawlerOffer
 		if mutation.Product {
 			source = crawlerCommon + crawlerProduct
@@ -286,13 +297,21 @@ func crawlerWeirRequests(config crawlerClientConfig, mutations []crawlerMutation
 }
 
 func (c *crawlerClient) executeSingleNative(ctx context.Context, mutation crawlerMutation, ledger *crawlerApplicationLedger) (bool, error) {
-	script := map[string]any{"lang": "painless", "source": crawlerNative, "params": mutation}
-	payload := map[string]any{"script": script}
+	var payload map[string]any
+	if c.config.Profile == "partial-update" {
+		payload = map[string]any{"doc": mutation.Document}
+	} else {
+		script := map[string]any{"lang": "painless", "source": crawlerNative, "params": mutation}
+		payload = map[string]any{"script": script}
+	}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return false, err
 	}
 	query := url.Values{"refresh": {"wait_for"}, "wait_for_active_shards": {"1"}, "timeout": {"10s"}, "retry_on_conflict": {"3"}}
+	if c.config.Profile == "partial-update" {
+		query.Set("retry_on_conflict", "0")
+	}
 	request := crawlerHTTPRequest{Method: http.MethodPost, URL: c.config.SearchURL + "/" + crawlerIndex(c.config.Namespace, mutation.Product) + "/_update/" + url.PathEscape(mutation.ID) + "?" + query.Encode(), Body: body}
 	ledger.record(1)
 	raw, err := crawlerHTTP(ctx, c.http, request)
@@ -402,7 +421,13 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 				dispatch := time.Now()
 				lag := dispatch.UnixNano() - job.ScheduledNS
 				result.MaxDispatchLagNS = max(result.MaxDispatchLagNS, lag)
-				mutations := crawlerPage(result.Worker, job.Page, c.config.PageSize)
+				var mutations []crawlerMutation
+				if c.config.Profile == "partial-update" {
+					mutation := partialUpdateMutation(result.Worker, job.Page)
+					mutations = []crawlerMutation{mutation}
+				} else {
+					mutations = crawlerPage(result.Worker, job.Page, c.config.PageSize)
+				}
 				deadline := time.Unix(0, job.ScheduledNS).Add(time.Duration(c.config.TimeoutNS))
 				operationCtx, cancel := context.WithDeadline(ctx, deadline)
 				unknown, err := false, operationCtx.Err()
@@ -443,7 +468,11 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 					if current == nil {
 						current = crawlerDocument(mutation.ID, mutation.Product)
 					}
-					result.Expected[mutation.ID] = crawlerMerge(current, mutation)
+					if c.config.Profile == "partial-update" {
+						result.Expected[mutation.ID] = partialUpdateMerge(current, mutation)
+					} else {
+						result.Expected[mutation.ID] = crawlerMerge(current, mutation)
+					}
 				}
 			}
 			result.ApplicationRequests = applications.snapshot()

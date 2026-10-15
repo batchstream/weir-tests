@@ -12,6 +12,31 @@ def digest(binary):
     return hashlib.sha256(binary.read_bytes()).hexdigest()
 
 
+def workload_controls(environ):
+    profile = environ['CRAWLER_PROFILES']
+    partial = profile == 'partial-update'
+    workers = max(map(int, environ['CRAWLER_LEVELS'].split(',')))
+    page_size = int(environ['CRAWLER_PAGE_SIZE'])
+    controls = dict(
+        profiles=profile,
+        logical_unit='single_partial_update' if partial else 'completed_business_product',
+        seeded_documents=workers * page_size * 6 + 1,
+        full_field_oracle='Every seeded product, seller and shared seller, including untouched and rejected keys',
+        native_conflict_retries=0 if partial else 3,
+        weir_backend_expression_conflict_retries=0 if partial else None,
+        weir_lua_total_attempts=None if partial else 4,
+        current_batch_max_wait='0s',
+        optimized_batch_max_wait=environ.get('CRAWLER_BATCH_MAX_WAIT', '0s'),
+        search_phase_metrics=dict(
+            http_duration='client.Do through response body read and validation; bulk includes refresh=wait_for and is not pure indexing time',
+            request_records='Attempted framed records at the client.Do boundary for mget/bulk; not acknowledged writes or proof of network delivery',
+            lua_duration='luaengine.Evaluate only; excludes document encoding/decoding and HTTP',
+            availability='Missing before/after series and reset counters remain unavailable, never inferred as zero',
+        ),
+    )
+    return controls
+
+
 def main():
     binary = Path('.tools/weir-crawler')
     servers = [Path('.tools/weir-current'), Path('.tools/weir-optimized')]
@@ -21,7 +46,7 @@ def main():
     modes = os.environ['CRAWLER_MODES']
     if modes == 'both':
         modes = 'fixed-rate,saturation'
-    command = [str(binary), '-input-shape', os.environ['CRAWLER_INPUT_SHAPE'], '-http-observer', os.environ['CRAWLER_HTTP_OBSERVER'], '-modes', modes, '-profiles', os.environ['CRAWLER_PROFILES'], '-after-max-in-flight', os.environ['CRAWLER_MAX_IN_FLIGHT'], '-rates', os.environ['CRAWLER_RATES'],
+    command = [str(binary), '-input-shape', os.environ['CRAWLER_INPUT_SHAPE'], '-http-observer', os.environ['CRAWLER_HTTP_OBSERVER'], '-modes', modes, '-profiles', os.environ['CRAWLER_PROFILES'], '-after-max-in-flight', os.environ['CRAWLER_MAX_IN_FLIGHT'], '-after-batch-max-wait', os.environ.get('CRAWLER_BATCH_MAX_WAIT', '0s'), '-rates', os.environ['CRAWLER_RATES'],
                '-concurrency-levels', os.environ['CRAWLER_LEVELS'],
                '-page-size', os.environ['CRAWLER_PAGE_SIZE'],
                '-duration', os.environ['CRAWLER_DURATION'],
@@ -37,7 +62,7 @@ def main():
             raise ValueError('server binary changed or source is dirty')
     cpu_model = next(line.split(':', 1)[1].strip() for line in Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name'))
     memory_bytes = int(next(line for line in Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemTotal:')).split()[1]) * 1024
-    receipt = dict(input_shape=os.environ['CRAWLER_INPUT_SHAPE'],http_observer=os.environ['CRAWLER_HTTP_OBSERVER'],host_cpu_model=cpu_model,host_memory_bytes=memory_bytes,source=source, source_dirty=False, command=command,
+    receipt = dict(workload_controls=workload_controls(os.environ),input_shape=os.environ['CRAWLER_INPUT_SHAPE'],http_observer=os.environ['CRAWLER_HTTP_OBSERVER'],host_cpu_model=cpu_model,host_memory_bytes=memory_bytes,source=source, source_dirty=False, command=command,
                    client_binary_sha256=digest(binary), servers=receipts,
                    host=platform.uname()._asdict(), host_cpus=os.cpu_count(),
                    go=subprocess.check_output(['go', 'version'], text=True).strip(),

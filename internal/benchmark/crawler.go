@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +32,7 @@ type CrawlerOptions struct {
 	Processes, PageSize, QueuePages, Rounds                        int
 	AfterMaxInFlight                                               int
 	CPUs                                                           float64
-	Warmup, Duration, Timeout                                      time.Duration
+	Warmup, Duration, Timeout, AfterBatchMaxWait                   time.Duration
 }
 type crawlerServerReceipt struct {
 	Path    string          `json:"path"`
@@ -63,6 +64,7 @@ type crawlerStage struct {
 	Round, Concurrency, ProductsPerSecond                                             int
 	CPUQuota                                                                          *DatabaseCPUQuota
 	ServerPID                                                                         int
+	BatchMaxWaitNS                                                                    int64
 	ServerSHA256                                                                      string
 	StartedNS, ElapsedNS, DrainNS                                                     int64
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
@@ -103,7 +105,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 	if opts.HTTPObserver != "enabled" && opts.HTTPObserver != "disabled" {
 		return nil, errors.New("http-observer must be enabled or disabled")
 	}
-	if opts.AfterMaxInFlight < 0 || opts.AfterMaxInFlight > 4096 || opts.Warmup > time.Minute || opts.Processes < 1 || opts.Processes > 8 || opts.PageSize < 1 || opts.PageSize > 32 || opts.QueuePages < 1 || opts.QueuePages > 16 || opts.Rounds < 1 || opts.Rounds > 5 || opts.Warmup < time.Second || opts.Duration < time.Second || opts.Duration > 10*time.Minute || opts.Timeout < time.Second || opts.Timeout > time.Minute || len(opts.Concurrency) == 0 || len(opts.Concurrency) > 4 || len(opts.Rates) > 4 {
+	if opts.AfterBatchMaxWait < 0 || opts.AfterBatchMaxWait > time.Second || opts.AfterMaxInFlight < 0 || opts.AfterMaxInFlight > 4096 || opts.Warmup > time.Minute || opts.Processes < 1 || opts.Processes > 8 || opts.PageSize < 1 || opts.PageSize > 32 || opts.QueuePages < 1 || opts.QueuePages > 16 || opts.Rounds < 1 || opts.Rounds > 5 || opts.Warmup < time.Second || opts.Duration < time.Second || opts.Duration > 10*time.Minute || opts.Timeout < time.Second || opts.Timeout > time.Minute || len(opts.Concurrency) == 0 || len(opts.Concurrency) > 4 || len(opts.Rates) > 4 {
 		return nil, errors.New("invalid bounded crawler benchmark parameters")
 	}
 	for _, workers := range opts.Concurrency {
@@ -120,9 +122,12 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		return nil, errors.New("one or two explicit crawler profiles required")
 	}
 	for _, profile := range opts.Profiles {
-		if profile != "combined" && profile != "two-step" {
-			return nil, errors.New("crawler profile must be combined or two-step")
+		if profile != "combined" && profile != "two-step" && profile != "partial-update" {
+			return nil, errors.New("crawler profile must be combined, two-step, or partial-update")
 		}
+	}
+	if slices.Contains(opts.Profiles, "partial-update") && (len(opts.Profiles) != 1 || opts.InputShape != "single" || opts.AfterMaxInFlight != 0) {
+		return nil, errors.New("partial-update mechanism requires single input, unlimited adapter concurrency and its own exclusive profile")
 	}
 	if len(opts.Modes) == 0 {
 		opts.Modes = []string{"fixed-rate"}
@@ -156,8 +161,16 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		server := crawlerServerReceipt{Path: pair[0], Receipt: raw, SHA256: digest}
 		servers[name] = server
 	}
+	if slices.Contains(opts.Profiles, "partial-update") && servers["current"].SHA256 != servers["optimized"].SHA256 {
+		return nil, errors.New("partial-update batching mechanism requires the same server binary on both paths")
+	}
 	origins := map[string]string{"original_pse": "7f36b501cded06a1bcc7484575346bb9c4d6311b", "optimized_pse": "8725e4743c6ddba66132874e0e0fe9d393ab4a85", "weir_lua_translation_base": "283940ef442b479440e45b39c86988351b92d7b5"}
 	report = &CrawlerReport{BusinessSources: origins, Schema: 1, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Three-way same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
+	if slices.Contains(opts.Profiles, "partial-update") {
+		report.BusinessSources = nil
+		report.Sources = partialUpdateSources()
+		report.Method = "Mechanism control, not a PSE-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Three-way same-runner rotation; one binary with max_wait=0 versus the declared after-batch-max-wait. QUERY_VISIBLE / refresh=wait_for, request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
+	}
 	defer func() {
 		if resultErr != nil {
 			report.Incomplete = resultErr.Error()
@@ -217,6 +230,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 				replacement := fixture.ServerReplacement{Binary: binary}
 				if path == "optimized" {
 					replacement.MaxInFlight = opts.AfterMaxInFlight
+					replacement.BatchMaxWait = opts.AfterBatchMaxWait
 				}
 				if err := cluster.ReplaceServer(ctx, replacement); err != nil {
 					return report, err
@@ -395,6 +409,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	stage = crawlerStage{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, Mode: opts.Case.Mode, Round: opts.Round, Concurrency: opts.Case.Workers, ProductsPerSecond: opts.Case.Rate, ServerPID: opts.Cluster.Nodes[0].ProcessID}
 	binary := config.Before
 	if opts.Path == "optimized" {
+		stage.BatchMaxWaitNS = int64(config.AfterBatchMaxWait)
 		binary = config.After
 	}
 	binaryRaw, err := os.ReadFile(binary)

@@ -13,6 +13,9 @@ The [crawler benchmark](docs/crawler-benchmark.md) adds explicit same-runner
 native/current/optimized Search comparisons using PSE product and seller merges,
 open-loop offered rates, durable query-visible completion, database work per
 completed product, and a separate two-call versus combined-merge ablation.
+Its exclusive `partial-update` mechanism control compares identical single-record
+partial updates through native Search and the same Weir binary with explicit
+zero versus 20 ms collection windows, independently of the crawler Lua workload.
 
 The SDK, protocol, server revision, Go toolchain and database artifacts are
 locked in [versions.json](versions.json). Server binaries are built separately
