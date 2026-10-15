@@ -1,0 +1,9 @@
+{
+  "source": "8bdfe233f4baad325c66718a4cdec1c8c436a41a",
+  "source_method": "git archive --format=tar of the immutable client commit, extracted into a new empty directory",
+  "source_archive_sha256": "f79a603799b65a0b801015bad8700b0ecb9b9c24ad90a895bf5cb09310c966bf",
+  "binary_sha256": "88f2480de227ed43f3d889a9c305077fc01db393de8107813911931b86b7eec0",
+  "go_toolchain": "go1.27.1 darwin/arm64",
+  "command": "env -u GOROOT GOENV=off GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off go build -o <auditor> ./cmd/weir-crawler",
+  "network_dependencies": "disabled with GOPROXY=off GOSUMDB=off"
+}

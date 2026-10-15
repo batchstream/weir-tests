@@ -55,7 +55,7 @@ func main() {
 	flag.StringVar(&profiles, "profiles", "two-step", "existing two-step crawler rules, combined rule, or both")
 	flag.StringVar(&modes, "modes", "fixed-rate", "fixed-rate, saturation, or both comma-separated")
 	flag.StringVar(&rates, "rates", "4,16,48", "absolute offered product rates; none disables fixed-rate cases")
-	flag.StringVar(&levels, "concurrency-levels", "128", "total goroutine workers across OS client processes")
+	flag.StringVar(&levels, "concurrency-levels", "128", "total goroutine workers across OS clients: <=2048 total, <=512 per process; fixed-rate uses only the largest level")
 	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "optimized server batch cap; zero is unlimited and omitted for the old server")
 	flag.IntVar(&opts.Processes, "client-processes", 4, "independent OS clients, one pool per process")
 	flag.IntVar(&opts.PageSize, "page-size", 1, "products per page, each with two sellers")
