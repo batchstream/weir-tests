@@ -70,6 +70,11 @@ func TestSingleMeasurementStopsOnUnknownWithoutRetry(t *testing.T) {
 	if result.Result.Attempted != 2 || result.Result.Indeterminate != 2 || result.Result.Succeeded != 0 || result.Result.complete() {
 		t.Fatal("unknown business writes were replayed or counted as success", result)
 	}
+	totals := TimeBucket{Offered: 2, Failed: 2, Unknown: 2, TimedOut: 2}
+	audit := timeBucketAudit{Buckets: result.TimeBuckets, DurationNS: command.DurationNS, ItemsPerCall: 1, Totals: totals, Latency: result.Result.Latency, Histogram: result.Buckets}
+	if err := auditTimeBuckets(audit); err != nil {
+		t.Fatal("unknown deadline outcomes disappeared from temporal evidence", err)
+	}
 }
 
 func TestChildConfigurationAndAcknowledgementCannotHideMissingCalls(t *testing.T) {
@@ -78,9 +83,16 @@ func TestChildConfigurationAndAcknowledgementCannotHideMissingCalls(t *testing.T
 	if err := validateClientConfig(config); err != nil {
 		t.Fatal(err)
 	}
-	base := Result{Path: "direct", Attempted: 1, Planned: 1, Succeeded: 1, Latency: Latency{Samples: 1}}
-	result := ClientProcessResult{Phase: "timed", PID: 7, Threads: 2, WorkerOffset: 4, PoolLimit: 2, Requests: 1, Reads: 1, Result: base}
+	var latency histogram
+	latency.add(0)
+	base := Result{Path: "direct", Attempted: 1, Planned: 1, Succeeded: 1, Latency: latency.summary()}
+	result := ClientProcessResult{Phase: "timed", PID: 7, Threads: 2, WorkerOffset: 4, PoolLimit: 2, Requests: 1, Reads: 1, Result: base, PhaseDurationNS: int64(time.Second), TimeBuckets: newTimeBuckets(int64(time.Second), true)}
 	result.Buckets[0] = 1
+	result.TimeBuckets[0].Offered = 1
+	result.TimeBuckets[0].Completed = 1
+	result.TimeBuckets[0].Buckets = latency.buckets
+	result.TimeBuckets[0].Latency = latency.summary()
+	finishTimeBuckets(result.TimeBuckets)
 	reply := clientReply{Phase: "timed", PID: 7, Result: &result}
 	err := validateClientReply(reply, "timed", config, 7)
 	if err != nil {

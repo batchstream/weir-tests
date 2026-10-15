@@ -39,21 +39,23 @@ type expectedRange struct {
 }
 
 type ClientProcessResult struct {
-	Phase        string          `json:"phase"`
-	PID          int             `json:"pid"`
-	Threads      int             `json:"concurrent_workers"`
-	WorkerOffset int             `json:"worker_offset"`
-	PoolLimit    int             `json:"native_connection_pool_limit"`
-	GoMaxProcs   int             `json:"gomaxprocs"`
-	StartLagNS   int64           `json:"start_lag_ns"`
-	Result       Result          `json:"result"`
-	Reads        uint64          `json:"reads"`
-	Writes       uint64          `json:"writes"`
-	Requests     uint64          `json:"business_requests"`
-	Buckets      [256]uint64     `json:"latency_histogram_buckets"`
-	Expected     []expectedRange `json:"expected_record_ranges"`
-	Exited       bool            `json:"owned_process_exited"`
-	ExitError    string          `json:"owned_process_exit_error,omitempty"`
+	Phase           string          `json:"phase"`
+	PID             int             `json:"pid"`
+	Threads         int             `json:"concurrent_workers"`
+	WorkerOffset    int             `json:"worker_offset"`
+	PoolLimit       int             `json:"native_connection_pool_limit"`
+	GoMaxProcs      int             `json:"gomaxprocs"`
+	StartLagNS      int64           `json:"start_lag_ns"`
+	PhaseDurationNS int64           `json:"phase_duration_ns"`
+	TimeBuckets     []TimeBucket    `json:"time_buckets,omitempty"`
+	Result          Result          `json:"result"`
+	Reads           uint64          `json:"reads"`
+	Writes          uint64          `json:"writes"`
+	Requests        uint64          `json:"business_requests"`
+	Buckets         [256]uint64     `json:"latency_histogram_buckets"`
+	Expected        []expectedRange `json:"expected_record_ranges"`
+	Exited          bool            `json:"owned_process_exited"`
+	ExitError       string          `json:"owned_process_exit_error,omitempty"`
 }
 
 type clientReply struct {
@@ -138,11 +140,16 @@ type singleMeasureOptions struct {
 func measureSingleRequests(ctx context.Context, opts singleMeasureOptions) ClientProcessResult {
 	workers := make([]workerResult, opts.Threads)
 	reads, writes := make([]uint64, opts.Threads), make([]uint64, opts.Threads)
+	workerBuckets := make([][]TimeBucket, opts.Threads)
+	for index := range workerBuckets {
+		workerBuckets[index] = newTimeBuckets(opts.Command.DurationNS, opts.Command.Phase == "timed")
+	}
 	barrier := make(chan struct{})
 	var ready, joined sync.WaitGroup
 	ready.Add(opts.Threads)
 	joined.Add(opts.Threads)
 	var deadline time.Time
+	var commonStart time.Time
 	for index := range opts.Threads {
 		go func() {
 			defer joined.Done()
@@ -154,11 +161,18 @@ func measureSingleRequests(ctx context.Context, opts singleMeasureOptions) Clien
 				operation := opts.State.nextSingle(global)
 				callCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
 				began := time.Now()
+				if bucket := timeBucketAt(workerBuckets[index], began.Sub(commonStart).Nanoseconds()); bucket != nil {
+					bucket.Offered++
+				}
 				outcome := opts.Executor.Execute(callCtx, operation)
-				worker.hist.add(time.Since(began))
-				if outcome.Status != workload.Success && errors.Is(callCtx.Err(), context.DeadlineExceeded) {
+				elapsed := time.Since(began)
+				worker.hist.add(elapsed)
+				timedOut := outcome.Status != workload.Success && errors.Is(callCtx.Err(), context.DeadlineExceeded)
+				if timedOut {
 					worker.result.Timeouts++
 				}
+				event := timeBucketOutcome{OffsetNS: began.Sub(commonStart).Nanoseconds() + elapsed.Nanoseconds(), Latency: elapsed, Items: 1, Failed: outcome.Status != workload.Success, Unknown: outcome.Status == workload.Indeterminate, TimedOut: timedOut}
+				recordTimeBucketOutcome(workerBuckets[index], event)
 				cancel()
 				recordOutcome(&worker.result, outcome)
 				if operation.Write {
@@ -184,7 +198,7 @@ func measureSingleRequests(ctx context.Context, opts singleMeasureOptions) Clien
 	}
 	started := time.Now()
 	lag := time.Duration(started.UnixNano() - opts.Command.StartUnixNS)
-	commonStart := started.Add(-lag)
+	commonStart = started.Add(-lag)
 	deadline = commonStart.Add(time.Duration(opts.Command.DurationNS))
 	if lag > 100*time.Millisecond {
 		deadline = started
@@ -195,7 +209,7 @@ func measureSingleRequests(ctx context.Context, opts singleMeasureOptions) Clien
 	if lag > 100*time.Millisecond {
 		base.ErrorExamples = append(base.ErrorExamples, "client phase start lag exceeded 100ms; measurement invalid")
 	}
-	result := ClientProcessResult{PID: os.Getpid(), Threads: opts.Threads, PoolLimit: opts.Threads, WorkerOffset: opts.WorkerOffset, GoMaxProcs: runtime.GOMAXPROCS(0), StartLagNS: started.UnixNano() - opts.Command.StartUnixNS, Result: base}
+	result := ClientProcessResult{PID: os.Getpid(), Threads: opts.Threads, PoolLimit: opts.Threads, WorkerOffset: opts.WorkerOffset, GoMaxProcs: runtime.GOMAXPROCS(0), StartLagNS: started.UnixNano() - opts.Command.StartUnixNS, PhaseDurationNS: opts.Command.DurationNS, TimeBuckets: newTimeBuckets(opts.Command.DurationNS, opts.Command.Phase == "timed"), Result: base}
 	result.Phase = opts.Command.Phase
 	if opts.Executor.Name() != "direct" {
 		result.PoolLimit = 0
@@ -206,6 +220,7 @@ func measureSingleRequests(ctx context.Context, opts singleMeasureOptions) Clien
 		result.Reads += reads[index]
 		result.Writes += writes[index]
 		combined.merge(&worker.hist)
+		mergeTimeBuckets(result.TimeBuckets, workerBuckets[index])
 		global := &opts.State.workers[opts.WorkerOffset+index]
 		expected := expectedRange{Start: global.start, Revisions: global.revisions}
 		result.Expected = append(result.Expected, expected)
@@ -215,6 +230,7 @@ func measureSingleRequests(ctx context.Context, opts singleMeasureOptions) Clien
 	result.Result.OperationsPerSec = float64(result.Result.Succeeded) * 1e9 / float64(result.Result.ElapsedNS)
 	result.Result.Latency = combined.summary()
 	result.Buckets = combined.buckets
+	finishTimeBuckets(result.TimeBuckets)
 	return result
 }
 
@@ -295,6 +311,11 @@ func validateClientReply(reply clientReply, phase string, config clientConfig, p
 	}
 	if count != r.Result.Attempted || r.Result.Latency.Samples != count {
 		return errors.New("independent client latency count mismatch")
+	}
+	if phase == "timed" {
+		totals := TimeBucket{Offered: r.Requests, Completed: r.Result.Succeeded, Failed: r.Result.Errors + r.Result.Indeterminate, Unknown: r.Result.Indeterminate, TimedOut: r.Result.Timeouts}
+		options := timeBucketAudit{Buckets: r.TimeBuckets, DurationNS: r.PhaseDurationNS, ItemsPerCall: 1, Totals: totals, Latency: r.Result.Latency, Histogram: r.Buckets}
+		return auditTimeBuckets(options)
 	}
 	return nil
 }

@@ -41,15 +41,16 @@ type crawlerWorkerResult struct {
 	PID                                                                               int                      `json:"pid"`
 	Worker                                                                            int                      `json:"worker"`
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
-	QueuePeak                                                                         int         `json:"queue_peak_pages"`
-	MaxGeneratorLagNS                                                                 int64       `json:"max_generator_lag_ns"`
-	MaxDispatchLagNS                                                                  int64       `json:"max_dispatch_lag_ns"`
-	ElapsedNS                                                                         int64       `json:"elapsed_ns"`
-	ErrorExamples                                                                     []string    `json:"error_examples,omitempty"`
-	Latency                                                                           Latency     `json:"planned_to_visible_latency"`
-	ServiceLatency                                                                    Latency     `json:"dispatch_to_visible_latency"`
-	Buckets                                                                           [256]uint64 `json:"planned_to_visible_buckets"`
-	ServiceBuckets                                                                    [256]uint64 `json:"dispatch_to_visible_buckets"`
+	QueuePeak                                                                         int          `json:"queue_peak_pages"`
+	MaxGeneratorLagNS                                                                 int64        `json:"max_generator_lag_ns"`
+	MaxDispatchLagNS                                                                  int64        `json:"max_dispatch_lag_ns"`
+	ElapsedNS                                                                         int64        `json:"elapsed_ns"`
+	ErrorExamples                                                                     []string     `json:"error_examples,omitempty"`
+	Latency                                                                           Latency      `json:"planned_to_visible_latency"`
+	ServiceLatency                                                                    Latency      `json:"dispatch_to_visible_latency"`
+	Buckets                                                                           [256]uint64  `json:"planned_to_visible_buckets"`
+	ServiceBuckets                                                                    [256]uint64  `json:"dispatch_to_visible_buckets"`
+	TimeBuckets                                                                       []TimeBucket `json:"time_buckets,omitempty"`
 }
 type crawlerReply struct {
 	Visibility          string
@@ -410,6 +411,13 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawlerWorkerResult {
 	results := make([]crawlerWorkerResult, c.config.Threads)
 	queues := make([]chan crawlerJob, len(results))
+	workerBuckets := make([][]TimeBucket, len(results))
+	type arrivalCounts struct{ offered, rejected, invalidOffsets uint64 }
+	arrivals := make([][]arrivalCounts, len(results))
+	for index := range workerBuckets {
+		workerBuckets[index] = newTimeBuckets(phase.DurationNS, phase.Phase == "timed")
+		arrivals[index] = make([]arrivalCounts, len(workerBuckets[index]))
+	}
 	var workers sync.WaitGroup
 	for index := range results {
 		queue := make(chan crawlerJob, c.config.QueuePages)
@@ -417,7 +425,7 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 		workers.Add(1)
 		go func() {
 			defer workers.Done()
-			result := crawlerWorkerResult{PID: os.Getpid(), Worker: c.config.Offset + index}
+			result := crawlerWorkerResult{PID: os.Getpid(), Worker: c.config.Offset + index, TimeBuckets: workerBuckets[index]}
 			var latency, service histogram
 			var applications crawlerApplicationLedger
 			for job := range queue {
@@ -446,12 +454,15 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 				latency.add(time.Duration(finished.UnixNano() - job.ScheduledNS))
 				service.add(finished.Sub(dispatch))
 				result.ElapsedNS = max(result.ElapsedNS, finished.UnixNano()-phase.StartNS)
+				timedOut := err != nil && (errors.Is(err, context.DeadlineExceeded) || finished.After(deadline))
+				event := timeBucketOutcome{OffsetNS: finished.UnixNano() - phase.StartNS, Latency: time.Duration(finished.UnixNano() - job.ScheduledNS), Items: uint64(c.config.PageSize), Failed: err != nil, Unknown: err != nil && unknown, TimedOut: timedOut}
+				recordTimeBucketOutcome(result.TimeBuckets, event)
 				if err != nil {
 					result.Failed += uint64(c.config.PageSize)
 					if unknown {
 						result.Indeterminate += uint64(c.config.PageSize)
 					}
-					if errors.Is(err, context.DeadlineExceeded) || finished.After(deadline) {
+					if timedOut {
 						result.TimedOut += uint64(c.config.PageSize)
 					}
 					if len(result.ErrorExamples) < 3 {
@@ -510,12 +521,23 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 			}
 			lags[worker] = max(lags[worker], time.Now().UnixNano()-scheduled)
 			offered[worker] += uint64(c.config.PageSize)
+			var arrival *arrivalCounts
+			if len(arrivals[worker]) > 0 {
+				arrival = &arrivals[worker][timeBucketIndex(workerBuckets[worker], scheduled-phase.StartNS)]
+				arrival.offered += uint64(c.config.PageSize)
+				if scheduled < phase.StartNS {
+					arrival.invalidOffsets++
+				}
+			}
 			job := crawlerJob{Page: ordinal / len(results), ScheduledNS: scheduled}
 			select {
 			case queues[worker] <- job:
 				peak[worker] = max(peak[worker], len(queues[worker]))
 			default:
 				rejected[worker] += uint64(c.config.PageSize)
+				if arrival != nil {
+					arrival.rejected += uint64(c.config.PageSize)
+				}
 			}
 		}
 	} else {
@@ -530,6 +552,13 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 					select {
 					case queue <- job:
 						offered[index] += uint64(c.config.PageSize)
+						if len(arrivals[index]) > 0 {
+							arrival := &arrivals[index][timeBucketIndex(workerBuckets[index], job.ScheduledNS-phase.StartNS)]
+							arrival.offered += uint64(c.config.PageSize)
+							if job.ScheduledNS < phase.StartNS {
+								arrival.invalidOffsets++
+							}
+						}
 						peak[index] = max(peak[index], len(queue))
 					case <-ctx.Done():
 						return
@@ -548,6 +577,13 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 		results[index].Rejected = rejected[index]
 		results[index].QueuePeak = peak[index]
 		results[index].MaxGeneratorLagNS = lags[index]
+		for bin, arrival := range arrivals[index] {
+			bucket := &results[index].TimeBuckets[bin]
+			bucket.Offered = arrival.offered
+			bucket.Rejected = arrival.rejected
+			bucket.InvalidOffsets += arrival.invalidOffsets
+		}
+		finishTimeBuckets(results[index].TimeBuckets)
 	}
 	return results
 }
