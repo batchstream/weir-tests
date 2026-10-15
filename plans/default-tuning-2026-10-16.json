@@ -1,0 +1,2571 @@
+{
+  "schema": 1,
+  "server_source": "37cbfd41f8b50daeda3b236244d66381330ea62d",
+  "description": "Prospective default selection; see results/default-tuning-2026-10-16/PLAN.md",
+  "case_sets": {
+    "select-pure": [
+      {
+        "id": "c128-w5ms-s1",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 1
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w0s-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w10ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s64",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 64
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w1ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s8",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 8
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c32-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c32-w0s-s0",
+        "kind": "write",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w10ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w1ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w2ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "2ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w20ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w1ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w10ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "c512-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 512,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      }
+    ],
+    "select-partial": [
+      {
+        "id": "c128-w5ms-s1",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 1
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w0s-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c256-w10ms-s4",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s64",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 64
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w1ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s8",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 8
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c32-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c32-w0s-s0",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c256-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w10ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c64-w1ms-s4",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s4",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c64-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w2ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "2ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w20ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s32",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c256-w1ms-s32",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c64-w10ms-s32",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c512-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 512,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "partial-update",
+        "rate": 512,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "page_size": 1,
+        "http_observer": "disabled"
+      }
+    ],
+    "select-crawler": [
+      {
+        "id": "c128-w5ms-s1",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 1
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w0s-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c256-w10ms-s4",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s64",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 64
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w1ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s8",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 8
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c32-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c32-w0s-s0",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c256-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w10ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c64-w1ms-s4",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s4",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 4
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c64-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w2ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "2ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w20ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c128-w5ms-s32",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c256-w1ms-s32",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c64-w10ms-s32",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 32
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      },
+      {
+        "id": "c512-w5ms-s16",
+        "kind": "crawler",
+        "batching": {
+          "max_operations": 512,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "profile": "two-step",
+        "rate": 68,
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "page_size": 1,
+        "http_observer": "disabled"
+      }
+    ],
+    "select-search-read": [
+      {
+        "id": "c128-w5ms-s1",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 1
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w0s-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w10ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 4
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s64",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 64
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w1ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s8",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 8
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c32-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c32-w0s-s0",
+        "kind": "write",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w10ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w1ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 4
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 4
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w2ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "2ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w20ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 32
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w1ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 32
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w10ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 32
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c512-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 512,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      }
+    ],
+    "select-mongo-read": [
+      {
+        "id": "c128-w5ms-s1",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 1
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w0s-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w10ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 4
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s64",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 64
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w1ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s8",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 8
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c32-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c32-w0s-s0",
+        "kind": "write",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w10ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w1ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 4
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s4",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 4
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w2ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "2ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w20ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c128-w5ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 32
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c256-w1ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 256,
+          "max_bytes": 8388608,
+          "max_wait": "1ms",
+          "max_in_flight": 32
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c64-w10ms-s32",
+        "kind": "write",
+        "batching": {
+          "max_operations": 64,
+          "max_bytes": 8388608,
+          "max_wait": "10ms",
+          "max_in_flight": 32
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      },
+      {
+        "id": "c512-w5ms-s16",
+        "kind": "write",
+        "batching": {
+          "max_operations": 512,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "5s",
+        "duration": "10s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "mongo",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "levels": [
+          4,
+          128
+        ],
+        "write_percent": 0,
+        "lua_mutations": false
+      }
+    ],
+    "select-bytes": [
+      {
+        "id": "bytes262144",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 262144,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 65536,
+        "records": 2048,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "bytes1048576",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 1048576,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 65536,
+        "records": 2048,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "bytes4194304",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 65536,
+        "records": 2048,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      },
+      {
+        "id": "bytes8388608",
+        "kind": "write",
+        "batching": {
+          "max_operations": 128,
+          "max_bytes": 8388608,
+          "max_wait": "5ms",
+          "max_in_flight": 16
+        },
+        "warmup": "10s",
+        "duration": "20s",
+        "rounds": 1,
+        "database_cpus": 1,
+        "client_processes": 4,
+        "backend": "search",
+        "payload_bytes": 65536,
+        "records": 2048,
+        "levels": [
+          512
+        ],
+        "write_percent": 100,
+        "lua_mutations": false
+      }
+    ]
+  }
+}
