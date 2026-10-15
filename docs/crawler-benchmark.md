@@ -6,6 +6,29 @@ The three same-runner paths are native Elasticsearch, current Weir, and optimize
 
 An exclusive `partial-update` profile reuses the experiment machinery for a separate batching mechanism control. It is not a PSE-equivalent workload and is never pooled with the product/seller results.
 
+Partial updates can explicitly select `application_acknowledged` or `query_visible`
+completion and a retained seed-document padding size. Native and Weir use the same
+patch and completion mode. Application-acknowledged stages perform an explicit,
+checked postflight refresh after timed CPU and database snapshots, before full
+search verification. Two-step and combined business profiles retain query-visible
+completion. Reports use schema 2; archived experiments retain their original
+frozen-client auditor.
+
+The candidate's operation count, input/final-body byte target, collection wait and
+execution concurrency are independent experiment controls. Every stage retains its
+owned routes, and the auditor checks these controls plus actual before/after
+wait/concurrency gauges. The client reconstructs every expected seeded document
+from acknowledged ordinals after measurement; workers no longer clone/reconcile an
+expected document on every timed acknowledgement. Arrival deadlines, bounded
+worker queues and generator-lag qualification remain in effect.
+
+The separate `Search write batching coverage` workflow reuses single-record OS
+clients for pure index writes with application acknowledgement. Its finite
+calibration changes operation count, wait and execution concurrency separately;
+its independent confirmation tests a prospectively fixed candidate. These write
+operations are not crawler business products. Neither calibration nor a single
+successful scenario establishes universally optimal defaults.
+
 ## Business data and semantics
 
 The frozen rules come from PSE product/offer merges (`7f36b501cded06a1bcc7484575346bb9c4d6311b`), with the combined reconciliation change in `8725e4743c6ddba66132874e0e0fe9d393ab4a85`. The Weir primitive translation started from the existing independently tested PSE rules at `283940ef442b479440e45b39c86988351b92d7b5`. Every Lua source and the native script has a SHA-256 in the report. The benchmark imports no private PSE data or deployment settings.

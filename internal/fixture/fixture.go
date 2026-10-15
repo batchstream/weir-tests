@@ -37,6 +37,7 @@ type Options struct {
 	OwnerCount          int
 	DiscoveryOnly       bool
 	BatchSize           int
+	BatchBytes          int
 	BatchMaxWait        time.Duration
 	MaxInFlight         int
 	SearchRetryAttempts int
@@ -162,7 +163,7 @@ func validateOptions(options Options) (Options, error) {
 	if options.OwnerCount < 1 || options.OwnerCount > 8 {
 		return options, errors.New("OwnerCount must be between 1 and 8")
 	}
-	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
+	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.BatchBytes < 0 || options.BatchBytes > 32<<20 || options.BatchBytes > 0 && options.BatchSize == 0 || options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
 		return options, errors.New("invalid batching, transport or exchange limit")
 	}
 	return options, nil
@@ -276,6 +277,9 @@ func (c *Cluster) writeConfiguration(index int) error {
 			store := map[string]any{"name": backend, "backend": adapter}
 			if c.options.BatchSize > 0 {
 				batching := map[string]any{"max_operations": c.options.BatchSize}
+				if c.options.BatchBytes > 0 {
+					batching["max_bytes"] = fmt.Sprintf("%dB", c.options.BatchBytes)
+				}
 				if c.options.BatchMaxWait > 0 {
 					batching["max_wait"] = c.options.BatchMaxWait.String()
 				}
@@ -480,6 +484,8 @@ func (c *Cluster) RestartNode(ctx context.Context, index int) error {
 
 type ServerReplacement struct {
 	Binary       string
+	BatchSize    int
+	BatchBytes   int
 	MaxInFlight  int
 	BatchMaxWait time.Duration
 }
@@ -494,6 +500,10 @@ func (c *Cluster) ReplaceServer(ctx context.Context, replacement ServerReplaceme
 	}
 	options := c.options
 	options.WeirBinary = replacement.Binary
+	if replacement.BatchSize > 0 {
+		options.BatchSize = replacement.BatchSize
+	}
+	options.BatchBytes = replacement.BatchBytes
 	options.MaxInFlight = replacement.MaxInFlight
 	options.BatchMaxWait = replacement.BatchMaxWait
 	validated, err := validateOptions(options)

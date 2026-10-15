@@ -19,6 +19,8 @@ import (
 
 type crawlerClientConfig struct {
 	InputShape                                                     string
+	Visibility                                                     string
+	SeedPaddingBytes                                               int
 	Path, Profile, SearchURL, Seed, Namespace                      string
 	Offset, Threads, PageSize, Processes, ProcessIndex, QueuePages int
 	TimeoutNS                                                      int64
@@ -39,18 +41,19 @@ type crawlerWorkerResult struct {
 	PID                                                                               int                      `json:"pid"`
 	Worker                                                                            int                      `json:"worker"`
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
-	QueuePeak                                                                         int                       `json:"queue_peak_pages"`
-	MaxGeneratorLagNS                                                                 int64                     `json:"max_generator_lag_ns"`
-	MaxDispatchLagNS                                                                  int64                     `json:"max_dispatch_lag_ns"`
-	ElapsedNS                                                                         int64                     `json:"elapsed_ns"`
-	ErrorExamples                                                                     []string                  `json:"error_examples,omitempty"`
-	Latency                                                                           Latency                   `json:"planned_to_visible_latency"`
-	ServiceLatency                                                                    Latency                   `json:"dispatch_to_visible_latency"`
-	Buckets                                                                           [256]uint64               `json:"planned_to_visible_buckets"`
-	ServiceBuckets                                                                    [256]uint64               `json:"dispatch_to_visible_buckets"`
-	Expected                                                                          map[string]map[string]any `json:"expected_documents,omitempty"`
+	QueuePeak                                                                         int         `json:"queue_peak_pages"`
+	MaxGeneratorLagNS                                                                 int64       `json:"max_generator_lag_ns"`
+	MaxDispatchLagNS                                                                  int64       `json:"max_dispatch_lag_ns"`
+	ElapsedNS                                                                         int64       `json:"elapsed_ns"`
+	ErrorExamples                                                                     []string    `json:"error_examples,omitempty"`
+	Latency                                                                           Latency     `json:"planned_to_visible_latency"`
+	ServiceLatency                                                                    Latency     `json:"dispatch_to_visible_latency"`
+	Buckets                                                                           [256]uint64 `json:"planned_to_visible_buckets"`
+	ServiceBuckets                                                                    [256]uint64 `json:"dispatch_to_visible_buckets"`
 }
 type crawlerReply struct {
+	Visibility          string
+	SeedPaddingBytes    int
 	InputShape          string
 	NativePoolLimit     int
 	ApplicationRequests crawlerApplicationCounts
@@ -65,6 +68,12 @@ type crawlerClient struct {
 }
 
 func newCrawlerClient(ctx context.Context, config crawlerClientConfig) (*crawlerClient, error) {
+	if config.Visibility == "" {
+		config.Visibility = "query_visible"
+	}
+	if config.Visibility != "query_visible" && config.Visibility != "application_acknowledged" || config.Visibility == "application_acknowledged" && config.Profile != "partial-update" || config.SeedPaddingBytes < 0 || config.SeedPaddingBytes > 1<<20 {
+		return nil, errors.New("invalid crawler client visibility or seed padding")
+	}
 	if config.InputShape == "" {
 		config.InputShape = "page"
 	}
@@ -311,6 +320,9 @@ func (c *crawlerClient) executeSingleNative(ctx context.Context, mutation crawle
 	query := url.Values{"refresh": {"wait_for"}, "wait_for_active_shards": {"1"}, "timeout": {"10s"}, "retry_on_conflict": {"3"}}
 	if c.config.Profile == "partial-update" {
 		query.Set("retry_on_conflict", "0")
+		if c.config.Visibility == "application_acknowledged" {
+			query.Set("refresh", "false")
+		}
 	}
 	request := crawlerHTTPRequest{Method: http.MethodPost, URL: c.config.SearchURL + "/" + crawlerIndex(c.config.Namespace, mutation.Product) + "/_update/" + url.PathEscape(mutation.ID) + "?" + query.Encode(), Body: body}
 	ledger.record(1)
@@ -366,7 +378,7 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 			pool *= 3
 		}
 	}
-	ready := crawlerReply{Phase: "ready", PID: os.Getpid(), InputShape: client.config.InputShape, NativePoolLimit: pool}
+	ready := crawlerReply{Phase: "ready", PID: os.Getpid(), Visibility: client.config.Visibility, SeedPaddingBytes: client.config.SeedPaddingBytes, InputShape: client.config.InputShape, NativePoolLimit: pool}
 	if err := encoder.Encode(ready); err != nil {
 		return err
 	}
@@ -379,21 +391,12 @@ func RunCrawlerWorker(ctx context.Context, input io.Reader, output io.Writer) er
 			return errors.New("invalid crawler phase")
 		}
 		replies := client.measure(ctx, command)
-		expected := crawlerReply{Phase: phase + "-expected", PID: os.Getpid(), Workers: make([]crawlerWorkerResult, len(replies))}
-		for index := range replies {
-			expected.Workers[index].Worker = replies[index].Worker
-			expected.Workers[index].Expected = replies[index].Expected
-			replies[index].Expected = nil
-		}
 		var applicationCounts crawlerApplicationCounts
 		for _, worker := range replies {
 			mergeCrawlerApplicationCounts(&applicationCounts, worker.ApplicationRequests)
 		}
-		reply := crawlerReply{Phase: phase, PID: os.Getpid(), Workers: replies, InputShape: client.config.InputShape, NativePoolLimit: pool, ApplicationRequests: applicationCounts}
+		reply := crawlerReply{Phase: phase, PID: os.Getpid(), Workers: replies, Visibility: client.config.Visibility, SeedPaddingBytes: client.config.SeedPaddingBytes, InputShape: client.config.InputShape, NativePoolLimit: pool, ApplicationRequests: applicationCounts}
 		if err := encoder.Encode(reply); err != nil {
-			return err
-		}
-		if err := encoder.Encode(expected); err != nil {
 			return err
 		}
 	}
@@ -414,7 +417,7 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 		workers.Add(1)
 		go func() {
 			defer workers.Done()
-			result := crawlerWorkerResult{PID: os.Getpid(), Worker: c.config.Offset + index, Expected: map[string]map[string]any{}}
+			result := crawlerWorkerResult{PID: os.Getpid(), Worker: c.config.Offset + index}
 			var latency, service histogram
 			var applications crawlerApplicationLedger
 			for job := range queue {
@@ -463,17 +466,6 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 				} else {
 					result.Late += uint64(c.config.PageSize)
 				}
-				for _, mutation := range mutations {
-					current := result.Expected[mutation.ID]
-					if current == nil {
-						current = crawlerDocument(mutation.ID, mutation.Product)
-					}
-					if c.config.Profile == "partial-update" {
-						result.Expected[mutation.ID] = partialUpdateMerge(current, mutation)
-					} else {
-						result.Expected[mutation.ID] = crawlerMerge(current, mutation)
-					}
-				}
 			}
 			result.ApplicationRequests = applications.snapshot()
 			result.Latency = latency.summary()
@@ -498,6 +490,9 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 	peak := make([]int, len(results))
 	lags := make([]int64, len(results))
 	if phase.ProductsPerSecond > 0 {
+		timer := time.NewTimer(time.Hour)
+		timer.Stop()
+		defer timer.Stop()
 		for ordinal := 0; ctx.Err() == nil; ordinal++ {
 			worker := ordinal % len(results)
 			scheduled := phase.StartNS + int64(ordinal*c.config.Processes+c.config.ProcessIndex)*int64(c.config.PageSize)*int64(time.Second)/int64(phase.ProductsPerSecond)
@@ -506,7 +501,7 @@ func (c *crawlerClient) measure(ctx context.Context, phase crawlerPhase) []crawl
 			}
 			wait := time.Until(time.Unix(0, scheduled))
 			if wait > 0 {
-				timer := time.NewTimer(wait)
+				timer.Reset(wait)
 				select {
 				case <-timer.C:
 				case <-ctx.Done():

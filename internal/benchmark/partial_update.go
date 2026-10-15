@@ -44,7 +44,11 @@ func partialUpdateRequest(config crawlerClientConfig, mutation crawlerMutation) 
 		return nil, err
 	}
 	expression := &weir.Document{ContentType: "application/vnd.weir.search-update.v1+json", Data: raw}
-	visibility := &weir.MutationOptions{Visibility: weir.MutationQueryVisible}
+	completion := weir.MutationQueryVisible
+	if config.Visibility == "application_acknowledged" {
+		completion = weir.MutationApplicationAcknowledged
+	}
+	visibility := &weir.MutationOptions{Visibility: completion}
 	request := &weir.MutateRequest{Resource: crawlerIndex(config.Namespace, true) + "/s:" + mutation.ID, Action: weir.MutationAtomicTransform, BackendExpression: expression, Options: visibility}
 	return request, nil
 }
