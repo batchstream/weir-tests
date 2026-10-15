@@ -124,9 +124,9 @@ The finite independent confirmation inventory is:
 - Pure writes, selected defaults versus native: concurrency 128/512/1024,
   database quota 0.25 CPU and separately 1 CPU, three alternating rounds,
   60s warmup +60s timed. Eighteen timed stages per quota.
-- Partial updates at 0.25 CPU: offered rates 128/256/512 updates/s, 512 workers,
+- Partial updates at 0.25 CPU: offered rates 128/256/512/1024/2048/4096 updates/s, 512 workers,
   three rotating paired rounds, 60s warmup +60s arrivals.
-- Query-visible crawler at 0.25 CPU: offered rates 34/68/136 products/s,
+- Query-visible crawler at 0.25 CPU: offered rates 34/68/136/272/544 products/s,
   512 workers, three rotating paired rounds, 60s warmup +60s arrivals.
 - Partial512 and crawler68 at 1 CPU: matching previous representative loads,
   three paired rounds, 60s warmup +60s arrivals.

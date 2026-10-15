@@ -372,7 +372,11 @@ def formal_results(options):
             if entry['phase'] == 'soak':
                 for row in points:
                     if row['path'] in ('weir', 'optimized'):
-                        sustained.append(dict(label=entry['label'], case_id=case['id'], decision=capacity_rules.soak(dict(row=row, kind=case['kind'], histogram=helpers.histogram))))
+                        try:
+                            decision = capacity_rules.soak(dict(row=row, kind=case['kind'], histogram=helpers.histogram))
+                        except (KeyError, TypeError, ValueError) as error:
+                            decision = dict(passed=False, errors=[str(error)])
+                        sustained.append(dict(label=entry['label'], case_id=case['id'], decision=decision))
             elif case['kind'] == 'write' and case['backend'] == 'search' and case['write_percent'] == 100 and not case.get('lua_mutations') and len(case['levels']) >= 2:
                 capacity.append(dict(label=entry['label'], case_id=case['id'], decision=capacity_rules.capacity(dict(rows=points, levels=case['levels']))))
             for row in points:
