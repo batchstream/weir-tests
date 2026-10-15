@@ -79,7 +79,59 @@ class SelectionTests(unittest.TestCase):
         self.assertFalse(outcome['binding'][1]['binding_demonstrated'])
 
 
+class ReportedDurationTests(unittest.TestCase):
+    def test_go_report_durations_are_exact_integer_nanoseconds(self):
+        cases = [('0s', 0), ('60s', 60_000_000_000), ('1m0s', 60_000_000_000),
+                 ('5m0s', 300_000_000_000), ('1h2m3.000000004s', 3_723_000_000_004),
+                 ('1.25ms', 1_250_000), ('1.5us', 1500), ('1.5µs', 1500), ('1.5μs', 1500),
+                 ('0.000000001s', 1), ('2562047h47m16.854775807s', 9_223_372_036_854_775_807)]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertEqual(analysis.reported_duration_ns(value), expected)
+
+    def test_invalid_negative_overflow_and_fractional_nanoseconds_fail_closed(self):
+        cases = [None, 60, True, '', '0', '-1s', '+1s', ' 1m0s', '1m 0s', '1m0sx',
+                 '1d', '1e3s', 'NaNs', 'Infms', '1.1ns', '0.0000000001s', '0.5ns0.5ns',
+                 '9223372036.854775807000000000000000000001s',
+                 '9223372036854775808ns', '2562047h47m16.854775808s']
+        for value in cases:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                analysis.reported_duration_ns(value)
+
+    def test_compound_raw_support_does_not_relax_plan_duration_validation(self):
+        self.assertEqual(analysis.reported_duration_ns('1m0s'), analysis.runner.duration_ns('60s'))
+        self.assertNotEqual(analysis.reported_duration_ns('1m0.000000001s'), analysis.runner.duration_ns('60s'))
+        with self.assertRaises(ValueError):
+            analysis.runner.duration_ns('1m0s')
+
+
 class RawPreflightTests(unittest.TestCase):
+    def test_four_real_confirmation_cases_match_declared_durations(self):
+        manifest = json.loads((FOLDER / 'manifest.json').read_text())
+        expected_sets = {'confirm-pure-q025', 'confirm-pure-q1', 'confirm-search-large-body'}
+        entries = [entry for entry in manifest['entries'] if entry['case_set'] in expected_sets]
+        self.assertEqual({entry['case_set'] for entry in entries}, expected_sets)
+        checked = []
+        for entry in entries:
+            plan = json.loads(analysis.committed(analysis.REPO, entry['client_source'], entry['plan_path']))
+            folder = FOLDER / 'raw' / entry['label']
+            for case in plan['case_sets'][entry['case_set']]:
+                report = analysis.load(analysis.prior.one(folder, case['id'] + '/measurement/search.json.gz'))
+                params = report['parameters']
+                for report_field, plan_field in [('warmup_duration', 'warmup'), ('measurement_duration', 'duration')]:
+                    with self.subTest(label=entry['label'], case_id=case['id'], field=report_field):
+                        self.assertEqual(params[report_field], '1m0s')
+                        self.assertEqual(analysis.reported_duration_ns(params[report_field]), analysis.runner.duration_ns(case[plan_field]))
+                        with self.assertRaises(ValueError):
+                            analysis.runner.duration_ns(params[report_field])
+                receipt = analysis.load(analysis.prior.one(folder, case['id'] + '/receipt.json.gz'))
+                options = dict(folder=folder, entry=entry, case=case, receipt=receipt)
+                rows = analysis.process_write(options)
+                self.assertEqual(len(rows), len(case['levels']) * case['rounds'] * 2)
+                checked.append((entry['label'], case['id']))
+        self.assertEqual(len(checked), 4)
+        self.assertEqual(len(set(checked)), 4)
+
     def test_real_mongo_read_has_no_search_http_observations(self):
         manifest = json.loads((FOLDER / 'manifest.json').read_text())
         entry = next(item for item in manifest['entries'] if item['case_set'] == 'select-mongo-read')

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Audit the prospective tuning inventory and apply frozen selection/capacity rules."""
 import argparse
+from fractions import Fraction
 import hashlib
 import importlib.util
 import json
 import math
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -33,6 +35,21 @@ require, load = helpers.require, helpers.load
 
 def checksum(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def reported_duration_ns(value):
+    require(isinstance(value, str), 'reported duration must be a nonnegative Go duration string')
+    parts = re.findall(r'([0-9]+(?:\.[0-9]+)?)(ns|us|µs|μs|ms|s|m|h)', value)
+    require(parts and ''.join(number + unit for number, unit in parts) == value, 'invalid reported Go duration')
+    factors = {'ns': 1, 'us': 1000, 'µs': 1000, 'μs': 1000, 'ms': 1000000,
+               's': 1000000000, 'm': 60000000000, 'h': 3600000000000}
+    total = 0
+    for number, unit in parts:
+        component = Fraction(number) * factors[unit]
+        require(component.denominator == 1, 'reported duration has fractional nanoseconds')
+        total += component.numerator
+        require(total <= 9223372036854775807, 'reported duration overflows int64 nanoseconds')
+    return total
 
 
 def committed(repository, source, name):
@@ -207,7 +224,7 @@ def process_write(options):
     prior.evidence.validate_report_provenance(report, receipt)
     runner.audit_live_batching(report, case)
     params, dataset = report['parameters'], report['parameters']['dataset']
-    require(params['concurrency_levels'] == case['levels'] and params['batch_sizes'] == [1] and params['paired_rounds'] == case['rounds'] and params['requested_write_percent'] == case['write_percent'] and params['client_process_count'] == case['client_processes'] and params['records_per_business_request'] == 1 and runner.duration_ns(params['warmup_duration']) == runner.duration_ns(case['warmup']) and runner.duration_ns(params['measurement_duration']) == runner.duration_ns(case['duration']), 'write workload parameters differ')
+    require(params['concurrency_levels'] == case['levels'] and params['batch_sizes'] == [1] and params['paired_rounds'] == case['rounds'] and params['requested_write_percent'] == case['write_percent'] and params['client_process_count'] == case['client_processes'] and params['records_per_business_request'] == 1 and reported_duration_ns(params['warmup_duration']) == runner.duration_ns(case['warmup']) and reported_duration_ns(params['measurement_duration']) == runner.duration_ns(case['duration']), 'write workload parameters differ')
     require(dataset['backend'] == backend and dataset['records'] == case['records'] and dataset['padding_bytes'] == case['payload_bytes'] and bool(dataset.get('lua_mutations')) == case.get('lua_mutations', False), 'write dataset differs')
     require(report['provenance'].get('weir_effective_config'), 'effective configuration missing')
     container = fixture_proof(dict(folder=folder, directory=report['provenance']['fixture_logs'], binary=receipt['server_binary_sha256'], backend=backend))
