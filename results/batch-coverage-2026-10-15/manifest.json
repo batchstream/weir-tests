@@ -105,5 +105,7 @@
       "planned_timed_stages": 9,
       "workflow_run": null
     }
-  ]
+  ],
+  "analysis_freeze_source": "2dab1408126d0d00de037d09b7e8189c2b8b9b5e",
+  "analysis_frozen_before_formal_dispatch": true
 }
