@@ -137,3 +137,59 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 		t.Fatal("ambiguous live gauge series were accepted")
 	}
 }
+
+func TestCrawlerDefaultPathOmitsControlsAndAuditsAllResolvedGauges(t *testing.T) {
+	opts := CrawlerOptions{AfterUseDefaults: true, CaptureEffectiveConfig: true,
+		AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
+		AfterBatchMaxWait: 5 * time.Millisecond, Paths: []string{"direct", "optimized"}}
+	if err := normalizeCrawlerControls(&opts); err != nil {
+		t.Fatal(err)
+	}
+	configuration := json.RawMessage(`{"stores":[{"name":"search"}]}`)
+	stage := crawlerStage{Path: "optimized", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait),
+		ServerConfiguration: configuration, ServerEffectiveConfiguration: "resolved owned settings"}
+	if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
+		t.Fatal("omitted defaults were not accepted", err)
+	}
+	labels := map[string]string{"store": "search"}
+	wait := observe.Metric{Name: "weir_store_batch_max_wait_seconds", Labels: labels, Value: .005}
+	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 16}
+	count := observe.Metric{Name: "weir_store_batch_max_operations", Labels: labels, Value: 128}
+	bytes := observe.Metric{Name: "weir_store_batch_max_bytes", Labels: labels, Value: 8 << 20}
+	snapshot := observe.Snapshot{Metrics: []observe.Metric{wait, cap, count, bytes}}
+	stage.ServerBefore, stage.ServerAfter = snapshot, snapshot
+	if err := auditCrawlerLiveControls(stage, opts); err != nil {
+		t.Fatal("declared defaults did not match resolved gauges", err)
+	}
+	stage.ServerAfter.Metrics = []observe.Metric{wait, cap, count}
+	if err := auditCrawlerLiveControls(stage, opts); err == nil {
+		t.Fatal("missing byte gauge hid unknown default", err)
+	}
+	stage.ServerConfiguration = crawlerTestConfiguration(t, opts, "optimized")
+	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
+		t.Fatal("an explicit override was presented as an omitted default")
+	}
+	stage.Path, stage.BatchMaxWaitNS = "current", 0
+	stage.ServerConfiguration = json.RawMessage(`{"stores":[{"name":"search","batching":{"max_operations":32,"max_bytes":"8388608B"}}]}`)
+	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
+		t.Fatal("legacy zero wait and zero slots were silently omitted")
+	}
+}
+
+func TestCrawlerPathsRejectUnknownOrDuplicateAndRetainDeclaredSubset(t *testing.T) {
+	for _, paths := range [][]string{{"direct", "optimized"}, {"optimized"}} {
+		opts := CrawlerOptions{Paths: paths}
+		if err := normalizeCrawlerControls(&opts); err != nil {
+			t.Fatal("valid selected paths rejected", paths, err)
+		}
+		if len(opts.Paths) != len(paths) {
+			t.Fatal("unselected path was added", opts.Paths)
+		}
+	}
+	for _, paths := range [][]string{{"direct", "direct"}, {"native"}} {
+		opts := CrawlerOptions{Paths: paths}
+		if err := normalizeCrawlerControls(&opts); err == nil {
+			t.Fatal("ambiguous path selection was accepted", paths)
+		}
+	}
+}

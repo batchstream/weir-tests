@@ -163,7 +163,7 @@ func validateOptions(options Options) (Options, error) {
 	if options.OwnerCount < 1 || options.OwnerCount > 8 {
 		return options, errors.New("OwnerCount must be between 1 and 8")
 	}
-	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.BatchBytes < 0 || options.BatchBytes > 32<<20 || options.BatchBytes > 0 && options.BatchSize == 0 || options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
+	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.BatchBytes < 0 || options.BatchBytes > 32<<20 || options.BatchBytes > 0 && options.BatchSize == 0 || options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.MaxInFlight > 0 && options.BatchSize == 0 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
 		return options, errors.New("invalid batching, transport or exchange limit")
 	}
 	return options, nil
@@ -276,16 +276,13 @@ func (c *Cluster) writeConfiguration(index int) error {
 			}
 			store := map[string]any{"name": backend, "backend": adapter}
 			if c.options.BatchSize > 0 {
-				batching := map[string]any{"max_operations": c.options.BatchSize}
-				if c.options.BatchBytes > 0 {
-					batching["max_bytes"] = fmt.Sprintf("%dB", c.options.BatchBytes)
+				batchBytes := c.options.BatchBytes
+				if batchBytes == 0 {
+					batchBytes = 8 << 20
 				}
-				if c.options.BatchMaxWait > 0 {
-					batching["max_wait"] = c.options.BatchMaxWait.String()
-				}
-				if c.options.MaxInFlight > 0 {
-					batching["max_in_flight"] = c.options.MaxInFlight
-				}
+				batching := map[string]any{"max_operations": c.options.BatchSize,
+					"max_bytes": fmt.Sprintf("%dB", batchBytes),
+					"max_wait":  c.options.BatchMaxWait.String(), "max_in_flight": c.options.MaxInFlight}
 				store["batching"] = batching
 			}
 			stores = append(stores, store)
@@ -297,6 +294,28 @@ func (c *Cluster) writeConfiguration(index int) error {
 
 func (c *Cluster) nodeFile(index int, suffix string) string {
 	return filepath.Join(c.Directory, fmt.Sprintf("node-%d-%s", index, suffix))
+}
+
+// EffectiveConfiguration records the owned binary's redacted resolved configuration.
+// It reads only files created by this fixture and does not query a running service.
+func (c *Cluster) EffectiveConfiguration(ctx context.Context, index int) (string, error) {
+	if index < 0 || index >= len(c.Nodes) {
+		return "", errors.New("node index out of range")
+	}
+	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	command := exec.CommandContext(checkCtx, c.options.WeirBinary, "check", "--effective", "--config", c.nodeFile(index, "config.json"), "--routes", c.nodeFile(index, "routes.json"))
+	raw, err := command.Output()
+	if err != nil {
+		return "", fmt.Errorf("owned effective configuration: %w", err)
+	}
+	if len(raw) == 0 || len(raw) > 1<<20 {
+		return "", errors.New("owned effective configuration is empty or exceeds 1 MiB")
+	}
+	if err := os.WriteFile(c.nodeFile(index, "effective.yaml"), raw, 0600); err != nil {
+		return "", err
+	}
+	return string(raw), nil
 }
 
 func writeJSON(path string, value any) error {
@@ -500,9 +519,7 @@ func (c *Cluster) ReplaceServer(ctx context.Context, replacement ServerReplaceme
 	}
 	options := c.options
 	options.WeirBinary = replacement.Binary
-	if replacement.BatchSize > 0 {
-		options.BatchSize = replacement.BatchSize
-	}
+	options.BatchSize = replacement.BatchSize
 	options.BatchBytes = replacement.BatchBytes
 	options.MaxInFlight = replacement.MaxInFlight
 	options.BatchMaxWait = replacement.BatchMaxWait

@@ -93,7 +93,8 @@ def rows(report):
     observer_mode = parameters.get('HTTPObserver') or 'enabled'
     modes = parameters.get('Modes') or ['fixed-rate', 'saturation']
     case_count = (len(parameters['Rates'] or []) if 'fixed-rate' in modes else 0) + (len(parameters['Concurrency']) if 'saturation' in modes else 0)
-    expected_stages = len(parameters['Profiles']) * case_count * parameters['Rounds'] * 3
+    paths = parameters.get('Paths') or ['direct', 'current', 'optimized']
+    expected_stages = len(parameters['Profiles']) * case_count * parameters['Rounds'] * len(paths)
     report_clean = not report.get('incomplete') and not report.get('cleanup_error') and len(report['Stages']) == expected_stages
     for stage in report['Stages']:
         success = stage['Completed']

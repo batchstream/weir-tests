@@ -55,6 +55,7 @@ type labOptions struct {
 	backendBatchWait  time.Duration
 	backendInFlight   int
 	luaMutations      bool
+	captureEffective  bool
 }
 
 func main() {
@@ -81,7 +82,7 @@ func main() {
 	flag.IntVar(&opts.writePercent, "write-percent", 10, "write fraction from 0 through 100")
 	flag.BoolVar(&opts.luaMutations, "lua-mutations", false, "single-record mutation: native atomic update pipeline/server script versus Weir Lua; no client batching")
 	flag.StringVar(&opts.mode, "mode", "saturation", "saturation sends independent single requests from OS client processes; bulk-saturation measures bulk overhead; fixed is a finite diagnostic")
-	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 512 in single-request mode")
+	flag.StringVar(&opts.levels, "concurrency-levels", "8,32,128", "ascending total client concurrency, at most 1024 in single-request mode; one level is diagnostic only")
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
 	flag.IntVar(&opts.clientProcesses, "client-processes", 4, "independent client OS processes; each level is evenly divided into concurrent workers and its own connection pool")
 	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 0, "batching.max_operations override; 0 uses server default, 1 disables aggregation")
@@ -94,6 +95,7 @@ func main() {
 	flag.IntVar(&opts.pendingRecords, "pending-records", 0, "transport.max_pending_records override; 0 uses server default")
 	flag.IntVar(&opts.exchangeBytes, "exchange-bytes", 0, "backend.max_exchange_bytes override; 0 uses server default")
 	flag.StringVar(&opts.serverReceipt, "server-receipt", "", "verified build receipt for an explicit local source server")
+	flag.BoolVar(&opts.captureEffective, "capture-effective-config", false, "retain the owned server's redacted effective configuration")
 	flag.Parse()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -126,13 +128,13 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if err != nil {
 			return err
 		}
-		if len(levels) < 2 || len(levels) > 12 || len(batches) > 8 || opts.duration < 5*time.Second || opts.duration > 10*time.Minute || opts.warmupDuration < time.Second || opts.warmupDuration > time.Minute {
+		if len(levels) < 1 || len(levels) > 12 || len(batches) > 8 || opts.duration < 5*time.Second || opts.duration > 10*time.Minute || opts.warmupDuration < time.Second || opts.warmupDuration > time.Minute {
 			return errors.New("invalid saturation matrix or durations")
 		}
 		previous := 0
 		maxLevel := 64
 		if opts.mode == "saturation" {
-			maxLevel = 512
+			maxLevel = 1024
 		}
 		for _, workers := range levels {
 			if workers <= previous || workers > maxLevel {
@@ -170,7 +172,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.mode != "fixed" {
 		maxWorkers = 64
 		if opts.mode == "saturation" {
-			maxWorkers = 512
+			maxWorkers = 1024
 		}
 	}
 	if opts.operations < 1 || opts.operations > 10000000 || opts.warmup < 0 || opts.warmup > 10000000 || opts.rounds < 1 || opts.rounds > 100 || opts.writePercent < 0 || opts.writePercent > 100 || opts.concurrency < 1 || opts.concurrency > maxWorkers || opts.records < opts.concurrency || opts.payload < 1 {
@@ -288,6 +290,18 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		resultErr = errors.Join(resultErr, cluster.Close(cleanup))
 	}()
 	provenance["fixture_logs"] = cluster.Directory
+	if opts.captureEffective {
+		effective, err := cluster.EffectiveConfiguration(ctx, 0)
+		if err != nil {
+			return err
+		}
+		provenance["weir_effective_config"] = effective
+		routes, err := os.ReadFile(filepath.Join(cluster.Directory, "node-0-routes.json"))
+		if err != nil {
+			return err
+		}
+		provenance["weir_routing_config"] = string(routes)
+	}
 	fmt.Println("Owned fixture logs:", cluster.Directory)
 	for _, backend := range backends {
 		namespace, err := workload.NewNamespace()

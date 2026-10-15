@@ -42,6 +42,7 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, BatchBytes: 1},
 		{WeirBinary: binary, BatchSize: 32, BatchBytes: (32 << 20) + 1},
 		{WeirBinary: binary, BatchSize: 1025},
+		{WeirBinary: binary, MaxInFlight: 4},
 		{WeirBinary: binary, PendingRecords: -1},
 		{WeirBinary: binary, PendingRecords: 4097},
 		{WeirBinary: binary, ExchangeBytes: (4 << 20) - 1},
@@ -613,8 +614,42 @@ func TestConfigurationExposesBatchCollectionWaitWithoutChangingDefaults(t *testi
 			t.Fatal("explicit batch controls were dropped", string(raw))
 		}
 		configured, exists := routing.Stores[0].Batching["max_wait"]
-		if wait == 0 && exists || wait > 0 && configured != "20ms" {
+		if !exists || configured != wait.String() {
 			t.Fatal("collection wait hidden, dropped, or enabled by default", string(raw))
+		}
+	}
+}
+
+func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t *testing.T) {
+	for _, operations := range []int{0, 32} {
+		opts := Options{Backends: []string{"search"}, BatchSize: operations}
+		cluster := &Cluster{Directory: t.TempDir(), options: opts, SearchURL: "http://127.0.0.1:50002", owner: "test"}
+		node := Node{Owner: true, Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102"}
+		cluster.Nodes = []Node{node}
+		if err := cluster.writeConfiguration(0); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := os.ReadFile(cluster.nodeFile(0, "routes.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var routes struct {
+			Stores []struct {
+				Batching map[string]any `json:"batching"`
+			} `json:"stores"`
+		}
+		if err := json.Unmarshal(raw, &routes); err != nil {
+			t.Fatal(err)
+		}
+		batch := routes.Stores[0].Batching
+		if operations == 0 {
+			if batch != nil {
+				t.Fatal("default path emitted a hidden batching override", string(raw))
+			}
+			continue
+		}
+		if len(batch) != 4 || batch["max_operations"] != float64(32) || batch["max_bytes"] != "8388608B" || batch["max_wait"] != "0s" || batch["max_in_flight"] != float64(0) {
+			t.Fatal("explicit legacy controls inherited a future production default", string(raw))
 		}
 	}
 }

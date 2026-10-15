@@ -30,9 +30,11 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 			return errors.New("crawler server receipt missing")
 		}
 		var receipt struct {
-			Source, SHA256 string
-			SourceDirty    bool `json:"source_dirty"`
-			Identity       struct {
+			Source, SHA256   string
+			SourceDirty      bool   `json:"source_dirty"`
+			SourceTreeSHA256 string `json:"source_tree_sha256"`
+			SourceDiffSHA256 string `json:"source_diff_sha256"`
+			Identity         struct {
 				Revision string `json:"revision"`
 			} `json:"identity"`
 		}
@@ -41,7 +43,10 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 		}
 		source, sourceErr := hex.DecodeString(receipt.Source)
 		digest, digestErr := hex.DecodeString(receipt.SHA256)
-		if sourceErr != nil || len(source) != 20 || digestErr != nil || len(digest) != 32 || receipt.SHA256 != server.SHA256 || receipt.SourceDirty || receipt.Identity.Revision != receipt.Source {
+		frozenTree, treeErr := hex.DecodeString(receipt.SourceTreeSHA256)
+		frozenDiff, diffErr := hex.DecodeString(receipt.SourceDiffSHA256)
+		frozen := treeErr == nil && len(frozenTree) == 32 && diffErr == nil && len(frozenDiff) == 32 && receipt.Identity.Revision != ""
+		if sourceErr != nil || len(source) != 20 || digestErr != nil || len(digest) != 32 || receipt.SHA256 != server.SHA256 || receipt.SourceDirty || receipt.Identity.Revision != receipt.Source && !frozen {
 			return errors.New("crawler server receipt has invalid immutable identity")
 		}
 	}
@@ -65,18 +70,18 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 	if err != nil {
 		return err
 	}
-	expectedStages := len(cases) * options.Rounds * 3
+	paths := options.Paths
+	expectedStages := len(cases) * options.Rounds * len(paths)
 	if len(report.Stages) != expectedStages {
 		return errors.New("crawler stage matrix is incomplete")
 	}
-	paths := []string{"direct", "current", "optimized"}
 	stageIndex := 0
 	for caseIndex, test := range cases {
 		for round := range options.Rounds {
 			for offset := range paths {
 				stage := report.Stages[stageIndex]
 				stageIndex++
-				path := paths[(caseIndex+round+offset)%3]
+				path := paths[(caseIndex+round+offset)%len(paths)]
 				if stage.Path != path || stage.Round != round+1 || stage.Profile != test.Profile || stage.Mode != test.Mode || stage.Concurrency != test.Workers || stage.ProductsPerSecond != test.Rate {
 					return fmt.Errorf("crawler stage %d does not follow the declared same-runner rotation", stageIndex)
 				}

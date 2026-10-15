@@ -12,6 +12,27 @@ def digest(binary):
     return hashlib.sha256(binary.read_bytes()).hexdigest()
 
 
+def planned_command(case, output):
+    batch = case['batching'] if case['batching'] is not None else case['expected_batching']
+    command = ['.tools/weir-crawler', '-before', '.tools/write-weir', '-after', '.tools/write-weir',
+               '-before-receipt', '.tools/write-weir.receipt.json',
+               '-after-receipt', '.tools/write-weir.receipt.json', '-input-shape', 'single',
+               '-http-observer', case['http_observer'], '-modes', 'fixed-rate',
+               '-profiles', case['profile'], '-paths', ','.join(case['paths']),
+               '-rates', str(case['rate']), '-concurrency-levels', str(case['concurrency']),
+               '-client-processes', str(case['client_processes']), '-page-size', '1',
+               '-visibility', case['visibility'], '-seed-padding-bytes', str(case['seed_padding_bytes']),
+               '-after-batch-max-operations', str(batch['max_operations']),
+               '-after-batch-max-bytes', str(batch['max_bytes']),
+               '-after-batch-max-wait', batch['max_wait'], '-after-max-in-flight', str(batch['max_in_flight']),
+               '-database-cpus', str(case['database_cpus']), '-queue-pages', '1', '-timeout', '10s',
+               '-rounds', str(case['rounds']), '-warmup', case['warmup'], '-duration', case['duration'],
+               '-capture-effective-config', '-output', str(output)]
+    if case['batching'] is None:
+        command.append('-after-use-defaults')
+    return command
+
+
 def workload_controls(environ):
     profile = environ['CRAWLER_PROFILES']
     partial = profile == 'partial-update'

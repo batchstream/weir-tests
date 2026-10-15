@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +17,22 @@ func TestConcurrencyAndBatchListsRejectEmptyDuplicateOrInvalidEntries(t *testing
 	values, err := parsePositiveList("8, 32,128")
 	if err != nil || len(values) != 3 || values[1] != 32 {
 		t.Fatal("valid concurrency ladder rejected", values, err)
+	}
+}
+
+func TestSingleDiagnosticLevelAllows1024WorkersBeforeBinaryLookup(t *testing.T) {
+	opts := labOptions{mode: "saturation", backend: "search", databaseCPUs: 1,
+		levels: "1024", batches: "1", clientProcesses: 4, duration: 5 * time.Second,
+		warmupDuration: time.Second, operations: 1, records: 2048, payload: 1,
+		rounds: 1, writePercent: 100, binary: filepath.Join(t.TempDir(), "missing-weir")}
+	err := runLab(t.Context(), opts)
+	if err == nil || !strings.Contains(err.Error(), "prepare the locked Weir executable") {
+		t.Fatal("valid bounded single-level diagnostic was rejected or started external work", err)
+	}
+	opts.levels = "1028"
+	err = runLab(t.Context(), opts)
+	if err == nil || !strings.Contains(err.Error(), "strictly increase through 1024") {
+		t.Fatal("unbounded client concurrency passed validation", err)
 	}
 }
 
