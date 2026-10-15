@@ -1,0 +1,9 @@
+{
+  "experiment": "search-batching-2026-10-15",
+  "client_source": "8bdfe233f4baad325c66718a4cdec1c8c436a41a",
+  "server_sources": {
+    "current": "0f6fac3edb462e088decff98b67560dae2c23c9a",
+    "optimized": null
+  },
+  "entries": []
+}
