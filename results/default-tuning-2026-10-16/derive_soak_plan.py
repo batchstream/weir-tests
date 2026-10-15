@@ -15,6 +15,14 @@ POLICY = dict(version=1, max_checks=3,
               crawler_order=['lower_rate_descending', 'database_cpus_ascending', 'label_ascending'],
               crawler_profiles=['partial-update', 'two-step'], warmup='60s', duration='300s',
               rounds=1, client_processes=4, rerun_failed_soak=False)
+INDEPENDENT_CRAWLER_PARENTS = {
+    'confirm-partial-independent-q025': 'partial-update',
+    'confirm-crawler-independent-q025': 'two-step',
+}
+CANDIDATE_CAPACITY_REGISTRATION = dict(
+    candidate_capacity_supplement='results/default-tuning-2026-10-16/CANDIDATE-CAPACITY-SUPPLEMENT.md',
+    candidate_capacity_supplement_source='f7b01989520378d8794915361c1790b4f0eaec5a',
+    candidate_capacity_supplement_sha256='769672a99683520d6ec6a522277d2d3befab2c060951fc66d92bf5ee0a8a2ada')
 
 
 def require(condition, message):
@@ -51,6 +59,16 @@ def validate_context(options):
         require(entry['server_source'] == plan['server_source'] == options['server_source'], 'confirmation uses another server')
         require(plan['metadata']['soak_derivation'] == POLICY, 'soak tie/derivation policy was not registered before confirmation')
         require(plan['metadata']['selected_controls'] == controls, 'confirmation controls differ')
+        independent_profile = INDEPENDENT_CRAWLER_PARENTS.get(entry['case_set'])
+        if independent_profile is not None:
+            require(all(plan['metadata'].get(key) == value for key, value in CANDIDATE_CAPACITY_REGISTRATION.items()), 'candidate-only parent lacks the fixed supplement source/hash registration')
+        require(entry['case_set'] in plan['case_sets'], 'confirmation parent case-set is missing')
+        for case in plan['case_sets'][entry['case_set']]:
+            if independent_profile is not None:
+                require(case['kind'] == 'crawler' and case['profile'] == independent_profile, 'candidate-only parent profile differs from registration')
+            if case['kind'] == 'crawler':
+                expected_paths = ['optimized'] if independent_profile is not None else ['direct', 'optimized']
+                require(case['paths'] == expected_paths, 'crawler parent paths are not registered')
     return entries
 
 
@@ -114,7 +132,7 @@ def build_plan(options):
         cases = [case for case in cases if case['profile'] == profile and case['rate'] == lower['rate']]
         require(len(cases) == 1, 'lower-bound case is missing or ambiguous')
         case = parent_case(context, label, cases[0]['id'])
-        require(case['kind'] == 'crawler' and case['database_cpus'] == decision['database_cpus'] and case['paths'] == ['direct', 'optimized'] and case.get('page_size', 1) == 1, 'crawler parent topology differs')
+        require(case['kind'] == 'crawler' and case['database_cpus'] == decision['database_cpus'] and case.get('page_size', 1) == 1, 'crawler parent topology differs')
         crawlers[profile].append(dict(label=label, case_id=case['id'], rate=lower['rate'], upper_rate=upper['rate'], database_cpus=case['database_cpus'], case=case))
     pure.sort(key=lambda point: (point['workers'], point['database_cpus'], point['label'], point['case_id']))
     chosen = []
