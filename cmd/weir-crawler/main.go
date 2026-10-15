@@ -50,7 +50,7 @@ func main() {
 	flag.StringVar(&opts.BeforeReceipt, "before-receipt", ".tools/weir-current.receipt.json", "current server source and binary receipt")
 	flag.StringVar(&opts.AfterReceipt, "after-receipt", ".tools/weir-optimized.receipt.json", "optimized server source and binary receipt")
 	flag.StringVar(&opts.Output, "output", "results/local/crawler.json", "raw evidence report")
-	flag.StringVar(&profiles, "profiles", "combined", "combined or combined,two-step for a short business-call ablation")
+	flag.StringVar(&profiles, "profiles", "two-step", "existing two-step crawler rules, combined rule, or both")
 	flag.StringVar(&rates, "rates", "20,80,160", "absolute offered product rates; empty disables fixed-rate cases")
 	flag.StringVar(&levels, "concurrency-levels", "32,128", "total goroutine workers across OS client processes")
 	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "optimized server batch cap; zero is unlimited and omitted for the old server")
