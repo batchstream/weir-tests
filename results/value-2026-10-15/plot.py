@@ -45,7 +45,7 @@ def draw(ax, rows, metric, label):
     ax.fill_between(workers, low, high, color=COLORS[path], alpha=0.11)
 
 
-def finish_axis(ax, workers, metric):
+def finish_axis(ax, workers, metric, expected_paths=2):
     ax.set_xscale("log", base=2)
     ax.set_xticks(workers)
     ax.xaxis.set_major_formatter(ScalarFormatter())
@@ -57,9 +57,11 @@ def finish_axis(ax, workers, metric):
     else:
         ax.set_yscale("log")
         ax.set_ylabel("p95 upper bound, ms")
-    if not ax.lines:
-        ax.text(0.5, 0.5, "FAILED / INCOMPLETE\nSee raw evidence and analysis.json",
-                ha="center", va="center", transform=ax.transAxes, color="#a52727")
+    complete = len(ax.lines) == expected_paths and all(set(line.get_xdata()) == set(workers) for line in ax.lines)
+    if not complete:
+        box = {"facecolor": "white", "edgecolor": "#a52727", "alpha": 0.95}
+        ax.text(0.5, 0.5, "FAILED / INCOMPLETE\nMissing or invalid points; see analysis.json",
+                ha="center", va="center", transform=ax.transAxes, color="#a52727", bbox=box)
 
 
 def save(fig, name, output):
@@ -110,7 +112,7 @@ def ablation(rows, output):
                     label = ("Native" if path == "direct" else "Weir") + ", grouping " + str(limit)
                     draw(ax, selected, "qps", label)
             ax.set_title(("MongoDB" if backend == "mongo" else "Search") + " · " + title)
-            finish_axis(ax, (32, 128), "qps")
+            finish_axis(ax, (32, 128), "qps", 4)
     axes[0, 0].legend(frameon=False, fontsize=8)
     fig.suptitle("Aggregation ablation · grouping limits 1 and 32 on the same runner", fontsize=14)
     fig.supxlabel("Limit 1 is measured first, then 32. Each has its own paired native baseline; inspect native drift. Bands retain every round.", fontsize=9)
