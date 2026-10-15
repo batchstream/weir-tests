@@ -18,12 +18,18 @@ on:
         default: '0'
         type: choice
         options: ['0', '4', '16']
+      after-batch-max-wait:
+        description: Optimized batching max_wait; explicit collection window
+        required: true
+        default: '0s'
+        type: choice
+        options: ['0s', '20ms']
       profiles:
-        description: Existing two-step crawler rules or a controlled fused-rule workload
+        description: Crawler business rules or exclusive partial-update batching mechanism
         required: true
         default: two-step
         type: choice
-        options: [two-step, combined, 'combined,two-step']
+        options: [two-step, combined, 'combined,two-step', partial-update]
       input-shape:
         description: Single-record native updates and SDK calls or explicit page-batch control
         required: true
@@ -113,6 +119,7 @@ jobs:
           GOPROXY: 'off'
           GOSUMDB: 'off'
           CRAWLER_MAX_IN_FLIGHT: ${{ inputs.after-max-in-flight }}
+          CRAWLER_BATCH_MAX_WAIT: ${{ inputs.after-batch-max-wait }}
           CRAWLER_PROFILES: ${{ inputs.profiles }}
           CRAWLER_INPUT_SHAPE: ${{ inputs.input-shape }}
           CRAWLER_HTTP_OBSERVER: ${{ inputs.http-observer }}

@@ -34,6 +34,9 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, Backends: []string{"redis"}},
 		{WeirBinary: binary, OwnerCount: -1},
 		{WeirBinary: binary, OwnerCount: 9},
+		{WeirBinary: binary, BatchMaxWait: time.Millisecond},
+		{WeirBinary: binary, BatchMaxWait: -time.Nanosecond},
+		{WeirBinary: binary, BatchMaxWait: time.Second + time.Nanosecond},
 		{WeirBinary: binary, BatchSize: -1},
 		{WeirBinary: binary, BatchSize: 1025},
 		{WeirBinary: binary, PendingRecords: -1},
@@ -578,5 +581,33 @@ func TestSearchStartupWaitsForSlowTemplatePublication(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("template publication ignored caller cancellation")
+	}
+}
+
+func TestConfigurationExposesBatchCollectionWaitWithoutChangingDefaults(t *testing.T) {
+	for _, wait := range []time.Duration{0, 20 * time.Millisecond} {
+		opts := Options{Backends: []string{"search"}, BatchSize: 32, BatchMaxWait: wait}
+		cluster := &Cluster{Directory: t.TempDir(), options: opts, SearchURL: "http://127.0.0.1:50002", owner: "test"}
+		node := Node{Owner: true, Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102"}
+		cluster.Nodes = []Node{node}
+		if err := cluster.writeConfiguration(0); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := os.ReadFile(cluster.nodeFile(0, "routes.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var routing struct {
+			Stores []struct {
+				Batching map[string]any `json:"batching"`
+			} `json:"stores"`
+		}
+		if err := json.Unmarshal(raw, &routing); err != nil {
+			t.Fatal(err)
+		}
+		configured, exists := routing.Stores[0].Batching["max_wait"]
+		if wait == 0 && exists || wait > 0 && configured != "20ms" {
+			t.Fatal("collection wait hidden, dropped, or enabled by default", string(raw))
+		}
 	}
 }
