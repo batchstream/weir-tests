@@ -29,7 +29,7 @@ All paths use the same finite seeded working set and final-field oracle as the p
 
 ## Exact dispatch
 
-The metadata-only candidate SHA `745501319ae59a16351294c2eaed58019288c3ad` is frozen in this plan and the manifest. Commit the plan and analysis sources before dispatching any measurement. At this preparation stage, no metadata-only run has been dispatched and all three workflow URLs remain null. Record each resulting URL before inspecting its results. If dispatch or any subsequent run fails, retain the attempt in the experiment ledger and preserve every available raw artifact.
+The metadata-only candidate SHA `745501319ae59a16351294c2eaed58019288c3ad` is frozen in this plan and the manifest. The plan and analysis sources were committed and pushed as `18c3c7aac946108f5202feab4496d517ad1c86ad` before any measurement was dispatched. The primary runs are rate 16: `38734590273`, rate 48: `38734598763`, and rate 96: `38734606631`, dispatched at 12:26:01, 12:26:05, and 12:26:09 UTC respectively on 2026-10-15. Their URLs and dispatch receipts are frozen in the manifest and `dispatch-receipts.json` before inspecting results. If dispatch or any subsequent run fails, retain the attempt in the experiment ledger and preserve every available raw artifact.
 
 Dispatch the existing `crawler.yml` workflow using `--ref main` only after verifying that main still resolves to `8bdfe233f4baad325c66718a4cdec1c8c436a41a`; verify each returned run's `headSha` matches it. GitHub rejects a raw commit SHA as a `workflow_dispatch` ref. For each `RATE` in `16`, `48`, `96`, pass:
 
