@@ -376,12 +376,38 @@ def ratios(rows):
             baseline = lookup.get((row['label'], profile, row['mode'], row['offered_products_s'], row['workers'], row['round'], path))
             if baseline is None:
                 continue
-            item = dict(label=row['label'], workflow_run=row['workflow_run'], mode=row['mode'], offered_products_s=row['offered_products_s'], workers=row['workers'], round=row['round'], path=row['path'], profile=row['profile'], input_shape=row['input_shape'], baseline_path=path, baseline_profile=profile, both_formal_measurement=row['formal_measurement'] and baseline['formal_measurement'], both_formal_all_arrivals=row['formal_all_arrivals'] and baseline['formal_all_arrivals'])
+            item = dict(label=row['label'], workflow_run=row['workflow_run'], mode=row['mode'], offered_products_s=row['offered_products_s'], workers=row['workers'], round=row['round'], path=row['path'], profile=row['profile'], input_shape=row['input_shape'], path_label=row['path_label'], baseline_label=baseline['path_label'], baseline_path=path, baseline_profile=profile, both_formal_measurement=row['formal_measurement'] and baseline['formal_measurement'], both_formal_all_arrivals=row['formal_all_arrivals'] and baseline['formal_all_arrivals'])
             for metric in ('completed_products_s', 'db_cpu_quota_percent', 'sampled_db_cpu_ms_per_product', 'p99_planned_to_visible_ms', 'indexed_documents_per_product', 'get_operations_per_product', 'database_http_requests_per_product', 'observed_adapter_records_per_execution', 'application_call_attempts_per_completed_product'):
                 first, last = baseline[metric], row[metric]
                 item[metric + '_ratio'] = last/first if first and last is not None else None
             result.append(item)
     return result
+
+
+def compare_paired_rounds(paired):
+    keys = ('label', 'workflow_run', 'input_shape', 'profile', 'baseline_profile', 'mode', 'offered_products_s', 'workers', 'path', 'baseline_path')
+    comparisons = []
+    for identity, grouped in itertools.groupby(sorted(paired, key=lambda item: tuple(item[key] for key in keys)), key=lambda item: tuple(item[key] for key in keys)):
+        group = sorted(grouped, key=lambda item: item['round'])
+        result = dict(zip(keys, identity))
+        result['path_label'] = group[0]['path_label']
+        result['baseline_label'] = group[0]['baseline_label']
+        result['paired_rounds'] = len(group)
+        complete = len(group) == 3 and [item['round'] for item in group] == [1, 2, 3]
+        result['complete_three_rounds'] = complete
+        result['all_rounds_formal_measurement'] = complete and all(item['both_formal_measurement'] for item in group)
+        result['all_rounds_all_arrivals'] = complete and all(item['both_formal_all_arrivals'] for item in group)
+        qps = [item['completed_products_s_ratio'] for item in group]
+        cpu = [item['sampled_db_cpu_ms_per_product_ratio'] for item in group]
+        result['all_rounds_qps_within_five_percent'] = complete and all(value is not None and 0.95 <= value <= 1.05 for value in qps)
+        result['all_rounds_cpu_ms_per_product_decreased'] = complete and all(value is not None and value < 1 for value in cpu)
+        for field, values in (('completed_products_s_ratio', qps), ('sampled_db_cpu_ms_per_product_ratio', cpu)):
+            available = [value for value in values if value is not None]
+            result[field + '_minimum'] = min(available) if available else None
+            result[field + '_maximum'] = max(available) if available else None
+        result['supports_lower_database_cpu_at_comparable_completed_throughput'] = result['all_rounds_all_arrivals'] and result['all_rounds_qps_within_five_percent'] and result['all_rounds_cpu_ms_per_product_decreased']
+        comparisons.append(result)
+    return comparisons
 
 
 def main():
@@ -440,14 +466,16 @@ def main():
                 row[key + '_per_product'] = row[key]/row['completed'] if row['completed'] and row[key] is not None else None
             rows.append(row)
     groups, paired = aggregate(rows), ratios(rows)
+    comparisons = compare_paired_rounds(paired)
     frozen_sources = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in ('analyze.py', 'summarize.py', 'plot.py')}
-    output = dict(schema=1, frozen_analysis_sources=frozen_sources, auditor_sha256=hashlib.sha256(args.auditor.read_bytes()).hexdigest(), client_source=manifest['client_source'], default_server_sources=SOURCES, experimental_acceptance_gates=GATES, workload_note='Single-record calls: native HTTP _update versus one-record Weir SDK Mutate; three causal phases (reconcile, product, parallel sellers), four OS processes and 128 total goroutine workers. Application-call attempts are measured client invocation counters, not backend wire commands. HTTP-observer backend request/byte metrics remain unavailable.', cpu_note='Sampled CPU only, weighted by covered time; not extrapolated to unsampled intervals. Rejected arrivals have no completed latency. All rows and negative ratios are retained; comparisons are within one workflow run.', qualification_note='Formal measurement validates source/audit, duration, rounds, error-free dispatched business work and CPU coverage. Formal all-arrivals applies only to fixed-rate rows and additionally rejects dropped arrivals, excess latency, drain and generator lag. Fixed-rate results do not establish maximum throughput capacity.', http_note='Disabled observers provide no backend HTTP request/byte counts; those values remain null. Native HTTP call attempts are directly instrumented client calls; Weir Mutate calls do not measure backend HTTP command counts.', cleanup_note='Cleanup receipts attest only the final owned process and removed database container. Earlier server replacement waits synchronously in ReplaceServer/stopProcess; there is no separate historical OS termination receipt.', runs=runs, groups=groups, paired_round_ratios=paired, rows=rows)
+    output = dict(schema=1, frozen_analysis_sources=frozen_sources, auditor_sha256=hashlib.sha256(args.auditor.read_bytes()).hexdigest(), client_source=manifest['client_source'], default_server_sources=SOURCES, experimental_acceptance_gates=GATES, workload_note='Single-record calls: native HTTP _update versus one-record Weir SDK Mutate; three causal phases (reconcile, product, parallel sellers), four OS processes and 128 total goroutine workers. Application-call attempts are measured client invocation counters, not backend wire commands. HTTP-observer backend request/byte metrics remain unavailable.', cpu_note='Sampled CPU only, weighted by covered time; not extrapolated to unsampled intervals. Rejected arrivals have no completed latency. All rows and negative ratios are retained; comparisons are within one workflow run.', qualification_note='Formal measurement validates source/audit, duration, rounds, error-free dispatched business work and CPU coverage. Formal all-arrivals applies only to fixed-rate rows and additionally rejects dropped arrivals, excess latency, drain and generator lag. Fixed-rate results do not establish maximum throughput capacity.', http_note='Disabled observers provide no backend HTTP request/byte counts; those values remain null. Native HTTP call attempts are directly instrumented client calls; Weir Mutate calls do not measure backend HTTP command counts.', cleanup_note='Cleanup receipts attest only the final owned process and removed database container. Earlier server replacement waits synchronously in ReplaceServer/stopProcess; there is no separate historical OS termination receipt.', runs=runs, groups=groups, paired_round_ratios=paired, comparisons=comparisons, comparison_note='A lower-database-CPU/comparable-completion claim requires both paths to pass every all-arrivals gate in all three paired rounds, each QPS ratio within [0.95, 1.05], and CPU ms/completed product lower in each round. Ratios are within one workflow runner only; no cross-run CPU/QPS pooling or confidence interval is calculated.', rows=rows)
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / 'analysis.json').write_text(json.dumps(output, indent=2, allow_nan=False) + '\n')
     csv_write(args.output / 'groups.csv', groups)
     csv_write(args.output / 'paired-rounds.csv', paired)
+    csv_write(args.output / 'comparisons.csv', comparisons)
     csv_write(args.output / 'stages.csv', rows)
-    totals = dict(runs=len(runs), audit_failed_runs=sum(run['go_audit_exit'] != 0 for run in runs), stages=len(rows), timed_observations=sum(row['timed_observed'] for row in rows), formal_measurements=sum(row['formal_measurement'] for row in rows), formal_all_arrivals=sum(row['formal_all_arrivals'] for row in rows), groups=len(groups), paired_rounds=len(paired))
+    totals = dict(runs=len(runs), audit_failed_runs=sum(run['go_audit_exit'] != 0 for run in runs), stages=len(rows), timed_observations=sum(row['timed_observed'] for row in rows), formal_measurements=sum(row['formal_measurement'] for row in rows), formal_all_arrivals=sum(row['formal_all_arrivals'] for row in rows), groups=len(groups), paired_rounds=len(paired), comparisons=len(comparisons))
     print(json.dumps(totals))
 
 

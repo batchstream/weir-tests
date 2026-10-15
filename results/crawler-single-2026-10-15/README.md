@@ -2,6 +2,53 @@
 
 This experiment tests Weir with independently arriving single-record writes. It corrects the earlier [page-20 client control](../crawler-2026-10-15/README.md), which gave callers an already assembled batch and therefore did not represent the reference worker's individual product and seller calls. Only the test repository changes; business and production Weir code remain untouched. Sink and new Lua helper APIs are excluded. The metric is database load and completed business throughput; extra Weir CPU is outside the requested comparison.
 
+## Finding
+
+**The corrected single-record baseline still does not establish a consistent Weir database-load benefit over native atomic updates.** All 27 formal stages passed persisted-field checks and offline Go audit (CPU sampling coverage 99.966–99.988%), with zero failed/unknown/timed-out dispatched products. This is correctness evidence; it does not mean every offered arrival completed. Overload rejections and performance-gate failures remain in the results.
+
+At 16 offered products/s, all paths completed every arrival and met the predeclared latency/drain/lag limits. Default Weir's paired CPU ms/product ratios against native were 0.876, 1.016 and 1.365; cap16's were 0.663, 0.821 and 1.083. The CPU direction reverses across rounds, so neither supports the predefined consistent-savings claim. Native CPU changed substantially across rounds; the short warmup and rotating order do not establish a stationary production estimate.
+
+At 48 offered products/s, native completed all arrivals and met every round's gates. Default Weir completed all arrivals but missed the generator-lag limit in round1 and p99 in round3; its CPU/product exceeded native in each round. Cap16 rejected 319 of 2880 arrivals and had p99 7.34–8.39 s. At 96, every path rejected arrivals and missed the all-arrivals gate: these are overload observations, not sustainable capacity results.
+
+There is one narrower configuration result: at 16, cap16 versus cap0 had comparable completed throughput in every round and reduced sampled CPU/product by **19.3–24.3%**, while both met all-arrivals gates. This isolates the execution cap within Weir; it does not establish an advantage over native. Higher offered rates did not preserve that service behavior.
+
+The table retains per-round ranges; each offered rate is a separate workflow/runner. Compare paths within a rate, not absolute rates or CPU between runners.
+
+| Offered products/s | Path | Completed / offered, three rounds | Rejected | Completed products/s range | Sampled DB CPU ms/product range | Worst p99 upper bound (s) | Worst drain (s) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 16 | Native single _update | 960/960 | 0 | 14.65–14.83 | 6.634–30.736 | 3.146 | 1.850 |
+| 16 | Weir cap0 | 960/960 | 0 | 14.60–14.79 | 9.055–26.931 | 3.146 | 1.919 |
+| 16 | Weir cap16 | 960/960 | 0 | 14.64–14.69 | 7.184–20.384 | 3.932 | 1.862 |
+| 48 | Native single _update | 2880/2880 | 0 | 41.94–44.17 | 3.927–15.132 | 4.194 | 2.892 |
+| 48 | Weir cap0 | 2880/2880 | 0 | 41.74–43.66 | 4.654–15.299 | 5.243 | 3.000 |
+| 48 | Weir cap16 | 2561/2880 | 319 | 33.65–35.25 | 5.073–7.162 | 8.389 | 4.909 |
+| 96 | Native single _update | 3858/5760 | 1902 | 48.08–58.81 | 3.888–13.950 | 6.291 | 4.045 |
+| 96 | Weir cap0 | 3970/5760 | 1790 | 53.01–57.58 | 5.202–13.957 | 5.243 | 3.995 |
+| 96 | Weir cap16 | 2836/5760 | 2924 | 35.33–38.14 | 4.930–6.327 | 8.389 | 5.957 |
+
+All measured client calls contained one record. The server-side adapter fill below independently confirms Weir aggregated separate submissions, while the CPU and latency findings above show why aggregation alone is insufficient evidence of a benefit.
+
+| Offered products/s | cap0 records/adapter execution | cap16 records/adapter execution |
+| --- | --- | --- |
+| 16 | 1.523 | 2.584 |
+| 48 | 2.105 | 6.107 |
+| 96 | 2.884 | 6.348 |
+
+![All paired rounds at 16 offered products/s](plots/formal16-two-step.png)
+
+![All paired rounds at 48 offered products/s](plots/formal48-two-step.png)
+
+The client-call histograms certify one record per invocation, and server adapter counters independently record any aggregation. The existence of a server batch is a mechanism observation, not proof of useful load reduction. See the complete [stage table](analysis/stages.csv), [paired ratios](analysis/paired-rounds.csv) and [strict comparison gates](analysis/comparisons.csv).
+
+| Run | Purpose | Workflow |
+| --- | --- | --- |
+| calibration | 4/16/48, one short round; no formal claim | [38727143882](https://github.com/batchstream/weir-tests/actions/runs/38727143882) |
+| formal16 | 16, three full paired rounds | [38727911341](https://github.com/batchstream/weir-tests/actions/runs/38727911341) |
+| formal48 | 48, three full paired rounds | [38727916942](https://github.com/batchstream/weir-tests/actions/runs/38727916942) |
+| formal96 | 96, three full paired rounds | [38727921899](https://github.com/batchstream/weir-tests/actions/runs/38727921899) |
+
+The [formal-rate decision](FORMAL-DECISION.md) was recorded before formal dispatch. Every calibration and formal stage is retained. No production or business code was tuned in response to the measurements.
+
 ## Submission and business completion
 
 Four OS client processes own 32 goroutine workers each. One business product arrives at a time, scheduled from absolute timestamps independently of prior completion. Each worker reconciles one product, waits for query visibility, updates that product, waits again, then independently submits its two sellers concurrently and joins both acknowledgements. The synthetic shared placeholder adds a third separate seller when `(worker + page) % 100 == 0`. Every native HTTP `_update` and every Weir SDK `Mutate` call contains exactly one record. Native uses cached atomic Painless; Weir runs the frozen Lua translation outside the database. Neither caller creates a batch, adds an aggregation window or shares a client-side aggregator across processes.

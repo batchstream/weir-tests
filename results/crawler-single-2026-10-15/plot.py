@@ -17,6 +17,7 @@ NAMES = dict(direct='Native single _update', current='Weir cap0', optimized='Wei
 def draw(options):
     rows, groups, output = options
     first = rows[0]
+    categorical = len({row['offered_products_s'] for row in rows}) == 1
     fig, axes = plt.subplots(1, 3, figsize=(13, 4.6))
     fig.subplots_adjust(left=0.06, right=0.99, bottom=0.22, top=0.80, wspace=0.30)
     panels = [('fixed-rate', 'offered_products_s', 'completed_products_s', 'Offered products/s', 'Completed products/s'), ('fixed-rate', 'offered_products_s', 'db_cpu_quota_percent', 'Offered products/s', 'Database CPU (% of 1 CPU)')]
@@ -27,14 +28,25 @@ def draw(options):
             subset = [row for row in rows if row['mode'] == mode and row['path'] == path and row[ykey] is not None]
             for round_index in sorted({row['round'] for row in subset}):
                 points = sorted((row for row in subset if row['round'] == round_index), key=lambda row: row[xkey])
-                axis.plot([row[xkey] for row in points], [row[ykey] for row in points], color=COLORS[path], alpha=0.25, linewidth=0.8)
+                if not categorical:
+                    axis.plot([row[xkey] for row in points], [row[ykey] for row in points], color=COLORS[path], alpha=0.25, linewidth=0.8)
                 for row in points:
                     accepted = row['formal_all_arrivals']
-                    axis.scatter(row[xkey], row[ykey], edgecolors=COLORS[path], facecolors=COLORS[path] if accepted else 'none', marker=('o', 's', '^')[round_index % 3], s=24, linewidths=0.9)
+                    position = PATHS.index(path) + (round_index - 2) * 0.09 if categorical else row[xkey]
+                    axis.scatter(position, row[ykey], edgecolors=COLORS[path], facecolors=COLORS[path] if accepted else 'none', marker=('o', 's', '^')[round_index % 3], s=24, linewidths=0.9)
             values = sorted((group for group in groups if group['mode'] == mode and group['path'] == path and group[ykey] is not None), key=lambda group: group[xkey])
             if values:
-                axis.plot([group[xkey] for group in values], [group[ykey] for group in values], color=COLORS[path], linewidth=1.8, label=values[0].get('path_label', NAMES[path]))
-        axis.set_xlabel(xlabel)
+                label = values[0].get('path_label', NAMES[path])
+                if categorical:
+                    accepted = values[0]['formal_all_arrivals']
+                    axis.scatter(PATHS.index(path), values[0][ykey], edgecolors=COLORS[path], facecolors=COLORS[path] if accepted else 'none', marker='D', s=40, linewidths=1.4, label=label)
+                else:
+                    axis.plot([group[xkey] for group in values], [group[ykey] for group in values], color=COLORS[path], linewidth=1.8, label=label)
+        if categorical:
+            axis.set_xticks(range(len(PATHS)), ['Native\nsingle _update', 'Weir\ncap 0', 'Weir\ncap 16'])
+            axis.set_xlim(-0.4, 2.4)
+        else:
+            axis.set_xlabel(xlabel)
         axis.set_ylabel(ylabel)
         axis.set_ylim(bottom=0)
         axis.grid(alpha=0.2)
@@ -45,8 +57,13 @@ def draw(options):
         handles, labels = axes[2].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 0.94), ncol=3, frameon=False)
     title = f"{first['label']} | single-record calls | {first['profile']} | optimized max_in_flight={first['after_max_in_flight']}"
+    if categorical:
+        title += f" | offered {first['offered_products_s']} products/s"
     fig.suptitle(title, fontsize=11, y=0.99)
-    fig.supxlabel('Thin lines/markers: every round; thick lines: completed/elapsed and CPU weighted by sampled time.\nHollow: fails the fixed-rate all-arrivals gate, or calibration. CPU includes completion drain.', fontsize=8)
+    caption = 'Thin lines/markers: every round; thick lines: completed/elapsed and CPU weighted by sampled time.'
+    if categorical:
+        caption = 'Small offset markers: each round; diamonds: completed/elapsed and CPU weighted by sampled time.'
+    fig.supxlabel(caption + '\nHollow: fails the fixed-rate all-arrivals gate, or calibration. CPU includes completion drain.', fontsize=8)
     stem = re.sub('[^a-zA-Z0-9_-]+', '-', first['label'] + '-' + first['profile'])
     metadata = dict(Creator='crawler_evidence_plot.py')
     for extension in ('png', 'svg'):
