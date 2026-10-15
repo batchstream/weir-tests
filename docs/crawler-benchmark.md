@@ -18,9 +18,11 @@ The generated fixture exercises incoming string replacement, Unicode-safe brand 
 
 The independent Go domain oracle reconstructs every seeded document, including untouched and rejected keys, and compares all fields and JSON value types with a normal Elasticsearch search. It checks the expected product/seller index as well. The report stores the verified document count, canonical expected-document hash and acknowledged page ordinals. `audit` reconstructs that hash offline from the page ordinals. Full expected document bodies are discarded after successful verification to keep multi-stage artifacts bounded.
 
-## Separate server and business-call experiments
+## Workload profiles
 
-`-profiles combined` is the default. Every path runs the same single product reconciliation-plus-merge rule. Differences between current and optimized Weir can be attributed to the server/configuration comparison; they cannot be attributed to combining two PSE calls.
+`-profiles two-step` is the default and preserves the existing detail-worker reconciliation followed by product and seller updates. The current experiment only tests Weir: PSE is a read-only source of business rules. No business repository changes or migrations are part of this experiment.
+
+`-profiles combined` is an optional controlled workload where every path runs the same single product reconciliation-plus-merge rule. It does not describe a deployed PSE optimization. Differences between current and optimized Weir can be attributed to the server/configuration comparison; they cannot be attributed to combining two PSE calls.
 
 `-profiles combined,two-step` adds an explicit business-call ablation. The two-step profile first reconciles product offers and waits for query visibility, then performs the normal product and seller calls, each with its own visibility wait. The final independent oracle is identical. Both native and Weir follow the PSE page call shape: products become visible first, then sellers become visible. The two-step profile adds a separate query-visible product-reconciliation call before those two phases, making three phases. The 20-product page is a controlled approximation of a PSE page; the additional reconciliation models the detail-worker change and is not a claim that every PSE page formerly reconciled offers. Compare profiles on the same optimized server to assess removing a product read/merge/write and its visibility wait. This is a separate contribution from the server change.
 
@@ -59,7 +61,7 @@ python3 scripts/prepare_crawler_servers.py \
 go build -trimpath -buildvcs=false -o .tools/weir-crawler ./cmd/weir-crawler
 ```
 
-Use the manual `Crawler database throughput` workflow for Linux Docker measurements. Start with one round, 5-second arrival stages, a short warmup and a small matrix. Fix calibrated rates before the three-round 20-second formal matrix. Run the business-call ablation separately if keeping the main matrix small.
+Use the manual `Crawler database throughput` workflow for Linux Docker measurements. Start with the existing two-step rules, one round, 5-second arrival stages, a short warmup and a small matrix. Fix calibrated rates before the three-round 20-second formal matrix. The current experiment does not include a business-call refactor ablation.
 
 A small local functional run (not publishable performance evidence):
 

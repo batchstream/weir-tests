@@ -19,11 +19,11 @@ on:
         type: choice
         options: ['0', '4', '16']
       profiles:
-        description: Server comparison or additional two-step business-call ablation
+        description: Existing two-step crawler rules or a controlled fused-rule workload
         required: true
-        default: combined
+        default: two-step
         type: choice
-        options: [combined, 'combined,two-step']
+        options: [two-step, combined, 'combined,two-step']
       rates:
         description: Offered product rates (empty disables fixed-rate cases)
         required: false
