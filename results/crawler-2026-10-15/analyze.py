@@ -39,6 +39,13 @@ def verify_archive(folder):
         compressed = (folder / item['path']).read_bytes()
         raw = gzip.decompress(compressed)
         require(hashlib.sha256(compressed).hexdigest() == item['gzip_sha256'] and hashlib.sha256(raw).hexdigest() == item['sha256'] and len(raw) == item['bytes'], 'raw archive hash/length mismatch: ' + item['path'])
+    log_receipt_path = folder / 'search-log-receipt.json.gz'
+    if log_receipt_path.exists():
+        log_receipt = load(log_receipt_path)
+        fixture = load(folder / 'manifest.json.gz')
+        log_bytes = gzip.decompress((folder / 'search-process.log.gz').read_bytes())
+        require(log_receipt['owner'] == fixture['owner'] and log_receipt['container_id'] == fixture['containers'][0]['id'] and not log_receipt['error'], 'owned database log receipt mismatch')
+        require(len(log_bytes) == log_receipt['captured_bytes'] <= log_receipt['maximum_bytes'], 'owned database log capture length mismatch')
     return len(inventory)
 
 
