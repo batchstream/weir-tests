@@ -151,6 +151,9 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 						if worker.Offered != worker.Rejected+worker.Completed+worker.Failed || worker.Completed != uint64(len(worker.AppliedPages)*options.PageSize) || worker.Completed != worker.WithinWindow+worker.Late {
 							return errors.New("crawler worker offered/completed accounting mismatch")
 						}
+						if err := auditCrawlerTimeBuckets(worker, int64(options.Duration), options.PageSize); err != nil {
+							return err
+						}
 						if worker.QueuePeak > options.QueuePages || worker.QueuePeak < 0 {
 							return errors.New("crawler worker queue exceeded its bound")
 						}
