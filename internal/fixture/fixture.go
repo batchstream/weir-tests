@@ -530,6 +530,10 @@ func (c *Cluster) Close(ctx context.Context) error {
 		failures = append(failures, err)
 	}
 	for i := len(c.containers) - 1; i >= 0; i-- {
+		owned := c.containers[i]
+		if owned.Backend == "search" && !owned.removed {
+			c.captureSearchLog(ctx, owned)
+		}
 		if err := c.removeContainer(ctx, &c.containers[i]); err != nil {
 			failures = append(failures, err)
 		}

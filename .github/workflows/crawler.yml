@@ -24,6 +24,12 @@ on:
         default: two-step
         type: choice
         options: [two-step, combined, 'combined,two-step']
+      http-observer:
+        description: Enable HTTP ledger or bypass observer on every path for direct control
+        required: true
+        default: enabled
+        type: choice
+        options: [enabled, disabled]
       modes:
         description: Run fixed-rate cases, saturation cases, or both independently
         required: true
@@ -102,6 +108,7 @@ jobs:
           GOSUMDB: 'off'
           CRAWLER_MAX_IN_FLIGHT: ${{ inputs.after-max-in-flight }}
           CRAWLER_PROFILES: ${{ inputs.profiles }}
+          CRAWLER_HTTP_OBSERVER: ${{ inputs.http-observer }}
           CRAWLER_MODES: ${{ inputs.modes }}
           CRAWLER_RATES: ${{ inputs.rates }}
           CRAWLER_LEVELS: ${{ inputs.concurrency-levels }}
@@ -134,5 +141,6 @@ jobs:
             /tmp/weir-tests-*/*config.json
             /tmp/weir-tests-*/*routes.json
             /tmp/weir-tests-*/*process.log
+            /tmp/weir-tests-*/search-log-receipt.json
             /tmp/weir-tests-*/docker-engine.json
           retention-days: 30
