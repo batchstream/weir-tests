@@ -17,7 +17,8 @@ NAMES = dict(direct='Native atomic bulk', current='Current Weir', optimized='Opt
 def draw(options):
     rows, groups, output = options
     first = rows[0]
-    fig, axes = plt.subplots(1, 3, figsize=(13, 3.7), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(13, 4.6))
+    fig.subplots_adjust(left=0.06, right=0.99, bottom=0.22, top=0.80, wspace=0.30)
     panels = [('fixed-rate', 'offered_products_s', 'completed_products_s', 'Offered products/s', 'Completed products/s'), ('fixed-rate', 'offered_products_s', 'db_cpu_quota_percent', 'Offered products/s', 'Database CPU (% of 1 CPU)')]
     if any(row['mode'] == 'saturation' for row in rows):
         panels.append(('saturation', 'workers', 'completed_products_s', 'Concurrent goroutine workers', 'Completed products/s'))
@@ -45,15 +46,15 @@ def draw(options):
     handles, labels = axes[0].get_legend_handles_labels()
     if not handles:
         handles, labels = axes[2].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='outside upper center', ncol=3, frameon=False)
+    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 0.94), ncol=3, frameon=False)
     title = f"{first['label']} | {first['profile']} | optimized max_in_flight={first['after_max_in_flight']}"
-    fig.suptitle(title, fontsize=11)
+    fig.suptitle(title, fontsize=11, y=0.99)
     fig.supxlabel('Thin lines/markers: every round; thick lines: completed/elapsed and CPU weighted by sampled time.\nHollow: fails fixed-rate all-arrivals gate or saturation measurement gate, or calibration. CPU includes completion drain.', fontsize=8)
     stem = re.sub('[^a-zA-Z0-9_-]+', '-', first['label'] + '-' + first['profile'])
     metadata = dict(Creator='crawler_evidence_plot.py')
     for extension in ('png', 'svg'):
         target = output / (stem + '.' + extension)
-        fig.savefig(target, dpi=180, metadata=metadata)
+        fig.savefig(target, dpi=180, metadata=metadata, bbox_inches='tight')
         if extension == 'svg':
             target.write_text('\n'.join(line.rstrip() for line in target.read_text().splitlines()) + '\n')
     plt.close(fig)
