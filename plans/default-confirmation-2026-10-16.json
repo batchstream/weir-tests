@@ -1,0 +1,1025 @@
+{
+  "schema": 1,
+  "server_source": "084572d79b7a53230801297f90ca2363fd864913",
+  "description": "Independent confirmation of actual omitted defaults; four OS clients; see frozen PLAN.md",
+  "metadata": {
+    "phase": "independent_confirmation",
+    "method": "results/default-tuning-2026-10-16/PLAN.md",
+    "method_sha256": "e8be3219521755f1dc98275eee65d6419b0dfdf2fb320d12c303045af3fcb46e",
+    "selected_controls": {
+      "max_operations": 128,
+      "max_bytes": 4194304,
+      "max_wait": "20ms",
+      "max_in_flight": 16
+    },
+    "selection_plan_sha256": "77e9d2dc649da7eb77fa5af782f9c03c2bf5a25e2817a5cb5317b5dce1fbc9fe",
+    "confirmation_addendum": "results/default-tuning-2026-10-16/CONFIRMATION-ADDENDUM.md",
+    "confirmation_addendum_source": "778a3b1ef3d48a9b1bb1e6e10bdae4d8edbce61e",
+    "confirmation_addendum_sha256": "4feecd752d7448a94c96dea55c0de7f6cd404d3da0a797a586c9bcdb3c4e2baa",
+    "lower_bracket_supplement": "results/default-tuning-2026-10-16/LOWER-BRACKET-SUPPLEMENT.md",
+    "lower_bracket_supplement_source": "40d1ac7e9d0672e1018571ee61e60398aa6db8f8",
+    "lower_bracket_supplement_sha256": "78c75eee83543fea058a7eb254a1d4b878041864e9a4897f9836572a8f62981d",
+    "selection_analysis": "results/default-tuning-2026-10-16/analysis-selection-parser-fix/analysis.json",
+    "selection_analysis_source": "40d1ac7e9d0672e1018571ee61e60398aa6db8f8",
+    "selection_analysis_sha256": "e3598a2d5521c1f121ea529505a3e0762b1d6b3e04acc4dd19efe04ce796be98",
+    "joint_regression_case_set": "confirm-search-large-body",
+    "soak_derivation": {
+      "version": 1,
+      "max_checks": 3,
+      "pure_case_sets": [
+        "confirm-pure-q025",
+        "confirm-pure-q1"
+      ],
+      "pure_order": [
+        "workers_ascending",
+        "database_cpus_ascending",
+        "label_ascending",
+        "case_id_ascending"
+      ],
+      "crawler_order": [
+        "lower_rate_descending",
+        "database_cpus_ascending",
+        "label_ascending"
+      ],
+      "crawler_profiles": [
+        "partial-update",
+        "two-step"
+      ],
+      "warmup": "60s",
+      "duration": "300s",
+      "rounds": 1,
+      "client_processes": 4,
+      "rerun_failed_soak": false
+    },
+    "p99_slo_seconds": 5,
+    "inventory": {
+      "confirm-pure-q025": {
+        "cases": 1,
+        "timed_stages": 18,
+        "warmup_and_timed_minutes": 36.0
+      },
+      "confirm-pure-q1": {
+        "cases": 1,
+        "timed_stages": 18,
+        "warmup_and_timed_minutes": 36.0
+      },
+      "confirm-partial-q025": {
+        "cases": 6,
+        "timed_stages": 36,
+        "warmup_and_timed_minutes": 72.0
+      },
+      "confirm-crawler-q025": {
+        "cases": 5,
+        "timed_stages": 30,
+        "warmup_and_timed_minutes": 60.0
+      },
+      "confirm-partial-lower-q025": {
+        "cases": 4,
+        "timed_stages": 24,
+        "warmup_and_timed_minutes": 48.0
+      },
+      "confirm-crawler-lower-q025": {
+        "cases": 3,
+        "timed_stages": 18,
+        "warmup_and_timed_minutes": 36.0
+      },
+      "confirm-partial-q1": {
+        "cases": 1,
+        "timed_stages": 6,
+        "warmup_and_timed_minutes": 12.0
+      },
+      "confirm-crawler-q1": {
+        "cases": 1,
+        "timed_stages": 6,
+        "warmup_and_timed_minutes": 12.0
+      },
+      "confirm-search-read": {
+        "cases": 2,
+        "timed_stages": 24,
+        "warmup_and_timed_minutes": 24.0
+      },
+      "confirm-mongo-read": {
+        "cases": 2,
+        "timed_stages": 24,
+        "warmup_and_timed_minutes": 24.0
+      },
+      "confirm-mongo-regression": {
+        "cases": 6,
+        "timed_stages": 36,
+        "warmup_and_timed_minutes": 36.0
+      },
+      "confirm-search-large-body": {
+        "cases": 2,
+        "timed_stages": 12,
+        "warmup_and_timed_minutes": 24.0
+      }
+    },
+    "five_minute_checks": "Excluded here: dispatch only after the frozen qualifying lower-bound rules pass"
+  },
+  "case_sets": {
+    "confirm-pure-q025": [
+      {
+        "kind": "write",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "id": "default-pure-q025",
+        "backend": "search",
+        "levels": [
+          128,
+          512,
+          1024
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-pure-q1": [
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "id": "default-pure-q1",
+        "backend": "search",
+        "levels": [
+          128,
+          512,
+          1024
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-partial-q025": [
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q025-r128",
+        "profile": "partial-update",
+        "rate": 128,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q025-r256",
+        "profile": "partial-update",
+        "rate": 256,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q025-r512",
+        "profile": "partial-update",
+        "rate": 512,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q025-r1024",
+        "profile": "partial-update",
+        "rate": 1024,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q025-r2048",
+        "profile": "partial-update",
+        "rate": 2048,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q025-r4096",
+        "profile": "partial-update",
+        "rate": 4096,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-crawler-q025": [
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-q025-r34",
+        "profile": "two-step",
+        "rate": 34,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-q025-r68",
+        "profile": "two-step",
+        "rate": 68,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-q025-r136",
+        "profile": "two-step",
+        "rate": 136,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-q025-r272",
+        "profile": "two-step",
+        "rate": 272,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-q025-r544",
+        "profile": "two-step",
+        "rate": 544,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-partial-lower-q025": [
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-lower-q025-r32",
+        "profile": "partial-update",
+        "rate": 32,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-lower-q025-r64",
+        "profile": "partial-update",
+        "rate": 64,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-lower-q025-r128",
+        "profile": "partial-update",
+        "rate": 128,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-lower-q025-r256",
+        "profile": "partial-update",
+        "rate": 256,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-crawler-lower-q025": [
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-lower-q025-r8",
+        "profile": "two-step",
+        "rate": 8,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-lower-q025-r17",
+        "profile": "two-step",
+        "rate": 17,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "crawler",
+        "database_cpus": 0.25,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-lower-q025-r34",
+        "profile": "two-step",
+        "rate": 34,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-partial-q1": [
+      {
+        "kind": "crawler",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-partial-q1-r512",
+        "profile": "partial-update",
+        "rate": 512,
+        "visibility": "application_acknowledged",
+        "seed_padding_bytes": 16384,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-crawler-q1": [
+      {
+        "kind": "crawler",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "concurrency": 512,
+        "paths": [
+          "direct",
+          "optimized"
+        ],
+        "http_observer": "disabled",
+        "page_size": 1,
+        "id": "default-crawler-q1-r68",
+        "profile": "two-step",
+        "rate": 68,
+        "visibility": "query_visible",
+        "seed_padding_bytes": 0,
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      }
+    ],
+    "confirm-search-read": [
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 0,
+        "lua_mutations": false,
+        "id": "default-search-read-q1",
+        "backend": "search",
+        "levels": [
+          4,
+          128
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 0,
+        "lua_mutations": false,
+        "id": "legacy-search-read-q1",
+        "backend": "search",
+        "levels": [
+          4,
+          128
+        ],
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        }
+      }
+    ],
+    "confirm-mongo-read": [
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 0,
+        "lua_mutations": false,
+        "id": "default-mongo-read-q1",
+        "backend": "mongo",
+        "levels": [
+          4,
+          128
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 0,
+        "lua_mutations": false,
+        "id": "legacy-mongo-read-q1",
+        "backend": "mongo",
+        "levels": [
+          4,
+          128
+        ],
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        }
+      }
+    ],
+    "confirm-mongo-regression": [
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "id": "default-mongo-write-q1",
+        "backend": "mongo",
+        "levels": [
+          128
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "id": "legacy-mongo-write-q1",
+        "backend": "mongo",
+        "levels": [
+          128
+        ],
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 10,
+        "lua_mutations": false,
+        "id": "default-mongo-mixed-q1",
+        "backend": "mongo",
+        "levels": [
+          128
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 10,
+        "lua_mutations": false,
+        "id": "legacy-mongo-mixed-q1",
+        "backend": "mongo",
+        "levels": [
+          128
+        ],
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": true,
+        "id": "default-mongo-lua-q1",
+        "backend": "mongo",
+        "levels": [
+          128
+        ],
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "30s",
+        "duration": "30s",
+        "payload_bytes": 1024,
+        "records": 8192,
+        "write_percent": 100,
+        "lua_mutations": true,
+        "id": "legacy-mongo-lua-q1",
+        "backend": "mongo",
+        "levels": [
+          128
+        ],
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        }
+      }
+    ],
+    "confirm-search-large-body": [
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "payload_bytes": 65536,
+        "records": 2048,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "id": "default-search-large-body-q1",
+        "backend": "search",
+        "levels": [
+          512
+        ],
+        "description": "Independent joint byte/count regression; not new selection or a sustained-capacity candidate",
+        "batching": null,
+        "expected_batching": {
+          "max_operations": 128,
+          "max_bytes": 4194304,
+          "max_wait": "20ms",
+          "max_in_flight": 16
+        }
+      },
+      {
+        "kind": "write",
+        "database_cpus": 1,
+        "client_processes": 4,
+        "rounds": 3,
+        "warmup": "60s",
+        "duration": "60s",
+        "payload_bytes": 65536,
+        "records": 2048,
+        "write_percent": 100,
+        "lua_mutations": false,
+        "id": "legacy-search-large-body-q1",
+        "backend": "search",
+        "levels": [
+          512
+        ],
+        "description": "Independent joint byte/count regression; not new selection or a sustained-capacity candidate",
+        "batching": {
+          "max_operations": 32,
+          "max_bytes": 8388608,
+          "max_wait": "0s",
+          "max_in_flight": 0
+        }
+      }
+    ]
+  }
+}
