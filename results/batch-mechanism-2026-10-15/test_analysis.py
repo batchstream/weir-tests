@@ -37,6 +37,16 @@ class MechanismGatesTest(unittest.TestCase):
         rows[-1]['sampled_db_cpu_ms_per_product'] = None
         self.assertFalse(any(item['supports_lower_database_cpu_at_comparable_completed_throughput'] for item in analysis.compare(rows) if item['candidate'] == 'optimized'))
 
+    def test_actual_collection_wait_and_cap_are_attested_at_both_boundaries(self):
+        for path, wait in (('direct', 0), ('current', 0), ('optimized', .02)):
+            snapshot = dict(raw=f'weir_store_batch_max_wait_seconds{{store="search"}} {wait}\nweir_store_active_executions_limit{{store="search"}} 0\n')
+            stage = dict(Path=path, ServerBefore=snapshot, ServerAfter=snapshot)
+            analysis.configuration_metrics(stage)
+            wrong = dict(raw='weir_store_batch_max_wait_seconds{store="search"} 1\nweir_store_active_executions_limit{store="search"} 0\n')
+            stage['ServerAfter'] = wrong
+            with self.assertRaises(ValueError):
+                analysis.configuration_metrics(stage)
+
     def test_raw_and_parsed_histogram_metrics_must_match(self):
         raw = 'weir_search_http_request_records_bucket{operation="bulk",visibility="wait_for",le="+Inf"} 4\nweir_search_http_request_records_count{operation="bulk",visibility="wait_for"} 4\n'
         labels = dict(operation='bulk', visibility='wait_for')

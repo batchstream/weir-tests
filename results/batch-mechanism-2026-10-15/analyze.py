@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Reproduce the prospectively fixed mechanism/crawler controls without pooling runners."""
 import argparse
-import gzip
 import hashlib
 import importlib.util
-import itertools
 import json
 import math
 from pathlib import Path
@@ -131,10 +129,15 @@ def stage_proof(stage, report, entry, fixture):
     before_indices = helpers.settling(stage['BeforeWarmupSettling'])
     require(before_indices == helpers.settling(stage['BeforeMeasurementSettling']) == tuple(sorted(stage['DatabaseBefore']['indices'])) == tuple(sorted(stage['DatabaseAfter']['indices'])), 'index identity/settling differs')
     require(stage['VerifiedDocuments'] == (3073 if stage['Verified'] else 0), 'full seeded oracle count differs')
-    if stage['Path'] != 'direct':
-        require(all(helpers.prom_value(stage[key], 'weir_store_active_executions_limit') == 0 for key in ('ServerBefore', 'ServerAfter')), 'adapter cap attestation differs')
+    configuration_metrics(stage)
     pressure = helpers.cpu_pressure(stage)
     return dict(passed=True, reason=None, warmup=warmup, timed=calls, pressure=pressure)
+
+
+def configuration_metrics(stage):
+    expected_wait = .02 if stage['Path'] == 'optimized' else 0
+    require(all(helpers.prom_value(stage[key], 'weir_store_batch_max_wait_seconds') == expected_wait for key in ('ServerBefore', 'ServerAfter')), 'live batch max wait attestation differs')
+    require(all(helpers.prom_value(stage[key], 'weir_store_active_executions_limit') == 0 for key in ('ServerBefore', 'ServerAfter')), 'live adapter cap attestation differs')
 
 
 def phase_metric_checks(stage):
