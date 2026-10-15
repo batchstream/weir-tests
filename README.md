@@ -4,7 +4,13 @@ Independent blackbox integration tests and database throughput comparisons for
 [Weir](https://github.com/batchstream/weir). This module uses the published
 Go SDK and public protocol. It imports no server packages.
 
-The executed [2026-10-15 value benchmark](results/value-2026-10-15/README.md)
+The [2026-10-16 batching-default study](results/default-tuning-2026-10-16/README.md)
+selects bounded defaults from a declared sensitivity grid and independently
+checks actual omitted configuration against fragmented single-record native
+calls. It reports completed throughput, actual database CPU, p99 and every
+failed capacity gate across Search/Mongo and crawler workloads.
+
+The historical [2026-10-15 value benchmark](results/value-2026-10-15/README.md)
 publishes 94 paired real-database comparisons, all rounds, raw evidence and
 offline analysis. It identifies the high-concurrency aggregation benefits and
 the low-concurrency/native-bulk counterexamples.
