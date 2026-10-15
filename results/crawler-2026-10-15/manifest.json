@@ -19,6 +19,15 @@
       "report": "raw/cap16/crawler.json.gz",
       "fixture_manifest": "raw/cap16/manifest.json.gz",
       "cleanup": "raw/cap16/cleanup.json.gz"
+    },
+    {
+      "label": "main",
+      "role": "main",
+      "workflow_run": "https://github.com/batchstream/weir-tests/actions/runs/38719747415",
+      "receipt": "raw/main/crawler.receipt.json.gz",
+      "report": "raw/main/crawler.json.gz",
+      "fixture_manifest": "raw/main/manifest.json.gz",
+      "cleanup": "raw/main/cleanup.json.gz"
     }
   ]
 }

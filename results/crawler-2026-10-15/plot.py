@@ -50,8 +50,12 @@ def draw(options):
     fig.suptitle(title, fontsize=11)
     fig.supxlabel('Thin lines/markers: every round; thick lines: completed/elapsed and CPU weighted by sampled time.\nHollow: fails fixed-rate all-arrivals gate or saturation measurement gate, or calibration. CPU includes completion drain.', fontsize=8)
     stem = re.sub('[^a-zA-Z0-9_-]+', '-', first['label'] + '-' + first['profile'])
+    metadata = dict(Creator='crawler_evidence_plot.py')
     for extension in ('png', 'svg'):
-        fig.savefig(output / (stem + '.' + extension), dpi=180, metadata=dict(Creator='crawler_evidence_plot.py'))
+        target = output / (stem + '.' + extension)
+        fig.savefig(target, dpi=180, metadata=metadata)
+        if extension == 'svg':
+            target.write_text('\n'.join(line.rstrip() for line in target.read_text().splitlines()) + '\n')
     plt.close(fig)
 
 
@@ -62,7 +66,8 @@ def main():
     args = parser.parse_args()
     data = json.loads(args.analysis.read_text())
     args.output.mkdir(parents=True, exist_ok=True)
-    plt.rcParams.update({'font.size': 9, 'axes.spines.top': False, 'axes.spines.right': False, 'svg.fonttype': 'none'})
+    settings = {'font.size': 9, 'axes.spines.top': False, 'axes.spines.right': False, 'svg.fonttype': 'none'}
+    plt.rcParams.update(settings)
     for label, profile in sorted({(row['label'], row['profile']) for row in data['rows']}):
         rows = [row for row in data['rows'] if row['label'] == label and row['profile'] == profile]
         groups = [group for group in data['groups'] if group['label'] == label and group['profile'] == profile]

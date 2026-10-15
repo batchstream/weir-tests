@@ -30,6 +30,18 @@ def load(path):
         return json.load(stream)
 
 
+def verify_archive(folder):
+    inventory = load(folder / 'files.json')
+    require(inventory and len({item['path'] for item in inventory}) == len(inventory), 'empty/duplicate raw archive inventory')
+    require({item['path'] for item in inventory} == {path.name for path in folder.glob('*.gz')}, 'raw archive inventory differs from files')
+    for item in inventory:
+        require(Path(item['path']).name == item['path'] and item['path'].endswith('.gz'), 'unsafe archive filename')
+        compressed = (folder / item['path']).read_bytes()
+        raw = gzip.decompress(compressed)
+        require(hashlib.sha256(compressed).hexdigest() == item['gzip_sha256'] and hashlib.sha256(raw).hexdigest() == item['sha256'] and len(raw) == item['bytes'], 'raw archive hash/length mismatch: ' + item['path'])
+    return len(inventory)
+
+
 def csv_write(path, values):
     fields = list(dict.fromkeys(key for row in values for key in row))
     with path.open('w', newline='', encoding='utf-8') as stream:
@@ -153,11 +165,20 @@ def arithmetic(stage, options):
                 sums[key] += worker[key]
     require(len(pids) == options['Processes'] and all(stage[key] == value for key, value in sums.items()), 'pooled count mismatch')
     require(stage['RequestedMutations'] == sum(worker['requested_logical_mutations'] for reply in stage['Clients'] for worker in reply['Workers']), 'logical mutation count mismatch')
-    for method in set(stage['HTTPBefore']) | set(stage['HTTPAfter']):
-        for field in ('Requests', 'RequestBytes', 'ResponseBytes', 'Failed'):
-            before = stage['HTTPBefore'].get(method, {}).get(field, 0)
-            after = stage['HTTPAfter'].get(method, {}).get(field, 0)
-            require(after >= before and stage['HTTPDelta'][method][field] == after - before, 'physical HTTP delta mismatch')
+    # Historical proxy body-copy aborts may be missing from old ledgers.
+    # Delta arithmetic checks the recorded ledger, not request completeness.
+    http_mode = options.get('HTTPObserver', 'enabled')
+    if http_mode == 'disabled':
+        require(all(stage[key] is None for key in ('HTTPBefore', 'HTTPAfter', 'HTTPDelta')), 'disabled HTTP observer unexpectedly has counters')
+    else:
+        require(http_mode == 'enabled' and all(isinstance(stage[key], dict) for key in ('HTTPBefore', 'HTTPAfter', 'HTTPDelta')), 'enabled HTTP observer ledger missing')
+        for method in set(stage['HTTPBefore']) | set(stage['HTTPAfter']):
+            for field in ('Requests', 'RequestBytes', 'ResponseBytes', 'Failed'):
+                before_counter = stage['HTTPBefore'].get(method)
+                after_counter = stage['HTTPAfter'].get(method)
+                before = before_counter.get(field, 0) if before_counter else 0
+                after = after_counter.get(field, 0) if after_counter else 0
+                require(after >= before and stage['HTTPDelta'][method][field] == after - before, 'physical HTTP delta mismatch')
     for kind, key in enumerate(('ScheduledToVisible', 'DispatchToVisible')):
         calculated = histogram(pooled[kind], maxima[kind])
         require(all(stage[key][name] == value for name, value in calculated.items()), 'pooled histogram mismatch')
@@ -196,6 +217,10 @@ def identities(bundle, client_source):
         values = [] if flags[flag] in ('', 'none') else [int(value) for value in flags[flag].split(',')]
         require(values == (options[field] or []), 'command/report matrix mismatch')
     require(flags['-profiles'].split(',') == options['Profiles'] and flags['-output'] == options['Output'], 'command/report profile/output mismatch')
+    http_mode = options.get('HTTPObserver', 'enabled')
+    require(http_mode in ('enabled', 'disabled'), 'unknown HTTP observer mode')
+    if 'HTTPObserver' in options:
+        require(flags.get('-http-observer') == http_mode, 'command/report HTTP observer mismatch')
     require(float(flags['-database-cpus']) == options['CPUs'] == fixture['options']['DatabaseCPUs'] == 1, 'database quota differs')
     require(fixture['host_os'] == 'linux' and fixture['options']['BatchSize'] == 32 and fixture['options']['PendingRecords'] == 4096 and fixture['options']['SearchRetryAttempts'] == 4, 'controlled fixture policy differs')
     require(options['Processes'] == 4 and options['QueuePages'] == 1 and options['Timeout'] == 10*10**9, 'controlled client policy differs')
@@ -256,6 +281,8 @@ def aggregate(rows):
         for key in ('completed', 'offered', 'rejected', 'failed', 'unknown', 'timeout', 'elapsed_s', 'sampled_cpu_ns', 'covered_cpu_s'):
             item[key] = sum(row[key] for row in group) if all(row[key] is not None for row in group) else None
         item['path_label'] = group[0]['path_label']
+        item['http_observer'] = group[0]['http_observer']
+        item['http_counter_status'] = group[0]['http_counter_status']
         item['attested_max_in_flight'] = group[0]['attested_max_in_flight']
         for field in ('observed_adapter_records', 'observed_adapter_executions'):
             item[field] = sum(row[field] for row in group) if all(row[field] is not None for row in group) else None
@@ -313,6 +340,8 @@ def main():
     for entry in manifest['entries']:
         require(entry['role'] in ('calibration', 'main', 'business', 'cap'), 'unknown experiment role')
         bundle = dict(entry=entry)
+        report_path = args.manifest.parent / entry['report']
+        archived_files = verify_archive(report_path.parent) if report_path.suffix == '.gz' else None
         for name in ('receipt', 'report', 'fixture_manifest', 'cleanup'):
             bundle[name] = load(args.manifest.parent / entry[name])
         client_source = entry.get('client_source', manifest['client_source'])
@@ -326,11 +355,12 @@ def main():
         path_labels = dict(direct='Native atomic bulk', current='Current Weir', optimized='Optimized Weir')
         if entry['role'] == 'cap':
             path_labels.update(current='Weir cap0', optimized='Weir cap16')
-        source_checks = dict(label=entry['label'], client_source=client_source, server_sources=server_sources, path_labels=path_labels, provenance_verified=True, complete_report=not report.get('incomplete') and not report.get('cleanup_error'), report_incomplete=report.get('incomplete'), report_cleanup_error=report.get('cleanup_error'), runner_exit=bundle['receipt']['exit_code'], workflow_run=entry['workflow_run'], role=entry['role'], go_audit_exit=audit.returncode, go_audit_output=(audit.stdout + audit.stderr).strip(), host=bundle['receipt']['host'], host_cpu_model=bundle['receipt'].get('host_cpu_model'), database_image=bundle['fixture_manifest']['containers'][0]['image'])
+        source_checks = dict(label=entry['label'], archive_files_verified=archived_files, client_source=client_source, http_observer=report['Parameters'].get('HTTPObserver', 'enabled'), server_sources=server_sources, path_labels=path_labels, provenance_verified=True, complete_report=not report.get('incomplete') and not report.get('cleanup_error'), report_incomplete=report.get('incomplete'), report_cleanup_error=report.get('cleanup_error'), runner_exit=bundle['receipt']['exit_code'], workflow_run=entry['workflow_run'], role=entry['role'], go_audit_exit=audit.returncode, go_audit_output=(audit.stdout + audit.stderr).strip(), host=bundle['receipt']['host'], host_cpu_model=bundle['receipt'].get('host_cpu_model'), database_image=bundle['fixture_manifest']['containers'][0]['image'])
         runs.append(source_checks)
         for row, stage in zip(summary.rows(report), report['Stages']):
             observed = stage['ElapsedNS'] > 0
-            row.update(label=entry['label'], client_source=client_source, path_label=path_labels[row['path']], role=entry['role'], workflow_run=entry['workflow_run'], after_max_in_flight=report['Parameters']['AfterMaxInFlight'], timed_observed=observed, timed_stage_checks_passed=observed and stage['Verified'] and stage['ClientsExited'] and all(stage[key] == 0 for key in ('Failed', 'Indeterminate', 'TimedOut')) and not stage.get('verification_error') and not stage.get('client_exit_errors'), live_field_oracle_recorded_pass=stage['Verified'])
+            http_mode = report['Parameters'].get('HTTPObserver', 'enabled')
+            row.update(label=entry['label'], client_source=client_source, path_label=path_labels[row['path']], role=entry['role'], workflow_run=entry['workflow_run'], after_max_in_flight=report['Parameters']['AfterMaxInFlight'], timed_observed=observed, http_observer=http_mode, http_counter_status='recorded proxy ledger' if observed and http_mode == 'enabled' else 'unavailable', timed_stage_checks_passed=observed and stage['Verified'] and stage['ClientsExited'] and all(stage[key] == 0 for key in ('Failed', 'Indeterminate', 'TimedOut')) and not stage.get('verification_error') and not stage.get('client_exit_errors'), live_field_oracle_recorded_pass=stage['Verified'])
             row.update(adapter_metrics(stage))
             row['attested_max_in_flight'] = prom_value(stage['ServerBefore'], 'weir_store_active_executions_limit') if observed and stage['Path'] != 'direct' else None
             cpu_ns, coverage, _ = summary.cpu_cost(stage)
@@ -340,23 +370,27 @@ def main():
             row['database_http_requests'] = sum(value['Requests'] for value in traffic)
             row['database_http_request_body_bytes'] = sum(value['RequestBytes'] for value in traffic)
             row['database_http_response_body_bytes'] = sum(value['ResponseBytes'] for value in traffic)
-            if not observed:
+            if not observed or http_mode == 'disabled':
                 for key in list(row):
-                    if key.startswith(('POST_', 'GET_', 'database_http_')) or key in ('p95_planned_to_visible_ms', 'p99_planned_to_visible_ms', 'max_generator_lag_ms', 'max_dispatch_lag_ms', 'drain_s'):
+                    if key.startswith(('POST_', 'GET_', 'database_http_')):
                         row[key] = None
+            if not observed:
+                for key in ('p95_planned_to_visible_ms', 'p99_planned_to_visible_ms', 'max_generator_lag_ms', 'max_dispatch_lag_ms', 'drain_s'):
+                    row[key] = None
             row['formal_measurement'] = entry['role'] != 'calibration' and bundle['receipt']['exit_code'] == 0 and audit.returncode == 0 and row['qualified'] and all(row[key] == 0 for key in ('failed', 'unknown', 'timeout')) and report['Parameters']['Rounds'] == GATES['rounds'] and report['Parameters']['Duration'] >= GATES['duration_s'] * 1e9 and report['Parameters']['Warmup'] >= GATES['warmup_s'] * 1e9 and coverage >= GATES['cpu_coverage']
             row['formal_all_arrivals'] = row['formal_measurement'] and row['mode'] == 'fixed-rate' and row['rejected'] == 0 and row['offered'] == row['completed'] and row['p99_planned_to_visible_ms'] <= GATES['p99_ms'] and row['drain_s'] <= GATES['drain_s'] and row['max_generator_lag_ms'] <= GATES['generator_lag_ms']
             for key in ('indexed_documents', 'get_operations', 'database_http_requests'):
                 row[key + '_per_product'] = row[key]/row['completed'] if row['completed'] and row[key] is not None else None
             rows.append(row)
     groups, paired = aggregate(rows), ratios(rows)
-    output = dict(schema=1, client_source=manifest['client_source'], default_server_sources=SOURCES, experimental_acceptance_gates=GATES, cpu_note='Sampled CPU only, weighted by covered time; not extrapolated to unsampled intervals. Rejected arrivals have no completed latency. All rows and negative ratios are retained; comparisons are within one workflow run.', qualification_note='Formal measurement validates source/audit, duration, rounds, error-free dispatched business work and CPU coverage. Formal all-arrivals applies only to fixed-rate rows and additionally rejects dropped arrivals, excess latency, drain and generator lag. Saturation is observed throughput at the fixed database quota; it does not establish maximum capacity or equivalent all-arrivals latency.', cleanup_note='Cleanup receipts attest only the final owned process and removed database container. Earlier server replacement waits synchronously in ReplaceServer/stopProcess; there is no separate historical OS termination receipt.', runs=runs, groups=groups, paired_round_ratios=paired, rows=rows)
+    output = dict(schema=1, client_source=manifest['client_source'], default_server_sources=SOURCES, experimental_acceptance_gates=GATES, cpu_note='Sampled CPU only, weighted by covered time; not extrapolated to unsampled intervals. Rejected arrivals have no completed latency. All rows and negative ratios are retained; comparisons are within one workflow run.', qualification_note='Formal measurement validates source/audit, duration, rounds, error-free dispatched business work and CPU coverage. Formal all-arrivals applies only to fixed-rate rows and additionally rejects dropped arrivals, excess latency, drain and generator lag. Saturation is observed throughput at the fixed database quota; it does not establish maximum capacity or equivalent all-arrivals latency.', http_note='Disabled observers provide no HTTP request/byte counts; those values remain null. Recorded proxy ledgers are observer measurements, not independent completeness proofs; historical proxy body-copy aborts may be missing from their counts.', cleanup_note='Cleanup receipts attest only the final owned process and removed database container. Earlier server replacement waits synchronously in ReplaceServer/stopProcess; there is no separate historical OS termination receipt.', runs=runs, groups=groups, paired_round_ratios=paired, rows=rows)
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / 'analysis.json').write_text(json.dumps(output, indent=2, allow_nan=False) + '\n')
     csv_write(args.output / 'groups.csv', groups)
     csv_write(args.output / 'paired-rounds.csv', paired)
     csv_write(args.output / 'stages.csv', rows)
-    print(json.dumps(dict(runs=len(runs), audit_failed_runs=sum(run['go_audit_exit'] != 0 for run in runs), stages=len(rows), timed_observations=sum(row['timed_observed'] for row in rows), formal_measurements=sum(row['formal_measurement'] for row in rows), formal_all_arrivals=sum(row['formal_all_arrivals'] for row in rows), groups=len(groups), paired_rounds=len(paired))))
+    totals = dict(runs=len(runs), audit_failed_runs=sum(run['go_audit_exit'] != 0 for run in runs), stages=len(rows), timed_observations=sum(row['timed_observed'] for row in rows), formal_measurements=sum(row['formal_measurement'] for row in rows), formal_all_arrivals=sum(row['formal_all_arrivals'] for row in rows), groups=len(groups), paired_rounds=len(paired))
+    print(json.dumps(totals))
 
 
 if __name__ == '__main__':
