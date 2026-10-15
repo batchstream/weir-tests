@@ -15,6 +15,23 @@ import tempfile
 FOLDER = Path(__file__).resolve().parent
 REPO = FOLDER.parents[1]
 EMBEDDED_INPUTS = tuple('internal/benchmark/crawlerdata/' + name for name in ('common.lua', 'product.lua', 'offer.lua', 'native.painless'))
+EXTENDED_SOURCE = 'f06a346a8e0f37f0f8b2ae6539d9a7ce6dff5b27'
+WAIT_PLAN = 'plans/default-wait-sensitivity-2026-10-16.json'
+WAIT_SERVER = '084572d79b7a53230801297f90ca2363fd864913'
+WAIT_CASE_SETS = {'wait-partial-q1': ('confirm-partial-q1', [20, 80, 40, 160]),
+                  'wait-crawler-q1': ('confirm-crawler-q1', [160, 40, 80, 20])}
+WAIT_REGISTRATION = dict(
+    phase='wait_sensitivity',
+    parent_confirmation_plan='plans/default-confirmation-2026-10-16.json',
+    parent_confirmation_source='682e725df1a81e29f4d4983d8711df1989c4adad',
+    parent_confirmation_sha256='d6cb1158e6c6ffa40a28ff4d6447e16a6523c0dfb9b678fabe3b09ddee700dcb',
+    wait_sensitivity_supplement='results/default-tuning-2026-10-16/WAIT-SENSITIVITY-SUPPLEMENT.md',
+    wait_sensitivity_supplement_source='5969c629970861f6f99e0d816c73192b90454ae9',
+    wait_sensitivity_supplement_sha256='af98e75b0360963602fd72a01ae602ef70b94483d2983da53240a24a054b2acc',
+    wait_selector='results/default-tuning-2026-10-16/wait_sensitivity_rules.py',
+    wait_selector_source='fc85cd52c1d923b6b093f52b41ffa3a82c872769',
+    wait_selector_sha256='0e6fd50e43a587149965a579304c64e281e6693cdfa36837bdff961aab07609d',
+    client_go_reference=EXTENDED_SOURCE)
 sys.path.insert(0, str(REPO / 'scripts'))
 
 
@@ -372,12 +389,78 @@ def preparation_source_proof():
     return tree
 
 
+def extended_source_proof():
+    preparation = soak_derivation.PREPARATION_SOURCE
+    _, before = prior.source_snapshot(REPO, preparation)
+    tree, after = prior.source_snapshot(REPO, EXTENDED_SOURCE)
+    before = {item['path']: item['sha256'] for item in before}
+    after = {item['path']: item['sha256'] for item in after}
+    replacements = {
+        'cmd/weir-lab/main.go': [
+            ('at most 1024 in single-request mode', 'at most 2048 in single-request mode'),
+            ('opts.warmupDuration > time.Minute', 'opts.warmupDuration > 5*time.Minute'),
+            ('maxLevel = 1024', 'maxLevel = 2048'),
+            ('level%opts.clientProcesses != 0 {', 'level%opts.clientProcesses != 0 || level/opts.clientProcesses > 1024 {'),
+            ('concurrency levels must divide evenly into client processes', 'concurrency levels must divide evenly into at most 1024 workers per client process'),
+            ('maxWorkers = 1024', 'maxWorkers = 2048')],
+        'internal/benchmark/client_worker.go': [('c.TotalWorkers > 1024', 'c.TotalWorkers > 2048')],
+        'internal/workload/dataset.go': [('config.Concurrency > 1024', 'config.Concurrency > 2048')]}
+    tests = {
+        'cmd/weir-lab/main_test.go': '6df5196e1f99a82957f33b256c94c23420cbcb6add30fd8abea5f6c357722411',
+        'internal/benchmark/client_worker_test.go': 'af663765b76eb1112c34921aeed0b513398aca53253f078e98a3785a6d89770c',
+        'internal/workload/dataset_test.go': 'e7cde1ee7c226ab07bb39d8db96a34a320571344c3bc6f447640fe28e39ec13e'}
+    changed = {name for name in set(before) | set(after) if before.get(name) != after.get(name)}
+    require(changed == set(replacements) | set(tests), 'extended admission changes other Go/module inputs')
+    for path, edits in replacements.items():
+        expected = committed(REPO, preparation, path).decode()
+        for original, replacement in edits:
+            require(expected.count(original) == 1, 'extended admission original guard differs: ' + path)
+            expected = expected.replace(original, replacement)
+        require(committed(REPO, EXTENDED_SOURCE, path).decode() == expected, 'extended admission changes measurement beyond registered guards: ' + path)
+    require(all(after[path] == digest for path, digest in tests.items()), 'extended admission regression-test hashes differ')
+    for path in EMBEDDED_INPUTS:
+        require(committed(REPO, preparation, path) == committed(REPO, EXTENDED_SOURCE, path), 'extended admission changes embedded input: ' + path)
+    return tree
+
+
+def validate_wait_plan(entry, plan):
+    require(entry['phase'] == 'wait_sensitivity' and entry['case_set'] in WAIT_CASE_SETS and entry['plan_path'] == WAIT_PLAN and entry['server_source'] == WAIT_SERVER, 'wait source is not registered for this cohort/plan/server')
+    parent_raw = committed(REPO, WAIT_REGISTRATION['parent_confirmation_source'], WAIT_REGISTRATION['parent_confirmation_plan'])
+    require(checksum(parent_raw) == WAIT_REGISTRATION['parent_confirmation_sha256'], 'wait parent confirmation plan differs')
+    parent = json.loads(parent_raw)
+    for name in ('wait_sensitivity_supplement', 'wait_selector'):
+        raw = committed(REPO, WAIT_REGISTRATION[name + '_source'], WAIT_REGISTRATION[name])
+        require(checksum(raw) == WAIT_REGISTRATION[name + '_sha256'], 'wait registration bytes differ: ' + name)
+    anchor = dict(max_operations=128, max_bytes=4194304, max_wait='20ms', max_in_flight=16)
+    case_sets, inventory = {}, {}
+    for name, (parent_name, waits) in WAIT_CASE_SETS.items():
+        cases = []
+        for wait in waits:
+            batch = dict(anchor, max_wait=str(wait) + 'ms')
+            expected_batch = dict(batch)
+            case = dict(parent['case_sets'][parent_name][0], id=name + '-w' + str(wait) + 'ms',
+                        paths=['optimized'], batching=batch, expected_batching=expected_batch)
+            cases.append(case)
+        case_sets[name] = cases
+        inventory[name] = dict(cases=4, timed_stages=12, warmup_and_timed_minutes=24.0)
+    metadata = dict(WAIT_REGISTRATION, anchor_controls=anchor,
+                    candidate_waits_ms=[20, 40, 80, 160], inventory=inventory)
+    expected = dict(schema=1, server_source=WAIT_SERVER,
+                    description='Registered four-wait sensitivity; original workload semantics and all failures retained',
+                    metadata=metadata, case_sets=case_sets)
+    require(json.dumps(plan, sort_keys=True) == json.dumps(expected, sort_keys=True), 'wait plan differs from the fixed registered workload/controls/order/metadata')
+
+
 def measurement_source_proof(manifest):
     baseline, _ = prior.source_snapshot(REPO, soak_derivation.ORIGINAL_SOURCE)
     preparation = preparation_source_proof()
     entries = {entry['label']: entry for entry in manifest['entries']}
     require(len(entries) == len(manifest['entries']), 'duplicate source-proof workflow label')
     require(sum(entry['case_set'] == soak_derivation.STARTUP_PARENT for entry in entries.values()) <= 1, 'startup correction permits only one confirmation attempt')
+    for name in WAIT_CASE_SETS:
+        require(sum(entry['case_set'] == name for entry in entries.values()) <= 1, 'wait sensitivity permits only one attempt per registered cohort')
+    require(all(entry['phase'] != 'wait_sensitivity' or entry['case_set'] in WAIT_CASE_SETS for entry in entries.values()), 'unregistered wait sensitivity cohort')
+    extended = extended_source_proof() if any(entry['case_set'] in WAIT_CASE_SETS for entry in entries.values()) else None
     plans = {}
     for label, entry in entries.items():
         raw = committed(REPO, entry['client_source'], entry['plan_path'])
@@ -394,7 +477,10 @@ def measurement_source_proof(manifest):
         plan = plans[label]
         corrected_soak = entry['phase'] == 'soak' and entry['case_set'] == 'soak-pure' and any(key in plan.get('metadata', {}) for key in soak_derivation.STARTUP_REGISTRATION)
         corrected = entry['case_set'] == soak_derivation.STARTUP_PARENT or corrected_soak
-        if corrected:
+        if entry['case_set'] in WAIT_CASE_SETS:
+            require(tree == extended, 'wait-sensitivity client Go tree differs from Cext')
+            validate_wait_plan(entry, plan)
+        elif corrected:
             require(tree == preparation, 'startup-correction client Go tree differs from Cprep')
             correction_options = dict(entry=entry, plan=plan, entries=entries, plans=plans)
             soak_derivation.validate_startup_plan(correction_options)
@@ -435,7 +521,7 @@ def formal_results(options):
     manifest, rows = options['manifest'], options['rows']
     capacity, rate_bounds, sustained, comparisons = [], [], [], []
     for entry in manifest['entries']:
-        if entry['phase'] == 'selection':
+        if entry['phase'] in ('selection', 'wait_sensitivity'):
             continue
         plan = json.loads(committed(REPO, entry['client_source'], entry['plan_path']))
         cases = plan['case_sets'][entry['case_set']]
