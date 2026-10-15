@@ -1,6 +1,6 @@
 # Default selection sensitivity study
 
-Selected combination: **128 operations / 4 MiB / 20ms / 16 adapter invocations**. This is the constrained choice within the declared sensitivity inventory; independent actual-default confirmation remains pending.
+Selected combination: **128 operations / 4 MiB / 20ms / 16 adapter invocations**. This is the constrained choice within the declared sensitivity inventory. Independent actual-default confirmation and its separate capacity qualifications are reported in the [complete evidence](README.md).
 
 Twenty count/wait/slot configurations were measured at the 8 MiB byte anchor across three write profiles and two read guards. A separate four-point 64 KiB body calibration used the 128/5ms/16 anchor. The independently confirmed combination must pass the registered joint large-body check. This is not a claim that the full cross-product or every deployment is globally optimal.
 
@@ -48,4 +48,4 @@ Eleven protective candidates were eligible, seven entered the 5% throughput fron
 
 ## Limits
 
-These short selection stages choose a candidate and do not establish steady state or maximum capacity. The original native partial512 point did not complete all arrivals and cannot support a qualified paired saving claim. Independent three-round, actual omitted-default and conditional five-minute checks determine the final adoption and capacity claims.
+These short selection stages choose a candidate and do not establish steady state or maximum capacity. The original native partial512 point did not complete all arrivals and cannot support a qualified paired saving claim. The complete evidence retains the independent three-round actual omitted-default results, all 12 passed read guards, the combined large-body check and every failed capacity qualification. Conditional five-minute checks remain subject to the original eligibility gates.

@@ -18,6 +18,9 @@ All primary native calls contain one record. Four independent OS processes own
 their driver/SDK connections and issue the same changes using disjoint keys.
 There is no client batching or Sink baseline. Search has one primary per index,
 zero replicas, request translog durability and a one-second refresh interval.
+Fixtures explicitly allow 4096 transport pending records; the four omitted batching
+controls are the defaults under selection, rather than an entirely default server
+configuration. Queue and memory defaults are not selected by this study.
 Acknowledgement and query visibility match within each comparison. Every update
 changes a revision; independent full-field persisted oracles check the result.
 Business repositories, SDK, protocol and deployment charts were not modified.
@@ -76,10 +79,10 @@ database's per-document indexing work.
 
 ## Comparable completed crawler throughput, lower database load
 
-The original two-step Lua product/seller dependencies remain intact. Each
-completed product updates one product and two sellers in two query-visible
-phases. At 68 offered products/s, 512 workers, one database CPU and three
-60-second rounds:
+The original `two-step` profile preserves three ordered query-visible phases:
+product reconciliation, the product update, then the two seller updates in
+parallel. It touches one product and two seller documents. At 68 offered
+products/s, 512 workers, one database CPU and three 60-second rounds:
 
 | Round | Native products/s | Weir products/s | Native / Weir p99 ms | Native / Weir DB CPU ms/product |
 | --- | ---: | ---: | ---: | ---: |
@@ -167,7 +170,25 @@ function; a virtual-time regression fails at three minutes on the old code and
 passes at the parent's eight-minute deadline after the fix. Weir, database quota,
 per-request deadlines, measurement code, embedded workloads and numerical gates
 remain unchanged. This named correction cohort and any eligible conditional
-five-minute pure check remain pending. The original failed workflow is retained;
+five-minute pure check were audited in the
+[22-workflow analysis](analysis-startup-corrected-confirmation/analysis.json).
+All 18 new stages are usable; the [equivalence receipt](startup-corrected-analysis-equivalence.json)
+preserves the previous 549 rows and both selectors unchanged. At 512 workers:
+
+| Round | Native writes/s | Weir writes/s | Ratio | Native / Weir actual DB quota CPU | Weir p99 ms |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 677.454 | 5197.600 | 7.672× | 103.409% / 103.640% | 393.215 |
+| 2 | 695.808 | 5379.045 | 7.731× | 103.944% / 103.603% | 425.983 |
+| 3 | 695.287 | 5794.242 | 8.334× | 103.967% / 103.947% | 327.679 |
+
+Actual container CPU is approximately 0.129–0.130 cores; the quota label alone
+would understate the observation. The paired actual CPU ratios are
+0.99672–1.00223. These three points pass the original quality and stability gates,
+but the 512-to-1024 gains are 11.220%, 12.062% and 3.510%; the third 1024-worker
+round's second/first-half ratio is 0.879494. No Weir capacity point qualifies,
+and [the unchanged rules still derive zero soak checks](soak-derivation-after-startup-correction.json).
+The first 256-worker round has strong cold-state effects and its larger ratio
+is not used as the principal benefit claim. The original failed workflow is retained;
 there is no favorable performance retry or adaptive startup extension.
 
 ## Reproduction and analysis corrections
@@ -204,7 +225,10 @@ python3 results/default-tuning-2026-10-16/analyze.py \
 python3 -m unittest discover -s results/default-tuning-2026-10-16 -p '*_test.py'
 ```
 
-The auditor build receipt identifies its original source and binary SHA256.
+The auditor build receipt identifies its original source and binary SHA256, built
+with Go 1.27.1 for `darwin/arm64` and `CGO_ENABLED=1`. The exact binary gate uses
+that recorded platform/build identity; a different-platform rebuild has a
+different identity and is not silently substituted into this evidence.
 Output directories must be new. Ordinary Go tests remain offline and do not
 start services; real database integration is opt-in. These are owned Linux
 loopback fixtures, not a distributed production fleet. The finite candidate grid,
