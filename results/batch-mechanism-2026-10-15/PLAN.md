@@ -5,10 +5,12 @@ Frozen before dispatch on 2026-10-15. This experiment separates server aggregati
 ## Immutable source and changed variable
 
 - Client, workflow and original Go offline auditor: `c0f9d6159ce542e5678f81d5d5f02846a157cbad` (`batchstream/weir-tests`). The frozen workflow branch is `randy/batch-mechanism-client`; verify it resolves to this SHA and do not move it after dispatch.
-- Both Weir paths: `4bb1b20a6877a28eabf359f0d7b67c5ecbcfa66a` (`batchstream/weir`). Root must confirm that fresh code review has no blocking finding before dispatch. If a blocker requires a source change, amend the prospective source and ledger before any run; retain every already-dispatched source/run rather than silently replacing it.
+- Both Weir paths: `49bab6ae1622fb389926269e976dd31385b075e5` (`batchstream/weir`). Root must confirm that fresh code review has no blocking finding before dispatch. If a blocker requires a source change, amend the prospective source and ledger before any run; retain every already-dispatched source/run rather than silently replacing it.
 - Three paths rotate `direct/current/optimized`, `current/optimized/direct`, `optimized/direct/current`. Native callers always submit one record; they never receive a preassembled batch from independent workers. Both Weir paths receive the **same binary SHA-256**. Baseline `batching.max_wait=0` (field omitted), candidate `batching.max_wait=20ms`; both `max_in_flight=0`. Max operations remains 32. The collection window is the only configuration difference.
 
 Source preparation and run receipts must retain clean source identities, build metadata and binary SHA-256 before/after measurement. Every returned workflow head SHA and runner source must match the frozen client. Plan/report-only commits follow that source so that they do not claim to contain their own Git identity. A source/ref/config mismatch invalidates the attempt and remains in the ledger.
+
+The initial prospective server `4bb1b20a6877a28eabf359f0d7b67c5ecbcfa66a` was replaced before any dispatch/result with `49bab6ae1622fb389926269e976dd31385b075e5`: a reviewed selector early exit avoids scanning the rest of the queue once the oldest namespace already fills the configured operation batch. Selection/wait semantics and every experiment control remain unchanged. The original plan remains in Git history.
 
 ## Fixed workloads and resources
 
