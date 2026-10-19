@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	weir "github.com/batchstream/weir-go"
@@ -135,90 +136,74 @@ func (s *system) testProjectionAndFailures(t *testing.T, backend *backendData) {
 			t.Fatalf("refresh projection fixture: %d %s", code, body)
 		}
 	}
-	filter := &weir.Document{ContentType: "application/json", Data: []byte(`{"range":{"n":{"gte":2}}}`)}
-	if target.name == "mongo" {
-		bound := bson.D{{Key: "$gte", Value: int64(2)}}
-		value := bson.D{{Key: "n", Value: bound}}
-		filter = bsonDocument(t, value)
+	wires := []nativeInvoke{
+		ownerNative(transport(t, s.cluster.Nodes[0].Application)),
+		ownerNative(transport(t, s.cluster.Nodes[1].Application)),
 	}
-	projection := &weir.Projection{Mode: weir.ProjectionInclude, Fields: []string{"n"}}
-	request := &weir.ScanRequest{Resource: target.collection, Filter: filter, Projection: projection, PageSize: 1}
-	seen := make(map[int64]bool)
-	exhausted := false
-	for page := range 4 {
-		wire := transport(t, s.cluster.Nodes[page%2].Application)
-		opts := weir.ScanOptions{StoreName: target.name, Request: request, Consume: func(_ context.Context, document *weir.Document) error {
-			n, err := target.number(document)
-			if err != nil {
-				return err
-			}
-			if n < 2 || seen[n] {
-				return fmt.Errorf("wrong or duplicate projected record %d", n)
-			}
-			seen[n] = true
-			if target.name == "mongo" {
-				elements, err := bson.Raw(document.Data).Elements()
-				if err != nil || len(elements) != 1 || elements[0].Key() != "n" {
-					return fmt.Errorf("unexpected Mongo projection: %v %v", elements, err)
-				}
-			} else {
-				var fields map[string]json.RawMessage
-				if err := json.Unmarshal(document.Data, &fields); err != nil {
-					return err
-				}
-				if len(fields) != 1 || fields["n"] == nil {
-					return fmt.Errorf("unexpected Search projection: %s", document.Data)
-				}
-			}
-			return nil
-		}}
-		end, err := weir.Scan(s.ctx, wire, opts)
-		if err != nil || end.GetFailure() != nil || end.GetDocumentCount() > 1 {
-			t.Fatalf("projected page: %v %v", end, err)
-		}
-		if page == 0 {
-			if end.GetExhausted() || len(end.GetNextContinuationToken()) == 0 {
-				t.Fatal("first filtered page has no continuation", end)
-			}
-			changed := &weir.Projection{Mode: weir.ProjectionExclude, Fields: []string{"n"}}
-			invalid := &weir.ScanRequest{Resource: target.collection, Filter: filter, Projection: changed, PageSize: 1, ContinuationToken: end.NextContinuationToken}
-			invalidOpts := weir.ScanOptions{StoreName: target.name, Request: invalid, Consume: func(context.Context, *weir.Document) error { return nil }}
-			checkpoint, err := weir.Scan(s.ctx, wire, invalidOpts)
-			if err != nil || checkpoint.GetFailure().GetCode() != weir.FailureInvalidArgument || checkpoint.GetDocumentCount() != 0 || len(checkpoint.GetNextContinuationToken()) != 0 {
-				t.Fatalf("changed projection accepted token: %v %v", checkpoint, err)
-			}
-			request.ContinuationToken = end.NextContinuationToken
-		}
-		if end.GetExhausted() {
-			exhausted = true
-			break
-		}
-		request.ContinuationToken = end.NextContinuationToken
+	calls := 0
+	invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+		call := wires[calls%len(wires)]
+		calls++
+		return call(ctx, opts)
 	}
-	if !exhausted || len(seen) != 2 {
-		t.Fatal("filtered projection omitted documents", seen)
+	bound := bson.D{{Key: "$gte", Value: int64(2)}}
+	query := nativeQuery{
+		mongoFilter:     bson.D{{Key: "n", Value: bound}},
+		mongoProjection: bson.D{{Key: "n", Value: 1}, {Key: "_id", Value: 0}},
+		searchQuery:     map[string]any{"range": map[string]any{"n": map[string]any{"gte": 2}}},
+		searchSource:    []string{"n"},
 	}
-	exclude := &weir.Projection{Mode: weir.ProjectionExclude, Fields: []string{"n"}}
-	excluded := &weir.ScanRequest{Resource: target.collection, Projection: exclude, PageSize: 4}
-	excludedOptions := weir.ScanOptions{StoreName: target.name, Request: excluded, Consume: func(_ context.Context, document *weir.Document) error {
+	pager, err := target.nativePager(invoke, query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	documents := collectNativePages(t, s.ctx, pager)
+	var numbers []int64
+	for _, document := range documents {
+		n, err := target.number(document)
+		if err != nil {
+			t.Fatal(err)
+		}
+		numbers = append(numbers, n)
 		if target.name == "mongo" {
-			if bson.Raw(document.Data).Lookup("n").Type != 0 {
-				return fmt.Errorf("excluded Mongo field remains")
+			elements, err := bson.Raw(document.Data).Elements()
+			if err != nil || len(elements) != 1 || elements[0].Key() != "n" {
+				t.Fatalf("Native Mongo projection: %v %v", elements, err)
 			}
 		} else {
 			var fields map[string]json.RawMessage
-			if err := json.Unmarshal(document.Data, &fields); err != nil {
-				return err
-			}
-			if fields["n"] != nil {
-				return fmt.Errorf("excluded Search field remains")
+			if json.Unmarshal(document.Data, &fields) != nil || len(fields) != 1 || fields["n"] == nil {
+				t.Fatalf("Native Search _source inclusion: %s", document.Data)
 			}
 		}
-		return nil
-	}}
-	end, err := s.client.Scan(s.ctx, excludedOptions)
-	if err != nil || end.GetFailure() != nil || end.GetDocumentCount() != 3 || !end.GetExhausted() {
-		t.Fatalf("exclude projection: %v %v", end, err)
+	}
+	slices.Sort(numbers)
+	if !slices.Equal(numbers, []int64{2, 3}) || pager.pages < 2 {
+		t.Fatalf("filtered Native projection pagination: pages=%d numbers=%v", pager.pages, numbers)
+	}
+	exclude := nativeQuery{
+		mongoProjection: bson.D{{Key: "n", Value: 0}},
+		searchSource:    map[string]any{"excludes": []string{"n"}},
+	}
+	pager, err = target.nativePager(s.client.Native, exclude)
+	if err != nil {
+		t.Fatal(err)
+	}
+	documents = collectNativePages(t, s.ctx, pager)
+	if len(documents) != 3 {
+		t.Fatalf("Native exclusion omitted documents: %d", len(documents))
+	}
+	for _, document := range documents {
+		if target.name == "mongo" {
+			if bson.Raw(document.Data).Lookup("n").Type != 0 {
+				t.Fatal("Native Mongo excluded field remains")
+			}
+		} else {
+			var fields map[string]json.RawMessage
+			if json.Unmarshal(document.Data, &fields) != nil || fields["n"] != nil {
+				t.Fatalf("Native Search excluded source field remains: %s", document.Data)
+			}
+		}
 	}
 	s.testMissingTargets(t, target)
 	s.testAdapterOwnedEnvelopes(t, target)
@@ -232,22 +217,33 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 		native.Resource = weir.EncodeSegment(target.mongo.Database().Name())
 	}
 	options := weir.NativeOptions{StoreName: target.name, Request: native, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
-	result, err := s.client.Native(s.ctx, options)
+	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
+	result, err := s.client.Native(rpc, options)
+	cancel()
 	if err != nil || result == nil || result.Response != nil || result.Completion != weir.NativeNotStarted || result.Failure.GetCode() != weir.FailureUnsupported {
 		t.Fatalf("unknown format must reach adapter classification: %v %v", result, err)
 	}
-
-	projection := &weir.Projection{Mode: weir.ProjectionInclude, Fields: []string{"$literal"}}
-	request := &weir.ScanRequest{Resource: target.collection, Projection: projection, PageSize: 1}
-	scan := weir.ScanOptions{StoreName: target.name, Request: request, Consume: func(context.Context, *weir.Document) error { return nil }}
 	if target.name == "mongo" {
-		end, err := s.client.Scan(s.ctx, scan)
-		if err != nil || end.GetDocumentCount() != 0 || end.GetFailure().GetCode() != weir.FailureUnsupported {
-			t.Fatalf("Mongo field rule must be enforced by adapter: %v %v", end, err)
+		// This is a Mongo find projection error, not a portable projection rule.
+		projection := bson.D{{Key: "n", Value: 1}, {Key: "other", Value: 0}}
+		command := bson.D{{Key: "find", Value: target.mongo.Name()}, {Key: "projection", Value: projection}, {Key: "batchSize", Value: 1}}
+		request, err := nativeMongoRequest(target.mongo.Database().Name(), command)
+		if err != nil {
+			t.Fatal(err)
+		}
+		caller := &nativePager{store: target.name, invoke: s.client.Native}
+		_, body, err := caller.exchange(s.ctx, request)
+		raw := bson.Raw(body)
+		if err != nil || raw.Validate() != nil {
+			t.Fatalf("Mongo projection error lost Native completion: %s %v", raw, err)
+		}
+		ok, valid := raw.Lookup("ok").AsFloat64OK()
+		code, hasCode := raw.Lookup("code").AsInt64OK()
+		if !valid || ok != 0 || !hasCode || code != 31254 {
+			t.Fatalf("Mongo inclusion/exclusion business error: %s", raw)
 		}
 		return
 	}
-
 	literal := target.provisionTarget(t, s.ctx, "literal.fields")
 	document := &weir.Document{ContentType: "application/json", Data: []byte(`{"$literal":42,"n":1}`)}
 	write := &weir.WriteRequest{Resource: literal.resource("literal"), Document: document}
@@ -259,20 +255,18 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 	if code != http.StatusOK {
 		t.Fatalf("refresh literal field: %d %s", code, body)
 	}
-	request.Resource = literal.collection
-	scan.Consume = func(_ context.Context, value *weir.Document) error {
-		var fields map[string]int
-		if err := json.Unmarshal(value.Data, &fields); err != nil {
-			return err
-		}
-		if len(fields) != 1 || fields["$literal"] != 42 {
-			return fmt.Errorf("literal field projection mismatch: %s", value.Data)
-		}
-		return nil
+	query := nativeQuery{searchSource: []string{"$literal"}}
+	pager, err := literal.nativePager(s.client.Native, query)
+	if err != nil {
+		t.Fatal(err)
 	}
-	end, err := s.client.Scan(s.ctx, scan)
-	if err != nil || end.GetFailure() != nil || end.GetDocumentCount() != 1 {
-		t.Fatalf("store-neutral literal field: %v %v", end, err)
+	documents := collectNativePages(t, s.ctx, pager)
+	if len(documents) != 1 {
+		t.Fatalf("literal Search projection count=%d", len(documents))
+	}
+	var fields map[string]int
+	if json.Unmarshal(documents[0].Data, &fields) != nil || len(fields) != 1 || fields["$literal"] != 42 {
+		t.Fatalf("Native Search literal source field: %s", documents[0].Data)
 	}
 }
 
@@ -280,6 +274,9 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 	t.Helper()
 	missing := *target
 	missing.collection += ".never_created"
+	if target.name == "mongo" {
+		missing.mongo = target.mongo.Database().Collection(target.mongo.Name() + ".never_created")
+	}
 	requests := []*weir.ReadRequest{
 		{Resource: target.resource("1")}, {Resource: target.resource("absent")}, {Resource: missing.resource("1")},
 	}
@@ -291,65 +288,55 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 	if results[0].Document == nil || !results[1].Missing || results[1].Failure != nil || results[2].Missing || results[2].Failure.GetCode() != weir.FailureTargetNotFound {
 		t.Fatalf("record/target absence confused: %v", results)
 	}
-	emptyFilter := &weir.Document{ContentType: "application/json", Data: []byte(`{"term":{"n":999}}`)}
+	empty := nativeQuery{
+		mongoFilter: bson.D{{Key: "n", Value: int64(999)}},
+		searchQuery: map[string]any{"term": map[string]any{"n": 999}},
+	}
+	pager, err := target.nativePager(s.client.Native, empty)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if documents := collectNativePages(t, s.ctx, pager); len(documents) != 0 {
+		t.Fatalf("empty Native query returned %d records", len(documents))
+	}
+	query := nativeQuery{}
+	pager, err = missing.nativePager(s.client.Native, query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cleanupNativePager(t, pager)
 	if target.name == "mongo" {
-		value := bson.D{{Key: "n", Value: int64(999)}}
-		emptyFilter = bsonDocument(t, value)
-	}
-	request := &weir.ScanRequest{Resource: target.collection, Filter: emptyFilter, PageSize: 1}
-	scan := weir.ScanOptions{StoreName: target.name, Request: request, Consume: func(context.Context, *weir.Document) error { return nil }}
-	end, err := s.client.Scan(s.ctx, scan)
-	if err != nil || end.GetFailure() != nil || !end.GetExhausted() || end.GetDocumentCount() != 0 {
-		t.Fatalf("empty scan: %v %v", end, err)
-	}
-	request = &weir.ScanRequest{Resource: missing.collection, PageSize: 1}
-	scan.Request = request
-	end, err = s.client.Scan(s.ctx, scan)
-	if err != nil || end.GetFailure().GetCode() != weir.FailureTargetNotFound || end.GetExhausted() || len(end.GetNextContinuationToken()) != 0 {
-		t.Fatalf("missing target scan: %v %v", end, err)
-	}
-	nativeMissing := &weir.NativeRequest{Resource: missing.collection}
-	if target.name == "mongo" {
-		command := bson.D{{Key: "count", Value: target.mongo.Name() + ".never_created"}}
-		nativeMissing.Resource = weir.EncodeSegment(target.mongo.Database().Name())
-		nativeMissing.Request = bsonDocument(t, command)
-	} else {
-		nativeMissing = nativeHTTPGet(t, missing.collection, "/_doc/absent")
-	}
-	var nativeBody []byte
-	nativeMissingOptions := weir.NativeOptions{StoreName: target.name, Request: nativeMissing}
-	nativeMissingOptions.Consume = func(_ context.Context, _ *weir.NativeResponse, chunk []byte) error {
-		if len(nativeBody)+len(chunk) > 1<<20 {
-			return fmt.Errorf("Native response exceeded fixture bound")
-		}
-		nativeBody = append(nativeBody, chunk...)
-		return nil
-	}
-	missingResult, err := s.client.Native(s.ctx, nativeMissingOptions)
-	if err != nil || missingResult == nil || missingResult.Response == nil || missingResult.Completion != weir.NativeResponseComplete || missingResult.Failure != nil {
-		t.Fatalf("missing Native target must retain the backend response: %v %v", missingResult, err)
-	}
-	if target.name == "mongo" {
-		raw := bson.Raw(nativeBody)
-		if raw.Validate() != nil || raw.Lookup("n").AsInt64() != 0 || raw.Lookup("ok").AsFloat64() != 1 {
-			t.Fatalf("Native count on missing MongoDB collection: %s", raw)
+		// Mongo find on an absent collection is a successful empty cursor, unlike
+		// typed Read's explicit target classification.
+		documents := collectNativePages(t, s.ctx, pager)
+		if len(documents) != 0 || pager.mongoCursor != 0 {
+			t.Fatal("Native Mongo missing collection was not empty/exhausted")
 		}
 	} else {
-		response, err := weir.ParseHTTPNativeResponse(missingResult.Response)
-		if err != nil || response.StatusCode != http.StatusNotFound {
-			t.Fatalf("Native missing Search index HTTP response: %v %v", response, err)
+		head, body, err := pager.exchange(s.ctx, pager.open)
+		if err != nil {
+			t.Fatal("missing Search index lost Native completion:", err)
 		}
-	}
-	if target.name == "search" {
+		response, err := weir.ParseHTTPNativeResponse(head)
+		var failure struct {
+			Error struct {
+				Type string `json:"type"`
+			} `json:"error"`
+		}
+		if err != nil || response.StatusCode != http.StatusNotFound || json.Unmarshal(body, &failure) != nil || failure.Error.Type != "index_not_found_exception" {
+			t.Fatalf("Native missing Search index: metadata=%v body=%s err=%v", response, body, err)
+		}
 		native := nativeHTTPGet(t, target.collection, "/_doc/absent")
-		nativeOpts := weir.NativeOptions{StoreName: target.name, Request: native, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
-		result, err := s.client.Native(s.ctx, nativeOpts)
-		if err != nil || result == nil || result.Completion != weir.NativeResponseComplete || result.Failure != nil {
-			t.Fatalf("complete HTTP 404 native response: %v %v", result, err)
+		head, body, err = pager.exchange(s.ctx, native)
+		if err != nil {
+			t.Fatal("missing Search record lost Native completion:", err)
 		}
-		response, err := weir.ParseHTTPNativeResponse(result.Response)
-		if err != nil || response.StatusCode != http.StatusNotFound {
-			t.Fatalf("HTTP 404 metadata: %v %v", response, err)
+		response, err = weir.ParseHTTPNativeResponse(head)
+		var record struct {
+			Found *bool `json:"found"`
+		}
+		if err != nil || response.StatusCode != http.StatusNotFound || json.Unmarshal(body, &record) != nil || record.Found == nil || *record.Found {
+			t.Fatalf("Native missing Search record: metadata=%v body=%s err=%v", response, body, err)
 		}
 	}
 }
