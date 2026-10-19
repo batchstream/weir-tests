@@ -3,7 +3,6 @@
 package integration_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -134,7 +133,7 @@ func testTypedSequence(t *testing.T, ctx context.Context, client *weir.Client, b
 	backend.assertPersisted(t, ctx, "primary", 5)
 }
 
-func testCrossOwnerScan(t *testing.T, ctx context.Context, cluster *fixture.Cluster, backend *backendData) {
+func testCrossOwnerNativePagination(t *testing.T, ctx context.Context, cluster *fixture.Cluster, backend *backendData) {
 	t.Helper()
 	if backend.name == "search" {
 		refresh := httpRequest{method: http.MethodPost, path: "/" + backend.collection + "/_refresh"}
@@ -143,69 +142,76 @@ func testCrossOwnerScan(t *testing.T, ctx context.Context, cluster *fixture.Clus
 			t.Fatalf("refresh owned Search index: status=%d body=%s", code, body)
 		}
 	}
-	owners := []int{0, 1}
-	transports := make([]pb.StoreServiceClient, len(owners))
-	for i, owner := range owners {
-		transports[i] = transport(t, cluster.Nodes[owner].Application)
+	transports := []pb.StoreServiceClient{
+		transport(t, cluster.Nodes[0].Application), transport(t, cluster.Nodes[1].Application),
 	}
-	seen := make(map[int64]bool)
-	var token []byte
-	exhausted := false
-	for page := 0; page < 5; page++ {
-		request := &weir.ScanRequest{Resource: backend.collection, PageSize: 1, ContinuationToken: bytes.Clone(token)}
-		count := uint64(0)
-		scan := weir.ScanOptions{StoreName: backend.name, Request: request}
-		scan.Consume = func(_ context.Context, document *weir.Document) error {
-			number, err := backend.number(document)
-			if err != nil {
-				return err
-			}
-			if seen[number] {
-				return fmt.Errorf("cross-owner continuation repeated %d", number)
-			}
-			seen[number] = true
-			count++
-			return nil
-		}
-		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		end, err := weir.Scan(rpc, transports[page%len(transports)], scan)
-		cancel()
-		if err != nil || end == nil || end.GetFailure() != nil || end.GetDocumentCount() != count || count > 1 {
-			t.Fatalf("cross-owner Scan page=%d count=%d end=%v err=%v", page, count, end, err)
-		}
-		next := end.GetNextContinuationToken()
-		if end.GetExhausted() == (len(next) != 0) {
-			t.Fatal("Scan page must have exactly one of exhausted or continuation")
-		}
-		if end.GetExhausted() {
-			exhausted = true
-			break
-		}
-		if count == 0 || bytes.Equal(token, next) {
-			t.Fatal("Scan continuation did not advance")
-		}
-		token = bytes.Clone(next)
+	calls := 0
+	invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+		wire := transports[calls%len(transports)]
+		calls++
+		return weir.Native(ctx, wire, opts)
 	}
-	got := make([]int64, 0, len(seen))
-	for number := range seen {
-		got = append(got, number)
+	query := nativeQuery{}
+	pager, err := backend.nativePager(invoke, query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	documents := collectNativePages(t, ctx, pager)
+	got := make([]int64, 0, len(documents))
+	for _, document := range documents {
+		n, err := backend.number(document)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, n)
 	}
 	slices.Sort(got)
 	want := []int64{5, 11, 12}
-	if !exhausted || !slices.Equal(got, want) {
-		t.Fatalf("cross-owner complete Scan set: exhausted=%v got=%v want=%v", exhausted, got, want)
+	if pager.pages < 3 || !slices.Equal(got, want) {
+		t.Fatalf("cross-owner Native pagination: pages=%d got=%v want=%v", pager.pages, got, want)
 	}
-	refused := errors.New("consumer refused page")
-	request := &weir.ScanRequest{Resource: backend.collection, PageSize: 1}
-	scan := weir.ScanOptions{StoreName: backend.name, Request: request}
-	scan.Consume = func(context.Context, *weir.Document) error { return refused }
-	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	end, err := weir.Scan(rpc, transports[0], scan)
-	cancel()
-	if end != nil || !errors.Is(err, refused) {
-		t.Fatalf("failed consumer exposed a checkpoint: end=%v err=%v", end, err)
+
+	// A caller abandoning a page owns the live backend cursor and its cleanup.
+	early, err := backend.nativePager(invoke, query)
+	if err != nil {
+		t.Fatal(err)
 	}
-	t.Log("all finite Scan pages resumed on alternating owners without omissions/duplicates; failed consumer received no checkpoint")
+	cleanupNativePager(t, early)
+	first, err := early.next(ctx)
+	if err != nil || len(first) != 1 || early.exhausted || backend.name == "mongo" && early.mongoCursor == 0 || backend.name == "search" && early.scrollID == "" {
+		t.Fatalf("early-stop Native page: documents=%d err=%v", len(first), err)
+	}
+	probe, err := early.continuation()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := early.close(); err != nil || !early.reclaimed {
+		t.Fatal("explicit early-stop cleanup did not reclaim a live cursor:", err)
+	}
+	head, body, err := early.exchange(ctx, probe)
+	if err != nil {
+		t.Fatal("closed continuation lost Native transfer completion:", err)
+	}
+	if backend.name == "mongo" {
+		raw := bson.Raw(body)
+		if raw.Validate() != nil {
+			t.Fatal("invalid closed-cursor BSON")
+		}
+		ok, valid := raw.Lookup("ok").AsFloat64OK()
+		code, hasCode := raw.Lookup("code").AsInt64OK()
+		if !valid || ok != 0 || !hasCode || code != 43 {
+			t.Fatalf("closed Mongo cursor business error: %s", raw)
+		}
+	} else {
+		metadata, err := weir.ParseHTTPNativeResponse(head)
+		var failure struct {
+			Error json.RawMessage `json:"error"`
+		}
+		if err != nil || metadata.StatusCode != http.StatusNotFound || json.Unmarshal(body, &failure) != nil || len(failure.Error) == 0 {
+			t.Fatalf("closed Search scroll business error: metadata=%v body=%s err=%v", metadata, body, err)
+		}
+	}
+	t.Log("backend-owned Native continuation crossed owners and exhausted without omissions/duplicates; caller explicitly reclaimed early-stop cursor; closed continuation retained complete backend error response")
 }
 
 func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
@@ -238,6 +244,14 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 	cancel()
 	if err != nil || head == nil || end == nil || end.Response != head || end.Failure != nil || end.Completion != weir.NativeResponseComplete {
 		t.Fatalf("Native evidence: head=%v end=%v err=%v", head, end, err)
+	}
+	refused := errors.New("Native consumer refused body")
+	options.Consume = func(context.Context, *weir.NativeResponse, []byte) error { return refused }
+	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
+	interrupted, err := client.Native(rpc, options)
+	cancel()
+	if !errors.Is(err, refused) || interrupted == nil || interrupted.Response == nil || interrupted.Completion == weir.NativeResponseComplete {
+		t.Fatalf("refused Native body claimed complete transfer: result=%v err=%v", interrupted, err)
 	}
 	if backend.name == "mongo" {
 		raw := bson.Raw(body)

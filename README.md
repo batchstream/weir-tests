@@ -81,15 +81,27 @@ The opt-in `integration` build tag starts MongoDB, Elasticsearch, two Store
 owners and a discovery node. Tagged tests require a prepared `WEIR_TEST_BINARY`.
 Coverage includes discovery through every node, direct owner connections, typed
 CRUD and Lua transformations, independent persistence checks, same-Store calls
-containing many records, slice preflight and per-record validation, typed Scan filters and include/exclude projections, cross-owner continuation, Native response evidence,
+containing many records, slice preflight and per-record validation, Native MongoDB
+find/getMore and Search scroll pagination through alternating owners, backend-native
+filters and include/exclude projections, Native response evidence,
 cancellation, owner restart, directory convergence and persistent client recovery.
 Lua source returns one function receiving the current and incoming documents as
 ordinary tables. Tests cover object replacements, explicit keep/delete/reject
 actions, first creation, and concurrent read-modify-write through both owners.
 Nil, missing or multiple callback results return INVALID_ARGUMENT, including a
 callback that returns a missing current document. Missing records and missing
-backend targets have distinct outcomes; empty scans succeed and complete HTTP
-404 responses retain Native completion evidence. Separate multi-process tests
+backend targets have distinct typed outcomes. Native keeps backend semantics:
+MongoDB find on a missing collection succeeds with an empty cursor; Search returns
+a complete HTTP 404 with index/record absence in its body. Pagination uses one
+record per page, at most eight pages, ten Native calls, 1 MiB per response and
+10 MiB total per paginator (including cleanup/probes). Callers own backend cursor
+IDs, track rotating scroll IDs, and explicitly reclaim live cursors on early stop
+or errors using a separate five-second cleanup deadline. Exhausted Search scrolls
+are also cleared. Closed continuations retain complete Native transport evidence
+alongside MongoDB CursorNotFound or Search HTTP 404 business errors. There is no
+Weir continuation/checkpoint or projection-token binding contract. Search scroll
+requests use the API common to Elasticsearch and OpenSearch; this suite's existing
+fixture remains the pinned Elasticsearch version. Separate multi-process tests
 verify independent single-record callers.
 One-RPC reads deliver 64 MiB and 256 MiB across 1024 and 4096 distinct documents while
 checking bounded result credits and sampled owner RSS. Interrupted streams retain
@@ -98,7 +110,7 @@ confirmed record outcomes; unconfirmed mutations remain indeterminate.
 Each Execute request carries one record and its consecutive index. The client
 streams records as they are produced; server aggregation stays within the Store.
 Later invalid records stop the stream while preserving earlier acknowledged writes.
-Documents use explicit `ContentType` fields. Native carries an opaque request Document and optional response metadata; adapters own the formats. HTTP fixtures use standard messages through SDK helpers. Tests verify unknown content types reach adapter classification, while adapter-specific projection rules do not constrain other Stores.
+Documents use explicit `ContentType` fields. Native carries an opaque request Document and optional response metadata; adapters own the formats. HTTP fixtures use standard messages through SDK helpers. Tests verify unknown content types reach adapter classification. Projection syntax and business errors belong to the backend, not a portable Weir projection/token layer. Native transfer completion is checked separately from MongoDB `ok` and HTTP status/body, including complete backend error responses.
 
 Services bind to loopback and own exclusive namespaces. Cleanup verifies exact
 process and container ownership. Fixture logs, manifests and cleanup receipts

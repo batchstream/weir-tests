@@ -84,7 +84,7 @@ func TestSystemIntegration(t *testing.T) {
 	for _, backend := range backends {
 		if !t.Run(backend.name+"_lifecycle", func(t *testing.T) {
 			testLifecycle(t, ctx, client, backend)
-			testCrossOwnerScan(t, ctx, cluster, backend)
+			testCrossOwnerNativePagination(t, ctx, cluster, backend)
 			testPublicBatch(t, ctx, client, backend)
 			suite.testLargeDistinctBatch(t, backend)
 			suite.testStreamMemory(t, backend)
