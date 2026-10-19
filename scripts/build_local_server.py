@@ -6,6 +6,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
+
+# Only this trusted repository's scripts may supply sibling helpers under Python -I.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from server_source import (build_environment, freeze_server_source, native_toolchain,
+                           validate_identity, verify_snapshot)
 
 
 def digest(data):
@@ -51,24 +57,29 @@ def main():
     parser.add_argument('--source', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path, help='new binary path; existing artifacts are preserved')
     args = parser.parse_args()
+    if args.source.is_symlink() or args.output.is_symlink():
+        raise ValueError('source root and output binary must not be symlinks')
     source, output = args.source.resolve(), args.output.resolve()
     receipt_path = output.with_suffix('.receipt.json')
     frozen = output.with_suffix('.source')
-    if output.exists() or receipt_path.exists() or frozen.exists():
+    if any(path.exists() or path.is_symlink() for path in (output, receipt_path, frozen)):
         raise ValueError('output binary, receipt and source snapshot must all be new')
-    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
-    status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, text=True)
-    frozen.mkdir(parents=True)
-    tree_sha256, manifest = freeze_source(source, frozen)
-    # Limit Git reads to the same explicit Go input allowlist used by the snapshot.
+    env = build_environment()
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, env=env, text=True, timeout=10).strip()
+    status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=source, env=env, text=True, timeout=10)
+    toolchain = native_toolchain(env)
+    tree_sha256, manifest = freeze_server_source(source, frozen, env)
+    # Limit Git reads to the same explicit server input allowlist used by the snapshot.
     diff_paths = [item['path'] for item in manifest]
-    diff = subprocess.check_output(['git', 'diff', 'HEAD', '--', *diff_paths], cwd=source)
+    diff = subprocess.check_output(['git', 'diff', '--no-ext-diff', '--no-textconv', 'HEAD', '--', *diff_paths],
+                                   cwd=source, env=env, timeout=30)
     (frozen / 'source.diff').write_bytes(diff)
-    env = dict(os.environ, GOENV='off', GOWORK='off', GOFLAGS='-mod=readonly', CGO_ENABLED='0')
     # Ordinary local builds remain dev identities. The receipt identifies the frozen inputs.
     subprocess.run(['go', 'build', '-trimpath', '-buildvcs=false',
                     '-o', str(output), './cmd/weir'], cwd=frozen, env=env, check=True, timeout=600)
-    identity = json.loads(subprocess.check_output([str(output), 'version'], text=True))
+    identity = json.loads(subprocess.check_output([str(output), 'version'], env=env, text=True, timeout=10))
+    validate_identity(identity, toolchain)
+    verify_snapshot(frozen, manifest, tree_sha256)
     receipt = dict(source=revision, source_dirty=bool(status.strip()), source_tree_sha256=tree_sha256,
                    source_diff_sha256=digest(diff), source_files=manifest,
                    source_snapshot=str(frozen), source_kind='frozen local Go source tree',

@@ -25,10 +25,17 @@ zero versus 20 ms collection windows, independently of the crawler Lua workload.
 
 The SDK, protocol, server revision, Go toolchain and database artifacts are
 locked in [versions.json](versions.json). Server binaries are built separately
-from verified immutable module source. Explicit local builds for before/after
-experiments are frozen with a source snapshot and checksummed receipt; they are
-reported as local source. Module replacements and floating revisions are rejected
-by the dependency check.
+from an isolated, clean, full checkout of the exact public Git SHA. Go module
+Path/Version/Sum/Origin metadata verifies the lock, but the module cache's source
+`Dir` is never a build input. Explicit local builds for before/after experiments
+are frozen with a source snapshot and checksummed receipt; they retain dev
+identity and local tree/diff/dirty provenance. Module replacements and floating
+revisions are rejected by the test-module dependency check. The server-only
+snapshot permits only the declared `third_party/grpc` and `third_party/golua`
+replacements, verifying their module identities, upstream/patch file manifests
+and hashes; it does not expand the benchmark client's source allowlist.
+This is fixed-SHA source preparation, not candidate archive consumption or
+production qualification.
 
 ## Preparation and offline tests
 
@@ -41,6 +48,14 @@ make prepare
 make test
 GOWORK=off GOPROXY=off GOSUMDB=off python3 scripts/check_dependencies.py
 ```
+
+Server preparation fetches only `https://github.com/batchstream/weir.git` at the
+locked full SHA, with isolated Git configuration and no credential helpers.
+`prepare_weir.py --offline` disables Go downloads, not the public Git fetch for
+a new preparation. A previously prepared binary is reused only after its current
+CLI identity, digest, version, native toolchain/target and complete-source receipt
+match; old module-cache receipts are preserved but rejected, not silently rebuilt.
+A checkout, manifest or checksum failure has no module-cache/archive fallback.
 
 Default Go tests, including race tests, launch no databases or Weir processes.
 They validate request accounting, mutation evidence without replay, scheduling,
@@ -189,9 +204,14 @@ go build -trimpath -buildvcs=false -o .tools/performance-lab ./cmd/weir-lab
 ```
 
 The receipt records the binary SHA256, source HEAD, dirty state, Go source tree
-SHA256 and every frozen input file. The retained source snapshot includes local
-untracked Go files and a tracked Go diff, so the binary can be rebuilt independently
-of later edits. Only Go build inputs are copied; secret files are excluded.
+SHA256 and every frozen input file. The retained server snapshot includes local
+untracked production Go files and a tracked input diff, so the binary can be
+rebuilt independently of later edits. The server allowlist includes root module
+files and declared nested production modules, their `go.mod`/available `go.sum`,
+licenses, upstream manifests and patch metadata. Tests, unrelated third-party
+trees and secret files are excluded; selected symlinks, escaping replacements,
+missing inputs and manifest/hash mismatches fail closed. Ordinary local builds
+remain dev identities even when the source checkout is clean.
 Local macOS measurements describe the observed workload on that host and do not
 prove Linux database saturation or a production capacity limit.
 
