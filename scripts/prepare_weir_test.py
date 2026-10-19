@@ -118,6 +118,24 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual(self.build_directories, [])
         clean.assert_not_called()
 
+    def test_produced_full_git_receipt_reaches_matrix_and_report_as_locked(self):
+        import performance_tools_test as tools
+
+        versions = json.loads((Path(tools.runner.__file__).resolve().parent.parent / 'versions.json').read_text())
+        self.pins = versions
+        (self.root / 'versions.json').write_text(json.dumps(versions))
+        self.identity.update(revision=versions['weir_source'], version='local-' + versions['weir_source'])
+        self.invoke()
+        options = dict(binary=self.output, root=self.root)
+        consumed = tools.consume_produced_server(options)
+        self.assertEqual(len(consumed['commands']), 4)
+        for command in consumed['commands']:
+            self.assertNotIn('-server-receipt', command)
+        for receipt in consumed['receipts']:
+            self.assertEqual(receipt['server_receipt_kind'], 'locked')
+            self.assertEqual(receipt['server_receipt']['source_kind'], 'verified full git checkout')
+            self.assertNotIn('source_diff_sha256', receipt['server_receipt'])
+
     def test_failed_identity_is_not_published_and_cannot_fallback(self):
         self.identity['target'] = 'linux/amd64'
         with self.assertRaisesRegex(ValueError, 'identity'):

@@ -55,6 +55,17 @@ class FrozenSourceTests(unittest.TestCase):
             self.assertEqual(receipt['source_diff_sha256'], builder.digest(b'local diff'))
             self.assertEqual(receipt['source'], 'a' * 40)
             self.assertEqual(receipt['source_kind'], 'frozen local Go source tree')
+            import performance_tools_test as tools
+
+            options = dict(binary=output, root=root)
+            consumed = tools.consume_produced_server(options)
+            self.assertEqual(len(consumed['commands']), 4)
+            for command in consumed['commands']:
+                self.assertIn('-server-receipt', command)
+            for saved in consumed['receipts']:
+                self.assertEqual(saved['server_receipt_kind'], 'local')
+                self.assertTrue(saved['server_receipt']['source_dirty'])
+                self.assertEqual(saved['server_receipt']['source_diff_sha256'], receipt['source_diff_sha256'])
 
     def test_local_source_output_and_existing_artifact_symlinks_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
