@@ -11,7 +11,7 @@ import (
 
 func testDataset(t *testing.T, backend string) *Dataset {
 	t.Helper()
-	config := Config{Backend: backend, StoreName: backend, Namespace: "weirtest_0123456789abcdef01234567", Records: 37, PayloadBytes: 63, Concurrency: 5}
+	config := Config{MongoURI: "mongodb://localhost:27017", Backend: backend, StoreName: backend, Namespace: "weirtest_0123456789abcdef01234567", Records: 37, PayloadBytes: 63, Concurrency: 5}
 	dataset, err := New(config)
 	if err != nil {
 		t.Fatal(err)

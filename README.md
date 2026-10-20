@@ -61,7 +61,8 @@ Default Go tests, including race tests, launch no databases or Weir processes.
 They validate request accounting, mutation evidence without replay, scheduling,
 resource sampling, capacity qualification, fixture ownership and dependency boundaries.
 
-On macOS, an isolated native MongoDB fixture is also available:
+On macOS (arm64/amd64) or Ubuntu 24.04 amd64, an explicitly selected isolated
+native MongoDB fixture is also available:
 
 ```sh
 python3 scripts/prepare_native_mongo.py
@@ -70,6 +71,17 @@ export WEIR_TEST_MONGODB_BINARY="$PWD/.tools/mongod"
 
 The prepared binary is checksum-locked. Each test owns a new replica set, data
 directory and loopback port. Direct and Weir paths use the same database mode.
+Linux preparation uses the locked stock MongoDB 8.0.32 Ubuntu 24.04 archive,
+verifies its exact size/hash and regular binary member size/hash before version
+verification, and fails closed on unsupported platforms or mismatches. macOS
+pins remain unchanged. The blackbox CI job explicitly prepares this native
+fixture and exports `WEIR_TEST_MONGODB_BINARY` for integration and both comparison
+smokes; Search continues to use its original Docker fixture. This avoids the
+pinned Mongo container's observed pre-business kernel compatibility failure
+without changing kernels, Mongo versions or application behavior. Outside that
+explicit selection, the default Mongo fixture remains Docker; there is no
+runtime fallback. Native fixture smoke coverage does not establish database
+cgroup limits, matched performance or production qualification.
 
 ## Integration tests
 
@@ -295,6 +307,33 @@ This mode measures client batching overhead separately from the primary scenario
 For independently provisioned endpoints, see `cmd/weir-bench -help`. It requires
 explicit endpoints and creates an exclusive namespace. Remote addresses require
 an explicit flag; credential-bearing URLs are rejected.
+
+Mongo endpoints use a bounded (4096-byte), credential-free `mongodb://` profile
+with an empty or root path and explicit numeric ports (1–65535). A direct profile
+has one seed, no replica set, and omitted or `true` `directConnection`. Replica
+discovery uses 1–7 unique seeds, an explicit `replicaSet` (1–64 ASCII letters,
+digits, `_` or `-`), and omitted or `false` `directConnection`, for example
+`mongodb://127.0.0.1:27017,[::1]:27018/?replicaSet=bench`.
+Only those two query keys are accepted; authentication, TLS options, database
+paths, SRV, load balancing and read-preference overrides are not supported here.
+Every seed is validated, including canonical duplicate detection. Loopback IPs
+and literal `localhost` are permitted by default; every other IP or syntactically
+valid DNS name requires `--allow-remote`. Validation never resolves DNS. This is
+seed authorization, **not network confinement**: discovery may dial members not
+listed in the supplied seeds. Existing Weir application-seed and Search policies
+are unchanged. Programmatic workload callers must set `Config.AllowRemote` for
+the same opt-in.
+
+The comparison path named `direct` means the native database client, **not**
+`directConnection=true`. Its actual Mongo options preserve replica discovery,
+primary reads, majority writes, disabled retries/compression and worker-sized
+pooling. Discovery uses poll monitoring with a 1-second heartbeat, matching the
+server; direct profiles retain the driver's default heartbeat. Evidence records
+canonical credential-free seeds, profile, replica-set name and polling policy
+for the native connection (also carried with the Weir comparison evidence).
+Parser/options tests are offline checks, not matched live discovery, primary
+movement or performance qualification; those require a separately authorized
+replica fixture and candidate server qualification.
 
 ## CI and output
 

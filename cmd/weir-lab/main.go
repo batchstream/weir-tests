@@ -220,8 +220,8 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		provenance["topology"] = "native client, Weir and isolated MongoDB on one host; native MongoDB has no enforced CPU quota"
 	}
 	if pinsRaw, err := os.ReadFile("versions.json"); err == nil {
-		var pins map[string]string
-		if err := json.Unmarshal(pinsRaw, &pins); err != nil {
+		pins, err := parseLabVersionPins(pinsRaw)
+		if err != nil {
 			return err
 		}
 		if opts.serverReceipt == "" && identity.Revision != pins["weir_source"] {
@@ -339,6 +339,27 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		}
 	}
 	return nil
+}
+
+// parseLabVersionPins reads only the lab's required scalar pins. Other lock
+// entries, such as native fixture profiles, can have their own typed schemas.
+func parseLabVersionPins(raw []byte) (map[string]string, error) {
+	var entries map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &entries); err != nil {
+		return nil, err
+	}
+	pins := make(map[string]string)
+	for _, key := range []string{"weir_source", "sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
+		var value string
+		if err := json.Unmarshal(entries[key], &value); err != nil {
+			return nil, fmt.Errorf("invalid required version pin %s: %w", key, err)
+		}
+		if value == "" {
+			return nil, fmt.Errorf("empty required version pin %s", key)
+		}
+		pins[key] = value
+	}
+	return pins, nil
 }
 
 func parsePositiveList(raw string) ([]int, error) {

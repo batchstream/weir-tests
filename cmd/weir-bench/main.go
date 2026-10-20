@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
@@ -75,7 +74,7 @@ func run() (resultErr error) {
 	if err != nil {
 		return err
 	}
-	config := workload.Config{Backend: input.backend, MongoURI: input.mongoURI, SearchURL: input.searchURL, WeirSeed: input.weirSeed, StoreName: input.store, Namespace: namespace, Records: input.records, PayloadBytes: input.padding, Concurrency: input.workers}
+	config := workload.Config{AllowRemote: input.allowRemote, Backend: input.backend, MongoURI: input.mongoURI, SearchURL: input.searchURL, WeirSeed: input.weirSeed, StoreName: input.store, Namespace: namespace, Records: input.records, PayloadBytes: input.padding, Concurrency: input.workers}
 	dataset, err := workload.New(config)
 	if err != nil {
 		return err
@@ -130,28 +129,15 @@ func validate(input settings) error {
 	if err := validateAddress(input.weirSeed, input.allowRemote); err != nil {
 		return err
 	}
-	raw := input.searchURL
 	if input.backend == "mongo" {
-		raw = input.mongoURI
+		return workload.ValidateMongoURI(input.mongoURI, input.allowRemote)
 	}
+	raw := input.searchURL
 	address, err := url.Parse(raw)
 	if err != nil || address.User != nil || address.Host == "" || address.Fragment != "" {
 		return errors.New("requires an explicit credential-free backend endpoint")
 	}
-	if input.backend == "mongo" {
-		if address.Scheme != "mongodb" || address.Path != "" && address.Path != "/" || strings.Contains(address.Host, ",") {
-			return errors.New("Mongo endpoint requires mongodb://IP:port/ for one server")
-		}
-		query, err := url.ParseQuery(address.RawQuery)
-		if err != nil {
-			return errors.New("invalid Mongo URI query")
-		}
-		for key, values := range query {
-			if key != "directConnection" || len(values) != 1 || values[0] != "true" {
-				return errors.New("only directConnection=true is accepted in the fixture Mongo URI")
-			}
-		}
-	} else if (address.Scheme != "http" && address.Scheme != "https") || address.Path != "" && address.Path != "/" || address.RawQuery != "" {
+	if (address.Scheme != "http" && address.Scheme != "https") || address.Path != "" && address.Path != "/" || address.RawQuery != "" {
 		return errors.New("Search endpoint requires an http(s) root URL")
 	}
 	return validateAddress(address.Host, input.allowRemote)

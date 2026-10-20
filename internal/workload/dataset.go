@@ -15,6 +15,7 @@ import (
 )
 
 type Config struct {
+	AllowRemote  bool   `json:"allow_remote,omitempty"`
 	Backend      string `json:"backend"`
 	MongoURI     string `json:"-"`
 	SearchURL    string `json:"-"`
@@ -72,6 +73,11 @@ func NewNamespace() (string, error) {
 }
 
 func New(config Config) (*Dataset, error) {
+	if config.Backend == "mongo" {
+		if err := ValidateMongoURI(config.MongoURI, config.AllowRemote); err != nil {
+			return nil, err
+		}
+	}
 	if config.Backend != "mongo" && config.Backend != "search" {
 		return nil, errors.New("backend must be mongo or search")
 	}

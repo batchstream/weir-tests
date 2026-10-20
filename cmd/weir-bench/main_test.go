@@ -2,6 +2,28 @@ package main
 
 import "testing"
 
+func TestMongoCLISharedProfileValidation(t *testing.T) {
+	tests := []struct {
+		uri           string
+		remote, valid bool
+	}{
+		{"mongodb://localhost:1,[::1]:2/?replicaSet=rs", false, true},
+		{"mongodb://[::1]:1,[::2]:2/?replicaSet=rs", true, true},
+		{"mongodb://localhost:1,remote.invalid:2/?replicaSet=rs", false, false},
+		{"mongodb://localhost:1,remote.invalid:2/?replicaSet=rs", true, true},
+		{"mongodb://localhost:1/?replicaSet=rs&directConnection=true", false, false},
+		{"mongodb://localhost:0", false, false},
+		{"mongodb://localhost:1,LOCALHOST:01/?replicaSet=rs", false, false},
+		{"mongodb://localhost:1/?password=secret", false, false},
+	}
+	for _, test := range tests {
+		input := settings{backend: "mongo", mongoURI: test.uri, allowRemote: test.remote, weirSeed: "127.0.0.1:7447", store: "mongo", timeout: 1}
+		if err := validate(input); (err == nil) != test.valid {
+			t.Fatalf("valid=%v: %v", test.valid, err)
+		}
+	}
+}
+
 func TestEndpointValidationRequiresExplicitOptInAndNoCredentials(t *testing.T) {
 	valid := settings{backend: "mongo", mongoURI: "mongodb://127.0.0.1:27028/?directConnection=true", weirSeed: "127.0.0.1:7447", store: "mongo", timeout: 1}
 	if err := validate(valid); err != nil {
