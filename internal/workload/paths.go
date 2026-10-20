@@ -17,7 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
-	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 )
 
 type Status string
@@ -37,13 +36,16 @@ type Outcome struct {
 }
 
 type Evidence struct {
-	Protocol    string `json:"protocol"`
-	Endpoint    string `json:"endpoint"`
-	Version     string `json:"backend_version"`
-	ByteScope   string `json:"byte_scope"`
-	WritePolicy string `json:"write_policy"`
-	RetryPolicy string `json:"retry_policy"`
-	ClientBatch string `json:"client_batch"`
+	MongoProfile    string `json:"mongo_profile,omitempty"`
+	MongoReplicaSet string `json:"mongo_replica_set,omitempty"`
+	MongoPolling    string `json:"mongo_polling,omitempty"`
+	Protocol        string `json:"protocol"`
+	Endpoint        string `json:"endpoint"`
+	Version         string `json:"backend_version"`
+	ByteScope       string `json:"byte_scope"`
+	WritePolicy     string `json:"write_policy"`
+	RetryPolicy     string `json:"retry_policy"`
+	ClientBatch     string `json:"client_batch"`
 }
 
 // Executor is the real implementation boundary between native database access
@@ -116,17 +118,10 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 	info := Evidence{ByteScope: "logical document bytes from APPLIED write acknowledgements and validated reads; excludes transform scripts, URI, commands, acknowledgement bodies, framing, compression and discovery; unavailable evidence contributes zero", ClientBatch: "one logical operation per client call; no client bulk API", RetryPolicy: "no application retries"}
 	direct := &directPath{dataset: dataset, info: info}
 	if dataset.Config.Backend == "mongo" {
-		address, err := url.Parse(dataset.Config.MongoURI)
-		if err != nil || address.Scheme != "mongodb" || address.Host == "" || address.User != nil {
-			return nil, errors.New("requires a credential-free mongodb URI")
+		opts, profile, err := nativeMongoOptions(dataset.Config)
+		if err != nil {
+			return nil, err
 		}
-		opts := options.Client().ApplyURI(dataset.Config.MongoURI).SetDirect(true).
-			SetMaxPoolSize(uint64(dataset.Config.Concurrency)).SetMinPoolSize(0).
-			SetRetryWrites(false).SetRetryReads(false).SetMaxAdaptiveRetries(0).
-			SetEnableOverloadRetargeting(false).SetCompressors(nil).
-			SetServerMonitoringMode(options.ServerMonitoringModePoll).
-			SetReadPreference(readpref.Primary()).SetWriteConcern(writeconcern.Majority()).
-			SetServerSelectionTimeout(2 * time.Second).SetConnectTimeout(2 * time.Second)
 		client, err := mongo.Connect(opts)
 		if err != nil {
 			return nil, errors.New("direct Mongo client configuration rejected")
@@ -145,7 +140,14 @@ func openDirect(ctx context.Context, dataset *Dataset) (*directPath, error) {
 			return nil, fmt.Errorf("Mongo version evidence: %w", err)
 		}
 		direct.info.Protocol = "MongoDB driver OP_MSG"
-		direct.info.Endpoint = address.Host
+		direct.info.Endpoint = strings.Join(profile.Seeds, ",")
+		direct.info.MongoProfile = "direct"
+		direct.info.MongoPolling = "driver default heartbeat; poll monitoring"
+		if !profile.Direct {
+			direct.info.MongoProfile = "replica discovery"
+			direct.info.MongoPolling = "1s heartbeat; poll monitoring"
+		}
+		direct.info.MongoReplicaSet = profile.ReplicaSet
 		direct.info.Version = build.Version
 		direct.info.WritePolicy = "ReplaceOne upsert=true; primary reads; w=majority; no compression; pool=worker concurrency"
 		if dataset.Config.LuaMutations {

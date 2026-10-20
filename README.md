@@ -296,6 +296,33 @@ For independently provisioned endpoints, see `cmd/weir-bench -help`. It requires
 explicit endpoints and creates an exclusive namespace. Remote addresses require
 an explicit flag; credential-bearing URLs are rejected.
 
+Mongo endpoints use a bounded (4096-byte), credential-free `mongodb://` profile
+with an empty or root path and explicit numeric ports (1–65535). A direct profile
+has one seed, no replica set, and omitted or `true` `directConnection`. Replica
+discovery uses 1–7 unique seeds, an explicit `replicaSet` (1–64 ASCII letters,
+digits, `_` or `-`), and omitted or `false` `directConnection`, for example
+`mongodb://127.0.0.1:27017,[::1]:27018/?replicaSet=bench`.
+Only those two query keys are accepted; authentication, TLS options, database
+paths, SRV, load balancing and read-preference overrides are not supported here.
+Every seed is validated, including canonical duplicate detection. Loopback IPs
+and literal `localhost` are permitted by default; every other IP or syntactically
+valid DNS name requires `--allow-remote`. Validation never resolves DNS. This is
+seed authorization, **not network confinement**: discovery may dial members not
+listed in the supplied seeds. Existing Weir application-seed and Search policies
+are unchanged. Programmatic workload callers must set `Config.AllowRemote` for
+the same opt-in.
+
+The comparison path named `direct` means the native database client, **not**
+`directConnection=true`. Its actual Mongo options preserve replica discovery,
+primary reads, majority writes, disabled retries/compression and worker-sized
+pooling. Discovery uses poll monitoring with a 1-second heartbeat, matching the
+server; direct profiles retain the driver's default heartbeat. Evidence records
+canonical credential-free seeds, profile, replica-set name and polling policy
+for the native connection (also carried with the Weir comparison evidence).
+Parser/options tests are offline checks, not matched live discovery, primary
+movement or performance qualification; those require a separately authorized
+replica fixture and candidate server qualification.
+
 ## CI and output
 
 CI runs offline unit/race/vet and dependency checks, real multi-node integration,
