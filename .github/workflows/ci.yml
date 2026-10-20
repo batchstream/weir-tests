@@ -67,6 +67,8 @@ jobs:
           python3 scripts/download_modules.py
           python3 scripts/prepare_weir.py
           python3 scripts/prepare_images.py
+          mongod=$(python3 scripts/prepare_native_mongo.py)
+          printf 'WEIR_TEST_MONGODB_BINARY=%s\n' "$mongod" >> "$GITHUB_ENV"
       - name: Real multi-node integration
         env:
           GOPROXY: 'off'

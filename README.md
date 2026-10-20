@@ -61,7 +61,8 @@ Default Go tests, including race tests, launch no databases or Weir processes.
 They validate request accounting, mutation evidence without replay, scheduling,
 resource sampling, capacity qualification, fixture ownership and dependency boundaries.
 
-On macOS, an isolated native MongoDB fixture is also available:
+On macOS (arm64/amd64) or Ubuntu 24.04 amd64, an explicitly selected isolated
+native MongoDB fixture is also available:
 
 ```sh
 python3 scripts/prepare_native_mongo.py
@@ -70,6 +71,17 @@ export WEIR_TEST_MONGODB_BINARY="$PWD/.tools/mongod"
 
 The prepared binary is checksum-locked. Each test owns a new replica set, data
 directory and loopback port. Direct and Weir paths use the same database mode.
+Linux preparation uses the locked stock MongoDB 8.0.32 Ubuntu 24.04 archive,
+verifies its exact size/hash and regular binary member size/hash before version
+verification, and fails closed on unsupported platforms or mismatches. macOS
+pins remain unchanged. The blackbox CI job explicitly prepares this native
+fixture and exports `WEIR_TEST_MONGODB_BINARY` for integration and both comparison
+smokes; Search continues to use its original Docker fixture. This avoids the
+pinned Mongo container's observed pre-business kernel compatibility failure
+without changing kernels, Mongo versions or application behavior. Outside that
+explicit selection, the default Mongo fixture remains Docker; there is no
+runtime fallback. Native fixture smoke coverage does not establish database
+cgroup limits, matched performance or production qualification.
 
 ## Integration tests
 
