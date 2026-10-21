@@ -52,10 +52,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: saturation-${{ github.ref }}
-  cancel-in-progress: false
-
 defaults:
   run:
     shell: bash

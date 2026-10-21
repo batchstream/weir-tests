@@ -38,7 +38,8 @@ class MatrixRunnerTests(unittest.TestCase):
             result = subprocess.CompletedProcess(command, returncode)
             return result
 
-        with mock.patch('sys.argv', ['run_performance_matrix.py', *arguments]), \
+        argv = ['run_performance_matrix.py', *arguments]
+        with mock.patch('sys.argv', argv), \
                 mock.patch('sys.stdout', new_callable=io.StringIO), \
                 mock.patch.object(runner.subprocess, 'run', side_effect=run_command):
             runner.main()
@@ -65,14 +66,17 @@ class MatrixRunnerTests(unittest.TestCase):
                 expected_levels = '4,16' if mode == 'bulk-saturation' else '4,16,64,256'
                 self.assertEqual(command[command.index('-concurrency-levels') + 1], expected_levels)
                 self.assertEqual(command[command.index('-batch-sizes') + 1], '32' if mode == 'bulk-saturation' else '1')
-            self.assertEqual(['-lua-mutations' in command for command in commands], [False, False, False, True, False, False])
+            lua = ['-lua-mutations' in command for command in commands]
+            expected_lua = [False, False, False, True, False, False]
+            self.assertEqual(lua, expected_lua)
             self.assertTrue((output / 'read.log').exists())
 
     def test_failed_case_stops_the_matrix(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'matrix'
             with self.assertRaises(SystemExit):
-                self.run_matrix(['--backend', 'search', '--output', str(output)], returncode=3)
+                arguments = ['--backend', 'search', '--output', str(output)]
+                self.run_matrix(arguments, returncode=3)
             self.assertTrue((output / 'read.log').exists())
             self.assertFalse((output / 'mixed.log').exists())
 
@@ -104,7 +108,8 @@ class SummaryTests(unittest.TestCase):
             (after / 'lua' / 'mongo.json').unlink()
             result = self.summarize(before, after, root / 'partial')
             self.assertEqual(result['status'], 'partial')
-            self.assertEqual(result['missing_cases'], [dict(case='lua', missing=['after'])])
+            expected = [dict(case='lua', missing=['after'])]
+            self.assertEqual(result['missing_cases'], expected)
 
     def test_mismatched_schema_parameters_or_round_order_are_rejected(self):
         for change in ('schema', 'parameters', 'order'):

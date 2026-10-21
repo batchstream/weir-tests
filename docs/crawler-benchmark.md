@@ -85,7 +85,7 @@ make prepare
 go build -o .tools/weir-crawler ./cmd/weir-crawler
 ```
 
-To compare two server builds, pass them as `-before` and `-after`. The default comparison runs the prepared server on both Weir paths with different batching controls. The default scenario is single input, one product per call, four OS clients, 128 total goroutine workers, observer disabled, and fixed offered rates of 4, 16 and 48 products/s. Start with one round, 5-second stages and a small matrix, then fix calibrated rates before a three-round, 20-second matrix on Linux with Docker.
+By default `-before` and `-after` are both `.tools/weir` and the `-after-*` controls equal the before path's batching, so the two Weir paths run identical setups. To compare something, set at least one `-after-*` control (for example `-after-batch-max-wait 5ms`) or pass a different `-after` binary. The default scenario is single input, one product per call, four OS clients, 128 total goroutine workers, observer disabled, and fixed offered rates of 4, 16 and 48 products/s. Start with one round, 5-second stages and a small matrix, then fix calibrated rates before a three-round, 20-second matrix on Linux with Docker.
 
 A small local functional run:
 

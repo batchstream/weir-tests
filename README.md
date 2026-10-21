@@ -39,7 +39,9 @@ locked full SHA, with isolated Git configuration and no credential helpers.
 a new preparation. The binary is written to `.tools/weir` with a small
 `.tools/weir.json` metadata file. A previously prepared binary is reused only
 after its digest, version, CLI identity and native toolchain/target match the
-lock; a mismatched binary is preserved and reported rather than silently rebuilt.
+lock; a mismatched binary, or one without metadata, is preserved and reported
+rather than silently rebuilt. Delete a stale `.tools/` from an older preparation
+before running `make prepare`.
 A checkout, manifest or checksum failure has no module-cache/archive fallback.
 
 Default Go tests, including race tests, launch no databases or Weir processes.

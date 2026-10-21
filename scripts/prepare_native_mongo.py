@@ -93,6 +93,8 @@ def prepare(root):
     output = root / '.tools' / 'mongod'
     metadata_path = output.with_suffix('.json')
     if output.exists():
+        if not metadata_path.is_file():
+            raise ValueError('existing binary has no metadata; preserving it')
         metadata = json.loads(metadata_path.read_text())
         binary_hash = digest(output)
         if (metadata['archive_sha256'] != profile['sha256'] or

@@ -87,7 +87,7 @@ func TestCrawlerSettlingRejectsMissingOwnedIndexCounters(t *testing.T) {
 	}
 }
 
-func TestCrawlerExecutionFollowsPSEProductThenSellerPhases(t *testing.T) {
+func TestCrawlerExecutionFollowsProductThenSellerPhases(t *testing.T) {
 	for _, profile := range []string{"combined", "two-step"} {
 		t.Run(profile, func(t *testing.T) {
 			var calls [][]crawlerMutation

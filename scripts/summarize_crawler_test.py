@@ -53,13 +53,14 @@ class ReportSchemaTest(unittest.TestCase):
         parameters = dict(InputShape='single', HTTPObserver='disabled', Modes=['saturation'], Rates=None,
                           Concurrency=[4], Paths=['direct', 'before', 'after'], Profiles=['two-step'], Rounds=1)
         report = dict(schema=REPORT_SCHEMA, Parameters=parameters, Stages=[])
-        self.assertEqual(rows(report), [])
+        self.assertFalse(rows(report))
         for field in ('InputShape', 'HTTPObserver', 'Modes', 'Paths'):
             with self.subTest(missing=field):
                 missing = dict(parameters)
                 del missing[field]
+                incomplete = dict(report, Parameters=missing)
                 with self.assertRaises(KeyError):
-                    rows(dict(report, Parameters=missing))
+                    rows(incomplete)
 
 
 if __name__ == '__main__':

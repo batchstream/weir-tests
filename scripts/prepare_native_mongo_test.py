@@ -70,6 +70,13 @@ class NativeMongoTest(unittest.TestCase):
             native.prepare(self.root)
         self.assertEqual(output.read_bytes(), b'tampered')
 
+    def test_binary_without_metadata_is_preserved(self):
+        output = native.prepare(self.root)
+        output.with_suffix('.json').unlink()
+        with self.assertRaisesRegex(ValueError, 'no metadata'):
+            native.prepare(self.root)
+        self.assertEqual(output.read_bytes(), self.payload)
+
     def test_platform_and_version_fail_closed(self):
         for system, machine, release in [('Linux', 'arm64', '24.04'),
                                          ('Linux', 'x86_64', '22.04'),
