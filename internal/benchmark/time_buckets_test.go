@@ -113,7 +113,7 @@ func TestSingleRequestTimeBucketsRetainCompletionTailAndRejectOmission(t *testin
 	config := clientConfig{Path: executor.Name(), Threads: 1, TotalWorkers: 8}
 	reply := clientReply{Phase: "timed", PID: result.PID, Result: &result}
 	if err := validateClientReply(reply, "timed", config, result.PID); err != nil {
-		t.Fatal("honest completion-tail receipt rejected", err)
+		t.Fatal("honest completion-tail report rejected", err)
 	}
 	result.TimeBuckets = nil
 	if err := validateClientReply(reply, "timed", config, result.PID); err == nil {

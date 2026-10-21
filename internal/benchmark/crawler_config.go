@@ -10,16 +10,16 @@ import (
 	"github.com/batchstream/weir-tests/internal/observe"
 )
 
-const crawlerReportSchema = 3
+const crawlerReportSchema = 4
 
 func normalizeCrawlerControls(opts *CrawlerOptions) error {
 	if len(opts.Paths) == 0 {
-		opts.Paths = []string{"direct", "current", "optimized"}
+		opts.Paths = []string{"direct", "before", "after"}
 	}
 	seenPaths := map[string]bool{}
 	for _, path := range opts.Paths {
-		if path != "direct" && path != "current" && path != "optimized" || seenPaths[path] {
-			return errors.New("crawler paths must contain unique direct/current/optimized values")
+		if path != "direct" && path != "before" && path != "after" || seenPaths[path] {
+			return errors.New("crawler paths must contain unique direct/before/after values")
 		}
 		seenPaths[path] = true
 	}
@@ -64,13 +64,13 @@ func auditCrawlerServerConfiguration(stage crawlerStage, opts CrawlerOptions) er
 		return errors.New("crawler stage lacks its owned Search route configuration")
 	}
 	operations, bytes, inFlight, wait := 32, 8<<20, 0, time.Duration(0)
-	if stage.Path == "optimized" {
+	if stage.Path == "after" {
 		operations, bytes, inFlight, wait = opts.AfterBatchMaxOperations, opts.AfterBatchMaxBytes, opts.AfterMaxInFlight, opts.AfterBatchMaxWait
 	}
 	if stage.BatchMaxWaitNS != int64(wait) {
 		return errors.New("crawler stage collection wait differs from its declared path")
 	}
-	if stage.Path == "optimized" && opts.AfterUseDefaults {
+	if stage.Path == "after" && opts.AfterUseDefaults {
 		if len(configuration.Stores[0].Batching) != 0 {
 			return errors.New("crawler default path must omit its entire batching configuration")
 		}
@@ -107,18 +107,18 @@ func auditCrawlerServerConfiguration(stage crawlerStage, opts CrawlerOptions) er
 
 func auditCrawlerLiveControls(stage crawlerStage, opts CrawlerOptions) error {
 	wait, inFlight := float64(0), float64(0)
-	if stage.Path == "optimized" {
+	if stage.Path == "after" {
 		wait, inFlight = opts.AfterBatchMaxWait.Seconds(), float64(opts.AfterMaxInFlight)
 	}
 	expected := map[string]float64{"weir_store_batch_max_wait_seconds": wait, "weir_store_active_executions_limit": inFlight}
 	if opts.CaptureEffectiveConfig {
 		operations, bytes := 32, 8<<20
-		if stage.Path == "optimized" {
+		if stage.Path == "after" {
 			operations, bytes = opts.AfterBatchMaxOperations, opts.AfterBatchMaxBytes
 		}
 		expected["weir_store_batch_max_operations"], expected["weir_store_batch_max_bytes"] = float64(operations), float64(bytes)
 		if stage.ServerEffectiveConfiguration == "" {
-			return errors.New("crawler effective configuration receipt is missing")
+			return errors.New("crawler effective configuration is missing")
 		}
 	}
 	for _, snapshot := range []observe.Snapshot{stage.ServerBefore, stage.ServerAfter} {

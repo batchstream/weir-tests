@@ -24,33 +24,33 @@ import (
 )
 
 type CrawlerOptions struct {
-	HTTPObserver                                                   string
-	InputShape                                                     string
-	Visibility                                                     string
-	Before, After, BeforeReceipt, AfterReceipt, Executable, Output string
-	Rates, Concurrency                                             []int
-	Profiles                                                       []string
-	Modes                                                          []string
-	Paths                                                          []string
-	AfterUseDefaults, CaptureEffectiveConfig                       bool
-	Processes, PageSize, QueuePages, Rounds                        int
-	AfterMaxInFlight                                               int
-	AfterBatchMaxOperations, AfterBatchMaxBytes, SeedPaddingBytes  int
-	CPUs                                                           float64
-	Warmup, Duration, Timeout, AfterBatchMaxWait                   time.Duration
+	HTTPObserver                                                  string
+	InputShape                                                    string
+	Visibility                                                    string
+	Before, After, Executable, Output                             string
+	Rates, Concurrency                                            []int
+	Profiles                                                      []string
+	Modes                                                         []string
+	Paths                                                         []string
+	AfterUseDefaults, CaptureEffectiveConfig                      bool
+	Processes, PageSize, QueuePages, Rounds                       int
+	AfterMaxInFlight                                              int
+	AfterBatchMaxOperations, AfterBatchMaxBytes, SeedPaddingBytes int
+	CPUs                                                          float64
+	Warmup, Duration, Timeout, AfterBatchMaxWait                  time.Duration
 }
-type crawlerServerReceipt struct {
-	Path    string          `json:"path"`
-	Receipt json.RawMessage `json:"receipt"`
-	SHA256  string          `json:"sha256"`
+
+// crawlerServer identifies the Weir binary measured by one A/B path.
+type crawlerServer struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
 }
 type CrawlerReport struct {
-	BusinessSources          map[string]string
 	Schema                   int `json:"schema"`
 	Started, Method, Fixture string
 	Parameters               CrawlerOptions
 	Sources                  map[string]string
-	Servers                  map[string]crawlerServerReceipt
+	Servers                  map[string]crawlerServer
 	Stages                   []crawlerStage
 	Incomplete               string `json:"incomplete,omitempty"`
 	CleanupError             string `json:"cleanup_error,omitempty"`
@@ -146,37 +146,20 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 	if err != nil {
 		return nil, err
 	}
-	servers := map[string]crawlerServerReceipt{}
-	for name, pair := range map[string][2]string{"current": {opts.Before, opts.BeforeReceipt}, "optimized": {opts.After, opts.AfterReceipt}} {
-		data, err := os.ReadFile(pair[0])
+	servers := map[string]crawlerServer{}
+	for name, binary := range map[string]string{"before": opts.Before, "after": opts.After} {
+		data, err := os.ReadFile(binary)
 		if err != nil {
-			return nil, err
-		}
-		raw, err := os.ReadFile(pair[1])
-		if err != nil {
-			return nil, err
-		}
-		var receipt struct {
-			SHA256, Source string
-			SourceDirty    bool `json:"source_dirty"`
-		}
-		if err := json.Unmarshal(raw, &receipt); err != nil {
 			return nil, err
 		}
 		sum := sha256.Sum256(data)
-		digest := hex.EncodeToString(sum[:])
-		if receipt.SHA256 != digest || len(receipt.Source) != 40 || receipt.SourceDirty {
-			return nil, errors.New("crawler binary receipt source or hash mismatch")
-		}
-		server := crawlerServerReceipt{Path: pair[0], Receipt: raw, SHA256: digest}
+		server := crawlerServer{Path: binary, SHA256: hex.EncodeToString(sum[:])}
 		servers[name] = server
 	}
-	origins := map[string]string{"original_pse": "7f36b501cded06a1bcc7484575346bb9c4d6311b", "optimized_pse": "8725e4743c6ddba66132874e0e0fe9d393ab4a85", "weir_lua_translation_base": "283940ef442b479440e45b39c86988351b92d7b5"}
-	report = &CrawlerReport{BusinessSources: origins, Schema: crawlerReportSchema, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Declared-path same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same frozen PSE Lua on current and optimized Weir; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two PSE indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua; no Sink baseline"}
+	report = &CrawlerReport{Schema: crawlerReportSchema, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Declared-path same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same crawler Lua on the before and after Weir servers; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two crawler indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=3 and both Weir retry_attempts=4 (same four total attempts); native script supports every generated value, not arbitrary user Lua"}
 	if slices.Contains(opts.Profiles, "partial-update") {
-		report.BusinessSources = nil
 		report.Sources = partialUpdateSources()
-		report.Method = "Mechanism control, not a PSE-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Declared-path same-runner rotation with frozen source/binary receipts and declared batch operations/bytes/in-flight/wait controls. Explicit application_acknowledged/refresh=false or query_visible/refresh=wait_for completion; request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
+		report.Method = "Mechanism control, not a crawler-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Declared-path same-runner rotation with recorded binary digests and declared batch operations/bytes/in-flight/wait controls. Explicit application_acknowledged/refresh=false or query_visible/refresh=wait_for completion; request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
 	}
 	defer func() {
 		if resultErr != nil && report.Incomplete == "" {
@@ -231,11 +214,11 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 			for offset := range paths {
 				path := paths[(caseIndex+round+offset)%len(paths)]
 				binary := opts.Before
-				if path == "optimized" {
+				if path == "after" {
 					binary = opts.After
 				}
 				replacement := fixture.ServerReplacement{Binary: binary, BatchSize: 32, BatchBytes: 8 << 20}
-				if path == "optimized" {
+				if path == "after" {
 					replacement.BatchSize = opts.AfterBatchMaxOperations
 					replacement.BatchBytes = opts.AfterBatchMaxBytes
 					replacement.MaxInFlight = opts.AfterMaxInFlight
@@ -421,7 +404,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	config := opts.Options
 	stage = crawlerStage{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, Mode: opts.Case.Mode, Round: opts.Round, Concurrency: opts.Case.Workers, ProductsPerSecond: opts.Case.Rate, ServerPID: opts.Cluster.Nodes[0].ProcessID}
 	binary := config.Before
-	if opts.Path == "optimized" {
+	if opts.Path == "after" {
 		stage.BatchMaxWaitNS = int64(config.AfterBatchMaxWait)
 		binary = config.After
 	}

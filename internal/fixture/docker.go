@@ -322,6 +322,6 @@ func (c *Cluster) captureSearchLog(ctx context.Context, owned container) {
 	if captureErr != nil {
 		errorText = captureErr.Error()
 	}
-	receipt := map[string]any{"at_utc": time.Now().UTC().Format(time.RFC3339Nano), "container_id": owned.ID, "owner": c.owner, "tail_lines": 1000, "maximum_bytes": 1 << 20, "captured_bytes": output.Len(), "possibly_truncated": output.Len() == 1<<20, "timeout": "5s", "error": errorText}
-	_ = writeJSON(filepath.Join(c.Directory, "search-log-receipt.json"), receipt)
+	capture := map[string]any{"at_utc": time.Now().UTC().Format(time.RFC3339Nano), "container_id": owned.ID, "owner": c.owner, "tail_lines": 1000, "maximum_bytes": 1 << 20, "captured_bytes": output.Len(), "possibly_truncated": output.Len() == 1<<20, "timeout": "5s", "error": errorText}
+	_ = writeJSON(filepath.Join(c.Directory, "search-log-capture.json"), capture)
 }

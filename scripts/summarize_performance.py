@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Recompute every-round before/after throughput, latency, RSS and command evidence."""
+"""Compare two run_performance_matrix.py outputs: throughput, latency, RSS, server CPU and database commands."""
 import argparse
 from datetime import datetime
 import json
 from pathlib import Path
 
-from performance_evidence import validate_report_provenance
+
+# weir-lab writes single-request saturation reports as schema 4 and bulk-saturation reports as schema 2.
+REPORT_SCHEMAS = {'read': 4, 'mixed': 4, 'write': 4, 'lua': 4, 'bulk-read': 2, 'bulk-write': 2}
 
 
 def summarize_physical_counts(values):
@@ -52,19 +54,6 @@ def comparison_parameters(report):
         dataset.pop(fixture_field, None)
     parameters['dataset'] = dataset
     return parameters
-
-
-def measurement_arguments(receipt):
-    arguments = receipt['command'][1:]
-    result = []
-    index = 0
-    while index < len(arguments):
-        if arguments[index] in ('-weir', '-server-receipt', '-output'):
-            index += 2
-        else:
-            result.append(arguments[index])
-            index += 1
-    return result
 
 
 def summarize(report, concurrency, path):
@@ -141,7 +130,7 @@ def summarize(report, concurrency, path):
                   reads=reads, writes=writes,
                   errors=sum(value['errors'] for value in values),
                   indeterminate=sum(value['indeterminate'] for value in values),
-                  business_operation_timeouts=sum(value.get('business_operation_timeouts', 0) for value in values),
+                  business_operation_timeouts=sum(value['business_operation_timeouts'] for value in values),
                   verified=all(value['verified'] for value in values) and not report.get('incomplete'))
     return result
 
@@ -153,10 +142,8 @@ def main():
     parser.add_argument('--backend', choices=('mongo', 'search'), required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    rows, missing_cases, case_provenance = [], [], []
-    expected_client = None
-    expected_servers = None
-    for case in ('read', 'mixed', 'write', 'lua', 'bulk-read', 'bulk-write'):
+    rows, missing_cases, cases = [], [], []
+    for case, schema in REPORT_SCHEMAS.items():
         before_path = args.before / case / (args.backend + '.json')
         after_path = args.after / case / (args.backend + '.json')
         if not before_path.exists() or not after_path.exists():
@@ -166,34 +153,12 @@ def main():
                 missing_cases.append(missing_case)
             continue
         before, after = json.loads(before_path.read_text()), json.loads(after_path.read_text())
-        before_receipt = json.loads((args.before / (case + '.receipt.json')).read_text())
-        after_receipt = json.loads((args.after / (case + '.receipt.json')).read_text())
-        receipts = (before_receipt, after_receipt)
-        for phase, report, receipt in (('before', before, before_receipt), ('after', after, after_receipt)):
-            try:
-                validate_report_provenance(report, receipt)
-            except ValueError as error:
-                raise SystemExit(case + ' ' + phase + ': ' + str(error)) from error
-        if any(receipt.get('exit_code') != 0 for receipt in receipts):
-            raise SystemExit(case + ': benchmark process did not exit successfully')
-        if before_receipt['versions'] != after_receipt['versions']:
-            raise SystemExit(case + ': before/after pinned version manifests differ')
-        servers = tuple(receipt['server_binary_sha256'] for receipt in receipts)
-        if expected_servers is None:
-            expected_servers = servers
-        if servers != expected_servers:
-            raise SystemExit(case + ': a server binary changed within the matrix')
-        clients = [(receipt['client_source_tree_sha256'], receipt['client_binary_sha256']) for receipt in receipts]
-        if expected_client is None:
-            expected_client = clients[0]
-        if any(client != expected_client for client in clients):
-            raise SystemExit(case + ': client source or binary differs between cases/phases')
+        if before.get('schema') != schema or after.get('schema') != schema:
+            raise SystemExit(case + ': report schema must be ' + str(schema))
         if comparison_parameters(before) != comparison_parameters(after):
             raise SystemExit(case + ': before/after benchmark parameters differ')
         if len(before['parameters']['batch_sizes']) != 1:
             raise SystemExit(case + ': summarize one batch size per report to avoid mixing workloads')
-        if measurement_arguments(before_receipt) != measurement_arguments(after_receipt):
-            raise SystemExit(case + ': before/after measurement command arguments differ')
         paired_rounds = before['parameters']['paired_rounds']
         pair_keys = [(pair['concurrency'], pair['batch_size'], pair['round'], pair['order']) for pair in before['pairs']]
         after_keys = [(pair['concurrency'], pair['batch_size'], pair['round'], pair['order']) for pair in after['pairs']]
@@ -204,13 +169,10 @@ def main():
                 rounds = [pair['round'] for pair in before['pairs'] if pair['concurrency'] == concurrency and pair['batch_size'] == batch]
                 if sorted(rounds) != list(range(1, paired_rounds + 1)):
                     raise SystemExit(case + ': incomplete or duplicate paired rounds')
-        evidence = dict(case=case, parameters=comparison_parameters(before),
-                        command_arguments=measurement_arguments(before_receipt),
-                        before_server_binary_sha256=before_receipt['server_binary_sha256'],
-                        after_server_binary_sha256=after_receipt['server_binary_sha256'],
-                        before_receipt=str((args.before / (case + '.receipt.json')).resolve()),
-                        after_receipt=str((args.after / (case + '.receipt.json')).resolve()))
-        case_provenance.append(evidence)
+        details = dict(case=case, parameters=comparison_parameters(before),
+                       before_server_binary_sha256=before['provenance']['weir_binary_sha256'],
+                       after_server_binary_sha256=after['provenance']['weir_binary_sha256'])
+        cases.append(details)
         for concurrency in before['parameters']['concurrency_levels']:
             left, right = {}, {}
             for path in ('direct', 'weir'):
@@ -221,25 +183,17 @@ def main():
                        direct_change_percent=100 * (right['direct']['operations_per_second'] / left['direct']['operations_per_second'] - 1),
                        scope='all ' + str(paired_rounds) + ' paired rounds; p95 values are histogram upper bounds; bulk p95 remains per-round rather than averaging quantiles')
             rows.append(row)
-    provenance = dict(client_source_tree_sha256=expected_client[0] if expected_client else None,
-                      client_binary_sha256=expected_client[1] if expected_client else None,
-                      cases=case_provenance)
     status = 'partial' if missing_cases else 'complete'
-    summary = dict(status=status, missing_cases=missing_cases, backend=args.backend, before=str(args.before.resolve()), after=str(args.after.resolve()), provenance=provenance, rows=rows)
-    role_path = args.after / 'experiment-role.json'
-    if role_path.exists():
-        summary['after_experiment_role'] = json.loads(role_path.read_text())
+    summary = dict(status=status, missing_cases=missing_cases, backend=args.backend, before=str(args.before.resolve()),
+                   after=str(args.after.resolve()), cases=cases, rows=rows)
     args.output.with_suffix('.json').write_text(json.dumps(summary, indent=2) + '\n')
     lines = ['# Observed before/after performance', '',
-             '**Status: ' + status + '.** ' + ('Missing evidence: ' + ', '.join(item['case'] + ' ' + '/'.join(item['missing']) for item in missing_cases) if missing_cases else 'All core cases have complete matching paired rounds.'), '',
+             '**Status: ' + status + '.** ' + ('Missing reports: ' + ', '.join(item['case'] + ' ' + '/'.join(item['missing']) for item in missing_cases) if missing_cases else 'All core cases have complete matching paired rounds.'), '',
              'All paired rounds are included. Throughput is total successful operations divided by total measured time. Latencies are histogram upper bounds. Native MongoDB runs have no enforced CPU quota; these measurements do not prove maximum database capacity.', '',
              'Server CPU and Go allocation costs use the Prometheus counter differences around each timed stage, divided by successful records. These include small metrics collection overhead. RSS is the maximum observed process sample. A batch-size histogram without separate 31 and 32 boundaries cannot establish the exact 32-record full-batch fraction.', '',
-             'Each included case has the same frozen client source, binary, benchmark parameters and paired round order. Source tree: `' + str(provenance['client_source_tree_sha256']) + '`. Binary: `' + str(provenance['client_binary_sha256']) + '`.', '',
+             'Each included case has the same benchmark parameters and paired round order before and after.', '',
              '| Case | Total workers | Before Weir ops/s | After Weir ops/s | Change | Direct drift | Before / after p95 ms | Before / after RSS MiB | Before / after CPU µs/op | Before / after allocation KiB/op | Before / after adapter batch | Verified |',
              '| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |']
-    if 'after_experiment_role' in summary:
-        role = summary['after_experiment_role']
-        lines[2:2] = ['**After experiment: ' + role['role'] + '.** ' + role['status'] + '.', '']
     for row in rows:
         before, after = row['before']['weir'], row['after']['weir']
         latency = []
@@ -261,9 +215,6 @@ def main():
             observed = value['adapter_batch_average']
             batch.append(f'{observed:.2f}' if observed is not None else 'unavailable')
         lines.append(f"| {row['case']} | {row['concurrency']} | {before['operations_per_second']:.1f} | {after['operations_per_second']:.1f} | {row['weir_change_percent']:+.2f}% | {row['direct_change_percent']:+.2f}% | {' / '.join(latency)} | {before['sampled_weir_peak_rss_mib']:.1f} / {after['sampled_weir_peak_rss_mib']:.1f} | {' / '.join(cpu)} | {' / '.join(allocation)} | {' / '.join(batch)} | {verified} |")
-    notes_path = args.after / 'comparison-notes.md'
-    if notes_path.exists():
-        lines.extend(['', notes_path.read_text().strip()])
     args.output.with_suffix('.md').write_text('\n'.join(lines) + '\n')
     print(args.output.with_suffix('.md'))
 

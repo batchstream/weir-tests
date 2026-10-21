@@ -91,28 +91,30 @@ def prepare(root):
     pins = json.loads((root / 'versions.json').read_text())
     profile = select_profile(pins)
     output = root / '.tools' / 'mongod'
-    receipt_path = output.with_suffix('.receipt.json')
+    metadata_path = output.with_suffix('.json')
     if output.exists():
-        receipt = json.loads(receipt_path.read_text())
+        if not metadata_path.is_file():
+            raise ValueError('existing binary has no metadata; preserving it')
+        metadata = json.loads(metadata_path.read_text())
         binary_hash = digest(output)
-        if (receipt['archive_sha256'] != profile['sha256'] or
-                receipt['binary_sha256'] != binary_hash or
-                receipt['version'] != profile['version'] or
-                receipt['target'] != profile['target'] or
-                receipt['source'] != profile['url'] or
+        if (metadata['archive_sha256'] != profile['sha256'] or
+                metadata['binary_sha256'] != binary_hash or
+                metadata['version'] != profile['version'] or
+                metadata['target'] != profile['target'] or
+                metadata['source'] != profile['url'] or
                 ('member_sha256' in profile and binary_hash != profile['member_sha256'])):
-            raise ValueError('existing native fixture does not match its lock/receipt; preserving it')
+            raise ValueError('existing native fixture does not match its lock/metadata; preserving it')
         return output
     output.parent.mkdir(parents=True, exist_ok=True)
     archive = output.parent / ('mongodb-' + profile['target'].replace('/', '-') + '.tgz')
     with tempfile.TemporaryDirectory(prefix='weir-native-mongo-') as temporary:
         directory = Path(temporary)
         if not archive.exists():
-            candidate = directory / 'mongo.tgz'
-            with urllib.request.urlopen(profile['url'], timeout=60) as response, candidate.open('wb') as file:
+            download = directory / 'mongo.tgz'
+            with urllib.request.urlopen(profile['url'], timeout=60) as response, download.open('wb') as file:
                 copy_bounded(response, file, profile.get('size', MAX_ARCHIVE_BYTES))
-            verify_archive(candidate, profile)
-            shutil.copyfile(candidate, archive)
+            verify_archive(download, profile)
+            shutil.copyfile(download, archive)
         verify_archive(archive, profile)
         binary = directory / 'mongod'
         extract_binary(archive, binary, profile)
@@ -121,12 +123,12 @@ def prepare(root):
             [str(binary), '--version'], text=True, timeout=10).split('Build Info: ', 1)[-1])
         if version['version'] != profile['version']:
             raise ValueError('native MongoDB version differs from lock')
-        receipt = dict(version=version['version'], source=profile['url'],
-                       archive_sha256=profile['sha256'], binary_sha256=digest(binary),
-                       target=profile['target'])
+        metadata = dict(version=version['version'], source=profile['url'],
+                        archive_sha256=profile['sha256'], binary_sha256=digest(binary),
+                        target=profile['target'])
         shutil.copyfile(binary, output)
         output.chmod(0o755)
-        receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+        metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')
     return output
 
 

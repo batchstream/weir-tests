@@ -71,7 +71,7 @@ func (r *SaturationReport) Markdown() string {
 			p := r.BusinessPeaks
 			fmt.Fprintf(&text, "\nBest verified business QPS within this ladder: direct %.1f (%d workers), Weir %.1f (%d workers), observed change %+.2f%%. This is a measured business-throughput comparison, not a maximum-database-capacity claim.\n", p.Direct.OperationsPerSec, p.Direct.Concurrency, p.Weir.OperationsPerSec, p.Weir.Concurrency, p.DeltaPercent)
 		}
-		text.WriteString("\nObserved single-request business performance at matched client concurrency (independent of the database-capacity qualification):\n\n| Workers | Direct QPS | Weir QPS | Change | Direct p50/p95/p99 ms | Weir p50/p95/p99 ms |\n| ---: | ---: | ---: | ---: | --- | --- |\n")
+		text.WriteString("\nObserved single-request business performance at matched client concurrency (independent of the database-capacity check):\n\n| Workers | Direct QPS | Weir QPS | Change | Direct p50/p95/p99 ms | Weir p50/p95/p99 ms |\n| ---: | ---: | ---: | ---: | --- | --- |\n")
 		for _, comparison := range r.BusinessComparisons {
 			d, w := comparison.DirectLatency, comparison.WeirLatency
 			fmt.Fprintf(&text, "| %d | %.1f | %.1f | %+.2f%% | %.3f / %.3f / %.3f | %.3f / %.3f / %.3f |\n", comparison.Concurrency, comparison.DirectOps, comparison.WeirOps, comparison.DeltaPercent, float64(d.P50NS)/1e6, float64(d.P95NS)/1e6, float64(d.P99NS)/1e6, float64(w.P50NS)/1e6, float64(w.P95NS)/1e6, float64(w.P99NS)/1e6)

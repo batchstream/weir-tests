@@ -47,7 +47,7 @@ func TestCrawlerPressureConcurrencyBoundsBeforeFixtureStartup(t *testing.T) {
 	}
 }
 
-func TestCrawlerPressureChildBoundsAndNativePoolReceipt(t *testing.T) {
+func TestCrawlerPressureChildBoundsAndNativePoolReport(t *testing.T) {
 	for _, threads := range []int{0, 128, 512, 513} {
 		config := crawlerClientConfig{InputShape: "single", Path: "direct", Threads: threads, Processes: 4, PageSize: 1, QueuePages: 1, TimeoutNS: int64(time.Second)}
 		raw, err := json.Marshal(config)
@@ -70,7 +70,7 @@ func TestCrawlerPressureChildBoundsAndNativePoolReceipt(t *testing.T) {
 			t.Fatal(err)
 		}
 		if ready.Phase != "ready" || ready.InputShape != "single" || ready.NativePoolLimit != threads*3 {
-			t.Fatal("child receipt lost the full native seller pool", threads, ready)
+			t.Fatal("child report lost the full native seller pool", threads, ready)
 		}
 	}
 }

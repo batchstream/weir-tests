@@ -62,13 +62,20 @@ class NativeMongoTest(unittest.TestCase):
         self.assertEqual(native.prepare(self.root), output)
         self.download.assert_called_once_with(self.profile['url'], timeout=60)
         self.execute.assert_called_once()
-        receipt = json.loads(output.with_suffix('.receipt.json').read_text())
-        self.assertEqual(receipt['target'], 'linux/amd64')
-        self.assertEqual(receipt['binary_sha256'], self.profile['member_sha256'])
+        metadata = json.loads(output.with_suffix('.json').read_text())
+        self.assertEqual(metadata['target'], 'linux/amd64')
+        self.assertEqual(metadata['binary_sha256'], self.profile['member_sha256'])
         output.write_bytes(b'tampered')
         with self.assertRaises(ValueError):
             native.prepare(self.root)
         self.assertEqual(output.read_bytes(), b'tampered')
+
+    def test_binary_without_metadata_is_preserved(self):
+        output = native.prepare(self.root)
+        output.with_suffix('.json').unlink()
+        with self.assertRaisesRegex(ValueError, 'no metadata'):
+            native.prepare(self.root)
+        self.assertEqual(output.read_bytes(), self.payload)
 
     def test_platform_and_version_fail_closed(self):
         for system, machine, release in [('Linux', 'arm64', '24.04'),

@@ -24,40 +24,28 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 	if !reflect.DeepEqual(report.Sources, sources) {
 		return errors.New("crawler report workload fixture hashes differ from this auditor")
 	}
-	for _, name := range []string{"current", "optimized"} {
+	for _, name := range []string{"before", "after"} {
 		server, ok := report.Servers[name]
 		if !ok {
-			return errors.New("crawler server receipt missing")
+			return errors.New("crawler server identity missing")
 		}
-		var receipt struct {
-			Source, SHA256   string
-			SourceDirty      bool   `json:"source_dirty"`
-			SourceTreeSHA256 string `json:"source_tree_sha256"`
-			SourceDiffSHA256 string `json:"source_diff_sha256"`
-			Identity         struct {
-				Revision string `json:"revision"`
-			} `json:"identity"`
-		}
-		if err := json.Unmarshal(server.Receipt, &receipt); err != nil {
-			return err
-		}
-		source, sourceErr := hex.DecodeString(receipt.Source)
-		digest, digestErr := hex.DecodeString(receipt.SHA256)
-		frozenTree, treeErr := hex.DecodeString(receipt.SourceTreeSHA256)
-		frozenDiff, diffErr := hex.DecodeString(receipt.SourceDiffSHA256)
-		frozen := treeErr == nil && len(frozenTree) == 32 && diffErr == nil && len(frozenDiff) == 32 && receipt.Identity.Revision != ""
-		if sourceErr != nil || len(source) != 20 || digestErr != nil || len(digest) != 32 || receipt.SHA256 != server.SHA256 || receipt.SourceDirty || receipt.Identity.Revision != receipt.Source && !frozen {
-			return errors.New("crawler server receipt has invalid immutable identity")
+		digest, err := hex.DecodeString(server.SHA256)
+		if err != nil || len(digest) != 32 {
+			return errors.New("crawler server binary digest is invalid")
 		}
 	}
 	options := report.Parameters
+	// Reports record fully normalized controls; the auditor never fills defaults.
+	if len(options.Paths) == 0 || len(options.Modes) == 0 || options.Visibility == "" || options.AfterBatchMaxOperations == 0 || options.AfterBatchMaxBytes == 0 {
+		return errors.New("crawler report lacks normalized paths, modes, visibility or batch controls")
+	}
 	if err := normalizeCrawlerControls(&options); err != nil {
 		return err
 	}
-	if options.InputShape != "" && options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
+	if options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
 		return errors.New("invalid crawler input shape")
 	}
-	if options.HTTPObserver != "" && options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
+	if options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
 		return errors.New("unknown HTTP observer mode")
 	}
 	if slices.Contains(options.Profiles, "partial-update") && (len(options.Profiles) != 1 || options.InputShape != "single") {
@@ -94,9 +82,9 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				if err := auditCrawlerLiveControls(stage, options); err != nil {
 					return err
 				}
-				server := "current"
-				if path == "optimized" {
-					server = "optimized"
+				server := "before"
+				if path == "after" {
+					server = "after"
 				}
 				if stage.ServerSHA256 != report.Servers[server].SHA256 {
 					return errors.New("crawler stage used a different server binary")
@@ -126,20 +114,18 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 					if reply.Phase != "timed" || reply.PID < 1 || seenPIDs[reply.PID] || len(reply.Workers) != stage.Concurrency/options.Processes {
 						return errors.New("crawler client identity or goroutine count mismatch")
 					}
-					if options.InputShape != "" {
-						if reply.InputShape != options.InputShape || stage.InputShape != options.InputShape {
-							return errors.New("crawler child input shape mismatch")
+					if reply.InputShape != options.InputShape || stage.InputShape != options.InputShape {
+						return errors.New("crawler child input shape mismatch")
+					}
+					pool := 0
+					if stage.Path == "direct" {
+						pool = stage.Concurrency / options.Processes
+						if options.InputShape == "single" {
+							pool *= 3
 						}
-						pool := 0
-						if stage.Path == "direct" {
-							pool = stage.Concurrency / options.Processes
-							if options.InputShape == "single" {
-								pool *= 3
-							}
-						}
-						if reply.NativePoolLimit != pool {
-							return errors.New("native application connection-pool limit mismatch")
-						}
+					}
+					if reply.NativePoolLimit != pool {
+						return errors.New("native application connection-pool limit mismatch")
 					}
 					var childApplications crawlerApplicationCounts
 					seenPIDs[reply.PID] = true

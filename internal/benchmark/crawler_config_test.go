@@ -15,7 +15,7 @@ func crawlerTestConfiguration(t *testing.T, opts CrawlerOptions, path string) js
 		t.Fatal(err)
 	}
 	operations, bytes, inFlight, wait := 32, 8<<20, 0, time.Duration(0)
-	if path == "optimized" {
+	if path == "after" {
 		operations, bytes, inFlight, wait = opts.AfterBatchMaxOperations, opts.AfterBatchMaxBytes, opts.AfterMaxInFlight, opts.AfterBatchMaxWait
 	}
 	batching := map[string]any{"max_operations": operations, "max_bytes": fmt.Sprintf("%dB", bytes), "max_in_flight": inFlight, "max_wait": wait.String()}
@@ -28,7 +28,7 @@ func crawlerTestConfiguration(t *testing.T, opts CrawlerOptions, path string) js
 	return raw
 }
 
-func TestCrawlerControlsPreserveDefaultsAndAllowIndependentCandidateControls(t *testing.T) {
+func TestCrawlerControlsPreserveDefaultsAndAllowIndependentAfterControls(t *testing.T) {
 	opts := CrawlerOptions{Profiles: []string{"partial-update"}}
 	if err := normalizeCrawlerControls(&opts); err != nil {
 		t.Fatal(err)
@@ -40,11 +40,11 @@ func TestCrawlerControlsPreserveDefaultsAndAllowIndependentCandidateControls(t *
 	opts.AfterBatchMaxOperations, opts.AfterBatchMaxBytes, opts.AfterMaxInFlight = 64, 65536, 4
 	opts.AfterBatchMaxWait = 20 * time.Millisecond
 	if err := normalizeCrawlerControls(&opts); err != nil {
-		t.Fatal("candidate controls were restricted to the old one-off experiment", err)
+		t.Fatal("independent after-path controls were rejected", err)
 	}
-	for _, path := range []string{"direct", "current", "optimized"} {
+	for _, path := range []string{"direct", "before", "after"} {
 		stage := crawlerStage{Path: path, ServerConfiguration: crawlerTestConfiguration(t, opts, path)}
-		if path == "optimized" {
+		if path == "after" {
 			stage.BatchMaxWaitNS = int64(opts.AfterBatchMaxWait)
 		}
 		if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
@@ -57,12 +57,12 @@ func TestCrawlerControlsPreserveDefaultsAndAllowIndependentCandidateControls(t *
 	}
 }
 
-func TestCrawlerConfigurationAuditRejectsEveryChangedCandidateLimit(t *testing.T) {
+func TestCrawlerConfigurationAuditRejectsEveryChangedAfterLimit(t *testing.T) {
 	opts := CrawlerOptions{Profiles: []string{"partial-update"}, AfterBatchMaxOperations: 64, AfterBatchMaxBytes: 65536, AfterMaxInFlight: 4, AfterBatchMaxWait: 20 * time.Millisecond}
 	if err := normalizeCrawlerControls(&opts); err != nil {
 		t.Fatal(err)
 	}
-	stage := crawlerStage{Path: "optimized", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait), ServerConfiguration: crawlerTestConfiguration(t, opts, "optimized")}
+	stage := crawlerStage{Path: "after", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait), ServerConfiguration: crawlerTestConfiguration(t, opts, "after")}
 	for _, field := range []string{"operations", "bytes", "in-flight", "wait"} {
 		changed := opts
 		switch field {
@@ -118,7 +118,7 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 	wait := observe.Metric{Name: "weir_store_batch_max_wait_seconds", Labels: labels, Value: .02}
 	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 4}
 	snapshot := observe.Snapshot{Metrics: []observe.Metric{wait, cap}}
-	stage := crawlerStage{Path: "optimized", ServerBefore: snapshot, ServerAfter: snapshot}
+	stage := crawlerStage{Path: "after", ServerBefore: snapshot, ServerAfter: snapshot}
 	if err := auditCrawlerLiveControls(stage, opts); err != nil {
 		t.Fatal(err)
 	}
@@ -141,12 +141,12 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 func TestCrawlerDefaultPathOmitsControlsAndAuditsAllResolvedGauges(t *testing.T) {
 	opts := CrawlerOptions{AfterUseDefaults: true, CaptureEffectiveConfig: true,
 		AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
-		AfterBatchMaxWait: 5 * time.Millisecond, Paths: []string{"direct", "optimized"}}
+		AfterBatchMaxWait: 5 * time.Millisecond, Paths: []string{"direct", "after"}}
 	if err := normalizeCrawlerControls(&opts); err != nil {
 		t.Fatal(err)
 	}
 	configuration := json.RawMessage(`{"stores":[{"name":"search"}]}`)
-	stage := crawlerStage{Path: "optimized", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait),
+	stage := crawlerStage{Path: "after", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait),
 		ServerConfiguration: configuration, ServerEffectiveConfiguration: "resolved owned settings"}
 	if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
 		t.Fatal("omitted defaults were not accepted", err)
@@ -165,19 +165,19 @@ func TestCrawlerDefaultPathOmitsControlsAndAuditsAllResolvedGauges(t *testing.T)
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
 		t.Fatal("missing byte gauge hid unknown default", err)
 	}
-	stage.ServerConfiguration = crawlerTestConfiguration(t, opts, "optimized")
+	stage.ServerConfiguration = crawlerTestConfiguration(t, opts, "after")
 	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
 		t.Fatal("an explicit override was presented as an omitted default")
 	}
-	stage.Path, stage.BatchMaxWaitNS = "current", 0
+	stage.Path, stage.BatchMaxWaitNS = "before", 0
 	stage.ServerConfiguration = json.RawMessage(`{"stores":[{"name":"search","batching":{"max_operations":32,"max_bytes":"8388608B"}}]}`)
 	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
-		t.Fatal("legacy zero wait and zero slots were silently omitted")
+		t.Fatal("explicit zero wait and zero slots were silently omitted")
 	}
 }
 
 func TestCrawlerPathsRejectUnknownOrDuplicateAndRetainDeclaredSubset(t *testing.T) {
-	for _, paths := range [][]string{{"direct", "optimized"}, {"optimized"}} {
+	for _, paths := range [][]string{{"direct", "after"}, {"after"}} {
 		opts := CrawlerOptions{Paths: paths}
 		if err := normalizeCrawlerControls(&opts); err != nil {
 			t.Fatal("valid selected paths rejected", paths, err)

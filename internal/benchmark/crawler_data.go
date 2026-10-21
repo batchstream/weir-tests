@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// The Lua rules are a frozen translation of PSE 283940ef442b479440e45b39c86988351b92d7b5.
-// Only the reconcile early return changes: reconcile and merge execute in one mutation.
+// The Lua rules model a crawler's product and seller merge policy. Reconcile and merge
+// execute in one mutation; the two-step profile returns after reconcile instead.
 //
 //go:embed crawlerdata/common.lua
 var crawlerCommon string

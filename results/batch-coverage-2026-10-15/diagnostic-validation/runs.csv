@@ -1,7 +1,0 @@
-label,role,kind,workflow_run,evidence_available,checks_passed,error,archive_files,workflow_conclusion,provenance_error,complete,runner_exit,original_go_audit
-calibration-write,calibration,write,https://github.com/batchstream/weir-tests/actions/runs/38757498973,False,False,workflow not dispatched or retained evidence not yet available,,,,,,
-diagnostic-partial,diagnostic,crawler,https://github.com/batchstream/weir-tests/actions/runs/38757510460,True,True,,16,success,,True,0,"{""exit_code"": 0, ""output"": ""verified 3 crawler stages offline""}"
-diagnostic-crawler,diagnostic,crawler,https://github.com/batchstream/weir-tests/actions/runs/38757522402,True,True,,16,success,,True,0,"{""exit_code"": 0, ""output"": ""verified 3 crawler stages offline""}"
-formal-write,formal,write,,False,False,workflow not dispatched or retained evidence not yet available,,,,,,
-formal-partial,formal,crawler,,False,False,workflow not dispatched or retained evidence not yet available,,,,,,
-formal-crawler,formal,crawler,,False,False,workflow not dispatched or retained evidence not yet available,,,,,,

@@ -3,16 +3,6 @@ name: Database saturation benchmark
 on:
   workflow_dispatch:
     inputs:
-      server-candidate:
-        description: Optional full public Weir commit; frozen dev build, never advances release pins
-        default: ''
-        required: false
-        type: string
-      cpu-profile-concurrency:
-        description: Diagnostic non-baseline CPU capture of first Weir stage at this existing concurrency (0 disables); requires candidate, one backend and one batch limit
-        default: '0'
-        required: false
-        type: string
       write-percent:
         description: Deterministic write percentage (0 read, 10 mixed, 100 write)
         default: '0'
@@ -35,7 +25,7 @@ on:
         default: '32'
         required: true
         type: choice
-        options: ['32', '128', '256', '1', '1,32', '32,128,256']
+        options: ['32', '128', '256', '1']
       lua-mutations:
         description: Compare native single-record RMW with server-batched Lua mutations
         default: false
@@ -62,10 +52,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: saturation-${{ github.ref }}-${{ inputs.server-candidate || 'pinned' }}-${{ inputs.write-percent || 'matrix' }}-${{ inputs.database-cpus || '1' }}-${{ inputs.client-levels || '4,8,32,128,256' }}-${{ inputs.backend-batch-limit || '32' }}-${{ inputs.lua-mutations || false }}-${{ inputs.backend || 'all' }}-${{ inputs.mode || 'saturation' }}-${{ inputs.batch-sizes || '1' }}
-  cancel-in-progress: true
-
 defaults:
   run:
     shell: bash
@@ -78,198 +64,56 @@ env:
   PYTHONDONTWRITEBYTECODE: '1'
 
 jobs:
-  database-full-load:
-    strategy:
-      fail-fast: false
-      matrix:
-        write-percent: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('[{0}]', inputs.write-percent) || '[0,10,100]') }}
+  saturation:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
         with:
           go-version-file: go.mod
-      - name: Validate candidate and native execution target
+      - name: Prepare locked public tools and local images
         env:
-          SERVER_CANDIDATE: ${{ inputs.server-candidate }}
-        run: |
-          python3 - <<'PY'
-          import os, platform, re
-          candidate = os.environ['SERVER_CANDIDATE']
-          if candidate and re.fullmatch('[0-9a-f]{40}', candidate) is None:
-              raise SystemExit('server-candidate must be a full immutable public Weir commit')
-          if platform.system() != 'Linux' or platform.machine() != 'x86_64':
-              raise SystemExit('measurement requires native Linux amd64')
-          PY
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        if: inputs.server-candidate != ''
-        with:
-          repository: batchstream/weir
-          ref: ${{ inputs.server-candidate }}
-          path: .tools/server-candidate
-          persist-credentials: false
-      - name: Prepare immutable tools and owned database images
-        env:
-          SERVER_CANDIDATE: ${{ inputs.server-candidate }}
-          BACKEND: ${{ inputs.backend || 'all' }}
+          BACKEND: ${{ inputs.backend }}
         run: |
           python3 scripts/download_modules.py
-          if [ -n "$SERVER_CANDIDATE" ]; then
-            python3 - <<'PY'
-          import os, pathlib, sys
-          sys.path.insert(0, str(pathlib.Path('scripts').resolve()))
-          from server_source import build_environment, check_checkout
-          check_checkout(pathlib.Path('.tools/server-candidate'), os.environ['SERVER_CANDIDATE'], build_environment())
-          PY
-            python3 scripts/download_modules.py --server-source .tools/server-candidate
-            GOPROXY=off GOSUMDB=off python3 scripts/build_local_server.py --source .tools/server-candidate --output .tools/weir
-          else
-            python3 scripts/prepare_weir.py
-          fi
+          python3 scripts/prepare_weir.py
           python3 scripts/prepare_images.py
           if [ "$BACKEND" != search ]; then
             mongod=$(python3 scripts/prepare_native_mongo.py)
             printf 'WEIR_TEST_MONGODB_BINARY=%s\n' "$mongod" >> "$GITHUB_ENV"
           fi
-      - name: Independent single-request native and SDK clients
+      - name: Saturation benchmark
         env:
           GOPROXY: 'off'
           GOSUMDB: 'off'
-          WRITE_PERCENT: ${{ matrix.write-percent }}
-          DATABASE_CPUS: ${{ inputs.database-cpus || '1' }}
-          CLIENT_LEVELS: ${{ inputs.client-levels || '4,8,32,128,256' }}
-          BACKEND_BATCH_LIMITS: ${{ inputs.backend-batch-limit || '32' }}
-          LUA_MUTATIONS: ${{ inputs.lua-mutations || false }}
-          BACKEND: ${{ inputs.backend || 'all' }}
-          MODE: ${{ inputs.mode || 'saturation' }}
-          BATCH_SIZES: ${{ inputs.batch-sizes || '1' }}
-          CPU_PROFILE_CONCURRENCY: ${{ inputs.cpu-profile-concurrency || '0' }}
-          SERVER_CANDIDATE: ${{ inputs.server-candidate }}
+          WRITE_PERCENT: ${{ inputs.write-percent }}
+          DATABASE_CPUS: ${{ inputs.database-cpus }}
+          CLIENT_LEVELS: ${{ inputs.client-levels }}
+          BACKEND_BATCH_LIMIT: ${{ inputs.backend-batch-limit }}
+          LUA_MUTATIONS: ${{ inputs.lua-mutations }}
+          BACKEND: ${{ inputs.backend }}
+          MODE: ${{ inputs.mode }}
+          BATCH_SIZES: ${{ inputs.batch-sizes }}
         run: |
+          arguments=(-mode "$MODE" -weir .tools/weir -backend "$BACKEND" -database-cpus "$DATABASE_CPUS"
+            -backend-batch-limit "$BACKEND_BATCH_LIMIT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS"
+            -batch-sizes "$BATCH_SIZES" -records 8192 -payload-bytes 1024 -write-percent "$WRITE_PERCENT"
+            -rounds 3 -warmup-duration 10s -duration 20s -output results/local/saturation)
+          if [ "$LUA_MUTATIONS" = true ]; then
+            arguments+=(-lua-mutations)
+          fi
           mkdir -p results/local
-          python3 - <<'PY'
-          import hashlib, json, os, pathlib, platform, re, subprocess, sys
-          sys.path.insert(0, str(pathlib.Path('scripts').resolve()))
-          from build_local_server import freeze_source
-          from performance_evidence import validate_report_provenance, validate_server_receipt
-          profile_level = os.environ.get('CPU_PROFILE_CONCURRENCY', '0')
-          if not profile_level.isdecimal():
-              raise SystemExit('cpu-profile-concurrency must be 0 or an existing positive concurrency')
-          profiled = int(profile_level) > 0
-          if profiled and (not os.environ.get('SERVER_CANDIDATE') or os.environ['BACKEND'] not in ('mongo', 'search') or os.environ['MODE'] != 'saturation' or ',' in os.environ['BACKEND_BATCH_LIMITS'] or profile_level not in os.environ['CLIENT_LEVELS'].split(',')):
-              raise SystemExit('CPU diagnostic requires an immutable candidate, one backend, one batch limit, saturation and an existing concurrency')
-          binary = pathlib.Path('.tools/weir-lab').resolve()
-          frozen = pathlib.Path('.tools/performance-client-source').resolve()
-          client_tree, client_files = freeze_source(pathlib.Path.cwd(), frozen)
-          subprocess.run(['go', 'build', '-trimpath', '-buildvcs=false', '-o', str(binary), './cmd/weir-lab'], cwd=frozen, check=True, timeout=600)
-          server = pathlib.Path('.tools/weir')
-          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          if subprocess.check_output(['git', 'status', '--porcelain']):
-              raise SystemExit('measurement requires a clean source checkout')
-          server_receipt = json.loads(server.with_suffix('.receipt.json').read_text())
-          server_sha = hashlib.sha256(server.read_bytes()).hexdigest()
-          versions = json.loads(pathlib.Path('versions.json').read_text())
-          receipt_kind = validate_server_receipt(server_receipt, server_sha, versions)
-          if server_receipt['identity']['target'] != 'linux/amd64':
-              raise SystemExit('server candidate must be native Linux amd64')
-          mongod = os.environ.get('WEIR_TEST_MONGODB_BINARY')
-          mongo_receipt = None
-          if os.environ['BACKEND'] != 'search':
-              if not mongod:
-                  raise SystemExit('matched Mongo measurement requires the pinned native fixture')
-              mongo_path = pathlib.Path(mongod)
-              mongo_receipt = json.loads(mongo_path.with_suffix('.receipt.json').read_text())
-              mongo_pin = versions['mongodb_linux_amd64']
-              if (mongo_receipt['target'] != 'linux/amd64' or
-                      mongo_receipt['version'] != versions['mongodb_version'] or
-                      mongo_receipt['archive_sha256'] != mongo_pin['sha256'] or
-                      mongo_receipt['binary_sha256'] != mongo_pin['member_sha256'] or
-                      hashlib.sha256(mongo_path.read_bytes()).hexdigest() != mongo_receipt['binary_sha256']):
-                  raise SystemExit('native Mongo receipt or binary differs from the Linux pin')
-          for backend_limit in os.environ['BACKEND_BATCH_LIMITS'].split(','):
-              if not backend_limit.isdecimal() or not 1 <= int(backend_limit) <= 1024:
-                  raise SystemExit('backend batch limits must be integers from 1 through 1024')
-              output = 'results/local/saturation-batch-' + backend_limit
-              command = [str(binary), '-mode', os.environ['MODE'], '-weir', str(server), '-backend', os.environ['BACKEND'], '-database-cpus', os.environ['DATABASE_CPUS'], '-backend-batch-limit', backend_limit, '-client-processes', '4', '-concurrency-levels', os.environ['CLIENT_LEVELS'], '-batch-sizes', os.environ['BATCH_SIZES'], '-records', '8192', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', output]
-              if profiled:
-                  if receipt_kind != 'local' or server_receipt['source'] != os.environ['SERVER_CANDIDATE'] or server_receipt.get('source_dirty') is not False:
-                      raise SystemExit('CPU capture must use the exact candidate source receipt')
-                  command += ['-cpu-profile-concurrency', profile_level, '-cpu-profile-duration', '60s']
-              if receipt_kind == 'local':
-                  command += ['-server-receipt', str(server.with_suffix('.receipt.json'))]
-              if mongod:
-                  command += ['-mongod', mongod]
-              if os.environ['LUA_MUTATIONS'] == 'true':
-                  command.append('-lua-mutations')
-              receipt = {'client_operation_timeout': '10s', 'host_memory_bytes': int(next(line for line in pathlib.Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemTotal:')).split()[1]) * 1024, 'host_cpus': os.cpu_count(), 'host_cpu_model': next(line.split(':', 1)[1].strip() for line in pathlib.Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name')), 'go': subprocess.check_output(['go', 'version'], text=True).strip(), 'host': platform.uname()._asdict(), 'source': source, 'source_dirty': False, 'client_binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(), 'client_build': subprocess.check_output(['go', 'version', '-m', str(binary)], text=True), 'server_binary_sha256': server_sha, 'server_receipt': server_receipt, 'versions': json.loads(pathlib.Path('versions.json').read_text()), 'command': command, 'workflow_run': 'https://github.com/' + os.environ['GITHUB_REPOSITORY'] + '/actions/runs/' + os.environ['GITHUB_RUN_ID']}
-              receipt.update(client_source_tree_sha256=client_tree, client_source_files=client_files,
-                             server_receipt_kind=receipt_kind, native_mongodb_receipt=mongo_receipt,
-                             load_model='closed-loop matched concurrency; not matched fixed offered rate',
-                             mongo_resource_policy='native Mongo uses all host CPUs; database-cpus applies only to owned Docker Search')
-              if profiled:
-                  receipt['measurement_classification'] = 'diagnostic non-baseline; CPU sampling and owned server restart overhead; startup-inclusive profile'
-                  receipt['cpu_profile_concurrency'] = int(profile_level)
-                  receipt['cpu_profile_duration'] = '60s'
-              receipt_path = pathlib.Path('results/local/measurement-batch-' + backend_limit + '.receipt.json')
-              receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
-              if profiled:
-                  retained_binary = pathlib.Path(output + '.weir-profile-binary')
-                  with retained_binary.open('xb') as retained:
-                      retained.write(server.read_bytes())
-                  if hashlib.sha256(retained_binary.read_bytes()).hexdigest() != server_sha:
-                      raise SystemExit('retained CPU profile binary differs from the verified candidate')
-              with pathlib.Path(output + '.log').open('x') as log:
-                  process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-                  for line in process.stdout:
-                      print(line, end='', flush=True)
-                      log.write(line)
-                  receipt['exit_code'] = process.wait()
-              receipt['server_binary_after_sha256'] = hashlib.sha256(server.read_bytes()).hexdigest()
-              receipt['client_binary_after_sha256'] = hashlib.sha256(binary.read_bytes()).hexdigest()
-              if mongod:
-                  receipt['native_mongodb_binary_after_sha256'] = hashlib.sha256(pathlib.Path(mongod).read_bytes()).hexdigest()
-              receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
-              if mongod and receipt['native_mongodb_binary_after_sha256'] != mongo_receipt['binary_sha256']:
-                  raise SystemExit('native Mongo binary changed during measurement')
-              if receipt['server_binary_after_sha256'] != server_sha or receipt['client_binary_after_sha256'] != receipt['client_binary_sha256']:
-                  raise SystemExit('benchmark binary changed during measurement')
-              if receipt['exit_code']:
-                  raise SystemExit(receipt['exit_code'])
-              if profiled:
-                  profile = pathlib.Path(output) / 'weir-cpu.pprof'
-                  raw = subprocess.check_output(['go', 'tool', 'pprof', '-raw', '-symbolize=none', str(server), str(profile)], text=True)
-                  (pathlib.Path(output) / 'weir-cpu.raw.txt').write_text(raw)
-                  if re.search(r'^\s*[1-9][0-9]*\s+[1-9][0-9]*:', raw, re.M) is None:
-                      raise SystemExit('CPU diagnostic produced no positive CPU samples')
-              for backend in ('mongo', 'search') if os.environ['BACKEND'] == 'all' else (os.environ['BACKEND'],):
-                  report = json.loads((pathlib.Path(output) / (backend + '.json')).read_text())
-                  try:
-                      validate_report_provenance(report, receipt)
-                  except ValueError as error:
-                      receipt['validation_error'] = str(error)
-                      receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
-                      raise
-          PY
-          git diff --exit-code
-      - name: Preserve raw resource samples, workload validation and cleanup
+          go run ./cmd/weir-lab "${arguments[@]}" 2>&1 | tee results/local/saturation.log
+      - name: Upload results and fixture logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: saturation-evidence-writes-${{ matrix.write-percent }}-${{ github.sha }}
+          name: saturation-${{ github.run_id }}
           path: |
             results/local/
-            .tools/weir.receipt.json
-            .tools/weir.source/
-            .tools/performance-client-source/
-            .tools/mongod.receipt.json
-            /tmp/weir-tests-*/manifest.json
-            /tmp/weir-tests-*/cleanup.json
-            /tmp/weir-tests-*/*config.json
-            /tmp/weir-tests-*/*routes.json
-            /tmp/weir-tests-*/*process.log
-            /tmp/weir-tests-*/docker-engine.json
+            /tmp/weir-tests-*/*.json
+            /tmp/weir-tests-*/*.log
           retention-days: 14

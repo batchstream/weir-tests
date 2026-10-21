@@ -357,7 +357,7 @@ func TestNativeMongoAnnouncementRequiresOwnedPort(t *testing.T) {
 	}
 }
 
-func TestStoppedProcessFailureIsPreservedInCloseAndReceipt(t *testing.T) {
+func TestStoppedProcessFailureIsPreservedInCloseAndCleanupRecord(t *testing.T) {
 	failure := errors.New("database process crashed")
 	done := make(chan struct{})
 	close(done)
@@ -374,7 +374,7 @@ func TestStoppedProcessFailureIsPreservedInCloseAndReceipt(t *testing.T) {
 	}
 	data, err := os.ReadFile(filepath.Join(c.Directory, "cleanup.json"))
 	if err != nil || !bytes.Contains(data, []byte(failure.Error())) || !bytes.Contains(data, []byte(`"stopped": true`)) {
-		t.Fatal("cleanup receipt hid crash or did not confirm exit", string(data), err)
+		t.Fatal("cleanup record hid crash or did not confirm exit", string(data), err)
 	}
 	p.err = nil
 	if err := stopProcess(context.Background(), p); err != nil {
@@ -477,15 +477,15 @@ esac
 			if readErr != nil {
 				t.Fatal(readErr)
 			}
-			var receipt struct {
+			var cleanup struct {
 				Errors     string
 				Containers []struct{ Removed bool }
 			}
-			if err := json.Unmarshal(data, &receipt); err != nil {
+			if err := json.Unmarshal(data, &cleanup); err != nil {
 				t.Fatal(err)
 			}
-			if len(receipt.Containers) != 1 || !receipt.Containers[0].Removed || (receipt.Errors != "") != test.wantFailure {
-				t.Fatal("cleanup receipt hides backend crash or owned removal", string(data))
+			if len(cleanup.Containers) != 1 || !cleanup.Containers[0].Removed || (cleanup.Errors != "") != test.wantFailure {
+				t.Fatal("cleanup record hides backend crash or owned removal", string(data))
 			}
 		})
 	}
@@ -649,7 +649,7 @@ func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t 
 			continue
 		}
 		if len(batch) != 4 || batch["max_operations"] != float64(32) || batch["max_bytes"] != "8388608B" || batch["max_wait"] != "0s" || batch["max_in_flight"] != float64(0) {
-			t.Fatal("explicit legacy controls inherited a future production default", string(raw))
+			t.Fatal("explicit controls inherited a server default", string(raw))
 		}
 	}
 }

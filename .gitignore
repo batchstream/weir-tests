@@ -1,5 +1,5 @@
 .tools/
 .testdata/
-results/*/
+results/
 *.test
 __pycache__/

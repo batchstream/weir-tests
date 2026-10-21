@@ -1,6 +1,0 @@
-{
-  "max_operations": 128,
-  "max_bytes": 4194304,
-  "max_wait": "20ms",
-  "max_in_flight": 16
-}

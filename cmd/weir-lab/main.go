@@ -29,35 +29,32 @@ import (
 const businessTimeout = 10 * time.Second
 
 type labOptions struct {
-	binary                string
-	mongoBinary           string
-	output                string
-	backend               string
-	operations            int
-	warmup                int
-	records               int
-	payload               int
-	concurrency           int
-	rounds                int
-	writePercent          int
-	mode                  string
-	levels                string
-	batches               string
-	warmupDuration        time.Duration
-	duration              time.Duration
-	databaseCPUs          float64
-	pendingRecords        int
-	exchangeBytes         int
-	serverReceipt         string
-	clientProcesses       int
-	backendBatchLimit     int
-	backendBatchBytes     int
-	backendBatchWait      time.Duration
-	backendInFlight       int
-	luaMutations          bool
-	captureEffective      bool
-	cpuProfileConcurrency int
-	cpuProfileDuration    time.Duration
+	binary            string
+	mongoBinary       string
+	output            string
+	backend           string
+	operations        int
+	warmup            int
+	records           int
+	payload           int
+	concurrency       int
+	rounds            int
+	writePercent      int
+	mode              string
+	levels            string
+	batches           string
+	warmupDuration    time.Duration
+	duration          time.Duration
+	databaseCPUs      float64
+	pendingRecords    int
+	exchangeBytes     int
+	clientProcesses   int
+	backendBatchLimit int
+	backendBatchBytes int
+	backendBatchWait  time.Duration
+	backendInFlight   int
+	luaMutations      bool
+	captureEffective  bool
 }
 
 func main() {
@@ -96,10 +93,7 @@ func main() {
 	flag.Float64Var(&opts.databaseCPUs, "database-cpus", 1, "enforced CPU quota for each owned Docker database; native Mongo uses all host CPUs")
 	flag.IntVar(&opts.pendingRecords, "pending-records", 0, "transport.max_pending_records override; 0 uses server default")
 	flag.IntVar(&opts.exchangeBytes, "exchange-bytes", 0, "backend.max_exchange_bytes override; 0 uses server default")
-	flag.StringVar(&opts.serverReceipt, "server-receipt", "", "verified build receipt for an explicit local source server")
 	flag.BoolVar(&opts.captureEffective, "capture-effective-config", false, "retain the owned server's redacted effective configuration")
-	flag.IntVar(&opts.cpuProfileConcurrency, "cpu-profile-concurrency", 0, "opt-in diagnostic: profile first Weir stage at this existing concurrency; non-baseline")
-	flag.DurationVar(&opts.cpuProfileDuration, "cpu-profile-duration", 0, "required with cpu-profile-concurrency; positive and at most 60s; includes startup")
 	flag.Parse()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -107,23 +101,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-}
-
-func cleanCPUProfileReceipt(dirty *bool, target, receiptTarget string) bool {
-	return dirty != nil && !*dirty && target == runtime.GOOS+"/"+runtime.GOARCH && receiptTarget == target
-}
-
-func validateCPUCapture(opts labOptions, levels []int) error {
-	if opts.cpuProfileConcurrency == 0 && opts.cpuProfileDuration == 0 {
-		return nil
-	}
-	if opts.mode != "saturation" || (opts.backend != "mongo" && opts.backend != "search") || opts.serverReceipt == "" || opts.cpuProfileConcurrency <= 0 || !slices.Contains(levels, opts.cpuProfileConcurrency) || opts.cpuProfileDuration <= 0 || opts.cpuProfileDuration > 60*time.Second {
-		return errors.New("CPU capture requires saturation, one explicit backend, candidate server receipt, an existing concurrency, and duration in (0,60s]")
-	}
-	if opts.cpuProfileDuration < opts.warmupDuration+opts.duration+5*time.Second {
-		return errors.New("CPU capture must reserve warmup + measurement + at least 5s startup headroom within 60s; observed overlap is checked separately")
-	}
-	return nil
 }
 
 func runLab(ctx context.Context, opts labOptions) (resultErr error) {
@@ -180,9 +157,6 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		}
 		opts.concurrency = levels[len(levels)-1]
 	}
-	if err := validateCPUCapture(opts, levels); err != nil {
-		return err
-	}
 	if opts.databaseCPUs <= 0 || opts.databaseCPUs > float64(runtime.NumCPU()) {
 		return errors.New("database CPU quota exceeds host budget")
 	}
@@ -235,7 +209,6 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	}
 	var identity struct {
 		Revision string `json:"revision"`
-		Target   string `json:"target"`
 	}
 	if err := json.Unmarshal(identityRaw, &identity); err != nil {
 		return err
@@ -249,7 +222,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if err != nil {
 			return err
 		}
-		if opts.serverReceipt == "" && identity.Revision != pins["weir_source"] {
+		if identity.Revision != pins["weir_source"] {
 			return errors.New("Weir binary does not match versions.json")
 		}
 		for _, key := range []string{"sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
@@ -257,43 +230,6 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		}
 	} else {
 		return errors.New("run the lab from the repository root with its versions.json lock")
-	}
-	if opts.serverReceipt != "" {
-		receiptRaw, err := os.ReadFile(opts.serverReceipt)
-		if err != nil {
-			return err
-		}
-		var receipt struct {
-			Source           string `json:"source"`
-			SHA256           string `json:"sha256"`
-			SourceDiffSHA256 string `json:"source_diff_sha256"`
-			SourceTreeSHA256 string `json:"source_tree_sha256"`
-			SourceDirty      *bool  `json:"source_dirty"`
-			Identity         struct {
-				Revision string `json:"revision"`
-				Target   string `json:"target"`
-			} `json:"identity"`
-		}
-		if err := json.Unmarshal(receiptRaw, &receipt); err != nil {
-			return err
-		}
-		if receipt.Identity.Revision != identity.Revision || receipt.SHA256 != provenance["weir_binary_sha256"] || len(receipt.Source) != 40 || len(receipt.SourceTreeSHA256) != 64 || len(receipt.SourceDiffSHA256) != 64 {
-			return errors.New("local server build receipt does not match binary identity, checksum or source evidence")
-		}
-		if opts.cpuProfileConcurrency > 0 {
-			if !cleanCPUProfileReceipt(receipt.SourceDirty, identity.Target, receipt.Identity.Target) {
-				return errors.New("CPU capture requires clean candidate source and matching native binary/receipt target")
-			}
-			provenance["weir_binary_target"] = identity.Target
-		}
-		provenance["weir_binary_revision"] = identity.Revision
-		provenance["weir_source"] = receipt.Source
-		provenance["weir_source_diff_sha256"] = receipt.SourceDiffSHA256
-		provenance["weir_source_tree_sha256"] = receipt.SourceTreeSHA256
-		provenance["weir_source_dirty"] = fmt.Sprint(receipt.SourceDirty != nil && *receipt.SourceDirty)
-		provenance["weir_source_kind"] = "explicit local source build; unpublished changes may be present"
-	} else {
-		provenance["weir_source_kind"] = "locked immutable module source"
 	}
 	if revision, err := exec.CommandContext(ctx, "git", "rev-parse", "HEAD").Output(); err == nil {
 		provenance["test_source"] = strings.TrimSpace(string(revision))
@@ -354,11 +290,6 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		var caseErr error
 		if opts.mode != "fixed" {
 			saturation := benchmark.SaturationOptions{Dataset: dataset, Paths: paths, Concurrency: levels, BatchSizes: batches, Warmup: opts.warmupDuration, Duration: opts.duration, Rounds: opts.rounds, WritePercent: opts.writePercent, OperationTimeout: businessTimeout, Resources: cluster.Resources(backend), CPUThreshold: 90, Provenance: provenance}
-			if opts.cpuProfileConcurrency > 0 {
-				capture := &benchmark.CPUCapture{Cluster: cluster, Path: filepath.Join(opts.output, "weir-cpu.pprof"), Duration: opts.cpuProfileDuration, Concurrency: opts.cpuProfileConcurrency}
-				saturation.CPUCapture = capture
-				provenance["measurement_classification"] = "diagnostic non-baseline: CPU profile and owned server restart overhead"
-			}
 			if opts.mode == "saturation" {
 				executable, err := os.Executable()
 				if err != nil {
