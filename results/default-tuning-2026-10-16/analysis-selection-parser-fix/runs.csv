@@ -1,7 +1,0 @@
-label,available,failures,workflow_conclusion
-select-pure,True,[],success
-select-partial,True,[],success
-select-crawler,True,[],failure
-select-search-read,True,[],success
-select-mongo-read,True,[],success
-select-bytes,True,[],success
