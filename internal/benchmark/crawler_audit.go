@@ -35,13 +35,17 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 		}
 	}
 	options := report.Parameters
+	// Reports record fully normalized controls; the auditor never fills defaults.
+	if len(options.Paths) == 0 || len(options.Modes) == 0 || options.Visibility == "" || options.AfterBatchMaxOperations == 0 || options.AfterBatchMaxBytes == 0 {
+		return errors.New("crawler report lacks normalized paths, modes, visibility or batch controls")
+	}
 	if err := normalizeCrawlerControls(&options); err != nil {
 		return err
 	}
-	if options.InputShape != "" && options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
+	if options.InputShape != "single" && options.InputShape != "page" || options.InputShape == "single" && options.PageSize != 1 {
 		return errors.New("invalid crawler input shape")
 	}
-	if options.HTTPObserver != "" && options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
+	if options.HTTPObserver != "enabled" && options.HTTPObserver != "disabled" {
 		return errors.New("unknown HTTP observer mode")
 	}
 	if slices.Contains(options.Profiles, "partial-update") && (len(options.Profiles) != 1 || options.InputShape != "single") {
@@ -110,20 +114,18 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 					if reply.Phase != "timed" || reply.PID < 1 || seenPIDs[reply.PID] || len(reply.Workers) != stage.Concurrency/options.Processes {
 						return errors.New("crawler client identity or goroutine count mismatch")
 					}
-					if options.InputShape != "" {
-						if reply.InputShape != options.InputShape || stage.InputShape != options.InputShape {
-							return errors.New("crawler child input shape mismatch")
+					if reply.InputShape != options.InputShape || stage.InputShape != options.InputShape {
+						return errors.New("crawler child input shape mismatch")
+					}
+					pool := 0
+					if stage.Path == "direct" {
+						pool = stage.Concurrency / options.Processes
+						if options.InputShape == "single" {
+							pool *= 3
 						}
-						pool := 0
-						if stage.Path == "direct" {
-							pool = stage.Concurrency / options.Processes
-							if options.InputShape == "single" {
-								pool *= 3
-							}
-						}
-						if reply.NativePoolLimit != pool {
-							return errors.New("native application connection-pool limit mismatch")
-						}
+					}
+					if reply.NativePoolLimit != pool {
+						return errors.New("native application connection-pool limit mismatch")
 					}
 					var childApplications crawlerApplicationCounts
 					seenPIDs[reply.PID] = true

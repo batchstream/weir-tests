@@ -159,7 +159,10 @@ func TestCrawlerAuditUsesExactSelectedModeMatrix(t *testing.T) {
 	server := crawlerServer{SHA256: digest}
 	for _, mode := range []string{"fixed-rate", "saturation"} {
 		t.Run(mode, func(t *testing.T) {
-			opts := CrawlerOptions{Modes: []string{mode}, Profiles: []string{"two-step"}, Rates: []int{20}, Concurrency: []int{4, 8}, PageSize: 1, Processes: 1, Rounds: 1}
+			opts := CrawlerOptions{Modes: []string{mode}, Profiles: []string{"two-step"}, Rates: []int{20}, Concurrency: []int{4, 8}, PageSize: 1, Processes: 1, Rounds: 1, InputShape: "single", HTTPObserver: "disabled"}
+			if err := normalizeCrawlerControls(&opts); err != nil {
+				t.Fatal(err)
+			}
 			count := 3
 			if mode == "saturation" {
 				count = 6

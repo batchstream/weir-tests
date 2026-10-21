@@ -144,6 +144,13 @@ class PreparationTests(unittest.TestCase):
                     self.invoke()
                 self.assertEqual(self.output.read_bytes(), b'verified binary')
 
+    def test_binary_without_metadata_is_preserved(self):
+        self.invoke()
+        self.output.with_suffix('.json').unlink()
+        with self.assertRaisesRegex(ValueError, 'no metadata'):
+            self.invoke()
+        self.assertEqual(self.output.read_bytes(), b'verified binary')
+
     def test_orphan_metadata_and_binary_symlink_are_preserved(self):
         self.output.parent.mkdir()
         metadata_path = self.output.with_suffix('.json')

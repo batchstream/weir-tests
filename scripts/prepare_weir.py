@@ -32,7 +32,10 @@ def validate_source(pins, module):
 
 
 def verify_existing(output, pins, env, toolchain):
-    metadata = json.loads(output.with_suffix('.json').read_text())
+    metadata_path = output.with_suffix('.json')
+    if not metadata_path.is_file():
+        raise ValueError('existing binary has no metadata; preserving it')
+    metadata = json.loads(metadata_path.read_text())
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     expected = dict(source=pins['weir_source'], version=pins['weir_version'], go=pins['go'], sha256=digest)
     if any(metadata.get(key) != value for key, value in expected.items()):

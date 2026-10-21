@@ -114,7 +114,7 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 	before := crawlerServer{SHA256: digest}
 	after := crawlerServer{SHA256: afterDigest}
 	servers := map[string]crawlerServer{"before": before, "after": after}
-	opts := CrawlerOptions{InputShape: "single", HTTPObserver: "disabled", Profiles: []string{"partial-update"}, Modes: []string{"fixed-rate"}, Concurrency: []int{1}, Rates: []int{1}, Processes: 1, PageSize: 1, QueuePages: 1, Rounds: 1, CPUs: 1, AfterBatchMaxWait: 20 * time.Millisecond, Visibility: "application_acknowledged", SeedPaddingBytes: 8192, AfterBatchMaxOperations: 64, AfterBatchMaxBytes: 65536, AfterMaxInFlight: 4}
+	opts := CrawlerOptions{InputShape: "single", HTTPObserver: "disabled", Profiles: []string{"partial-update"}, Modes: []string{"fixed-rate"}, Paths: []string{"direct", "before", "after"}, Concurrency: []int{1}, Rates: []int{1}, Processes: 1, PageSize: 1, QueuePages: 1, Rounds: 1, CPUs: 1, AfterBatchMaxWait: 20 * time.Millisecond, Visibility: "application_acknowledged", SeedPaddingBytes: 8192, AfterBatchMaxOperations: 64, AfterBatchMaxBytes: 65536, AfterMaxInFlight: 4}
 	opts.Duration = time.Second
 	expected := map[string]map[string]any{"shared-seller": crawlerDocument("shared-seller", false)}
 	for record := range 2 {
@@ -170,6 +170,25 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 		t.Fatal("audit accepted an after path with the wrong collection window")
 	}
 	report.Stages[2].BatchMaxWaitNS = int64(opts.AfterBatchMaxWait)
+	for _, field := range []string{"InputShape", "HTTPObserver", "Visibility", "Paths", "Modes"} {
+		missing := *report
+		missing.Parameters = opts
+		switch field {
+		case "InputShape":
+			missing.Parameters.InputShape = ""
+		case "HTTPObserver":
+			missing.Parameters.HTTPObserver = ""
+		case "Visibility":
+			missing.Parameters.Visibility = ""
+		case "Paths":
+			missing.Parameters.Paths = nil
+		case "Modes":
+			missing.Parameters.Modes = nil
+		}
+		if err := AuditCrawlerReport(&missing); err == nil {
+			t.Fatal("audit filled a missing report parameter", field)
+		}
+	}
 	report.Stages[0].ExpectedDocumentsSHA256 = strings.Repeat("0", 64)
 	if err := AuditCrawlerReport(report); err == nil {
 		t.Fatal("audit accepted incorrect untouched/updated fields")

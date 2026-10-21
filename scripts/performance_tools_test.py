@@ -11,18 +11,18 @@ import run_performance_matrix as runner
 import summarize_performance as summary
 
 
-def make_report():
+def make_report(schema=4):
     provenance = dict(weir_binary_sha256='a' * 64)
     commands = dict(find=100, update=0)
     latency = dict(p95_upper_bound_ns=5_000_000)
     resources = dict(samples=[])
     stage = dict(succeeded=100, elapsed_ns=1_000_000_000, successful_operations_per_second=100,
-                 reads=100, writes=0, errors=0, indeterminate=0, verified=True,
+                 reads=100, writes=0, errors=0, indeterminate=0, business_operation_timeouts=0, verified=True,
                  latency=latency, resources=resources, timed_physical_database_command_deltas=commands)
     pair = dict(concurrency=8, batch_size=1, round=1, order='direct-first', direct=stage, weir=copy.deepcopy(stage))
     dataset = dict(backend='mongo', concurrency=8, namespace='owned', weir_seed='local')
     parameters = dict(dataset=dataset, concurrency_levels=[8], batch_sizes=[1], paired_rounds=1)
-    report = dict(provenance=provenance, parameters=parameters, pairs=[pair])
+    report = dict(schema=schema, provenance=provenance, parameters=parameters, pairs=[pair])
     return report
 
 
@@ -106,19 +106,21 @@ class SummaryTests(unittest.TestCase):
             self.assertEqual(result['status'], 'partial')
             self.assertEqual(result['missing_cases'], [dict(case='lua', missing=['after'])])
 
-    def test_mismatched_parameters_or_round_order_are_rejected(self):
-        for change in ('parameters', 'order'):
+    def test_mismatched_schema_parameters_or_round_order_are_rejected(self):
+        for change in ('schema', 'parameters', 'order'):
             with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 before, after = self.write_matrices(root)
                 path = after / 'mixed' / 'mongo.json'
                 report = json.loads(path.read_text())
-                if change == 'parameters':
+                if change == 'schema':
+                    report['schema'] = 3
+                elif change == 'parameters':
                     report['parameters']['dataset']['concurrency'] = 16
                 else:
                     report['pairs'][0]['order'] = 'weir-first'
                 path.write_text(json.dumps(report))
-                with self.assertRaisesRegex(SystemExit, 'mixed: before/after'):
+                with self.assertRaisesRegex(SystemExit, 'mixed: (before/after|report schema)'):
                     self.summarize(before, after, root / 'comparison')
 
 

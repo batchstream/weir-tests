@@ -6,6 +6,10 @@ import json
 from pathlib import Path
 
 
+# weir-lab writes single-request saturation reports as schema 4 and bulk-saturation reports as schema 2.
+REPORT_SCHEMAS = {'read': 4, 'mixed': 4, 'write': 4, 'lua': 4, 'bulk-read': 2, 'bulk-write': 2}
+
+
 def summarize_physical_counts(values):
     commands, reasons = {}, []
     expected_commands = None
@@ -126,7 +130,7 @@ def summarize(report, concurrency, path):
                   reads=reads, writes=writes,
                   errors=sum(value['errors'] for value in values),
                   indeterminate=sum(value['indeterminate'] for value in values),
-                  business_operation_timeouts=sum(value.get('business_operation_timeouts', 0) for value in values),
+                  business_operation_timeouts=sum(value['business_operation_timeouts'] for value in values),
                   verified=all(value['verified'] for value in values) and not report.get('incomplete'))
     return result
 
@@ -139,7 +143,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     rows, missing_cases, cases = [], [], []
-    for case in ('read', 'mixed', 'write', 'lua', 'bulk-read', 'bulk-write'):
+    for case, schema in REPORT_SCHEMAS.items():
         before_path = args.before / case / (args.backend + '.json')
         after_path = args.after / case / (args.backend + '.json')
         if not before_path.exists() or not after_path.exists():
@@ -149,6 +153,8 @@ def main():
                 missing_cases.append(missing_case)
             continue
         before, after = json.loads(before_path.read_text()), json.loads(after_path.read_text())
+        if before.get('schema') != schema or after.get('schema') != schema:
+            raise SystemExit(case + ': report schema must be ' + str(schema))
         if comparison_parameters(before) != comparison_parameters(after):
             raise SystemExit(case + ': before/after benchmark parameters differ')
         if len(before['parameters']['batch_sizes']) != 1:
@@ -163,10 +169,9 @@ def main():
                 rounds = [pair['round'] for pair in before['pairs'] if pair['concurrency'] == concurrency and pair['batch_size'] == batch]
                 if sorted(rounds) != list(range(1, paired_rounds + 1)):
                     raise SystemExit(case + ': incomplete or duplicate paired rounds')
-        empty = {}
         details = dict(case=case, parameters=comparison_parameters(before),
-                       before_server_binary_sha256=before.get('provenance', empty).get('weir_binary_sha256'),
-                       after_server_binary_sha256=after.get('provenance', empty).get('weir_binary_sha256'))
+                       before_server_binary_sha256=before['provenance']['weir_binary_sha256'],
+                       after_server_binary_sha256=after['provenance']['weir_binary_sha256'])
         cases.append(details)
         for concurrency in before['parameters']['concurrency_levels']:
             left, right = {}, {}
