@@ -120,6 +120,7 @@ jobs:
           from server_source import build_environment, check_checkout
           check_checkout(pathlib.Path('.tools/server-candidate'), os.environ['SERVER_CANDIDATE'], build_environment())
           PY
+            python3 scripts/download_modules.py --server-source .tools/server-candidate
             GOPROXY=off GOSUMDB=off python3 scripts/build_local_server.py --source .tools/server-candidate --output .tools/weir
           else
             python3 scripts/prepare_weir.py

@@ -32,6 +32,18 @@ class SaturationWorkflowTests(unittest.TestCase):
         for run in re.findall(r'        run: \|\n((?:          .*\n|\n)+)', WORKFLOW.read_text()):
             subprocess.run(['bash', '-n'], input=textwrap.dedent(run), text=True, check=True)
 
+    def test_candidate_graph_preparation_precedes_offline_build(self):
+        workflow = WORKFLOW.read_text()
+        prepare = workflow.split('      - name: Prepare immutable tools and owned database images\n', 1)[1]
+        prepare = prepare.split('      - name: Independent single-request native and SDK clients\n', 1)[0]
+        verify = "check_checkout(pathlib.Path('.tools/server-candidate'), os.environ['SERVER_CANDIDATE'], build_environment())"
+        graph = 'python3 scripts/download_modules.py --server-source .tools/server-candidate'
+        build = 'GOPROXY=off GOSUMDB=off python3 scripts/build_local_server.py --source .tools/server-candidate --output .tools/weir'
+        self.assertLess(prepare.index('if [ -n "$SERVER_CANDIDATE" ]; then'), prepare.index(verify))
+        self.assertLess(prepare.index(verify), prepare.index(graph))
+        self.assertLess(prepare.index(graph), prepare.index(build))
+        self.assertLess(prepare.index(build), prepare.index('          else\n'))
+
     def test_candidate_and_platform_fail_closed(self):
         block = python_blocks()[0]
         cases = [('', 'Linux', 'x86_64', True), ('a' * 40, 'Linux', 'x86_64', True),

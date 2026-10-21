@@ -244,9 +244,13 @@ benchmark** workflow accepts an optional `server-candidate` input: the full
 40-character public `batchstream/weir` commit. It checks the exact clean checkout,
 freezes the complete existing server source allowlist, and builds an unpublished
 dev identity with a source/binary receipt; it never advances `versions.json` or
-creates a release. Candidate dependencies must already be available from the
-pinned preparation step; the candidate build is offline/read-only and fails
-rather than changing module locks. Omit the input to retain the pinned server.
+creates a release. Preparation uses the candidate's own `go.mod`/`go.sum` and
+validated nested patch modules in a temporary source snapshot to download its
+public module graph through the Go proxy/checksum database. Candidate and
+companion module locks remain unchanged, including any additional graph sums
+needed only in the temporary snapshot. The subsequent candidate build remains
+`GOPROXY=off GOSUMDB=off` and read-only; preparation does not weaken that guard.
+Omit the input to retain the pinned server.
 For example, after this workflow is available on the selected companion ref:
 
 ```sh
