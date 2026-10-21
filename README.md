@@ -4,6 +4,12 @@ Independent blackbox integration tests and database throughput comparisons for
 [Weir](https://github.com/batchstream/weir). This module uses the published
 Go SDK and public protocol. It imports no server packages.
 
+The [finite external acceptance runner](docs/weir-accept.md), `cmd/weir-accept`,
+accepts an explicit owner/candidate/endpoints JSON contract for a small current-SDK
+functional check against externally orchestrated services. It starts no fixtures,
+uses no Kubernetes credentials/API, and does not replace formal, performance or
+HA qualification. Its input/report/cleanup contract is documented for chart authors.
+
 The [2026-10-16 batching-default study](results/default-tuning-2026-10-16/README.md)
 selects bounded defaults from a declared sensitivity grid and independently
 checks actual omitted configuration against fragmented single-record native
