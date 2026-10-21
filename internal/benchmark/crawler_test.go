@@ -100,13 +100,10 @@ func TestCrawlerOpenLoopKeepsArrivalsIndependentAndCountsRejectedPages(t *testin
 	}
 }
 
-func TestCrawlerSourcesRequireOnlyPlainDocumentReturns(t *testing.T) {
-	for name, source := range map[string]string{"common": crawlerCommon, "product": crawlerProduct, "offer": crawlerOffer} {
-		if strings.Contains(source, "weir.keep") || strings.Contains(source, "sink.v1") {
-			t.Fatal("unexpected legacy interface or action helper", name)
-		}
+func TestCrawlerSourcesHaveDigestsAndMergeAfterReconcile(t *testing.T) {
+	for _, name := range []string{"common", "product", "offer"} {
 		if len(crawlerSources()[name]) != 64 {
-			t.Fatal("missing frozen source digest", name)
+			t.Fatal("missing source digest", name)
 		}
 	}
 	if strings.Contains(crawlerProduct, "return reconcile(current, incoming)") {

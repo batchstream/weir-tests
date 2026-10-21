@@ -155,12 +155,8 @@ func TestCrawlerModesBuildOnlySelectedCases(t *testing.T) {
 }
 
 func TestCrawlerAuditUsesExactSelectedModeMatrix(t *testing.T) {
-	source := strings.Repeat("1", 40)
 	digest := strings.Repeat("2", 64)
-	identity := map[string]any{"revision": source}
-	receipt := map[string]any{"source": source, "sha256": digest, "source_dirty": false, "identity": identity}
-	raw, _ := json.Marshal(receipt)
-	server := crawlerServerReceipt{SHA256: digest, Receipt: raw}
+	server := crawlerServer{SHA256: digest}
 	for _, mode := range []string{"fixed-rate", "saturation"} {
 		t.Run(mode, func(t *testing.T) {
 			opts := CrawlerOptions{Modes: []string{mode}, Profiles: []string{"two-step"}, Rates: []int{20}, Concurrency: []int{4, 8}, PageSize: 1, Processes: 1, Rounds: 1}
@@ -176,7 +172,7 @@ func TestCrawlerAuditUsesExactSelectedModeMatrix(t *testing.T) {
 				rate = 0
 			}
 			stages[0] = crawlerStage{Path: "direct", Mode: mode, Profile: "two-step", Round: 1, Concurrency: workers, ProductsPerSecond: rate}
-			servers := map[string]crawlerServerReceipt{"current": server, "optimized": server}
+			servers := map[string]crawlerServer{"before": server, "after": server}
 			report := &CrawlerReport{Schema: crawlerReportSchema, Sources: crawlerSources(), Servers: servers, Parameters: opts, Stages: stages}
 			err := AuditCrawlerReport(report)
 			if err == nil || !strings.Contains(err.Error(), "unqualified") {

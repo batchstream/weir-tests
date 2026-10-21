@@ -55,7 +55,7 @@ func TestCrawlerSettlingRestartsQuietWindowAfterBusyAndFlushChange(t *testing.T)
 	changed := result.Samples[3].ElapsedNS
 	last := result.Samples[len(result.Samples)-1].ElapsedNS
 	if last-changed < int64(opts.Quiet) || result.WaitNS < last {
-		t.Fatal("quiet interval/wait receipts do not cover the final stable counters", result)
+		t.Fatal("quiet interval/wait records do not cover the final stable counters", result)
 	}
 	for _, sample := range result.Samples {
 		if sample.At == "" || len(sample.Stats) == 0 || sample.Error != "" {
@@ -140,7 +140,7 @@ func TestCrawlerExecutionFollowsPSEProductThenSellerPhases(t *testing.T) {
 				want = 3
 			}
 			if len(calls) != want {
-				t.Fatal("page phase count differs from PSE", len(calls), want)
+				t.Fatal("page phase count differs from the crawler rules", len(calls), want)
 			}
 			for phase, records := range calls {
 				for _, mutation := range records {

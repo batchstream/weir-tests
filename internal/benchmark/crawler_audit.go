@@ -24,30 +24,14 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 	if !reflect.DeepEqual(report.Sources, sources) {
 		return errors.New("crawler report workload fixture hashes differ from this auditor")
 	}
-	for _, name := range []string{"current", "optimized"} {
+	for _, name := range []string{"before", "after"} {
 		server, ok := report.Servers[name]
 		if !ok {
-			return errors.New("crawler server receipt missing")
+			return errors.New("crawler server identity missing")
 		}
-		var receipt struct {
-			Source, SHA256   string
-			SourceDirty      bool   `json:"source_dirty"`
-			SourceTreeSHA256 string `json:"source_tree_sha256"`
-			SourceDiffSHA256 string `json:"source_diff_sha256"`
-			Identity         struct {
-				Revision string `json:"revision"`
-			} `json:"identity"`
-		}
-		if err := json.Unmarshal(server.Receipt, &receipt); err != nil {
-			return err
-		}
-		source, sourceErr := hex.DecodeString(receipt.Source)
-		digest, digestErr := hex.DecodeString(receipt.SHA256)
-		frozenTree, treeErr := hex.DecodeString(receipt.SourceTreeSHA256)
-		frozenDiff, diffErr := hex.DecodeString(receipt.SourceDiffSHA256)
-		frozen := treeErr == nil && len(frozenTree) == 32 && diffErr == nil && len(frozenDiff) == 32 && receipt.Identity.Revision != ""
-		if sourceErr != nil || len(source) != 20 || digestErr != nil || len(digest) != 32 || receipt.SHA256 != server.SHA256 || receipt.SourceDirty || receipt.Identity.Revision != receipt.Source && !frozen {
-			return errors.New("crawler server receipt has invalid immutable identity")
+		digest, err := hex.DecodeString(server.SHA256)
+		if err != nil || len(digest) != 32 {
+			return errors.New("crawler server binary digest is invalid")
 		}
 	}
 	options := report.Parameters
@@ -94,9 +78,9 @@ func AuditCrawlerReport(report *CrawlerReport) error {
 				if err := auditCrawlerLiveControls(stage, options); err != nil {
 					return err
 				}
-				server := "current"
-				if path == "optimized" {
-					server = "optimized"
+				server := "before"
+				if path == "after" {
+					server = "after"
 				}
 				if stage.ServerSHA256 != report.Servers[server].SHA256 {
 					return errors.New("crawler stage used a different server binary")

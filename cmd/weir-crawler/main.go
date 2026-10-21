@@ -1,4 +1,6 @@
-// Command weir-crawler compares realistic crawler mutations on exclusively owned Search fixtures.
+// Command weir-crawler compares realistic crawler mutations on exclusively owned Search fixtures:
+// native Elasticsearch updates against two Weir servers ("before" and "after"), which may differ
+// in binary, batching configuration, or both.
 package main
 
 import (
@@ -47,29 +49,27 @@ func main() {
 	var rates, levels, profiles, modes, paths string
 	flag.StringVar(&opts.InputShape, "input-shape", "single", "single (one record per native update/SDK call, page-size 1) or explicit page batch control")
 	flag.StringVar(&opts.HTTPObserver, "http-observer", "disabled", "enabled or disabled; disabled bypasses the observer for all paths and leaves HTTP counters unavailable")
-	flag.StringVar(&opts.Before, "before", ".tools/weir-current", "immutable current Weir binary")
-	flag.StringVar(&opts.After, "after", ".tools/weir-optimized", "immutable optimized Weir binary")
-	flag.StringVar(&opts.BeforeReceipt, "before-receipt", ".tools/weir-current.receipt.json", "current server source and binary receipt")
-	flag.StringVar(&opts.AfterReceipt, "after-receipt", ".tools/weir-optimized.receipt.json", "optimized server source and binary receipt")
-	flag.StringVar(&opts.Output, "output", "results/local/crawler.json", "raw evidence report")
+	flag.StringVar(&opts.Before, "before", ".tools/weir", "Weir binary for the before path, run with explicit 32-operation, 8 MiB, no-wait batching")
+	flag.StringVar(&opts.After, "after", ".tools/weir", "Weir binary for the after path, run with the -after-* batching controls")
+	flag.StringVar(&opts.Output, "output", "results/local/crawler.json", "raw JSON report")
 	flag.StringVar(&profiles, "profiles", "two-step", "two-step or combined crawler rules, or exclusive partial-update batching mechanism control")
 	flag.StringVar(&modes, "modes", "fixed-rate", "fixed-rate, saturation, or both comma-separated")
-	flag.StringVar(&paths, "paths", "direct,current,optimized", "unique measured native/current/optimized paths in rotating order")
-	flag.BoolVar(&opts.AfterUseDefaults, "after-use-defaults", false, "omit optimized batching configuration; after controls declare expected effective defaults for audit only")
+	flag.StringVar(&paths, "paths", "direct,before,after", "unique measured direct/before/after paths in rotating order")
+	flag.BoolVar(&opts.AfterUseDefaults, "after-use-defaults", false, "omit the after path's batching configuration; after controls declare expected effective defaults for audit only")
 	flag.BoolVar(&opts.CaptureEffectiveConfig, "capture-effective-config", false, "retain owned effective configuration and require all four live batching controls")
 	flag.StringVar(&rates, "rates", "4,16,48", "absolute offered product rates; none disables fixed-rate cases")
 	flag.StringVar(&levels, "concurrency-levels", "128", "total goroutine workers across OS clients: <=2048 total, <=512 per process; fixed-rate uses only the largest level")
 	flag.StringVar(&opts.Visibility, "visibility", "query_visible", "query_visible or application_acknowledged (partial-update only); identical native and SDK completion")
 	flag.IntVar(&opts.SeedPaddingBytes, "seed-padding-bytes", 0, "additional untouched product payload bytes, partial-update only")
-	flag.IntVar(&opts.AfterBatchMaxOperations, "after-batch-max-operations", 32, "optimized server batching.max_operations")
-	flag.IntVar(&opts.AfterBatchMaxBytes, "after-batch-max-bytes", 8<<20, "optimized server batching.max_bytes in bytes")
-	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "optimized server batch cap; zero is unlimited and omitted for the old server")
+	flag.IntVar(&opts.AfterBatchMaxOperations, "after-batch-max-operations", 32, "after server batching.max_operations")
+	flag.IntVar(&opts.AfterBatchMaxBytes, "after-batch-max-bytes", 8<<20, "after server batching.max_bytes in bytes")
+	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "after server batching.max_in_flight; zero is unlimited")
 	flag.IntVar(&opts.Processes, "client-processes", 4, "independent OS clients, one pool per process")
 	flag.IntVar(&opts.PageSize, "page-size", 1, "products per page, each with two sellers")
 	flag.IntVar(&opts.QueuePages, "queue-pages", 1, "bounded queued pages per worker, counted explicitly")
 	flag.IntVar(&opts.Rounds, "rounds", 3, "three-way rotating rounds")
 	flag.Float64Var(&opts.CPUs, "database-cpus", 1, "enforced owned Search container CPU quota")
-	flag.DurationVar(&opts.AfterBatchMaxWait, "after-batch-max-wait", 0, "optimized server batching.max_wait; zero preserves immediate execution")
+	flag.DurationVar(&opts.AfterBatchMaxWait, "after-batch-max-wait", 0, "after server batching.max_wait; zero preserves immediate execution")
 	flag.DurationVar(&opts.Warmup, "warmup", 10*time.Second, "untimed warmup followed by data reset with pools retained")
 	flag.DurationVar(&opts.Duration, "duration", 20*time.Second, "offered arrival interval; subsequent completion drain remains included")
 	flag.DurationVar(&opts.Timeout, "timeout", 10*time.Second, "same planned-arrival-to-declared-completion deadline for all paths")
