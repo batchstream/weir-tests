@@ -239,6 +239,39 @@ remain dev identities even when the source checkout is clean.
 Local macOS measurements describe the observed workload on that host and do not
 prove Linux database saturation or a production capacity limit.
 
+For native Linux amd64 execution, the existing manual **Database saturation
+benchmark** workflow accepts an optional `server-candidate` input: the full
+40-character public `batchstream/weir` commit. It checks the exact clean checkout,
+freezes the complete existing server source allowlist, and builds an unpublished
+dev identity with a source/binary receipt; it never advances `versions.json` or
+creates a release. Candidate dependencies must already be available from the
+pinned preparation step; the candidate build is offline/read-only and fails
+rather than changing module locks. Omit the input to retain the pinned server.
+For example, after this workflow is available on the selected companion ref:
+
+```sh
+gh workflow run saturation.yml --ref main \
+  -f server-candidate=FULL_40_CHARACTER_SERVER_COMMIT \
+  -f backend=all -f write-percent=10 -f client-levels=8,32 \
+  -f backend-batch-limit=32 -f mode=saturation -f batch-sizes=1
+```
+
+Mongo cases use the checksummed native MongoDB 8.0.32 Linux amd64 fixture;
+Search retains the existing pinned owned Elasticsearch Docker fixture. Native
+Mongo uses all host CPUs without an enforced quota; `database-cpus` applies only
+to Docker Search. Each path shares the same backend and resource policy within
+its alternating paired run, not an equal cross-backend quota. The workflow
+retains frozen client/candidate source, preparation receipts, exact commands,
+raw reports/resource samples, failure/UNKNOWN and latency evidence, fixture logs
+and owned cleanup, and validates report provenance against the actual candidate.
+These are **closed-loop matched-concurrency** measurements, not matched fixed
+offered-rate experiments; driver scheduling/dispatch lag remains diagnostic,
+not proof of a sustainable externally offered rate. Failed, rejected or UNKNOWN
+work cannot count as an optimization. No new performance threshold is implied,
+and this entry does not replace normal/full formal Weir 30+600/200 qualification
+gates. Running the workflow needs separate execution authorization and available
+Linux amd64 capacity; the example is not evidence that it has run.
+
 `scripts/run_performance_matrix.py` serializes read, mixed (10%), write and Lua
 cases at total concurrency 8/32, with three alternating native/Weir rounds,
 10s warmup and 20s measurement for MongoDB, or 20s warmup and 20s
