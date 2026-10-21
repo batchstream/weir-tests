@@ -12,6 +12,41 @@ spec.loader.exec_module(builder)
 
 
 class FrozenSourceTests(unittest.TestCase):
+    def test_actual_frozen_lab_builds_offline_with_all_embedded_assets(self):
+        source = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            frozen = root / 'client-source'
+            _, manifest = builder.freeze_source(source, frozen)
+            hashes = {entry['path']: entry['sha256'] for entry in manifest}
+            for name in builder.CLIENT_EMBED_ASSETS:
+                self.assertIn(name, hashes)
+                self.assertEqual((frozen / name).read_bytes(), (source / name).read_bytes())
+                self.assertEqual(hashes[name], builder.digest((frozen / name).read_bytes()))
+            environment = dict(builder.os.environ, GOENV='off', GOWORK='off', GOTOOLCHAIN='local',
+                               GOPROXY='off', GOSUMDB='off', GOFLAGS='-mod=readonly')
+            binary = root / 'weir-lab'
+            command = ['go', 'build', '-trimpath', '-buildvcs=false', '-o', str(binary), './cmd/weir-lab']
+            builder.subprocess.run(command, cwd=frozen, env=environment, check=True, timeout=600)
+            self.assertTrue(binary.is_file())
+
+    def test_embed_allowlist_does_not_copy_other_assets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, frozen = root / 'source', root / 'frozen'
+            source.mkdir()
+            (source / 'go.mod').write_text('module example.invalid/test\n')
+            assets = source / 'internal/benchmark/crawlerdata'
+            assets.mkdir(parents=True)
+            (assets / 'common.lua').write_text('return true\n')
+            (assets / 'unrelated.lua').write_text('not a required embedded input\n')
+            (assets / 'unrelated.painless').write_text('not a required embedded input\n')
+            _, manifest = builder.freeze_source(source, frozen)
+            names = {entry['path'] for entry in manifest}
+            self.assertEqual(names, {'go.mod', 'internal/benchmark/crawlerdata/common.lua'})
+            self.assertFalse((frozen / 'internal/benchmark/crawlerdata/unrelated.lua').exists())
+            self.assertFalse((frozen / 'internal/benchmark/crawlerdata/unrelated.painless').exists())
+
     def test_build_overrides_inherited_overlay_flags(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

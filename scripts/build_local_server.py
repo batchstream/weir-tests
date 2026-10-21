@@ -18,6 +18,14 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+CLIENT_EMBED_ASSETS = frozenset((
+    'internal/benchmark/crawlerdata/common.lua',
+    'internal/benchmark/crawlerdata/product.lua',
+    'internal/benchmark/crawlerdata/offer.lua',
+    'internal/benchmark/crawlerdata/native.painless',
+))
+
+
 def freeze_source(source, output):
     source = source.resolve()
     files = []
@@ -34,7 +42,8 @@ def freeze_source(source, output):
             relative = path.relative_to(source)
             if path.is_symlink() or not path.is_file():
                 continue
-            if path.suffix != '.go' and relative.as_posix() not in ('go.mod', 'go.sum'):
+            name = relative.as_posix()
+            if path.suffix != '.go' and name not in ('go.mod', 'go.sum') and name not in CLIENT_EMBED_ASSETS:
                 continue
             files.append((relative, path.read_bytes()))
     if not any(path.as_posix() == 'go.mod' for path, _ in files):
