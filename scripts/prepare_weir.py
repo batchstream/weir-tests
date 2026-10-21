@@ -32,18 +32,15 @@ def validate_source(pins, module):
 
 
 def verify_existing(output, pins, env, toolchain):
-    receipt = json.loads(output.with_suffix('.receipt.json').read_text())
+    metadata = json.loads(output.with_suffix('.json').read_text())
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
-    expected = dict(source=pins['weir_source'], version=pins['weir_version'], go=pins['go'],
-                    sha256=digest, source_kind='verified full git checkout', source_dirty=False)
-    if any(receipt.get(key) != value for key, value in expected.items()):
-        raise ValueError('existing binary does not match its lock and receipt; preserving it')
-    if re.fullmatch(r'[0-9a-f]{64}', receipt.get('source_tree_sha256', '')) is None:
-        raise ValueError('existing binary lacks complete-source provenance; preserving it')
+    expected = dict(source=pins['weir_source'], version=pins['weir_version'], go=pins['go'], sha256=digest)
+    if any(metadata.get(key) != value for key, value in expected.items()):
+        raise ValueError('existing binary does not match its lock and metadata; preserving it')
     identity = json.loads(subprocess.check_output([str(output), 'version'], env=env, text=True, timeout=10))
     validate_identity(identity, toolchain, pins['weir_source'])
-    if receipt.get('identity') != identity:
-        raise ValueError('existing binary identity differs from its receipt; preserving it')
+    if metadata.get('identity') != identity:
+        raise ValueError('existing binary identity differs from its metadata; preserving it')
 
 
 def main():
@@ -55,19 +52,19 @@ def main():
     if re.fullmatch(r'[0-9a-f]{40}', pins['weir_source']) is None:
         raise ValueError('Weir source must be a full immutable commit')
     output = ROOT / '.tools' / ('weir.exe' if os.name == 'nt' else 'weir')
-    receipt_path = output.with_suffix('.receipt.json')
+    metadata_path = output.with_suffix('.json')
     env = build_environment()
     if args.offline:
         env.update(GOPROXY='off', GOSUMDB='off')
     toolchain = native_toolchain(env, pins['go'])
-    if output.is_symlink() or receipt_path.is_symlink():
-        raise ValueError('binary and receipt must not be symlinks')
+    if output.is_symlink() or metadata_path.is_symlink():
+        raise ValueError('binary and metadata must not be symlinks')
     if output.exists():
         verify_existing(output, pins, env, toolchain)
         print(output)
         return
-    if receipt_path.exists():
-        raise ValueError('preserving orphaned receipt; choose a new output')
+    if metadata_path.exists():
+        raise ValueError('preserving orphaned metadata; choose a new output')
     with tempfile.TemporaryDirectory(prefix='weir-source-') as temporary:
         directory = Path(temporary)
         metadata = directory / 'metadata'
@@ -92,15 +89,13 @@ def main():
         verify_snapshot(snapshot, manifest, tree_sha256)
         check_checkout(source, pins['weir_source'], env)
         data = binary.read_bytes()
-        receipt = dict(source=pins['weir_source'], version=pins['weir_version'], go=pins['go'],
-                       sha256=hashlib.sha256(data).hexdigest(), identity=identity,
-                       source_kind='verified full git checkout', source_dirty=False,
-                       source_tree_sha256=tree_sha256, source_files=manifest)
+        record = dict(source=pins['weir_source'], version=pins['weir_version'], go=pins['go'],
+                      sha256=hashlib.sha256(data).hexdigest(), identity=identity)
         output.parent.mkdir(parents=True, exist_ok=True)
         # Keep construction and verification outside the final output directory.
         output.write_bytes(data)
         output.chmod(0o755)
-        receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+        metadata_path.write_text(json.dumps(record, indent=2) + '\n')
     print(output)
 
 

@@ -62,9 +62,9 @@ class NativeMongoTest(unittest.TestCase):
         self.assertEqual(native.prepare(self.root), output)
         self.download.assert_called_once_with(self.profile['url'], timeout=60)
         self.execute.assert_called_once()
-        receipt = json.loads(output.with_suffix('.receipt.json').read_text())
-        self.assertEqual(receipt['target'], 'linux/amd64')
-        self.assertEqual(receipt['binary_sha256'], self.profile['member_sha256'])
+        metadata = json.loads(output.with_suffix('.json').read_text())
+        self.assertEqual(metadata['target'], 'linux/amd64')
+        self.assertEqual(metadata['binary_sha256'], self.profile['member_sha256'])
         output.write_bytes(b'tampered')
         with self.assertRaises(ValueError):
             native.prepare(self.root)

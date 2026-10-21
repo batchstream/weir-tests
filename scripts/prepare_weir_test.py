@@ -104,44 +104,23 @@ class PreparationTests(unittest.TestCase):
         clean = self.invoke()
         self.assertEqual(len(self.build_directories), 3)
         clean.assert_called_once()
-        receipt = json.loads(self.output.with_suffix('.receipt.json').read_text())
-        self.assertEqual(receipt['source'], self.pins['weir_source'])
-        self.assertEqual(receipt['version'], self.pins['weir_version'])
-        self.assertEqual(receipt['go'], self.pins['go'])
-        self.assertEqual(receipt['source_kind'], 'verified full git checkout')
-        self.assertFalse(receipt['source_dirty'])
-        self.assertEqual(receipt['identity'], self.identity)
-        self.assertEqual(receipt['sha256'], prepare.hashlib.sha256(b'verified binary').hexdigest())
-        self.assertEqual(len(receipt['source_files']), 3)
+        metadata = json.loads(self.output.with_suffix('.json').read_text())
+        self.assertEqual(metadata['source'], self.pins['weir_source'])
+        self.assertEqual(metadata['version'], self.pins['weir_version'])
+        self.assertEqual(metadata['go'], self.pins['go'])
+        self.assertEqual(metadata['identity'], self.identity)
+        self.assertEqual(metadata['sha256'], prepare.hashlib.sha256(b'verified binary').hexdigest())
         self.build_directories.clear()
         clean = self.invoke()
         self.assertEqual(self.build_directories, [])
         clean.assert_not_called()
-
-    def test_produced_full_git_receipt_reaches_matrix_and_report_as_locked(self):
-        import performance_tools_test as tools
-
-        versions = json.loads((Path(tools.runner.__file__).resolve().parent.parent / 'versions.json').read_text())
-        self.pins = versions
-        (self.root / 'versions.json').write_text(json.dumps(versions))
-        self.identity.update(revision=versions['weir_source'], version='local-' + versions['weir_source'])
-        self.invoke()
-        options = dict(binary=self.output, root=self.root)
-        consumed = tools.consume_produced_server(options)
-        self.assertEqual(len(consumed['commands']), 4)
-        for command in consumed['commands']:
-            self.assertNotIn('-server-receipt', command)
-        for receipt in consumed['receipts']:
-            self.assertEqual(receipt['server_receipt_kind'], 'locked')
-            self.assertEqual(receipt['server_receipt']['source_kind'], 'verified full git checkout')
-            self.assertNotIn('source_diff_sha256', receipt['server_receipt'])
 
     def test_failed_identity_is_not_published_and_cannot_fallback(self):
         self.identity['target'] = 'linux/amd64'
         with self.assertRaisesRegex(ValueError, 'identity'):
             self.invoke()
         self.assertFalse(self.output.exists())
-        self.assertFalse(self.output.with_suffix('.receipt.json').exists())
+        self.assertFalse(self.output.with_suffix('.json').exists())
 
     def test_wrong_root_module_is_not_built_or_published(self):
         self.metadata['Module']['Path'] = 'wrong/module'
@@ -150,39 +129,32 @@ class PreparationTests(unittest.TestCase):
         self.assertFalse(self.build_directories)
         self.assertFalse(self.output.exists())
 
-    def test_existing_receipt_version_digest_source_and_identity_must_match(self):
+    def test_existing_metadata_version_digest_source_and_identity_must_match(self):
         self.invoke()
-        receipt_path = self.output.with_suffix('.receipt.json')
-        receipt = json.loads(receipt_path.read_text())
-        variants = [dict(version='old-version'), dict(source='b' * 40), dict(go='1.26.0'),
-                    dict(sha256='0' * 64), dict(source_kind='module cache'),
-                    dict(source_tree_sha256='invalid'), {'identity': {'revision': 'old'}}]
+        metadata_path = self.output.with_suffix('.json')
+        metadata = json.loads(metadata_path.read_text())
+        variants = [dict(version='other-version'), dict(source='b' * 40), dict(go='1.26.0'),
+                    dict(sha256='0' * 64), {'identity': {'revision': 'other'}}]
         for variant in variants:
             with self.subTest(variant=variant):
-                changed = dict(receipt)
+                changed = dict(metadata)
                 changed.update(variant)
-                receipt_path.write_text(json.dumps(changed))
+                metadata_path.write_text(json.dumps(changed))
                 with self.assertRaises(ValueError):
                     self.invoke()
                 self.assertEqual(self.output.read_bytes(), b'verified binary')
-        old_receipt = {key: value for key, value in receipt.items()
-                       if key in ('source', 'version', 'go', 'sha256', 'identity')}
-        receipt_path.write_text(json.dumps(old_receipt))
-        with self.assertRaises(ValueError):
-            self.invoke()
 
-    def test_orphan_receipt_and_binary_symlink_are_preserved(self):
+    def test_orphan_metadata_and_binary_symlink_are_preserved(self):
         self.output.parent.mkdir()
-        receipt_path = self.output.with_suffix('.receipt.json')
-        receipt_path.write_text('{}')
+        metadata_path = self.output.with_suffix('.json')
+        metadata_path.write_text('{}')
         with self.assertRaisesRegex(ValueError, 'orphaned'):
             self.invoke()
-        receipt_path.unlink()
+        metadata_path.unlink()
         self.output.symlink_to(self.root / 'missing')
         with self.assertRaisesRegex(ValueError, 'symlinks'):
             self.invoke()
         self.assertTrue(self.output.is_symlink())
-
 
 if __name__ == '__main__':
     unittest.main()

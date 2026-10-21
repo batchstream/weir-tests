@@ -96,7 +96,7 @@ class ServerSnapshotTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'hash mismatch'):
             source.verify_snapshot(self.output, manifest, tree)
 
-    def test_legacy_lock_without_nested_replacements_remains_supported(self):
+    def test_lock_without_nested_replacements_is_supported(self):
         self.fixture.metadata['Replace'] = []
         tree, manifest = self.fixture.freeze(self.output)
         self.assertEqual([entry['path'] for entry in manifest], ['cmd/weir/main.go', 'go.mod', 'go.sum'])
