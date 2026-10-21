@@ -14,7 +14,6 @@ import (
 )
 
 type SaturationOptions struct {
-	CPUCapture       *CPUCapture
 	Dataset          *workload.Dataset
 	Paths            *workload.Paths
 	Concurrency      []int
