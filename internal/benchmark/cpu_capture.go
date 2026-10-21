@@ -52,11 +52,11 @@ func (c *CPUCapture) begin(ctx context.Context) error {
 	if err := c.Cluster.StopNode(ctx, 0); err != nil {
 		return err
 	}
-	c.launchBefore = time.Now().UTC()
+	c.launchBefore = time.Now()
 	if err := c.Cluster.RestartNodeWithCPUProfile(ctx, c.Path, c.Duration); err != nil {
 		return err
 	}
-	c.ready = time.Now().UTC()
+	c.ready = time.Now()
 	c.pid = c.Cluster.Nodes[0].ProcessID
 	return nil
 }
@@ -75,17 +75,32 @@ func conservativeOverlap(launch, start, end time.Time, duration time.Duration) t
 	return end.Sub(start)
 }
 
-func (c *CPUCapture) finish(options SaturationOptions, stageErr error) error {
+// recordTiming excludes the latest reported client start lag, not only the planned barrier.
+func (c *CPUCapture) recordTiming(start, end time.Time, clients []ClientProcessResult) {
+	var lag time.Duration
+	for _, client := range clients {
+		if time.Duration(client.StartLagNS) > lag {
+			lag = time.Duration(client.StartLagNS)
+		}
+	}
+	c.timedStart, c.timedEnd = start.Add(lag), end
+}
+
+func captureMayContinue(ctx context.Context, err error) bool {
+	return err == nil && ctx.Err() == nil
+}
+
+func (c *CPUCapture) finish(ctx context.Context, options SaturationOptions, stageErr error) error {
 	// Always join even after caller cancellation; Close remains the final cleanup owner.
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	cleanupCtx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
-	stopErr := c.Cluster.StopNode(ctx, 0)
-	joined := time.Now().UTC()
+	stopErr := c.Cluster.StopNode(cleanupCtx, 0)
+	joined := time.Now()
 	overlap := conservativeOverlap(c.launchBefore, c.timedStart, c.timedEnd, c.Duration)
 	if stopErr != nil {
 		overlap = 0
 	}
-	err := errors.Join(stageErr, stopErr)
+	err := errors.Join(stageErr, stopErr, ctx.Err())
 	if overlap < time.Second {
 		err = errors.Join(err, errors.New("CPU capture did not establish at least 1s of timed Weir workload overlap"))
 	}
@@ -95,7 +110,7 @@ func (c *CPUCapture) finish(options SaturationOptions, stageErr error) error {
 		err = errors.Join(err, errors.New("CPU capture file is empty"))
 	}
 	digest := sha256.Sum256(data)
-	receipt := cpuCaptureReceipt{Classification: "diagnostic non-baseline; startup-inclusive CPU profiling and restart overhead; no optimization or causal claim", Profile: c.Path, SHA256: hex.EncodeToString(digest[:]), PID: c.pid, Backend: options.Dataset.Config.Backend, Concurrency: c.Concurrency, Round: 1, Duration: c.Duration.String(), LaunchBefore: c.launchBefore, Ready: c.ready, TimedStart: c.timedStart, TimedEnd: c.timedEnd, Joined: joined, StopJoined: stopErr == nil, MinimumOverlapNS: overlap.Nanoseconds(), Provenance: options.Provenance}
+	receipt := cpuCaptureReceipt{Classification: "diagnostic non-baseline; startup-inclusive CPU profiling and restart overhead; no optimization or causal claim", Profile: c.Path, SHA256: hex.EncodeToString(digest[:]), PID: c.pid, Backend: options.Dataset.Config.Backend, Concurrency: c.Concurrency, Round: 1, Duration: c.Duration.String(), LaunchBefore: c.launchBefore.UTC(), Ready: c.ready.UTC(), TimedStart: c.timedStart.UTC(), TimedEnd: c.timedEnd.UTC(), Joined: joined.UTC(), StopJoined: stopErr == nil, MinimumOverlapNS: overlap.Nanoseconds(), Provenance: options.Provenance}
 	if err != nil {
 		receipt.Error = err.Error()
 	}
@@ -107,8 +122,8 @@ func (c *CPUCapture) finish(options SaturationOptions, stageErr error) error {
 		_, writeErr := file.Write(append(encoded, '\n'))
 		err = errors.Join(err, writeErr, file.Close())
 	}
-	if stopErr == nil {
-		err = errors.Join(err, c.Cluster.RestartNode(ctx, 0))
+	if captureMayContinue(ctx, err) {
+		err = c.Cluster.RestartNode(ctx, 0)
 	}
-	return err
+	return errors.Join(err, ctx.Err())
 }

@@ -268,21 +268,30 @@ at that concurrency stops and joins the existing owned server, restarts the
 same binary/configuration with `--cpu-profile FILE --cpu-profile-duration 60s`,
 then runs the existing independent clients, warmup and timed workload. It stops
 and joins that process to flush the file before restarting normally for the
-remaining stages. No HTTP profiling trigger or server source hook is used.
+remaining stages only on successful capture and an uncanceled caller context.
+Failure/cancellation still gets independent bounded stop/join cleanup, but no
+replacement server is started. No HTTP profiling trigger or server source hook is used.
 
 The ignored/CI-artifact output directory contains `weir-cpu.pprof` and
-`weir-cpu.pprof.receipt.json`. The workflow also retains the exact
-`weir-profile-binary` and `weir-cpu.raw.txt`, and fails if offline `go tool pprof`
-parsing does not find positive CPU samples. The receipt links the actual PID and profile hash
+`weir-cpu.pprof.receipt.json`. Before benchmark launch the workflow retains and
+hash-verifies the exact binary as the sibling `OUTPUT.weir-profile-binary`, so
+later stage failure cannot lose the matching executable or pre-create the
+runner's fresh output directory. Successful runs also retain `weir-cpu.raw.txt`
+and fail if offline `go tool pprof` parsing finds no positive CPU samples.
+The receipt links the actual PID and profile hash
 to existing source-tree/binary provenance and native target, launch/readiness
 bounds, timed workload timestamps, and successful process join. Capture starts
 somewhere between launch and readiness: the conservative timed overlap uses
 `launch_before + requested_duration`, not an invented exact sampler start.
+Timed overlap starts at the planned barrier plus the maximum reported client
+start lag, not the planned barrier alone. Internal timing retains monotonic
+clock readings; only receipt timestamps are serialized as UTC. Profile mode
+requires an explicitly present `source_dirty: false` in the candidate receipt.
 Less than one second of established timed Weir overlap fails the diagnostic;
 slow startup/client setup can therefore invalidate a run. Profiling includes
 startup and warmup; its throughput is **not baseline-comparable**, and sampled
 stacks alone do not prove the cause of the paired gap. Inspect the retained
-profile with `go tool pprof -top .tools/weir OUTPUT/weir-cpu.pprof` against the
+profile with `go tool pprof -top OUTPUT.weir-profile-binary OUTPUT/weir-cpu.pprof` against the
 exact retained binary before drawing conclusions. No profile is claimed until
 an authorized real execution produces samples. Local runner equivalents are
 `-cpu-profile-concurrency 32 -cpu-profile-duration 60s` with the existing

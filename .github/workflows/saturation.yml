@@ -152,7 +152,7 @@ jobs:
         run: |
           mkdir -p results/local
           python3 - <<'PY'
-          import hashlib, json, os, pathlib, platform, re, shutil, subprocess, sys
+          import hashlib, json, os, pathlib, platform, re, subprocess, sys
           sys.path.insert(0, str(pathlib.Path('scripts').resolve()))
           from build_local_server import freeze_source
           from performance_evidence import validate_report_provenance, validate_server_receipt
@@ -216,6 +216,12 @@ jobs:
                   receipt['cpu_profile_duration'] = '60s'
               receipt_path = pathlib.Path('results/local/measurement-batch-' + backend_limit + '.receipt.json')
               receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
+              if profiled:
+                  retained_binary = pathlib.Path(output + '.weir-profile-binary')
+                  with retained_binary.open('xb') as retained:
+                      retained.write(server.read_bytes())
+                  if hashlib.sha256(retained_binary.read_bytes()).hexdigest() != server_sha:
+                      raise SystemExit('retained CPU profile binary differs from the verified candidate')
               with pathlib.Path(output + '.log').open('x') as log:
                   process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                   for line in process.stdout:
@@ -235,7 +241,6 @@ jobs:
                   raise SystemExit(receipt['exit_code'])
               if profiled:
                   profile = pathlib.Path(output) / 'weir-cpu.pprof'
-                  shutil.copyfile(server, pathlib.Path(output) / 'weir-profile-binary')
                   raw = subprocess.check_output(['go', 'tool', 'pprof', '-raw', '-symbolize=none', str(server), str(profile)], text=True)
                   (pathlib.Path(output) / 'weir-cpu.raw.txt').write_text(raw)
                   if re.search(r'^\s*[1-9][0-9]*\s+[1-9][0-9]*:', raw, re.M) is None:

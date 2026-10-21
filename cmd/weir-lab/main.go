@@ -109,6 +109,10 @@ func main() {
 	}
 }
 
+func cleanCPUProfileReceipt(dirty *bool, target, receiptTarget string) bool {
+	return dirty != nil && !*dirty && target == runtime.GOOS+"/"+runtime.GOARCH && receiptTarget == target
+}
+
 func validateCPUCapture(opts labOptions, levels []int) error {
 	if opts.cpuProfileConcurrency == 0 && opts.cpuProfileDuration == 0 {
 		return nil
@@ -264,7 +268,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 			SHA256           string `json:"sha256"`
 			SourceDiffSHA256 string `json:"source_diff_sha256"`
 			SourceTreeSHA256 string `json:"source_tree_sha256"`
-			SourceDirty      bool   `json:"source_dirty"`
+			SourceDirty      *bool  `json:"source_dirty"`
 			Identity         struct {
 				Revision string `json:"revision"`
 				Target   string `json:"target"`
@@ -277,7 +281,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 			return errors.New("local server build receipt does not match binary identity, checksum or source evidence")
 		}
 		if opts.cpuProfileConcurrency > 0 {
-			if receipt.SourceDirty || identity.Target != runtime.GOOS+"/"+runtime.GOARCH || receipt.Identity.Target != identity.Target {
+			if !cleanCPUProfileReceipt(receipt.SourceDirty, identity.Target, receipt.Identity.Target) {
 				return errors.New("CPU capture requires clean candidate source and matching native binary/receipt target")
 			}
 			provenance["weir_binary_target"] = identity.Target
@@ -286,7 +290,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		provenance["weir_source"] = receipt.Source
 		provenance["weir_source_diff_sha256"] = receipt.SourceDiffSHA256
 		provenance["weir_source_tree_sha256"] = receipt.SourceTreeSHA256
-		provenance["weir_source_dirty"] = fmt.Sprint(receipt.SourceDirty)
+		provenance["weir_source_dirty"] = fmt.Sprint(receipt.SourceDirty != nil && *receipt.SourceDirty)
 		provenance["weir_source_kind"] = "explicit local source build; unpublished changes may be present"
 	} else {
 		provenance["weir_source_kind"] = "locked immutable module source"

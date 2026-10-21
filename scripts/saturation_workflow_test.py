@@ -101,6 +101,10 @@ class SaturationWorkflowTests(unittest.TestCase):
             def popen(command, **kwargs):
                 commands.append(command)
                 target = Path(command[command.index('-output') + 1])
+                if options.get('profile'):
+                    retained = Path(str(target) + '.weir-profile-binary')
+                    self.assertEqual(retained.read_bytes(), b'candidate')
+                    self.assertFalse(target.exists(), 'profile retention must not pre-create the runner output directory')
                 target.mkdir()
                 for backend in ('mongo', 'search'):
                     report = tools.make_report(receipt)
@@ -108,7 +112,7 @@ class SaturationWorkflowTests(unittest.TestCase):
                         report['provenance']['weir_binary_sha256'] = '0' * 64
                     (target / (backend + '.json')).write_text(json.dumps(report))
                 process = mock.Mock(stdout=[])
-                process.wait.return_value = 0
+                process.wait.return_value = options.get('exit_code', 0)
                 return process
 
             read_text = Path.read_text
@@ -130,6 +134,10 @@ class SaturationWorkflowTests(unittest.TestCase):
                 if options.get('profile_error'):
                     with self.assertRaisesRegex(SystemExit, options['profile_error']):
                         exec(python_blocks()[2], {})
+                    if options.get('exit_code'):
+                        self.assertEqual((root / 'results/local/saturation-batch-32.weir-profile-binary').read_bytes(), b'candidate')
+                        saved = json.loads((root / 'results/local/measurement-batch-32.receipt.json').read_text())
+                        self.assertEqual(saved['exit_code'], options['exit_code'])
                     return
                 if options.get('invalid_profile'):
                     with self.assertRaisesRegex(SystemExit, 'CPU diagnostic|cpu-profile-concurrency'):
@@ -160,7 +168,7 @@ class SaturationWorkflowTests(unittest.TestCase):
                 self.assertEqual(command[command.index('-cpu-profile-concurrency') + 1], '32')
                 self.assertEqual(command[command.index('-cpu-profile-duration') + 1], '60s')
                 self.assertIn('non-baseline', saved['measurement_classification'])
-                self.assertEqual((root / 'results/local/saturation-batch-32/weir-profile-binary').read_bytes(), b'candidate')
+                self.assertEqual((root / 'results/local/saturation-batch-32.weir-profile-binary').read_bytes(), b'candidate')
                 self.assertIn('10000000', (root / 'results/local/saturation-batch-32/weir-cpu.raw.txt').read_text())
             else:
                 self.assertNotIn('-cpu-profile-concurrency', command)
@@ -168,6 +176,10 @@ class SaturationWorkflowTests(unittest.TestCase):
 
     def test_opt_in_cpu_profile_reuses_existing_measurement(self):
         options = dict(profile=True)
+        self.measurement(options)
+
+    def test_cpu_binary_retained_before_launch_even_when_later_stage_fails(self):
+        options = dict(profile=True, exit_code=7, profile_error='7')
         self.measurement(options)
 
     def test_cpu_capture_rejects_wrong_candidate_receipt(self):

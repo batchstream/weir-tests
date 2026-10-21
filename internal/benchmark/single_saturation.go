@@ -90,7 +90,7 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 				selected := capture != nil && !capture.used && path == "weir" && workers == capture.Concurrency
 				if selected {
 					if err := capture.begin(ctx); err != nil {
-						return report, capture.finish(options, err)
+						return report, capture.finish(ctx, options, err)
 					}
 				}
 				if capture != nil {
@@ -105,7 +105,7 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 					if err == nil && (!result.complete() || !result.Verified) {
 						err = errors.New("profiled Weir stage did not complete successful verified work")
 					}
-					err = capture.finish(options, err)
+					err = capture.finish(ctx, options, err)
 				}
 				if path == "direct" {
 					pair.Direct = result
@@ -208,9 +208,6 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	}
 	now := time.Now()
 	started := now.Add(-time.Duration(now.UnixNano() - command.StartUnixNS))
-	if options.CPUCapture != nil {
-		options.CPUCapture.timedStart = started.UTC()
-	}
 	var monitor sync.WaitGroup
 	stop := make(chan struct{})
 	resources := Resources{AllocatedCPUs: options.Resources.AllocatedCPUs, Source: "owned Docker Engine cumulative CPU and timestamps; DB counters; individual owned client PID ps CPU/RSS and Weir CPU/RSS; 1s samples; common timed barrier"}
@@ -247,7 +244,7 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	}
 	elapsed := time.Since(started)
 	if options.CPUCapture != nil {
-		options.CPUCapture.timedEnd = started.Add(elapsed).UTC()
+		options.CPUCapture.recordTiming(started, started.Add(elapsed), replies)
 	}
 	close(stop)
 	monitor.Wait()
