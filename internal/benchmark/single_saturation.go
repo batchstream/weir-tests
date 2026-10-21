@@ -75,6 +75,9 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 	if options.Dataset.Config.LuaMutations {
 		report.Method = strings.Replace(report.Method, "native FindOne/ReplaceOne or single-ID mget/PUT", "native single-record atomic MongoDB update pipeline or Elasticsearch server-side update script; SDK Lua AtomicTransform computes the same revision toggle from the current source", 1)
 	}
+	if options.CPUCapture != nil {
+		report.Method = "DIAGNOSTIC NON-BASELINE: CPU sampling and owned server restart overhead; startup-inclusive profile. " + report.Method
+	}
 	for level, workers := range options.Concurrency {
 		for round := range options.Rounds {
 			pair := SaturationPair{Round: round + 1, Concurrency: workers, BatchSize: 1, Order: pairOrder(level + round)}
@@ -83,8 +86,27 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 					report.Incomplete = "prepare: " + err.Error()
 					return report, err
 				}
+				capture := options.CPUCapture
+				selected := capture != nil && !capture.used && path == "weir" && workers == capture.Concurrency
+				if selected {
+					if err := capture.begin(ctx); err != nil {
+						return report, capture.finish(ctx, options, err)
+					}
+				}
+				if capture != nil {
+					options.Resources = capture.Cluster.Resources(options.Dataset.Config.Backend)
+				}
 				stageOptions := singleStageOptions{Options: options, Path: path, Workers: workers}
+				if !selected {
+					stageOptions.Options.CPUCapture = nil
+				}
 				result, err := runSingleStage(ctx, stageOptions)
+				if selected {
+					if err == nil && (!result.complete() || !result.Verified) {
+						err = errors.New("profiled Weir stage did not complete successful verified work")
+					}
+					err = capture.finish(ctx, options, err)
+				}
 				if path == "direct" {
 					pair.Direct = result
 				} else {
@@ -221,6 +243,9 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 		}
 	}
 	elapsed := time.Since(started)
+	if options.CPUCapture != nil {
+		options.CPUCapture.recordTiming(started, started.Add(elapsed), replies)
+	}
 	close(stop)
 	monitor.Wait()
 	result.Resources = resources
