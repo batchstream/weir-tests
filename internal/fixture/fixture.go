@@ -60,14 +60,16 @@ type Cluster struct {
 	Nodes     []Node
 	Directory string
 
-	mu          sync.Mutex
-	options     Options
-	owner       string
-	dockerHost  string
-	containers  []container
-	processes   []*process
-	nativeMongo *process
-	closed      bool
+	mu                 sync.Mutex
+	options            Options
+	owner              string
+	dockerHost         string
+	containers         []container
+	processes          []*process
+	nativeMongo        *process
+	closed             bool
+	cpuProfilePath     string
+	cpuProfileDuration time.Duration
 }
 
 type process struct {
@@ -326,6 +328,14 @@ func writeJSON(path string, value any) error {
 	return os.WriteFile(path, append(data, '\n'), 0600)
 }
 
+func (c *Cluster) nodeCommand(index int) *exec.Cmd {
+	cmd := exec.Command(c.options.WeirBinary, "serve", "--config", c.nodeFile(index, "config.json"), "--routes", c.nodeFile(index, "routes.json"))
+	if c.cpuProfilePath != "" {
+		cmd.Args = append(cmd.Args, "--cpu-profile", c.cpuProfilePath, "--cpu-profile-duration", c.cpuProfileDuration.String())
+	}
+	return cmd
+}
+
 func (c *Cluster) startNode(ctx context.Context, index int) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -341,7 +351,7 @@ func (c *Cluster) startNode(ctx context.Context, index int) error {
 		return err
 	}
 	logOffset := info.Size()
-	cmd := exec.Command(c.options.WeirBinary, "serve", "--config", c.nodeFile(index, "config.json"), "--routes", c.nodeFile(index, "routes.json"))
+	cmd := c.nodeCommand(index)
 	cmd.Stdout, cmd.Stderr = log, log
 	if err := cmd.Start(); err != nil {
 		_ = log.Close()
@@ -484,6 +494,23 @@ func (c *Cluster) StopNode(ctx context.Context, index int) error {
 func (c *Cluster) RestartNode(ctx context.Context, index int) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	return c.restartNode(ctx, index)
+}
+
+// RestartNodeWithCPUProfile only changes the serve arguments for this restart.
+// The caller must first stop and join the owned process, as with RestartNode.
+func (c *Cluster) RestartNodeWithCPUProfile(ctx context.Context, path string, duration time.Duration) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if path == "" || duration <= 0 || duration > 60*time.Second || len(c.Nodes) != 1 {
+		return errors.New("CPU capture requires one owned node, a new path, and duration in (0,60s]")
+	}
+	c.cpuProfilePath, c.cpuProfileDuration = path, duration
+	defer func() { c.cpuProfilePath, c.cpuProfileDuration = "", 0 }()
+	return c.restartNode(ctx, 0)
+}
+
+func (c *Cluster) restartNode(ctx context.Context, index int) error {
 	if c.closed {
 		return errors.New("fixture is closed")
 	}

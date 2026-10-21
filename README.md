@@ -257,6 +257,37 @@ companion module locks remain unchanged, including any additional graph sums
 needed only in the temporary snapshot. The subsequent candidate build remains
 `GOPROXY=off GOSUMDB=off` and read-only; preparation does not weaken that guard.
 Omit the input to retain the pinned server.
+
+For a **diagnostic non-baseline** CPU sample of an already observed paired gap,
+add `cpu-profile-concurrency=32` (or another exact existing `client-levels`
+entry), select exactly one `backend` and one `backend-batch-limit`, and supply
+an immutable candidate containing the bounded `serve` CPU flags. The default
+`0` leaves the normal matched run unchanged. No workload, rounds, warmup,
+measurement duration, or qualification gates are changed. The first Weir stage
+at that concurrency stops and joins the existing owned server, restarts the
+same binary/configuration with `--cpu-profile FILE --cpu-profile-duration 60s`,
+then runs the existing independent clients, warmup and timed workload. It stops
+and joins that process to flush the file before restarting normally for the
+remaining stages. No HTTP profiling trigger or server source hook is used.
+
+The ignored/CI-artifact output directory contains `weir-cpu.pprof` and
+`weir-cpu.pprof.receipt.json`. The workflow also retains the exact
+`weir-profile-binary` and `weir-cpu.raw.txt`, and fails if offline `go tool pprof`
+parsing does not find positive CPU samples. The receipt links the actual PID and profile hash
+to existing source-tree/binary provenance and native target, launch/readiness
+bounds, timed workload timestamps, and successful process join. Capture starts
+somewhere between launch and readiness: the conservative timed overlap uses
+`launch_before + requested_duration`, not an invented exact sampler start.
+Less than one second of established timed Weir overlap fails the diagnostic;
+slow startup/client setup can therefore invalidate a run. Profiling includes
+startup and warmup; its throughput is **not baseline-comparable**, and sampled
+stacks alone do not prove the cause of the paired gap. Inspect the retained
+profile with `go tool pprof -top .tools/weir OUTPUT/weir-cpu.pprof` against the
+exact retained binary before drawing conclusions. No profile is claimed until
+an authorized real execution produces samples. Local runner equivalents are
+`-cpu-profile-concurrency 32 -cpu-profile-duration 60s` with the existing
+`-server-receipt`, explicit backend and fresh output-directory contract.
+
 For example, after this workflow is available on the selected companion ref:
 
 ```sh

@@ -8,6 +8,11 @@ on:
         default: ''
         required: false
         type: string
+      cpu-profile-concurrency:
+        description: Diagnostic non-baseline CPU capture of first Weir stage at this existing concurrency (0 disables); requires candidate, one backend and one batch limit
+        default: '0'
+        required: false
+        type: string
       write-percent:
         description: Deterministic write percentage (0 read, 10 mixed, 100 write)
         default: '0'
@@ -142,13 +147,21 @@ jobs:
           BACKEND: ${{ inputs.backend || 'all' }}
           MODE: ${{ inputs.mode || 'saturation' }}
           BATCH_SIZES: ${{ inputs.batch-sizes || '1' }}
+          CPU_PROFILE_CONCURRENCY: ${{ inputs.cpu-profile-concurrency || '0' }}
+          SERVER_CANDIDATE: ${{ inputs.server-candidate }}
         run: |
           mkdir -p results/local
           python3 - <<'PY'
-          import hashlib, json, os, pathlib, platform, subprocess, sys
+          import hashlib, json, os, pathlib, platform, re, shutil, subprocess, sys
           sys.path.insert(0, str(pathlib.Path('scripts').resolve()))
           from build_local_server import freeze_source
           from performance_evidence import validate_report_provenance, validate_server_receipt
+          profile_level = os.environ.get('CPU_PROFILE_CONCURRENCY', '0')
+          if not profile_level.isdecimal():
+              raise SystemExit('cpu-profile-concurrency must be 0 or an existing positive concurrency')
+          profiled = int(profile_level) > 0
+          if profiled and (not os.environ.get('SERVER_CANDIDATE') or os.environ['BACKEND'] not in ('mongo', 'search') or os.environ['MODE'] != 'saturation' or ',' in os.environ['BACKEND_BATCH_LIMITS'] or profile_level not in os.environ['CLIENT_LEVELS'].split(',')):
+              raise SystemExit('CPU diagnostic requires an immutable candidate, one backend, one batch limit, saturation and an existing concurrency')
           binary = pathlib.Path('.tools/weir-lab').resolve()
           frozen = pathlib.Path('.tools/performance-client-source').resolve()
           client_tree, client_files = freeze_source(pathlib.Path.cwd(), frozen)
@@ -182,6 +195,10 @@ jobs:
                   raise SystemExit('backend batch limits must be integers from 1 through 1024')
               output = 'results/local/saturation-batch-' + backend_limit
               command = [str(binary), '-mode', os.environ['MODE'], '-weir', str(server), '-backend', os.environ['BACKEND'], '-database-cpus', os.environ['DATABASE_CPUS'], '-backend-batch-limit', backend_limit, '-client-processes', '4', '-concurrency-levels', os.environ['CLIENT_LEVELS'], '-batch-sizes', os.environ['BATCH_SIZES'], '-records', '8192', '-payload-bytes', '1024', '-write-percent', os.environ['WRITE_PERCENT'], '-rounds', '3', '-warmup-duration', '10s', '-duration', '20s', '-output', output]
+              if profiled:
+                  if receipt_kind != 'local' or server_receipt['source'] != os.environ['SERVER_CANDIDATE'] or server_receipt.get('source_dirty') is not False:
+                      raise SystemExit('CPU capture must use the exact candidate source receipt')
+                  command += ['-cpu-profile-concurrency', profile_level, '-cpu-profile-duration', '60s']
               if receipt_kind == 'local':
                   command += ['-server-receipt', str(server.with_suffix('.receipt.json'))]
               if mongod:
@@ -193,6 +210,10 @@ jobs:
                              server_receipt_kind=receipt_kind, native_mongodb_receipt=mongo_receipt,
                              load_model='closed-loop matched concurrency; not matched fixed offered rate',
                              mongo_resource_policy='native Mongo uses all host CPUs; database-cpus applies only to owned Docker Search')
+              if profiled:
+                  receipt['measurement_classification'] = 'diagnostic non-baseline; CPU sampling and owned server restart overhead; startup-inclusive profile'
+                  receipt['cpu_profile_concurrency'] = int(profile_level)
+                  receipt['cpu_profile_duration'] = '60s'
               receipt_path = pathlib.Path('results/local/measurement-batch-' + backend_limit + '.receipt.json')
               receipt_path.write_text(json.dumps(receipt, indent=2) + '\n')
               with pathlib.Path(output + '.log').open('x') as log:
@@ -212,6 +233,13 @@ jobs:
                   raise SystemExit('benchmark binary changed during measurement')
               if receipt['exit_code']:
                   raise SystemExit(receipt['exit_code'])
+              if profiled:
+                  profile = pathlib.Path(output) / 'weir-cpu.pprof'
+                  shutil.copyfile(server, pathlib.Path(output) / 'weir-profile-binary')
+                  raw = subprocess.check_output(['go', 'tool', 'pprof', '-raw', '-symbolize=none', str(server), str(profile)], text=True)
+                  (pathlib.Path(output) / 'weir-cpu.raw.txt').write_text(raw)
+                  if re.search(r'^\s*[1-9][0-9]*\s+[1-9][0-9]*:', raw, re.M) is None:
+                      raise SystemExit('CPU diagnostic produced no positive CPU samples')
               for backend in ('mongo', 'search') if os.environ['BACKEND'] == 'all' else (os.environ['BACKEND'],):
                   report = json.loads((pathlib.Path(output) / (backend + '.json')).read_text())
                   try:
