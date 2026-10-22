@@ -96,11 +96,15 @@ class ServerSnapshotTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'hash mismatch'):
             source.verify_snapshot(self.output, manifest, tree)
 
-    def test_lock_without_nested_replacements_is_supported(self):
-        self.fixture.metadata['Replace'] = []
-        tree, manifest = self.fixture.freeze(self.output)
-        self.assertEqual([entry['path'] for entry in manifest], ['cmd/weir/main.go', 'go.mod', 'go.sum'])
-        source.verify_snapshot(self.output, manifest, tree)
+    def test_missing_nested_replacement_is_rejected(self):
+        for index in range(len(self.fixture.metadata['Replace'])):
+            with self.subTest(index=index):
+                replacements = list(self.fixture.metadata['Replace'])
+                del self.fixture.metadata['Replace'][index]
+                with self.assertRaisesRegex(ValueError, 'third_party'):
+                    self.fixture.freeze(self.output)
+                self.assertFalse(self.output.exists())
+                self.fixture.metadata['Replace'] = replacements
 
     def test_missing_nested_module_and_metadata_fail_before_snapshot(self):
         for name in ('go.mod', 'go.sum', 'library.go', 'WEIR_UPSTREAM.json', 'WEIR_PATCH.diff', 'LICENSE'):
@@ -308,21 +312,22 @@ class SourceBoundaryTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     source.native_toolchain(self.environment, '1.27.1')
 
-    def test_identity_rejects_wrong_source_toolchain_target_and_release_state(self):
+    def test_identity_rejects_wrong_source_toolchain_target_and_version(self):
         revision = 'a' * 40
-        identity = dict(product='weir', revision=revision, version='local-' + revision,
-                        state='clean-commit', dirty='false', go='go1.27.1', target='darwin/arm64')
+        identity = dict(product='weir', version='dev', revision=revision, go='go1.27.1', target='darwin/arm64')
         toolchain = ('go1.27.1', 'darwin/arm64')
         source.validate_identity(identity, toolchain, revision)
-        for name, value in [('product', 'other'), ('revision', 'b' * 40), ('go', 'go1.26.0'),
-                            ('target', 'linux/amd64'), ('state', 'dev'), ('dirty', 'true')]:
+        for name, value in [('product', 'other'), ('version', 'v0.2.0'), ('revision', 'b' * 40),
+                            ('go', 'go1.26.0'), ('target', 'linux/amd64'), ('state', 'dev')]:
             with self.subTest(name=name):
                 changed = dict(identity)
                 changed[name] = value
                 with self.assertRaises(ValueError):
                     source.validate_identity(changed, toolchain, revision)
+        missing = dict(identity)
+        del missing['revision']
         with self.assertRaises(ValueError):
-            source.validate_identity(identity, toolchain)
+            source.validate_identity(missing, toolchain, revision)
 
 
 if __name__ == '__main__':

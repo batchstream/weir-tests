@@ -17,8 +17,8 @@ locked in [versions.json](versions.json). The server binary is built separately
 from an isolated, clean, full checkout of the exact public Git SHA. Go module
 Path/Version/Sum/Origin metadata verifies the lock, but the module cache's source
 `Dir` is never a build input. Module replacements and floating revisions are
-rejected by the test-module dependency check. The server source snapshot permits
-only the declared `third_party/grpc` and `third_party/golua` replacements,
+rejected by the test-module dependency check. The server source snapshot requires
+exactly the declared `third_party/grpc` and `third_party/golua` replacements,
 verifying their module identities, upstream/patch file manifests and hashes.
 
 ## Preparation and offline tests
@@ -37,11 +37,12 @@ Server preparation fetches only `https://github.com/batchstream/weir.git` at the
 locked full SHA, with isolated Git configuration and no credential helpers.
 `prepare_weir.py --offline` disables Go downloads, not the public Git fetch for
 a new preparation. The binary is written to `.tools/weir` with a small
-`.tools/weir.json` metadata file. A previously prepared binary is reused only
-after its digest, version, CLI identity and native toolchain/target match the
-lock; a mismatched binary, or one without metadata, is preserved and reported
-rather than silently rebuilt. Delete a stale `.tools/` from an older preparation
-before running `make prepare`.
+`.tools/weir.json` metadata file. The build stamps the locked SHA with
+`-X main.revision`, and `weir version` must report exactly product `weir`,
+version `dev`, that revision and the native Go toolchain/target. An existing
+binary is reused only after its digest, version, CLI identity and native
+toolchain/target match the lock; a mismatched binary, or one without metadata,
+is preserved and reported rather than silently rebuilt.
 A checkout, manifest or checksum failure has no module-cache/archive fallback.
 
 Default Go tests, including race tests, launch no databases or Weir processes.

@@ -61,15 +61,12 @@ def native_toolchain(environment, expected=None):
     return version, host_os + '/' + host_arch
 
 
-def validate_identity(identity, toolchain, revision=None):
+def validate_identity(identity, toolchain, revision):
     version, target = toolchain
-    expected = dict(product='weir', go=version, target=target)
-    if revision is None:
-        expected.update(revision='unknown', version='dev', state='dev', dirty='unknown')
-    else:
-        expected.update(revision=revision, version='local-' + revision, state='clean-commit', dirty='false')
-    if any(identity.get(key) != value for key, value in expected.items()):
-        raise ValueError('server identity does not match source, toolchain, target or build state')
+    # A snapshot build has no module version or VCS stamp; the revision comes from -X main.revision.
+    expected = dict(product='weir', version='dev', revision=revision, go=version, target=target)
+    if identity != expected:
+        raise ValueError('server identity does not match source, toolchain or target')
 
 
 def safe_path(name, public_grpc=False):
@@ -228,6 +225,8 @@ def freeze_server_source(source, output, environment):
                 or new['Path'] != './' + NESTED[name] or name not in requirements):
             raise ValueError('unexpected or escaping server module replacement')
         replacements[name] = NESTED[name]
+    if replacements != NESTED:
+        raise ValueError('server go.mod must replace exactly the vendored third_party modules')
     files = {name: read_file(source, name) for name in ('go.mod', 'go.sum')}
     for directory in ('cmd', 'internal', 'pkg', 'api'):
         for name in go_paths(source, Path(directory)):
@@ -235,8 +234,7 @@ def freeze_server_source(source, output, environment):
     for module, relative in replacements.items():
         options = dict(module=module, relative=relative, version=requirements[module])
         files.update(nested_files(source, options, environment))
-    if replacements:
-        files['third_party/README.md'] = read_file(source, 'third_party/README.md')
+    files['third_party/README.md'] = read_file(source, 'third_party/README.md')
     tree = hashlib.sha256()
     manifest = []
     # Read and verify the complete allowlist before creating any snapshot files.

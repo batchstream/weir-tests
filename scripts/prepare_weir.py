@@ -84,7 +84,7 @@ def main():
         subprocess.run(['go', 'mod', 'download'], cwd=snapshot, env=env, check=True, timeout=180)
         subprocess.run(['go', 'mod', 'verify'], cwd=snapshot, env=env, check=True, timeout=180)
         binary = directory / output.name
-        ldflags = '-X main.sourceRevision=' + pins['weir_source']
+        ldflags = '-X main.revision=' + pins['weir_source']
         subprocess.run(['go', 'build', '-trimpath', '-buildvcs=false', '-ldflags', ldflags,
                         '-o', str(binary), './cmd/weir'], cwd=snapshot, env=env, check=True, timeout=600)
         identity = json.loads(subprocess.check_output([str(binary), 'version'], env=env, text=True, timeout=10))
