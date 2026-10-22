@@ -61,9 +61,10 @@ export WEIR_TEST_MONGODB_BINARY="$PWD/.tools/mongod"
 
 The prepared binary is checksum-locked. Each test owns a new replica set, data
 directory and loopback port. Direct and Weir paths use the same database mode.
-Linux preparation uses the locked stock MongoDB 8.0.32 Ubuntu 24.04 archive,
-verifies its exact size/hash and regular binary member size/hash before version
-verification, and fails closed on unsupported platforms or mismatches. The
+`versions.json` locks one stock MongoDB archive per target under
+`mongodb_native`. Preparation verifies the archive's exact size/hash and the
+regular `mongod` member's path, size and hash before version verification, and
+fails closed on unsupported platforms or mismatches. The
 blackbox CI job prepares this native fixture and exports
 `WEIR_TEST_MONGODB_BINARY` for integration and both comparison smokes; Search
 uses its Docker fixture. Without that explicit selection the Mongo fixture is

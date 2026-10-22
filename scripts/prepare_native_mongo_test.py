@@ -18,15 +18,14 @@ class NativeMongoTest(unittest.TestCase):
         self.payload = b'fixture binary content, never executed'
         self.member = 'mongodb-linux-x86_64-ubuntu2404-8.0.32/bin/mongod'
         self.archive = self.make_archive()
-        self.profile = dict(version='8.0.32', url='https://fixture.invalid/mongo.tgz',
+        self.profile = dict(url='https://fixture.invalid/mongo.tgz',
                             sha256=hashlib.sha256(self.archive).hexdigest(), size=len(self.archive),
                             member=self.member, member_size=len(self.payload),
                             member_sha256=hashlib.sha256(self.payload).hexdigest())
-        self.pins = dict(mongodb_version='8.0.32', mongodb_linux_amd64=self.profile,
-                         mongodb_darwin_arm64_url='https://fixture.invalid/darwin-arm64',
-                         mongodb_darwin_arm64_sha256='arm64',
-                         mongodb_darwin_amd64_url='https://fixture.invalid/darwin-amd64',
-                         mongodb_darwin_amd64_sha256='amd64')
+        profiles = {'linux/amd64': self.profile}
+        for arch in ('arm64', 'amd64'):
+            profiles['darwin/' + arch] = dict(self.profile, url='https://fixture.invalid/darwin-' + arch, sha256=arch)
+        self.pins = dict(mongodb_version='8.0.32', mongodb_native=profiles)
         (self.root / 'versions.json').write_text(json.dumps(self.pins))
         for name, value in [('system', 'Linux'), ('machine', 'x86_64'),
                             ('freedesktop_os_release', {'ID': 'ubuntu', 'VERSION_ID': '24.04'})]:
@@ -77,7 +76,7 @@ class NativeMongoTest(unittest.TestCase):
             native.prepare(self.root)
         self.assertEqual(output.read_bytes(), self.payload)
 
-    def test_platform_and_version_fail_closed(self):
+    def test_unsupported_platforms_fail_closed(self):
         for system, machine, release in [('Linux', 'arm64', '24.04'),
                                          ('Linux', 'x86_64', '22.04'),
                                          ('Windows', 'x86_64', '24.04')]:
@@ -88,14 +87,10 @@ class NativeMongoTest(unittest.TestCase):
                                        return_value={'ID': 'ubuntu', 'VERSION_ID': release}):
                     with self.assertRaises(ValueError):
                         native.prepare(self.root)
-        self.profile['version'] = 'other'
-        self.rewrite_pins()
-        with self.assertRaises(ValueError):
-            native.prepare(self.root)
         self.download.assert_not_called()
         self.execute.assert_not_called()
 
-    def test_darwin_profiles_preserved(self):
+    def test_darwin_profiles_are_selected_by_architecture(self):
         with mock.patch.object(native.platform, 'system', return_value='Darwin'):
             for machine, arch in [('arm64', 'arm64'), ('x86_64', 'amd64')]:
                 with mock.patch.object(native.platform, 'machine', return_value=machine):
@@ -149,9 +144,11 @@ class NativeMongoTest(unittest.TestCase):
             self.assertLess(export, workflow.index(step))
         self.assertIn('"$mongod" >> "$GITHUB_ENV"', workflow)
         pins = json.loads((root / 'versions.json').read_text())
-        self.assertEqual(pins['mongodb_linux_amd64']['version'], pins['mongodb_version'])
-        self.assertEqual(pins['mongodb_linux_amd64']['sha256'],
-                         'b411be17c31ef249767ed91974d876e007c91afd5f45e1534057d247eada9f0d')
+        self.assertEqual(sorted(pins['mongodb_native']), ['darwin/amd64', 'darwin/arm64', 'linux/amd64'])
+        for target, profile in pins['mongodb_native'].items():
+            with self.subTest(target=target):
+                self.assertEqual(sorted(profile), sorted(self.profile))
+                self.assertIn(pins['mongodb_version'], profile['url'])
 
 
 if __name__ == '__main__':
