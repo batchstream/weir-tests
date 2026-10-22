@@ -260,6 +260,7 @@ python3 scripts/summarize_performance.py --backend mongo \
 
 The summary recomputes throughput from all successful records and measured time,
 keeps each round's throughput and p95, and requires every compared case to have
+the expected report kind (`single` for the core cases, `bulk` for the bulk cases),
 matching workload parameters and paired round order. Missing core cases mark the
 summary partial; a one-sided bulk case is listed as missing. Server CPU time and
 Go allocation costs use Prometheus counter differences around each timed stage,

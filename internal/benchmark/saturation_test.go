@@ -248,3 +248,15 @@ func TestBulkDurationCountsLogicalOperationsInExpiredBatches(t *testing.T) {
 		t.Fatalf("expired batches must count logical operations: %+v", result)
 	}
 }
+
+func TestSaturationReportKindSelectsSingleRequestResourceNotes(t *testing.T) {
+	note := "Single-request reports also retain bounded Linux host CPU ticks"
+	single := &SaturationReport{Schema: 1, Kind: SaturationKindSingle}
+	if !strings.Contains(single.Markdown(), note) {
+		t.Fatal("single-request report omitted its resource observations")
+	}
+	bulk := &SaturationReport{Schema: 1, Kind: SaturationKindBulk}
+	if strings.Contains(bulk.Markdown(), note) {
+		t.Fatal("bulk report described single-request resource observations")
+	}
+}

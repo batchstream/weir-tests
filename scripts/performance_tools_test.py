@@ -11,7 +11,7 @@ import run_performance_matrix as runner
 import summarize_performance as summary
 
 
-def make_report(schema=4):
+def make_report(kind='single'):
     provenance = dict(weir_binary_sha256='a' * 64)
     commands = dict(find=100, update=0)
     latency = dict(p95_upper_bound_ns=5_000_000)
@@ -22,7 +22,7 @@ def make_report(schema=4):
     pair = dict(concurrency=8, batch_size=1, round=1, order='direct-first', direct=stage, weir=copy.deepcopy(stage))
     dataset = dict(backend='mongo', concurrency=8, namespace='owned', weir_seed='local')
     parameters = dict(dataset=dataset, concurrency_levels=[8], batch_sizes=[1], paired_rounds=1)
-    report = dict(schema=schema, provenance=provenance, parameters=parameters, pairs=[pair])
+    report = dict(schema=1, kind=kind, provenance=provenance, parameters=parameters, pairs=[pair])
     return report
 
 
@@ -112,20 +112,22 @@ class SummaryTests(unittest.TestCase):
             self.assertEqual(result['missing_cases'], expected)
 
     def test_mismatched_schema_parameters_or_round_order_are_rejected(self):
-        for change in ('schema', 'parameters', 'order'):
+        for change in ('schema', 'kind', 'parameters', 'order'):
             with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 before, after = self.write_matrices(root)
                 path = after / 'mixed' / 'mongo.json'
                 report = json.loads(path.read_text())
                 if change == 'schema':
-                    report['schema'] = 3
+                    report['schema'] = 2
+                elif change == 'kind':
+                    report['kind'] = 'bulk'
                 elif change == 'parameters':
                     report['parameters']['dataset']['concurrency'] = 16
                 else:
                     report['pairs'][0]['order'] = 'weir-first'
                 path.write_text(json.dumps(report))
-                with self.assertRaisesRegex(SystemExit, 'mixed: (before/after|report schema)'):
+                with self.assertRaisesRegex(SystemExit, 'mixed: (before/after|report must be schema 1 kind single)'):
                     self.summarize(before, after, root / 'comparison')
 
 

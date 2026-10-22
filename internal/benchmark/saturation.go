@@ -88,10 +88,18 @@ type SaturationComparison struct {
 	Unavailable  string           `json:"unavailable,omitempty"`
 }
 
+// Saturation report kinds distinguish single-record business requests from
+// supplemental client bulk calls.
+const (
+	SaturationKindSingle = "single"
+	SaturationKindBulk   = "bulk"
+)
+
 type SaturationReport struct {
 	BusinessPeaks       *BusinessPeaks         `json:"observed_business_peak_comparison,omitempty"`
 	BusinessComparisons []BusinessComparison   `json:"observed_business_comparisons,omitempty"`
 	Schema              int                    `json:"schema"`
+	Kind                string                 `json:"kind"`
 	Started             string                 `json:"started_utc"`
 	Parameters          SaturationParameters   `json:"parameters"`
 	Provenance          map[string]string      `json:"provenance"`
@@ -120,7 +128,7 @@ func RunSaturation(ctx context.Context, options SaturationOptions) (*SaturationR
 		provenance[key] = value
 	}
 	provenance["go"], provenance["gomaxprocs"], provenance["client_cpu_count"] = runtime.Version(), fmt.Sprint(runtime.GOMAXPROCS(0)), fmt.Sprint(runtime.NumCPU())
-	report := &SaturationReport{Schema: 2, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: parameters, Provenance: provenance, CPUQuota: quota, Method: "duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation"}
+	report := &SaturationReport{Schema: 1, Kind: SaturationKindBulk, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: parameters, Provenance: provenance, CPUQuota: quota, Method: "duration-based ascending concurrency sweep; matched native and same-Store SDK bulk batches; deterministic worker-owned IDs and real revision changes; alternating AB/BA pairs; independent postflight; CPU saturation requires >=5 valid intervals covering >=80% of total measurement time, time-weighted mean CPU>=threshold and CPU>=threshold during >=80% of total measurement time in every round, plus <=10% throughput gain at the next concurrency level; I/O/network byte counters do not prove saturation"}
 	for _, batch := range options.BatchSizes {
 		for level, workers := range options.Concurrency {
 			for round := range options.Rounds {

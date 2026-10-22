@@ -7,7 +7,7 @@ import math
 from pathlib import Path
 
 
-REPORT_SCHEMA = 4
+REPORT_SCHEMA = 1
 
 
 def cpu_cost(stage):

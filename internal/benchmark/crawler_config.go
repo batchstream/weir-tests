@@ -10,7 +10,7 @@ import (
 	"github.com/batchstream/weir-tests/internal/observe"
 )
 
-const crawlerReportSchema = 4
+const crawlerReportSchema = 1
 
 func normalizeCrawlerControls(opts *CrawlerOptions) error {
 	if len(opts.Paths) == 0 {
