@@ -108,7 +108,7 @@ func TestRepeatedWritesChangePayloadAndReadsFollowLatestWrite(t *testing.T) {
 				}
 			}
 			if repeated == 0 || readsAfterWrite == 0 {
-				t.Fatal("regression did not exercise repeated writes and dependent reads")
+				t.Fatal("test did not exercise repeated writes and dependent reads")
 			}
 			for record, revision := range directPlan.Expected {
 				final := Operation{Record: record, Revision: revision}

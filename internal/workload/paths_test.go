@@ -48,7 +48,7 @@ func TestSearchNonemptyRequestsDoNotReplayAfterZeroByteWriteFailure(t *testing.T
 				requests.Add(1)
 				body, err := io.ReadAll(request.Body)
 				if err != nil || len(body) == 0 {
-					t.Error("regression requires a nonempty request body", err)
+					t.Error("test requires a nonempty request body", err)
 				}
 				if request.Method != test.name {
 					t.Error("unexpected method", request.Method)
@@ -166,7 +166,7 @@ func TestSearchReadDoesNotReplayOnReusedConnectionFailure(t *testing.T) {
 		}
 		if call == 2 {
 			if request.RemoteAddr != firstRemote.Load().(string) {
-				t.Error("regression did not exercise a reused connection")
+				t.Error("test did not exercise a reused connection")
 			}
 			connection, _, err := writer.(http.Hijacker).Hijack()
 			if err != nil {

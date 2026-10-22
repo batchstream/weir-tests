@@ -62,7 +62,7 @@ func TestSearchCountersProjectScalarsAndExcludeLargeClientHistory(t *testing.T) 
 	full := `{"nodes":{"owned":{"http":{"current_open":7,"clients":` + history + `},"transport":{"rx_size_in_bytes":20,"tx_size_in_bytes":30},"fs":{"io_stats":{"total":{"read_kilobytes":2,"write_kilobytes":3}}}}}}`
 	limit := 64*(dataset.Config.PayloadBytes+1024) + 64<<10
 	if len(full) <= limit {
-		t.Fatal("regression must reproduce a response exceeding the business workspace")
+		t.Fatal("test must produce a response exceeding the business workspace")
 	}
 	projected := `{"nodes":{"owned":{"http":{"current_open":7},"transport":{"rx_size_in_bytes":20,"tx_size_in_bytes":30},"fs":{"io_stats":{"total":{"read_kilobytes":2,"write_kilobytes":3}}}}}}`
 	allowed := map[string]bool{

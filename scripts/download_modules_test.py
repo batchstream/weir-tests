@@ -1,4 +1,4 @@
-"""Offline regression checks for module preparation and immutable inputs."""
+"""Offline checks for module preparation and immutable inputs."""
 import os
 from pathlib import Path
 import subprocess
