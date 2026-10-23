@@ -78,8 +78,9 @@ make integration
 The opt-in `integration` build tag starts MongoDB, Elasticsearch and two
 independent Weir replicas hosting the same Stores. Tagged tests require a
 prepared `WEIR_TEST_BINARY`. Coverage includes SDK reads through every replica,
-NotFound for an unhosted Store, typed CRUD and Lua transformations, independent persistence checks, same-Store calls
-containing many records, slice preflight and per-record validation, Native MongoDB
+NotFound for an unhosted Store, typed CRUD and Lua transformations, independent
+persistence checks, same-Store calls containing many records sent on one stream,
+slice preflight and per-record validation, Native MongoDB
 find/getMore and Search scroll pagination through alternating replicas,
 backend-native filters and include/exclude projections, Native response metadata,
 cancellation, and a replica stop and restart that the other replica and the
@@ -102,9 +103,10 @@ Weir continuation/checkpoint or projection-token binding contract. Search scroll
 requests use the API common to Elasticsearch and OpenSearch; the fixture uses the
 pinned Elasticsearch version. Separate multi-process tests verify independent
 single-record callers.
-One-RPC reads deliver 64 MiB and 256 MiB across 1024 and 4096 distinct documents while
-checking that queued records stay within the stream window and sampling replica RSS. Interrupted streams retain
-confirmed record outcomes; unconfirmed mutations remain indeterminate.
+One-RPC reads deliver 64 MiB and 256 MiB across 1024 and 4096 distinct documents
+while checking that queued records stay within the stream window and sampling
+replica RSS. Interrupted streams retain confirmed record outcomes; unconfirmed
+mutations remain indeterminate.
 
 Each Execute request carries one record and its consecutive index. The client
 streams records as they are produced; server aggregation stays within the Store.

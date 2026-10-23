@@ -137,7 +137,7 @@ func (s *system) testReplicas(t *testing.T) {
 	}
 	for _, backend := range backends {
 		s.testServerPreflight(t, backend)
-		s.testBatchReplicaRouting(t, backend)
+		s.testBatchSingleStream(t, backend)
 	}
 }
 
@@ -329,7 +329,7 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 	}
 }
 
-func (s *system) testBatchReplicaRouting(t *testing.T, backend *backendData) {
+func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 	t.Helper()
 	before := s.nodeMetrics(t)
 	reads := make([]*weir.ReadRequest, 32)

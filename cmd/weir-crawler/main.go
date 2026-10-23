@@ -55,8 +55,6 @@ func main() {
 	flag.StringVar(&profiles, "profiles", "two-step", "two-step or combined crawler rules, or exclusive partial-update batching mechanism control")
 	flag.StringVar(&modes, "modes", "fixed-rate", "fixed-rate, saturation, or both comma-separated")
 	flag.StringVar(&paths, "paths", "direct,before,after", "unique measured direct/before/after paths in rotating order")
-	flag.BoolVar(&opts.AfterUseDefaults, "after-use-defaults", false, "omit the after path's batching configuration; after controls declare expected effective defaults for audit only")
-	flag.BoolVar(&opts.CaptureEffectiveConfig, "capture-effective-config", false, "retain owned effective configuration and require all four live batching controls")
 	flag.StringVar(&rates, "rates", "4,16,48", "absolute offered product rates; none disables fixed-rate cases")
 	flag.StringVar(&levels, "concurrency-levels", "128", "total goroutine workers across OS clients: <=2048 total, <=512 per process; fixed-rate uses only the largest level")
 	flag.StringVar(&opts.Visibility, "visibility", "query_visible", "query_visible or application_acknowledged (partial-update only); identical native and SDK completion")

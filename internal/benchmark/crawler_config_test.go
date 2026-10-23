@@ -137,35 +137,20 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 	}
 }
 
-func TestCrawlerDefaultPathOmitsControlsAndAuditsAllResolvedGauges(t *testing.T) {
-	opts := CrawlerOptions{AfterUseDefaults: true, CaptureEffectiveConfig: true,
-		AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
+func TestCrawlerAuditRequiresEveryExplicitBatchingControl(t *testing.T) {
+	opts := CrawlerOptions{AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
 		AfterBatchMaxWait: 5 * time.Millisecond, Paths: []string{"direct", "after"}}
 	if err := normalizeCrawlerControls(&opts); err != nil {
 		t.Fatal(err)
 	}
-	configuration := json.RawMessage(`{"stores":[{"name":"search"}]}`)
-	stage := crawlerStage{Path: "after", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait),
-		ServerConfiguration: configuration, ServerEffectiveConfiguration: "resolved owned settings"}
-	if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
-		t.Fatal("omitted defaults were not accepted", err)
-	}
-	labels := map[string]string{"store": "search"}
-	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 16}
-	snapshot := observe.Snapshot{Metrics: []observe.Metric{cap}}
-	stage.ServerBefore, stage.ServerAfter = snapshot, snapshot
-	if err := auditCrawlerLiveControls(stage, opts); err != nil {
-		t.Fatal("declared defaults did not match the resolved gauge", err)
-	}
-	effective := stage.ServerEffectiveConfiguration
-	stage.ServerEffectiveConfiguration = ""
-	if err := auditCrawlerLiveControls(stage, opts); err == nil {
-		t.Fatal("missing effective configuration hid unknown defaults", err)
-	}
-	stage.ServerEffectiveConfiguration = effective
-	stage.ServerConfiguration = crawlerTestConfiguration(t, opts, "after")
+	stage := crawlerStage{Path: "after", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait)}
+	stage.ServerConfiguration = json.RawMessage(`{"stores":[{"name":"search"}]}`)
 	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
-		t.Fatal("an explicit override was presented as an omitted default")
+		t.Fatal("a stage without batching controls was accepted")
+	}
+	stage.ServerConfiguration = crawlerTestConfiguration(t, opts, "after")
+	if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
+		t.Fatal("explicit after controls were rejected", err)
 	}
 	stage.Path, stage.BatchMaxWaitNS = "before", 0
 	stage.ServerConfiguration = json.RawMessage(`{"stores":[{"name":"search","batching":{"max_operations":32,"max_bytes":"8388608B"}}]}`)

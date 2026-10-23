@@ -32,7 +32,6 @@ type CrawlerOptions struct {
 	Profiles                                                      []string
 	Modes                                                         []string
 	Paths                                                         []string
-	AfterUseDefaults, CaptureEffectiveConfig                      bool
 	Processes, PageSize, QueuePages, Rounds                       int
 	AfterMaxInFlight                                              int
 	AfterBatchMaxOperations, AfterBatchMaxBytes, SeedPaddingBytes int
@@ -72,7 +71,6 @@ type crawlerStage struct {
 	BatchMaxWaitNS                                                                    int64
 	ServerSHA256                                                                      string
 	ServerConfiguration                                                               json.RawMessage
-	ServerEffectiveConfiguration                                                      string
 	StartedNS, ElapsedNS, DrainNS                                                     int64
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
 	CompletedProductsPerSecond                                                        float64
@@ -223,9 +221,6 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 					replacement.BatchBytes = opts.AfterBatchMaxBytes
 					replacement.MaxInFlight = opts.AfterMaxInFlight
 					replacement.BatchMaxWait = opts.AfterBatchMaxWait
-					if opts.AfterUseDefaults {
-						replacement.BatchSize, replacement.BatchBytes, replacement.MaxInFlight, replacement.BatchMaxWait = 0, 0, 0, 0
-					}
 				}
 				if err := cluster.ReplaceServer(ctx, replacement); err != nil {
 					return report, err
@@ -420,12 +415,6 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	}
 	if err := auditCrawlerServerConfiguration(stage, config); err != nil {
 		return stage, err
-	}
-	if config.CaptureEffectiveConfig {
-		stage.ServerEffectiveConfiguration, err = opts.Cluster.EffectiveConfiguration(ctx, 0)
-		if err != nil {
-			return stage, err
-		}
 	}
 	reset := crawlerResetOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace, Workers: config.Concurrency[len(config.Concurrency)-1], PageSize: config.PageSize, SeedPaddingBytes: config.SeedPaddingBytes}
 	settle := crawlerSettleOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace}

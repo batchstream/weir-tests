@@ -70,12 +70,6 @@ func auditCrawlerServerConfiguration(stage crawlerStage, opts CrawlerOptions) er
 	if stage.BatchMaxWaitNS != int64(wait) {
 		return errors.New("crawler stage collection wait differs from its declared path")
 	}
-	if stage.Path == "after" && opts.AfterUseDefaults {
-		if len(configuration.Stores[0].Batching) != 0 {
-			return errors.New("crawler default path must omit its entire batching configuration")
-		}
-		return nil
-	}
 	var batch struct {
 		Operations *int    `json:"max_operations"`
 		Bytes      *string `json:"max_bytes"`
@@ -111,9 +105,6 @@ func auditCrawlerLiveControls(stage crawlerStage, opts CrawlerOptions) error {
 		inFlight = float64(opts.AfterMaxInFlight)
 	}
 	expected := map[string]float64{"weir_store_active_executions_limit": inFlight}
-	if opts.CaptureEffectiveConfig && stage.ServerEffectiveConfiguration == "" {
-		return errors.New("crawler effective configuration is missing")
-	}
 	for _, snapshot := range []observe.Snapshot{stage.ServerBefore, stage.ServerAfter} {
 		if snapshot.Error != "" {
 			return errors.New("crawler live batching controls are unavailable")

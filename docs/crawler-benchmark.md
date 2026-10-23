@@ -8,11 +8,11 @@ Each stage runs one of three paths against the same exclusively owned Elasticsea
 
 - `direct`: native Elasticsearch. The default `single` input uses single-document `_update` calls with cached atomic Painless scripts.
 - `before`: Weir from `-before` (default `.tools/weir`) with explicit 32-operation, 8 MiB, no-wait, unlimited in-flight batching.
-- `after`: Weir from `-after` (default `.tools/weir`) with the `-after-batch-max-operations`, `-after-batch-max-bytes`, `-after-batch-max-wait` and `-after-max-in-flight` controls, or with no batching configuration at all when `-after-use-defaults` is set.
+- `after`: Weir from `-after` (default `.tools/weir`) with the `-after-batch-max-operations`, `-after-batch-max-bytes`, `-after-batch-max-wait` and `-after-max-in-flight` controls.
 
 `before` and `after` can differ in binary, batching configuration or both. Use the same binary for both to isolate a configuration change, or the same configuration to compare two server builds. `-paths` selects a unique subset in rotating order. All paths receive identical generated product and seller documents and use identical durable completion and query visibility. Weir receives exactly one mutation per SDK `Mutate` call; batching happens inside the server. An explicit `page` input retains client bulk calls as a separate control. No path uses a client-side read/replace cycle.
 
-The report records each Weir binary path and SHA-256. Every stage retains the owned routes and the server PID, and the auditor checks the declared batching controls against both the routes and the live before/after wait and in-flight gauges. With `-capture-effective-config`, each stage also retains the server's resolved configuration and the auditor checks all four live batching gauges.
+The report records each Weir binary path and SHA-256. Every stage retains the owned routes and the server PID, and the auditor checks the declared batching controls against the routes and the live before/after in-flight gauge.
 
 ## Business data and semantics
 
