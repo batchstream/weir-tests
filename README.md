@@ -17,8 +17,8 @@ locked in [versions.json](versions.json). The server binary is built separately
 from an isolated, clean, full checkout of the exact public Git SHA. Go module
 Path/Version/Sum/Origin metadata verifies the lock, but the module cache's source
 `Dir` is never a build input. Module replacements and floating revisions are
-rejected by the test-module dependency check. The server source snapshot permits
-only the declared `third_party/grpc` and `third_party/golua` replacements,
+rejected by the test-module dependency check. The server source snapshot requires
+exactly the declared `third_party/grpc` and `third_party/golua` replacements,
 verifying their module identities, upstream/patch file manifests and hashes.
 
 ## Preparation and offline tests
@@ -37,11 +37,12 @@ Server preparation fetches only `https://github.com/batchstream/weir.git` at the
 locked full SHA, with isolated Git configuration and no credential helpers.
 `prepare_weir.py --offline` disables Go downloads, not the public Git fetch for
 a new preparation. The binary is written to `.tools/weir` with a small
-`.tools/weir.json` metadata file. A previously prepared binary is reused only
-after its digest, version, CLI identity and native toolchain/target match the
-lock; a mismatched binary, or one without metadata, is preserved and reported
-rather than silently rebuilt. Delete a stale `.tools/` from an older preparation
-before running `make prepare`.
+`.tools/weir.json` metadata file. The build stamps the locked SHA with
+`-X main.revision`, and `weir version` must report exactly product `weir`,
+version `dev`, that revision and the native Go toolchain/target. An existing
+binary is reused only after its digest, version, CLI identity and native
+toolchain/target match the lock; a mismatched binary, or one without metadata,
+is preserved and reported rather than silently rebuilt.
 A checkout, manifest or checksum failure has no module-cache/archive fallback.
 
 Default Go tests, including race tests, launch no databases or Weir processes.
@@ -60,9 +61,10 @@ export WEIR_TEST_MONGODB_BINARY="$PWD/.tools/mongod"
 
 The prepared binary is checksum-locked. Each test owns a new replica set, data
 directory and loopback port. Direct and Weir paths use the same database mode.
-Linux preparation uses the locked stock MongoDB 8.0.32 Ubuntu 24.04 archive,
-verifies its exact size/hash and regular binary member size/hash before version
-verification, and fails closed on unsupported platforms or mismatches. The
+`versions.json` locks one stock MongoDB archive per target under
+`mongodb_native`. Preparation verifies the archive's exact size/hash and the
+regular `mongod` member's path, size and hash before version verification, and
+fails closed on unsupported platforms or mismatches. The
 blackbox CI job prepares this native fixture and exports
 `WEIR_TEST_MONGODB_BINARY` for integration and both comparison smokes; Search
 uses its Docker fixture. Without that explicit selection the Mongo fixture is
@@ -258,6 +260,7 @@ python3 scripts/summarize_performance.py --backend mongo \
 
 The summary recomputes throughput from all successful records and measured time,
 keeps each round's throughput and p95, and requires every compared case to have
+the expected report kind (`single` for the core cases, `bulk` for the bulk cases),
 matching workload parameters and paired round order. Missing core cases mark the
 summary partial; a one-sided bulk case is listed as missing. Server CPU time and
 Go allocation costs use Prometheus counter differences around each timed stage,

@@ -152,7 +152,7 @@ func TestCrawlerExecutionFollowsProductThenSellerPhases(t *testing.T) {
 						t.Fatal("product phase contains a seller", mutation)
 					}
 					if profile == "two-step" && phase == 0 && !mutation.ReconcileOnly {
-						t.Fatal("old profile omitted the separate reconciliation")
+						t.Fatal("two-step profile omitted the separate reconciliation")
 					}
 				}
 			}

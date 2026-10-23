@@ -310,7 +310,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 }
 
 // parseLabVersionPins reads only the lab's required scalar pins. Other lock
-// entries, such as native fixture profiles, can have their own typed schemas.
+// entries, such as native MongoDB profiles, are objects owned by their own tools.
 func parseLabVersionPins(raw []byte) (map[string]string, error) {
 	var entries map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &entries); err != nil {

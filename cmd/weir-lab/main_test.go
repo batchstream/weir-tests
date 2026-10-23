@@ -24,8 +24,8 @@ func TestLabVersionPinsCheckedInLock(t *testing.T) {
 		t.Fatal(err)
 	}
 	var native map[string]json.RawMessage
-	if err := json.Unmarshal(entries["mongodb_linux_amd64"], &native); err != nil || len(native) == 0 {
-		t.Fatalf("regression fixture must include the actual nested Linux pin: %v", err)
+	if err := json.Unmarshal(entries["mongodb_native"], &native); err != nil || len(native) == 0 {
+		t.Fatalf("lock must include native MongoDB profiles alongside the scalar pins: %v", err)
 	}
 	for _, key := range []string{"weir_source", "sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
 		var expected string

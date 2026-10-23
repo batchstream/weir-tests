@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+from server_source_test import ServerFixture
+
 
 spec = importlib.util.spec_from_file_location('prepare_weir', Path(__file__).with_name('prepare_weir.py'))
 prepare = importlib.util.module_from_spec(spec)
@@ -14,7 +16,7 @@ spec.loader.exec_module(prepare)
 
 class SourceTests(unittest.TestCase):
     def setUp(self):
-        self.pins = dict(weir_source='a' * 40, weir_version='v0.1.1-0.20261003014747-aaaaaaaaaaaa', weir_sum='h1:source')
+        self.pins = dict(weir_source='a' * 40, weir_version='v0.2.1-0.20261022105755-aaaaaaaaaaaa', weir_sum='h1:source')
         self.module = dict(Path='github.com/batchstream/weir', Version=self.pins['weir_version'],
                            Sum=self.pins['weir_sum'], Origin=dict(Hash=self.pins['weir_source']))
 
@@ -39,24 +41,21 @@ class PreparationTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.pins = dict(weir_source='a' * 40, weir_version='v0.2.1-0.20261015175329-aaaaaaaaaaaa',
+        self.pins = dict(weir_source='a' * 40, weir_version='v0.2.1-0.20261022105755-aaaaaaaaaaaa',
                          weir_sum='h1:fixed', go='1.27.1')
         (self.root / 'versions.json').write_text(json.dumps(self.pins))
         self.output = self.root / '.tools' / 'weir'
-        self.identity = dict(product='weir', revision=self.pins['weir_source'],
-                             version='local-' + self.pins['weir_source'], state='clean-commit', dirty='false',
+        self.identity = dict(product='weir', version='dev', revision=self.pins['weir_source'],
                              go='go1.27.1', target='darwin/arm64')
-        self.metadata = {'Module': {'Path': 'github.com/batchstream/weir'}, 'Go': '1.27.1'}
+        self.module_path = 'github.com/batchstream/weir'
+        self.server = None
         self.source_directory = None
         self.build_directories = []
 
     def checkout(self, directory, revision, environment):
         self.assertEqual(revision, self.pins['weir_source'])
-        directory.mkdir()
-        (directory / 'go.mod').write_text('module github.com/batchstream/weir\n\ngo 1.27.1\n')
-        (directory / 'go.sum').write_text('fixed sums\n')
-        (directory / 'cmd' / 'weir').mkdir(parents=True)
-        (directory / 'cmd' / 'weir' / 'main.go').write_text('package main\nfunc main() {}\n')
+        self.server = ServerFixture(directory)
+        self.server.metadata['Module']['Path'] = self.module_path
         self.source_directory = directory
 
     def command_output(self, command, **kwargs):
@@ -69,7 +68,8 @@ class PreparationTests(unittest.TestCase):
                           Dir=str(self.root / 'module-cache-must-never-be-used'))
             return json.dumps(module)
         if command == ['go', 'mod', 'edit', '-json']:
-            return json.dumps(self.metadata)
+            metadata = self.server.mod(Path(kwargs['cwd']), kwargs['env'])
+            return json.dumps(metadata)
         if command[-1] == 'version':
             return json.dumps(self.identity)
         self.fail('unexpected subprocess: ' + repr(command))
@@ -85,7 +85,7 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual(kwargs['env']['GOTOOLCHAIN'], 'local')
         self.assertTrue((directory / 'cmd' / 'weir' / 'main.go').is_file())
         if command[:2] == ['go', 'build']:
-            self.assertIn('-X main.sourceRevision=' + self.pins['weir_source'], command)
+            self.assertIn('-X main.revision=' + self.pins['weir_source'], command)
             binary = Path(command[command.index('-o') + 1])
             binary.write_bytes(b'verified binary')
 
@@ -123,7 +123,7 @@ class PreparationTests(unittest.TestCase):
         self.assertFalse(self.output.with_suffix('.json').exists())
 
     def test_wrong_root_module_is_not_built_or_published(self):
-        self.metadata['Module']['Path'] = 'wrong/module'
+        self.module_path = 'wrong/module'
         with self.assertRaisesRegex(ValueError, 'module identity'):
             self.invoke()
         self.assertFalse(self.build_directories)

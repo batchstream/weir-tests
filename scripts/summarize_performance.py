@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 
 
-# weir-lab writes single-request saturation reports as schema 4 and bulk-saturation reports as schema 2.
-REPORT_SCHEMAS = {'read': 4, 'mixed': 4, 'write': 4, 'lua': 4, 'bulk-read': 2, 'bulk-write': 2}
+REPORT_SCHEMA = 1
+# weir-lab saturation writes single-request reports; bulk-saturation writes bulk reports.
+REPORT_KINDS = {'read': 'single', 'mixed': 'single', 'write': 'single', 'lua': 'single',
+                'bulk-read': 'bulk', 'bulk-write': 'bulk'}
 
 
 def summarize_physical_counts(values):
@@ -143,7 +145,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     rows, missing_cases, cases = [], [], []
-    for case, schema in REPORT_SCHEMAS.items():
+    for case, kind in REPORT_KINDS.items():
         before_path = args.before / case / (args.backend + '.json')
         after_path = args.after / case / (args.backend + '.json')
         if not before_path.exists() or not after_path.exists():
@@ -153,8 +155,9 @@ def main():
                 missing_cases.append(missing_case)
             continue
         before, after = json.loads(before_path.read_text()), json.loads(after_path.read_text())
-        if before.get('schema') != schema or after.get('schema') != schema:
-            raise SystemExit(case + ': report schema must be ' + str(schema))
+        for report in (before, after):
+            if report.get('schema') != REPORT_SCHEMA or report.get('kind') != kind:
+                raise SystemExit(case + ': report must be schema ' + str(REPORT_SCHEMA) + ' kind ' + kind)
         if comparison_parameters(before) != comparison_parameters(after):
             raise SystemExit(case + ': before/after benchmark parameters differ')
         if len(before['parameters']['batch_sizes']) != 1:

@@ -18,20 +18,15 @@ MAX_BINARY_BYTES = 512 << 20
 def select_profile(pins):
     arch = {'arm64': 'arm64', 'x86_64': 'amd64'}.get(platform.machine())
     system = platform.system()
-    if system == 'Darwin' and arch is not None:
-        target = 'darwin/' + arch
-        prefix = 'mongodb_darwin_' + arch
-        profile = dict(target=target, version=pins['mongodb_version'],
-                       url=pins[prefix + '_url'], sha256=pins[prefix + '_sha256'])
-        return profile
+    supported = system == 'Darwin' and arch is not None
     if system == 'Linux' and arch == 'amd64':
         release = platform.freedesktop_os_release()
-        if release.get('ID') == 'ubuntu' and release.get('VERSION_ID') == '24.04':
-            profile = dict(pins['mongodb_linux_amd64'], target='linux/amd64')
-            if profile['version'] != pins['mongodb_version']:
-                raise ValueError('native Linux fixture version differs from MongoDB lock')
-            return profile
-    raise ValueError('native preparation supports macOS arm64/amd64 or Ubuntu 24.04 amd64 only')
+        supported = release.get('ID') == 'ubuntu' and release.get('VERSION_ID') == '24.04'
+    if not supported:
+        raise ValueError('native preparation supports macOS arm64/amd64 or Ubuntu 24.04 amd64 only')
+    target = system.lower() + '/' + arch
+    profile = dict(pins['mongodb_native'][target], target=target, version=pins['mongodb_version'])
+    return profile
 
 
 def copy_bounded(source, destination, limit):
@@ -53,7 +48,7 @@ def digest(path):
 
 def verify_archive(path, profile):
     size = path.stat().st_size
-    if size > MAX_ARCHIVE_BYTES or ('size' in profile and size != profile['size']):
+    if size > MAX_ARCHIVE_BYTES or size != profile['size']:
         raise ValueError('native MongoDB archive size differs from lock')
     if digest(path) != profile['sha256']:
         raise ValueError('native MongoDB archive checksum mismatch')
@@ -67,13 +62,11 @@ def extract_binary(archive, binary, profile):
             total += member.size
             if index >= 10000 or total > 1 << 30:
                 raise ValueError('native MongoDB archive exceeds member bounds')
-            matches = (member.name == profile['member'] if 'member' in profile
-                       else member.name.endswith('/bin/mongod'))
-            if not matches:
+            if member.name != profile['member']:
                 continue
             if selected is not None or not member.isfile() or member.size > MAX_BINARY_BYTES:
                 raise ValueError('archive must contain exactly one bounded regular mongod binary')
-            if 'member_size' in profile and member.size != profile['member_size']:
+            if member.size != profile['member_size']:
                 raise ValueError('native MongoDB binary size differs from lock')
             selected = member
         if selected is None:
@@ -83,7 +76,7 @@ def extract_binary(archive, binary, profile):
             count = copy_bounded(source, destination, selected.size)
         if count != selected.size:
             raise ValueError('native MongoDB binary is truncated')
-    if 'member_sha256' in profile and digest(binary) != profile['member_sha256']:
+    if digest(binary) != profile['member_sha256']:
         raise ValueError('native MongoDB binary checksum mismatch')
 
 
@@ -102,7 +95,7 @@ def prepare(root):
                 metadata['version'] != profile['version'] or
                 metadata['target'] != profile['target'] or
                 metadata['source'] != profile['url'] or
-                ('member_sha256' in profile and binary_hash != profile['member_sha256'])):
+                binary_hash != profile['member_sha256']):
             raise ValueError('existing native fixture does not match its lock/metadata; preserving it')
         return output
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -112,7 +105,7 @@ def prepare(root):
         if not archive.exists():
             download = directory / 'mongo.tgz'
             with urllib.request.urlopen(profile['url'], timeout=60) as response, download.open('wb') as file:
-                copy_bounded(response, file, profile.get('size', MAX_ARCHIVE_BYTES))
+                copy_bounded(response, file, profile['size'])
             verify_archive(download, profile)
             shutil.copyfile(download, archive)
         verify_archive(archive, profile)
