@@ -17,9 +17,7 @@ locked in [versions.json](versions.json). The server binary is built separately
 from an isolated, clean, full checkout of the exact public Git SHA. Go module
 Path/Version/Sum/Origin metadata verifies the lock, but the module cache's source
 `Dir` is never a build input. Module replacements and floating revisions are
-rejected by the test-module dependency check. The server source snapshot requires
-exactly the declared `third_party/grpc` and `third_party/golua` replacements,
-verifying their module identities, upstream/patch file manifests and hashes.
+rejected by the test-module dependency check and by the server source snapshot.
 
 ## Preparation and offline tests
 

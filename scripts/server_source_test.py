@@ -1,5 +1,4 @@
 import importlib.util
-import json
 import os
 from pathlib import Path
 import subprocess
@@ -22,50 +21,17 @@ class ServerFixture:
         (root / 'go.sum').write_text('fixed dependency sums\n')
         (root / 'cmd' / 'weir').mkdir(parents=True)
         (root / 'cmd' / 'weir' / 'main.go').write_text('package main\nfunc main() {}\n')
+        (root / 'internal' / 'server').mkdir(parents=True)
+        (root / 'internal' / 'server' / 'server.go').write_text('package server\n')
         self.metadata = {'Module': {'Path': source.SERVER_MODULE}, 'Go': '1.27.1', 'Require': [], 'Replace': []}
-        self.nested = {}
-        for module, relative in source.NESTED.items():
-            directory = root / relative
-            directory.mkdir(parents=True)
-            files = {'go.mod': 'module ' + module + '\n', 'LICENSE': 'public license\n',
-                     'go.sum': 'nested sums\n', 'library.go': 'package library\n'}
-            if module == 'google.golang.org/grpc':
-                files['credentials/alts/auth.go'] = 'package alts\n'
-            hashes = {}
-            for name, data in files.items():
-                (directory / name).parent.mkdir(parents=True, exist_ok=True)
-                (directory / name).write_text(data)
-                hashes[name] = source.digest(data.encode())
-            new = []
-            for name in ('WEIR_PATCH.diff', 'WEIR_PATCH.md'):
-                data = 'patch metadata\n'
-                (directory / name).write_text(data)
-                entry = dict(path=name, sha256=source.digest(data.encode()))
-                new.append(entry)
-            test_entry = dict(path='library_test.go', sha256='b' * 64)
-            new.append(test_entry)
-            manifest = dict(module=module, version='v1.0.0', files=hashes, newFiles=new, patchedFiles=[])
-            (directory / 'WEIR_UPSTREAM.json').write_text(json.dumps(manifest))
-            requirement = dict(Path=module, Version='v1.0.0')
-            replacement = {'Old': {'Path': module}, 'New': {'Path': './' + relative}}
-            self.metadata['Require'].append(requirement)
-            self.metadata['Replace'].append(replacement)
-            self.nested[directory] = {'Module': {'Path': module}}
-        (root / 'third_party' / 'README.md').write_text('bounded source patches\n')
 
     def mod(self, directory, environment):
-        return self.nested.get(directory, self.metadata)
+        return self.metadata
 
     def freeze(self, output):
         environment = {}
         with mock.patch.object(source, 'module_metadata', side_effect=self.mod):
             return source.freeze_server_source(self.root, output, environment)
-
-    def change_manifest(self, change):
-        path = self.root / 'third_party' / 'grpc' / 'WEIR_UPSTREAM.json'
-        manifest = json.loads(path.read_text())
-        change(manifest)
-        path.write_text(json.dumps(manifest))
 
 
 class ServerSnapshotTests(unittest.TestCase):
@@ -79,60 +45,30 @@ class ServerSnapshotTests(unittest.TestCase):
 
     def test_complete_server_profile_is_hashed_and_bounded(self):
         (self.fixture.root / 'cmd' / 'weir' / 'main_test.go').write_text('not production\n')
-        (self.fixture.root / 'third_party' / 'unrelated').mkdir()
+        (self.fixture.root / 'third_party' / 'unrelated').mkdir(parents=True)
         (self.fixture.root / 'third_party' / 'unrelated' / 'unused.go').write_text('not allowed\n')
+        (self.fixture.root / 'internal' / 'credentials').mkdir()
+        (self.fixture.root / 'internal' / 'credentials' / 'token.go').write_text('not source\n')
         tree, manifest = self.fixture.freeze(self.output)
-        paths = {item['path'] for item in manifest}
-        for relative in source.NESTED.values():
-            for name in ('library.go', 'go.mod', 'go.sum', 'LICENSE', 'WEIR_UPSTREAM.json',
-                         'WEIR_PATCH.diff', 'WEIR_PATCH.md'):
-                self.assertIn(relative + '/' + name, paths)
-        self.assertIn('third_party/grpc/credentials/alts/auth.go', paths)
-        self.assertEqual((self.output / 'third_party/grpc/credentials/alts/auth.go').read_text(), 'package alts\n')
-        self.assertNotIn('cmd/weir/main_test.go', paths)
-        self.assertFalse(any('unrelated' in name or name.endswith('_test.go') for name in paths))
+        paths = [item['path'] for item in manifest]
+        self.assertEqual(paths, ['cmd/weir/main.go', 'go.mod', 'go.sum', 'internal/server/server.go'])
         source.verify_snapshot(self.output, manifest, tree)
         (self.output / 'cmd' / 'weir' / 'main.go').write_text('changed\n')
         with self.assertRaisesRegex(ValueError, 'hash mismatch'):
             source.verify_snapshot(self.output, manifest, tree)
 
-    def test_missing_nested_replacement_is_rejected(self):
-        for index in range(len(self.fixture.metadata['Replace'])):
-            with self.subTest(index=index):
-                replacements = list(self.fixture.metadata['Replace'])
-                del self.fixture.metadata['Replace'][index]
-                with self.assertRaisesRegex(ValueError, 'third_party'):
+    def test_module_replacements_are_rejected(self):
+        variants = [
+            {'Old': {'Path': 'google.golang.org/grpc'}, 'New': {'Path': './third_party/grpc'}},
+            {'Old': {'Path': 'unexpected/module'}, 'New': {'Path': '../outside'}},
+            {'Old': {'Path': 'google.golang.org/grpc'}, 'New': {'Path': 'example.com/grpc', 'Version': 'v1.0.0'}},
+        ]
+        for variant in variants:
+            with self.subTest(variant=variant):
+                self.fixture.metadata['Replace'] = [variant]
+                with self.assertRaisesRegex(ValueError, 'must not replace'):
                     self.fixture.freeze(self.output)
                 self.assertFalse(self.output.exists())
-                self.fixture.metadata['Replace'] = replacements
-
-    def test_missing_nested_module_and_metadata_fail_before_snapshot(self):
-        for name in ('go.mod', 'go.sum', 'library.go', 'WEIR_UPSTREAM.json', 'WEIR_PATCH.diff', 'LICENSE'):
-            with self.subTest(name=name):
-                path = self.fixture.root / 'third_party' / 'grpc' / name
-                data = path.read_bytes()
-                path.unlink()
-                with self.assertRaises((ValueError, FileNotFoundError)):
-                    self.fixture.freeze(self.output)
-                self.assertFalse(self.output.exists())
-                path.write_bytes(data)
-
-    def test_manifest_hash_and_nested_identity_mismatch_are_rejected(self):
-        directory = self.fixture.root / 'third_party' / 'grpc'
-        path = directory / 'library.go'
-        path.write_text('changed production source\n')
-        with self.assertRaisesRegex(ValueError, 'hash mismatch'):
-            self.fixture.freeze(self.output)
-        path.write_text('package library\n')
-        self.fixture.nested[directory]['Module']['Path'] = 'wrong/module'
-        with self.assertRaisesRegex(ValueError, 'identity'):
-            self.fixture.freeze(self.output)
-
-    def test_missing_or_extra_production_source_is_rejected(self):
-        path = self.fixture.root / 'third_party' / 'grpc' / 'unexpected.go'
-        path.write_text('package library\n')
-        with self.assertRaisesRegex(ValueError, 'differs from manifest'):
-            self.fixture.freeze(self.output)
 
     def test_root_module_and_unexpected_nested_module_are_rejected(self):
         self.fixture.metadata['Module']['Path'] = 'wrong/module'
@@ -143,90 +79,16 @@ class ServerSnapshotTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'unexpected nested module'):
             self.fixture.freeze(self.output)
 
-    def test_replacements_are_exact_and_cannot_escape(self):
-        original = self.fixture.metadata['Replace'][0]
-        variants = [
-            {'Old': {'Path': 'unexpected/module'}, 'New': {'Path': '../outside'}},
-            {'Old': {'Path': 'google.golang.org/grpc'}, 'New': {'Path': '../grpc'}},
-            {'Old': {'Path': 'google.golang.org/grpc', 'Version': 'v1.0.0'},
-             'New': {'Path': './third_party/grpc'}},
-            {'Old': {'Path': 'google.golang.org/grpc'},
-             'New': {'Path': './third_party/grpc', 'Version': 'v2.0.0'}},
-        ]
-        for variant in variants:
-            with self.subTest(variant=variant):
-                self.fixture.metadata['Replace'][0] = variant
-                with self.assertRaisesRegex(ValueError, 'replacement'):
-                    self.fixture.freeze(self.output)
-        self.fixture.metadata['Replace'][0] = original
-        directory = self.fixture.root / 'third_party' / 'grpc'
-        replacement = {'Old': {'Path': 'x'}, 'New': {'Path': '../escape'}}
-        self.fixture.nested[directory]['Replace'] = [replacement]
-        with self.assertRaisesRegex(ValueError, 'replacement'):
-            self.fixture.freeze(self.output)
-
-    def test_manifest_identity_path_and_hash_fail_closed(self):
-        path = self.fixture.root / 'third_party' / 'grpc' / 'WEIR_UPSTREAM.json'
-        original = path.read_text()
-        variants = [
-            {'module': 'wrong/module'}, {'version': 'v9.0.0'},
-            {'files': {'../escape.go': 'a' * 64}}, {'files': {'/outside.go': 'a' * 64}},
-            {'files': {'credentials/input.go': 'a' * 64}}, {'files': {'library.go': 'invalid'}},
-            {'newFiles': [{'path': 'injected.pem', 'sha256': 'a' * 64}]},
-            {'newFiles': [{'path': 'library.go', 'sha256': 'a' * 64}]},
-        ]
-        for variant in variants:
-            with self.subTest(variant=variant):
-                self.fixture.change_manifest(lambda manifest: manifest.update(variant))
-                with self.assertRaises(ValueError):
-                    self.fixture.freeze(self.output)
-                self.assertFalse(self.output.exists())
-                path.write_text(original)
-
     def test_symlinks_are_rejected_not_silently_omitted(self):
-        path = self.fixture.root / 'third_party' / 'grpc' / 'library.go'
+        path = self.fixture.root / 'internal' / 'server' / 'server.go'
         path.unlink()
         path.symlink_to(self.fixture.root / 'cmd' / 'weir' / 'main.go')
         with self.assertRaisesRegex(ValueError, 'symlink'):
             self.fixture.freeze(self.output)
         path.unlink()
-        path.write_text('package library\n')
-        (self.fixture.root / 'internal').symlink_to(self.fixture.root / 'cmd', target_is_directory=True)
+        path.write_text('package server\n')
+        (self.fixture.root / 'pkg').symlink_to(self.fixture.root / 'cmd', target_is_directory=True)
         with self.assertRaisesRegex(ValueError, 'symlink'):
-            self.fixture.freeze(self.output)
-
-    def test_public_grpc_credentials_cannot_read_secret_files_or_unmanifested_go(self):
-        manifest_path = self.fixture.root / 'third_party/grpc/WEIR_UPSTREAM.json'
-        original = manifest_path.read_text()
-        secret_paths = ('credentials', 'credentials/token.pem', 'credentials/token.key',
-                        'credentials/.env', 'credentials/.env.local', 'credentials/credentials')
-        for name in secret_paths:
-            with self.subTest(name=name):
-                entry = dict(path=name, sha256='a' * 64)
-                self.fixture.change_manifest(lambda manifest: manifest['newFiles'].append(entry))
-                with mock.patch.object(source, 'read_file', wraps=source.read_file) as reader:
-                    with self.assertRaises(ValueError):
-                        self.fixture.freeze(self.output)
-                requested = 'third_party/grpc/' + name
-                self.assertFalse(any(call.args[1] == requested for call in reader.call_args_list))
-                self.assertFalse(self.output.exists())
-                manifest_path.write_text(original)
-        extra = self.fixture.root / 'third_party/grpc/credentials/alts/unmanifested.go'
-        extra.write_text('package alts\n')
-        with mock.patch.object(source, 'read_file', wraps=source.read_file) as reader:
-            with self.assertRaisesRegex(ValueError, 'differs from manifest'):
-                self.fixture.freeze(self.output)
-        self.assertFalse(any(call.args[1].endswith('/unmanifested.go') for call in reader.call_args_list))
-        self.assertFalse(self.output.exists())
-
-    def test_credentials_package_exception_does_not_apply_to_golua(self):
-        directory = self.fixture.root / 'third_party/golua'
-        path = directory / 'WEIR_UPSTREAM.json'
-        manifest = json.loads(path.read_text())
-        entry = dict(path='credentials/input.go', sha256='a' * 64)
-        manifest['newFiles'].append(entry)
-        path.write_text(json.dumps(manifest))
-        with self.assertRaisesRegex(ValueError, 'unsafe server source path'):
             self.fixture.freeze(self.output)
 
     def test_snapshot_rejects_manifest_corruption_extra_files_and_escaping_links(self):
