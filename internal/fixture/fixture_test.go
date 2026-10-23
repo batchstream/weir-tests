@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -32,8 +33,8 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: filepath.Join(t.TempDir(), "missing")},
 		{WeirBinary: binary, Backends: []string{"mongo", "mongo"}},
 		{WeirBinary: binary, Backends: []string{"redis"}},
-		{WeirBinary: binary, OwnerCount: -1},
-		{WeirBinary: binary, OwnerCount: 9},
+		{WeirBinary: binary, Replicas: -1},
+		{WeirBinary: binary, Replicas: 9},
 		{WeirBinary: binary, BatchMaxWait: time.Millisecond},
 		{WeirBinary: binary, BatchMaxWait: -time.Nanosecond},
 		{WeirBinary: binary, BatchMaxWait: time.Second + time.Nanosecond},
@@ -60,7 +61,7 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	backends[0] = "search"
-	if validated.Backends[0] != "mongo" || validated.OwnerCount != 1 || validated.BatchSize != 0 || validated.PendingRecords != 0 || validated.ExchangeBytes != 0 {
+	if validated.Backends[0] != "mongo" || validated.Replicas != 1 || validated.BatchSize != 0 || validated.PendingRecords != 0 || validated.ExchangeBytes != 0 {
 		t.Fatalf("invalid defaults or retained caller slice: %+v", validated)
 	}
 	large := Options{WeirBinary: binary, BatchSize: 513}
@@ -150,15 +151,13 @@ func TestPublishedPortMustBeOneLoopbackBinding(t *testing.T) {
 	}
 }
 
-func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
-	options := Options{Backends: []string{"mongo", "search"}, OwnerCount: 2, DiscoveryOnly: true, BatchSize: 16, PendingRecords: 128, ExchangeBytes: 8 << 20}
+func TestEveryReplicaHostsTheSameStoresOnItsOwnListener(t *testing.T) {
+	options := Options{Backends: []string{"mongo", "search"}, Replicas: 2, BatchSize: 16, PendingRecords: 128, ExchangeBytes: 8 << 20}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true", SearchURL: "http://127.0.0.1:50002"}
 	c.Nodes = []Node{
-		{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true},
-		{Application: "127.0.0.1:50200", Peer: "127.0.0.1:50201", Diagnostics: "127.0.0.1:50202", Owner: true},
-		{Application: "127.0.0.1:50300", Peer: "127.0.0.1:50301", Diagnostics: "127.0.0.1:50302"},
+		{Application: "127.0.0.1:50100", Diagnostics: "127.0.0.1:50102"},
+		{Application: "127.0.0.1:50200", Diagnostics: "127.0.0.1:50202"},
 	}
-	var groups []string
 	for i, node := range c.Nodes {
 		if err := c.writeConfiguration(i); err != nil {
 			t.Fatal(err)
@@ -167,20 +166,14 @@ func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		var configuration struct {
-			Discovery struct {
-				Group     string
-				Seeds     []string
-				Advertise []string
-			}
-		}
+		var configuration map[string]map[string]any
 		if err := json.Unmarshal(data, &configuration); err != nil {
 			t.Fatal(err)
 		}
-		if len(configuration.Discovery.Advertise) != 1 || configuration.Discovery.Advertise[0] != node.Application || len(configuration.Discovery.Seeds) != 2 {
-			t.Fatalf("node published other owners' endpoints or omitted seeds: %s", data)
+		listeners := map[string]any{"application": node.Application}
+		if len(configuration) != 3 || !reflect.DeepEqual(configuration["listeners"], listeners) || configuration["diagnostics"]["address"] != node.Diagnostics || configuration["transport"]["max_pending_records"] != float64(128) {
+			t.Fatalf("node configuration differs from its own listeners and transport policy: %s", data)
 		}
-		groups = append(groups, configuration.Discovery.Group)
 		routes, err := os.ReadFile(c.nodeFile(i, "routes.json"))
 		if err != nil {
 			t.Fatal(err)
@@ -199,22 +192,22 @@ func TestConfigurationSharesStoresWithoutRetainingDeadEndpoints(t *testing.T) {
 		if err := json.Unmarshal(routes, &routing); err != nil {
 			t.Fatal(err)
 		}
-		if node.Owner && len(routing.Stores) != 2 || !node.Owner && len(routing.Stores) != 0 {
-			t.Fatal("wrong Store ownership", string(routes))
+		if len(routing.Stores) != 2 {
+			t.Fatal("replica does not host every Store", string(routes))
 		}
 		for position, store := range routing.Stores {
 			if store.Name != options.Backends[position] || store.Batching.MaxOperations != 16 || store.Backend.MaxExchangeBytes != "8388608B" {
-				t.Fatal("owner backend did not receive the current batching/exchange overrides", string(routes))
+				t.Fatal("replica backend did not receive the current batching/exchange overrides", string(routes))
 			}
 		}
 	}
-	if groups[0] != groups[1] || groups[0] == groups[2] || c.Seed() != c.Nodes[2].Application {
-		t.Fatal("incorrect replica groups or discovery seed")
+	if c.Address() != c.Nodes[0].Application {
+		t.Fatal("cluster address is not the first replica")
 	}
 	first, _ := os.ReadFile(c.nodeFile(0, "routes.json"))
 	second, _ := os.ReadFile(c.nodeFile(1, "routes.json"))
 	if !bytes.Equal(first, second) {
-		t.Fatal("owners have different Store definitions")
+		t.Fatal("replicas have different Store definitions")
 	}
 }
 
@@ -295,8 +288,8 @@ func TestBoundedCommandCapture(t *testing.T) {
 
 func TestRestartReadinessDoesNotAcceptPreviousProcessAnnouncements(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "process.log")
-	node := Node{Application: "127.0.0.1:50001", Peer: "127.0.0.1:50002", Diagnostics: "127.0.0.1:50003"}
-	banner := "Weir listening on [127.0.0.1:50001 127.0.0.1:50002]; local execution and peer directory discovery\nDiagnostics listening on 127.0.0.1:50003\n"
+	node := Node{Application: "127.0.0.1:50001", Diagnostics: "127.0.0.1:50003"}
+	banner := "Weir listening on 127.0.0.1:50001\nDiagnostics listening on 127.0.0.1:50003\n"
 	if err := os.WriteFile(path, []byte(banner), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -382,21 +375,21 @@ func TestStoppedProcessFailureIsPreservedInCloseAndCleanupRecord(t *testing.T) {
 	}
 }
 
-func TestSingleOwnerConfigurationUsesAnEmptySeedList(t *testing.T) {
-	input := Options{WeirBinary: executableFile(t), Backends: []string{"mongo"}, OwnerCount: 1}
+func TestOrdinaryConfigurationLeavesServerDefaultsUnchanged(t *testing.T) {
+	input := Options{WeirBinary: executableFile(t), Backends: []string{"mongo"}, Replicas: 1}
 	options, err := validateOptions(input)
 	if err != nil {
 		t.Fatal(err)
 	}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true"}
-	node := Node{Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102", Owner: true}
+	node := Node{Application: "127.0.0.1:50100", Diagnostics: "127.0.0.1:50102"}
 	c.Nodes = []Node{node}
 	if err := c.writeConfiguration(0); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(c.nodeFile(0, "config.json"))
-	if err != nil || bytes.Contains(data, []byte(`"seeds": null`)) || !bytes.Contains(data, []byte(`"seeds": []`)) {
-		t.Fatal("single-owner config emits unsupported null seeds", string(data), err)
+	if err != nil || bytes.Contains(data, []byte(`"max_pending_records"`)) {
+		t.Fatal("ordinary fixture must leave transport defaults unchanged", string(data), err)
 	}
 	routes, err := os.ReadFile(c.nodeFile(0, "routes.json"))
 	if err != nil || bytes.Contains(routes, []byte(`"batching"`)) || bytes.Contains(routes, []byte(`"max_exchange_bytes"`)) {
@@ -592,7 +585,7 @@ func TestConfigurationExposesBatchCollectionWaitWithoutChangingDefaults(t *testi
 	for _, wait := range []time.Duration{0, 20 * time.Millisecond} {
 		opts := Options{Backends: []string{"search"}, BatchSize: 64, BatchBytes: 65536, MaxInFlight: 4, BatchMaxWait: wait}
 		cluster := &Cluster{Directory: t.TempDir(), options: opts, SearchURL: "http://127.0.0.1:50002", owner: "test"}
-		node := Node{Owner: true, Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102"}
+		node := Node{Application: "127.0.0.1:50100", Diagnostics: "127.0.0.1:50102"}
 		cluster.Nodes = []Node{node}
 		if err := cluster.writeConfiguration(0); err != nil {
 			t.Fatal(err)
@@ -624,7 +617,7 @@ func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t 
 	for _, operations := range []int{0, 32} {
 		opts := Options{Backends: []string{"search"}, BatchSize: operations}
 		cluster := &Cluster{Directory: t.TempDir(), options: opts, SearchURL: "http://127.0.0.1:50002", owner: "test"}
-		node := Node{Owner: true, Application: "127.0.0.1:50100", Peer: "127.0.0.1:50101", Diagnostics: "127.0.0.1:50102"}
+		node := Node{Application: "127.0.0.1:50100", Diagnostics: "127.0.0.1:50102"}
 		cluster.Nodes = []Node{node}
 		if err := cluster.writeConfiguration(0); err != nil {
 			t.Fatal(err)

@@ -225,7 +225,7 @@ func TestOpenPreservesOwnedCleanupFailureAfterSDKInitializationFails(t *testing.
 	}))
 	defer server.Close()
 	dataset.Config.SearchURL = server.URL
-	dataset.Config.WeirSeed = "invalid-initialization-address"
+	dataset.Config.WeirAddress = "invalid-initialization-address"
 	paths, err := Open(context.Background(), dataset)
 	if paths != nil || err == nil || !strings.Contains(err.Error(), "initialize Weir") || !strings.Contains(err.Error(), "owned Search index cleanup failed") || deletes.Load() != 1 {
 		t.Fatal("initialization hid cleanup failure", paths, err, deletes.Load())

@@ -16,7 +16,7 @@ func testNativeWriteChangeEvidence(t *testing.T, ctx context.Context, cluster *f
 	if err != nil {
 		t.Fatal(err)
 	}
-	config := workload.Config{Backend: "mongo", MongoURI: cluster.MongoURI, WeirSeed: cluster.Seed(), StoreName: "mongo", Namespace: namespace, Records: 64, PayloadBytes: 64, Concurrency: 2}
+	config := workload.Config{Backend: "mongo", MongoURI: cluster.MongoURI, WeirAddress: cluster.Address(), StoreName: "mongo", Namespace: namespace, Records: 64, PayloadBytes: 64, Concurrency: 2}
 	dataset, err := workload.New(config)
 	if err != nil {
 		t.Fatal(err)

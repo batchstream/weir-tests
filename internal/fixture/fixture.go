@@ -21,10 +21,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	pb "github.com/batchstream/weir-protocol/api/weir/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const ownerLabel = "io.batchstream.weir-tests.owner"
@@ -32,10 +28,10 @@ const ownerLabel = "io.batchstream.weir-tests.owner"
 type Options struct {
 	WeirBinary string
 	// MongoBinary explicitly selects a native pinned mongod; empty uses Docker.
-	MongoBinary         string
-	Backends            []string
-	OwnerCount          int
-	DiscoveryOnly       bool
+	MongoBinary string
+	Backends    []string
+	// Replicas is the number of independent Weir processes hosting every Store.
+	Replicas            int
 	BatchSize           int
 	BatchBytes          int
 	BatchMaxWait        time.Duration
@@ -49,9 +45,7 @@ type Options struct {
 type Node struct {
 	ProcessID   int
 	Application string
-	Peer        string
 	Diagnostics string
-	Owner       bool
 }
 
 type Cluster struct {
@@ -78,8 +72,8 @@ type process struct {
 }
 
 // Start creates new resources; it never adopts an existing container or process.
-// All owners share the same logical Stores and backend, but each advertises
-// only its own endpoint.
+// Every replica hosts the same Stores against the same backends and serves
+// them on its own application address.
 func Start(ctx context.Context, options Options) (*Cluster, error) {
 	ctx, cancel := context.WithTimeout(ctx, 8*time.Minute)
 	defer cancel()
@@ -157,11 +151,11 @@ func validateOptions(options Options) (Options, error) {
 		}
 		seen[backend] = true
 	}
-	if options.OwnerCount == 0 {
-		options.OwnerCount = 1
+	if options.Replicas == 0 {
+		options.Replicas = 1
 	}
-	if options.OwnerCount < 1 || options.OwnerCount > 8 {
-		return options, errors.New("OwnerCount must be between 1 and 8")
+	if options.Replicas < 1 || options.Replicas > 8 {
+		return options, errors.New("Replicas must be between 1 and 8")
 	}
 	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.BatchBytes < 0 || options.BatchBytes > 32<<20 || options.BatchBytes > 0 && options.BatchSize == 0 || options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.MaxInFlight > 0 && options.BatchSize == 0 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
 		return options, errors.New("invalid batching, transport or exchange limit")
@@ -195,19 +189,15 @@ func (c *Cluster) start(ctx context.Context) error {
 			return err
 		}
 	}
-	count := c.options.OwnerCount
-	if c.options.DiscoveryOnly {
-		count++
-	}
 	var reservations []net.Listener
 	defer func() {
 		for _, listener := range reservations {
 			_ = listener.Close()
 		}
 	}()
-	for i := range count {
+	for range c.options.Replicas {
 		var addresses []string
-		for range 3 {
+		for range 2 {
 			listener, err := net.Listen("tcp4", "127.0.0.1:0")
 			if err != nil {
 				return err
@@ -215,7 +205,7 @@ func (c *Cluster) start(ctx context.Context) error {
 			reservations = append(reservations, listener)
 			addresses = append(addresses, listener.Addr().String())
 		}
-		node := Node{Application: addresses[0], Peer: addresses[1], Diagnostics: addresses[2], Owner: i < c.options.OwnerCount}
+		node := Node{Application: addresses[0], Diagnostics: addresses[1]}
 		c.Nodes = append(c.Nodes, node)
 		c.processes = append(c.processes, nil)
 	}
@@ -223,70 +213,55 @@ func (c *Cluster) start(ctx context.Context) error {
 		if err := c.writeConfiguration(i); err != nil {
 			return err
 		}
-		for _, listener := range reservations[i*3 : i*3+3] {
+		for _, listener := range reservations[i*2 : i*2+2] {
 			_ = listener.Close()
 		}
 		if err := c.startNode(ctx, i); err != nil {
 			return err
 		}
 	}
-	if err := c.waitDiscovery(ctx); err != nil {
-		return err
-	}
 	return c.writeManifest()
 }
 
 func (c *Cluster) writeConfiguration(index int) error {
 	node := c.Nodes[index]
-	seeds := make([]string, 0, len(c.Nodes)-1)
-	for i, peer := range c.Nodes {
-		if i != index {
-			seeds = append(seeds, peer.Peer)
-		}
-	}
-	listeners := map[string]any{"application": node.Application, "peer": node.Peer}
+	listeners := map[string]any{"application": node.Application}
 	diagnostics := map[string]any{"address": node.Diagnostics}
-	discovery := map[string]any{"group": "owners-" + c.owner, "peer_address": node.Peer, "seeds": seeds, "advertise": []string{node.Application}}
-	if !node.Owner {
-		discovery["group"] = "directory-" + c.owner
-	}
 	transport := map[string]any{}
 	if c.options.PendingRecords > 0 {
 		transport["max_pending_records"] = c.options.PendingRecords
 	}
-	basic := map[string]any{"listeners": listeners, "diagnostics": diagnostics, "discovery": discovery, "transport": transport}
+	basic := map[string]any{"listeners": listeners, "diagnostics": diagnostics, "transport": transport}
 	if err := writeJSON(c.nodeFile(index, "config.json"), basic); err != nil {
 		return err
 	}
 	stores := make([]map[string]any, 0, len(c.options.Backends))
-	if node.Owner {
-		for _, backend := range c.options.Backends {
-			adapter := map[string]any{}
-			if c.options.ExchangeBytes > 0 {
-				adapter["max_exchange_bytes"] = fmt.Sprintf("%dB", c.options.ExchangeBytes)
-			}
-			if backend == "mongo" {
-				adapter["mongodb"] = map[string]any{"uri": c.MongoURI}
-			} else {
-				searchOptions := map[string]any{"url": c.SearchURL}
-				if c.options.SearchRetryAttempts > 0 {
-					searchOptions["retry_attempts"] = c.options.SearchRetryAttempts
-				}
-				adapter["search"] = searchOptions
-			}
-			store := map[string]any{"name": backend, "backend": adapter}
-			if c.options.BatchSize > 0 {
-				batchBytes := c.options.BatchBytes
-				if batchBytes == 0 {
-					batchBytes = 8 << 20
-				}
-				batching := map[string]any{"max_operations": c.options.BatchSize,
-					"max_bytes": fmt.Sprintf("%dB", batchBytes),
-					"max_wait":  c.options.BatchMaxWait.String(), "max_in_flight": c.options.MaxInFlight}
-				store["batching"] = batching
-			}
-			stores = append(stores, store)
+	for _, backend := range c.options.Backends {
+		adapter := map[string]any{}
+		if c.options.ExchangeBytes > 0 {
+			adapter["max_exchange_bytes"] = fmt.Sprintf("%dB", c.options.ExchangeBytes)
 		}
+		if backend == "mongo" {
+			adapter["mongodb"] = map[string]any{"uri": c.MongoURI}
+		} else {
+			searchOptions := map[string]any{"url": c.SearchURL}
+			if c.options.SearchRetryAttempts > 0 {
+				searchOptions["retry_attempts"] = c.options.SearchRetryAttempts
+			}
+			adapter["search"] = searchOptions
+		}
+		store := map[string]any{"name": backend, "backend": adapter}
+		if c.options.BatchSize > 0 {
+			batchBytes := c.options.BatchBytes
+			if batchBytes == 0 {
+				batchBytes = 8 << 20
+			}
+			batching := map[string]any{"max_operations": c.options.BatchSize,
+				"max_bytes": fmt.Sprintf("%dB", batchBytes),
+				"max_wait":  c.options.BatchMaxWait.String(), "max_in_flight": c.options.MaxInFlight}
+			store["batching"] = batching
+		}
+		stores = append(stores, store)
 	}
 	routes := map[string]any{"stores": stores}
 	return writeJSON(c.nodeFile(index, "routes.json"), routes)
@@ -406,68 +381,15 @@ func processAnnounced(path string, offset int64, node Node) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	announcement := fmt.Sprintf("Weir listening on [%s %s]; local execution and peer directory discovery\n", node.Application, node.Peer)
+	announcement := "Weir listening on " + node.Application + "\n"
 	diagnostics := "Diagnostics listening on " + node.Diagnostics + "\n"
 	return strings.Contains(string(data), announcement) && strings.Contains(string(data), diagnostics), nil
 }
 
-func (c *Cluster) waitDiscovery(ctx context.Context) error {
-	readyCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-	var expected []string
-	for _, node := range c.Nodes {
-		if node.Owner {
-			expected = append(expected, node.Application)
-		}
-	}
-	slices.Sort(expected)
-	for _, node := range c.Nodes {
-		conn, err := grpc.NewClient("passthrough:///"+node.Application, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithNoProxy(), grpc.WithDisableRetry(), grpc.WithDisableServiceConfig())
-		if err != nil {
-			return err
-		}
-		err = awaitStores(readyCtx, conn, c.options.Backends, expected)
-		_ = conn.Close()
-		if err != nil {
-			return fmt.Errorf("directory did not converge on %s: %w", node.Application, err)
-		}
-	}
-	return nil
-}
-
-func awaitStores(ctx context.Context, conn *grpc.ClientConn, stores, expected []string) error {
-	client := pb.NewStoreServiceClient(conn)
-	for _, store := range stores {
-		var last error
-		for {
-			request := &pb.ResolveStoreRequest{StoreName: store}
-			rpcCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-			response, err := client.ResolveStore(rpcCtx, request)
-			cancel()
-			if err == nil {
-				endpoints := slices.Clone(response.Endpoints)
-				slices.Sort(endpoints)
-				if response.StoreName == store && slices.Equal(endpoints, expected) {
-					break
-				}
-				last = fmt.Errorf("store %s endpoints %v, expected %v", store, endpoints, expected)
-			} else {
-				last = err
-			}
-			if err := pause(ctx); err != nil {
-				return errors.Join(err, last)
-			}
-		}
-	}
-	return nil
-}
-
-func (c *Cluster) Seed() string {
+// Address returns the first replica's application address.
+func (c *Cluster) Address() string {
 	if len(c.Nodes) == 0 {
 		return ""
-	}
-	if c.options.DiscoveryOnly {
-		return c.Nodes[len(c.Nodes)-1].Application
 	}
 	return c.Nodes[0].Application
 }
@@ -540,9 +462,6 @@ func (c *Cluster) ReplaceServer(ctx context.Context, replacement ServerReplaceme
 		if err := c.startNode(ctx, index); err != nil {
 			return err
 		}
-	}
-	if err := c.waitDiscovery(ctx); err != nil {
-		return err
 	}
 	return c.writeManifest()
 }

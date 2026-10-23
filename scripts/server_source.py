@@ -9,10 +9,6 @@ import subprocess
 
 PUBLIC_SOURCE = 'https://github.com/batchstream/weir.git'
 SERVER_MODULE = 'github.com/batchstream/weir'
-NESTED = {'google.golang.org/grpc': 'third_party/grpc',
-          'github.com/iceisfun/golua': 'third_party/golua'}
-METADATA = {'go.mod', 'go.sum', 'LICENSE', 'NOTICE', 'AUTHORS',
-            'WEIR_PATCH.diff', 'WEIR_PATCH.md', 'WEIR_UPSTREAM.json'}
 
 
 def digest(data):
@@ -69,20 +65,16 @@ def validate_identity(identity, toolchain, revision):
         raise ValueError('server identity does not match source, toolchain or target')
 
 
-def safe_path(name, public_grpc=False):
+def safe_path(name):
     path = PurePosixPath(name)
-    # gRPC's public credentials/*.go packages are production code, not secret inputs.
-    credential_package = public_grpc and name.endswith('.go') and path.name != 'credentials'
-    forbidden = any(part.startswith('.') or (part == 'credentials' and not credential_package)
-                    for part in path.parts)
+    forbidden = any(part.startswith('.') or part == 'credentials' for part in path.parts)
     if not name or path.is_absolute() or path.as_posix() != name or forbidden or '\\' in name:
         raise ValueError('unsafe server source path: ' + name)
     return Path(*path.parts)
 
 
-def read_file(root, name, public_grpc=False):
-    public_grpc = public_grpc or name.startswith('third_party/grpc/')
-    relative = safe_path(name, public_grpc)
+def read_file(root, name):
+    relative = safe_path(name)
     path = root
     for component in relative.parts:
         path = path / component
@@ -104,7 +96,7 @@ def production_file(name):
     return name.endswith('.go') and not name.endswith('_test.go')
 
 
-def go_paths(root, relative, public_grpc=False):
+def go_paths(root, relative):
     start = root / relative
     paths = []
     if start.is_symlink():
@@ -115,75 +107,20 @@ def go_paths(root, relative, public_grpc=False):
         current = Path(directory)
         directories[:] = [name for name in directories if not name.startswith('.')
                            and name not in ('vendor', 'testdata')
-                           and (name != 'credentials' or public_grpc)]
+                           and name != 'credentials']
         for name in directories:
             if (current / name).is_symlink():
                 raise ValueError('symlink directory in server source')
         for name in names:
             if production_file(name) and not name.startswith('.'):
                 path = (current / name).relative_to(root).as_posix()
-                safe_path(path, public_grpc)
+                safe_path(path)
                 if (current / name).is_symlink():
                     raise ValueError('symlink in server source: ' + path)
                 paths.append(path)
             elif name == 'go.mod' and current != root:
                 raise ValueError('unexpected nested module in server source')
     return paths
-
-
-def nested_files(root, options, environment):
-    module, relative, version = options['module'], options['relative'], options['version']
-    public_grpc = module == 'google.golang.org/grpc'
-    directory = root / relative
-    read_file(root, relative + '/go.mod')
-    metadata = module_metadata(directory, environment)
-    if metadata.get('Module', {}).get('Path') != module or metadata.get('Replace'):
-        raise ValueError('nested module identity or replacement mismatch')
-    manifest = json.loads(read_file(root, relative + '/WEIR_UPSTREAM.json'))
-    if manifest.get('module') != module or manifest.get('version') != version:
-        raise ValueError('nested upstream manifest identity mismatch')
-    hashes = dict(manifest['files'])
-    for name, value in hashes.items():
-        safe_path(name, public_grpc)
-        if re.fullmatch(r'[0-9a-f]{64}', value) is None:
-            raise ValueError('invalid upstream file hash')
-    changed = set()
-    for entry in manifest.get('patchedFiles', []):
-        name = entry['path']
-        if name in changed or hashes.get(name) != entry['upstream_sha256']:
-            raise ValueError('inconsistent patched file manifest')
-        changed.add(name)
-        hashes[name] = entry['sha256']
-    for entry in manifest.get('newFiles', []):
-        name = entry['path']
-        if name in hashes:
-            raise ValueError('duplicate new file manifest')
-        hashes[name] = entry['sha256']
-    selected = {}
-    for name, value in hashes.items():
-        safe_path(name, public_grpc)
-        if re.fullmatch(r'[0-9a-f]{64}', value) is None:
-            raise ValueError('invalid nested file hash')
-        if name.endswith('_test.go'):
-            continue
-        if not production_file(name) and name not in METADATA:
-            raise ValueError('unexpected upstream manifest file: ' + name)
-        data = read_file(root, relative + '/' + name)
-        if digest(data) != value:
-            raise ValueError('nested source hash mismatch: ' + name)
-        selected[relative + '/' + name] = data
-    for name in ('go.mod', 'LICENSE', 'WEIR_PATCH.diff', 'WEIR_PATCH.md'):
-        if relative + '/' + name not in selected:
-            raise ValueError('nested source missing required metadata: ' + name)
-    selected[relative + '/WEIR_UPSTREAM.json'] = read_file(root, relative + '/WEIR_UPSTREAM.json')
-    actual_names = {relative + '/' + name for name in go_paths(directory, Path('.'), public_grpc)}
-    expected_names = {name for name in selected if production_file(name)}
-    if actual_names != expected_names:
-        raise ValueError('nested production source differs from manifest')
-    for name in ('go.mod', 'go.sum', 'LICENSE', 'NOTICE', 'AUTHORS'):
-        if (directory / name).exists() and relative + '/' + name not in selected:
-            raise ValueError('unhashed nested metadata: ' + name)
-    return selected
 
 
 def verify_snapshot(root, manifest, expected):
@@ -216,25 +153,12 @@ def freeze_server_source(source, output, environment):
     metadata = module_metadata(source, environment)
     if metadata.get('Module', {}).get('Path') != SERVER_MODULE:
         raise ValueError('server go.mod has the wrong module identity')
-    requirements = {item['Path']: item['Version'] for item in metadata.get('Require', [])}
-    replacements = {}
-    for item in metadata.get('Replace', []):
-        old, new = item['Old'], item['New']
-        name = old['Path']
-        if (name not in NESTED or name in replacements or old.get('Version') or new.get('Version')
-                or new['Path'] != './' + NESTED[name] or name not in requirements):
-            raise ValueError('unexpected or escaping server module replacement')
-        replacements[name] = NESTED[name]
-    if replacements != NESTED:
-        raise ValueError('server go.mod must replace exactly the vendored third_party modules')
+    if metadata.get('Replace'):
+        raise ValueError('server go.mod must not replace modules')
     files = {name: read_file(source, name) for name in ('go.mod', 'go.sum')}
     for directory in ('cmd', 'internal', 'pkg', 'api'):
         for name in go_paths(source, Path(directory)):
             files[name] = read_file(source, name)
-    for module, relative in replacements.items():
-        options = dict(module=module, relative=relative, version=requirements[module])
-        files.update(nested_files(source, options, environment))
-    files['third_party/README.md'] = read_file(source, 'third_party/README.md')
     tree = hashlib.sha256()
     manifest = []
     # Read and verify the complete allowlist before creating any snapshot files.

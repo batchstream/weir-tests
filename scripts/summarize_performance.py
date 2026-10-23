@@ -52,7 +52,7 @@ def metric_delta(metrics, name):
 def comparison_parameters(report):
     parameters = dict(report['parameters'])
     dataset = dict(parameters['dataset'])
-    for fixture_field in ('weir_seed', 'namespace'):
+    for fixture_field in ('weir_address', 'namespace'):
         dataset.pop(fixture_field, None)
     parameters['dataset'] = dataset
     return parameters

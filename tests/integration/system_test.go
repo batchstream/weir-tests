@@ -5,9 +5,7 @@ package integration_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
-	"slices"
 	"testing"
 	"time"
 
@@ -24,11 +22,10 @@ import (
 const rpcTimeout = 5 * time.Second
 
 type system struct {
-	ctx         context.Context
-	cluster     *fixture.Cluster
-	client      *weir.Client
-	openOptions weir.OpenOptions
-	backends    []*backendData
+	ctx      context.Context
+	cluster  *fixture.Cluster
+	client   *weir.Client
+	backends []*backendData
 }
 
 // The integration tag is an explicit request for real services. Missing setup
@@ -42,8 +39,8 @@ func TestSystemIntegration(t *testing.T) {
 	defer cancel()
 	options := fixture.Options{
 		WeirBinary: binary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"),
-		Backends:   []string{"mongo", "search"},
-		OwnerCount: 2, DiscoveryOnly: true,
+		Backends:  []string{"mongo", "search"},
+		Replicas:  2,
 		BatchSize: 513, PendingRecords: streamPendingRecords,
 	}
 	cluster, err := fixture.Start(ctx, options)
@@ -58,33 +55,27 @@ func TestSystemIntegration(t *testing.T) {
 			t.Error("close owned fixtures:", err)
 		}
 	})
-	if len(cluster.Nodes) != 3 || !cluster.Nodes[0].Owner || !cluster.Nodes[1].Owner || cluster.Nodes[2].Owner {
-		t.Fatal("fixture requires two owners followed by one discovery-only node")
+	if len(cluster.Nodes) != 2 {
+		t.Fatal("fixture requires two replicas")
 	}
 	backends := provisionBackends(t, ctx, cluster)
-	openOptions := weir.OpenOptions{
-		Seed: cluster.Seed(), Stores: []string{"mongo", "search"},
-		RefreshInterval: 100 * time.Millisecond, ResolveTimeout: time.Second,
-	}
-	opening, stopOpening := context.WithTimeout(ctx, 15*time.Second)
-	client, err := weir.Open(opening, openOptions)
-	stopOpening()
+	client, err := weir.New(cluster.Address())
 	if err != nil {
-		t.Fatal("initialize through discovery-only node:", err)
+		t.Fatal("create SDK client:", err)
 	}
 	t.Cleanup(func() {
 		if err := client.Close(); err != nil {
 			t.Error("close SDK:", err)
 		}
 	})
-	suite := &system{ctx: ctx, cluster: cluster, client: client, openOptions: openOptions, backends: backends}
+	suite := &system{ctx: ctx, cluster: cluster, client: client, backends: backends}
 	if !t.Run("native_reset_and_write_change_evidence", func(t *testing.T) { testNativeWriteChangeEvidence(t, ctx, cluster) }) {
 		return
 	}
 	for _, backend := range backends {
 		if !t.Run(backend.name+"_lifecycle", func(t *testing.T) {
 			testLifecycle(t, ctx, client, backend)
-			testCrossOwnerNativePagination(t, ctx, cluster, backend)
+			testCrossReplicaNativePagination(t, ctx, cluster, backend)
 			testPublicBatch(t, ctx, client, backend)
 			suite.testLargeDistinctBatch(t, backend)
 			suite.testStreamMemory(t, backend)
@@ -94,8 +85,8 @@ func TestSystemIntegration(t *testing.T) {
 			return
 		}
 	}
-	if !t.Run("any_node_discovery_and_no_relay", func(t *testing.T) {
-		suite.testDiscovery(t)
+	if !t.Run("every_replica_serves_its_stores", func(t *testing.T) {
+		suite.testReplicas(t)
 	}) {
 		return
 	}
@@ -104,7 +95,7 @@ func TestSystemIntegration(t *testing.T) {
 	}) {
 		return
 	}
-	t.Run("owner_withdrawal_restart_and_seed_loss", func(t *testing.T) {
+	t.Run("replica_stop_and_restart", func(t *testing.T) {
 		suite.testRecovery(t)
 	})
 }
@@ -126,21 +117,13 @@ func transport(t *testing.T, address string) pb.StoreServiceClient {
 	return pb.NewStoreServiceClient(connection)
 }
 
-func (s *system) testDiscovery(t *testing.T) {
+func (s *system) testReplicas(t *testing.T) {
 	t.Helper()
 	ctx, cluster, backends := s.ctx, s.cluster, s.backends
-	want := []string{cluster.Nodes[0].Application, cluster.Nodes[1].Application}
 	for _, node := range cluster.Nodes {
-		wire := transport(t, node.Application)
-		for _, backend := range backends {
-			s.waitResolve(t, wire, backend.name, want)
-		}
-		options := weir.OpenOptions{Seed: node.Application, Stores: []string{"mongo", "search"}, ResolveTimeout: time.Second}
-		opening, cancel := context.WithTimeout(ctx, 10*time.Second)
-		client, err := weir.Open(opening, options)
-		cancel()
+		client, err := weir.New(node.Application)
 		if err != nil {
-			t.Fatalf("initialize through %s: %v", node.Application, err)
+			t.Fatalf("create SDK client for %s: %v", node.Application, err)
 		}
 		for _, backend := range backends {
 			want := record{id: "primary", n: 5}
@@ -149,65 +132,43 @@ func (s *system) testDiscovery(t *testing.T) {
 		if err := client.Close(); err != nil {
 			t.Fatal(err)
 		}
-	}
-	wire := transport(t, cluster.Nodes[2].Application)
-	request := &pb.ResolveStoreRequest{StoreName: "unconfigured"}
-	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	response, err := wire.ResolveStore(rpc, request)
-	cancel()
-	// An eventually synchronized directory cannot prove a Store does not exist
-	// globally. Missing live announcements are retryable and expose no endpoint.
-	if status.Code(err) != codes.Unavailable || len(response.GetEndpoints()) != 0 {
-		t.Fatalf("unannounced store ResolveStore: want Unavailable and no endpoints, got response=%v err=%v", response, err)
+		wire := transport(t, node.Application)
+		s.assertUnhostedStore(t, wire)
 	}
 	for _, backend := range backends {
 		s.testServerPreflight(t, backend)
-		s.testBatchOwnerRouting(t, backend)
-		read := &pb.ReadRequest{Resource: backend.resource("primary")}
-		operation := &pb.Command_Read{Read: read}
-		command := &pb.Command{Operation: operation}
-		request := &pb.ExecuteRequest{StoreName: backend.name, Index: 1, Command: command}
-		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		stream, err := wire.Execute(rpc)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := stream.Send(request); err != nil {
-			t.Fatal(err)
-		}
-		if err := stream.CloseSend(); err != nil {
-			t.Fatal(err)
-		}
-		response, err := stream.Recv()
-		cancel()
-		if response != nil || status.Code(err) != codes.Unavailable {
-			t.Fatalf("non-owner %s streamed Read: want Unavailable and no business response, got response=%v err=%v", backend.name, response, err)
-		}
+		s.testBatchSingleStream(t, backend)
 	}
 }
 
-func (s *system) waitResolve(t *testing.T, wire pb.StoreServiceClient, store string, want []string) {
+// A replica rejects a Store it does not host before any business response.
+func (s *system) assertUnhostedStore(t *testing.T, wire pb.StoreServiceClient) {
 	t.Helper()
-	expected := slices.Clone(want)
-	slices.Sort(expected)
-	poll(t, s.ctx, "ResolveStore "+store, func(attempt context.Context) error {
-		request := &pb.ResolveStoreRequest{StoreName: store}
-		response, err := wire.ResolveStore(attempt, request)
-		if err != nil {
-			return err
-		}
-		actual := slices.Clone(response.GetEndpoints())
-		slices.Sort(actual)
-		if response.GetStoreName() != store || response.GetCacheTtlMs() == 0 || !slices.Equal(actual, expected) {
-			return fmt.Errorf("got store=%q ttl=%d endpoints=%v; want %v", response.GetStoreName(), response.GetCacheTtlMs(), actual, expected)
-		}
-		return nil
-	})
+	read := &pb.ReadRequest{Resource: s.backends[0].resource("primary")}
+	operation := &pb.Command_Read{Read: read}
+	command := &pb.Command{Operation: operation}
+	request := &pb.ExecuteRequest{StoreName: "unconfigured", Index: 1, Command: command}
+	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
+	defer cancel()
+	stream, err := wire.Execute(rpc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Send(request); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.CloseSend(); err != nil {
+		t.Fatal(err)
+	}
+	response, err := stream.Recv()
+	if response != nil || status.Code(err) != codes.NotFound {
+		t.Fatalf("unhosted Store Read: want NotFound and no business response, got response=%v err=%v", response, err)
+	}
 }
 
 func (s *system) testCancellation(t *testing.T) {
 	t.Helper()
-	ctx, client, options, backend := s.ctx, s.client, s.openOptions, s.backends[0]
+	ctx, client, backend := s.ctx, s.client, s.backends[0]
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
 	read := &weir.ReadRequest{Resource: backend.resource("primary")}
@@ -215,14 +176,6 @@ func (s *system) testCancellation(t *testing.T) {
 	result, err := client.ReadOne(canceled, request)
 	if result != nil || !cancellation(err) {
 		t.Fatalf("canceled Read: result=%v err=%v", result, err)
-	}
-	opened, err := weir.Open(canceled, options)
-	if opened != nil {
-		_ = opened.Close()
-		t.Fatal("canceled initialization returned a live SDK")
-	}
-	if !cancellation(err) {
-		t.Fatal("canceled initialization:", err)
 	}
 	write := backend.write(t, "canceled_create", 123)
 	writeOptions := weir.WriteOptions{StoreName: backend.name, Request: write}
@@ -249,63 +202,44 @@ func (s *system) testRecovery(t *testing.T) {
 		assertApplied(t, result, err)
 		backend.assertPersisted(t, ctx, "durable", 99)
 	}
-	control, cancel := context.WithTimeout(ctx, 20*time.Second)
-	err := cluster.StopNode(control, 0)
-	cancel()
+	survivor, err := weir.New(cluster.Nodes[1].Application)
 	if err != nil {
-		t.Fatal("withdraw owner:", err)
-	}
-	wire := transport(t, cluster.Nodes[2].Application)
-	for _, backend := range backends {
-		s.waitResolve(t, wire, backend.name, []string{cluster.Nodes[1].Application})
-		want := record{id: "durable", n: 99}
-		backend.waitRead(t, ctx, client, want)
-	}
-	options := weir.OpenOptions{Seed: cluster.Seed(), Stores: []string{"mongo", "search"}, ResolveTimeout: time.Second}
-	opening, stopOpening := context.WithTimeout(ctx, 10*time.Second)
-	recreated, err := weir.Open(opening, options)
-	stopOpening()
-	if err != nil {
-		t.Fatal("initialize with one surviving owner:", err)
+		t.Fatal("create SDK client for the second replica:", err)
 	}
 	defer func() {
-		if err := recreated.Close(); err != nil {
-			t.Error("close recreated SDK:", err)
+		if err := survivor.Close(); err != nil {
+			t.Error("close second-replica SDK:", err)
 		}
 	}()
+	control, cancel := context.WithTimeout(ctx, 20*time.Second)
+	err = cluster.StopNode(control, 0)
+	cancel()
+	if err != nil {
+		t.Fatal("stop first replica:", err)
+	}
 	for _, backend := range backends {
 		want := record{id: "durable", n: 99}
-		backend.assertRead(t, ctx, recreated, want)
+		backend.assertRead(t, ctx, survivor, want)
+		read := &weir.ReadRequest{Resource: backend.resource("durable")}
+		readOptions := weir.ReadOneOptions{StoreName: backend.name, Request: read}
+		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
+		result, err := client.ReadOne(rpc, readOptions)
+		cancel()
+		if result != nil || status.Code(err) != codes.Unavailable {
+			t.Fatalf("read through a stopped replica: want Unavailable, got result=%v err=%v", result, err)
+		}
 	}
 	control, cancel = context.WithTimeout(ctx, 25*time.Second)
 	err = cluster.RestartNode(control, 0)
 	cancel()
 	if err != nil {
-		t.Fatal("restart owner:", err)
-	}
-	want := []string{cluster.Nodes[0].Application, cluster.Nodes[1].Application}
-	for _, backend := range backends {
-		s.waitResolve(t, wire, backend.name, want)
-		backend.assertPersisted(t, ctx, "durable", 99)
-		owner := transport(t, cluster.Nodes[0].Application)
-		read := &weir.ReadRequest{Resource: backend.resource("durable")}
-		readOptions := weir.ReadOneOptions{StoreName: backend.name, Request: read}
-		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		result, err := weir.ReadOne(rpc, owner, readOptions)
-		cancel()
-		backend.assertReadResult(t, result, err, 99)
-	}
-	control, cancel = context.WithTimeout(ctx, 20*time.Second)
-	err = cluster.StopNode(control, 2)
-	cancel()
-	if err != nil {
-		t.Fatal("stop initialization node:", err)
+		t.Fatal("restart first replica:", err)
 	}
 	for _, backend := range backends {
 		want := record{id: "durable", n: 99}
 		backend.waitRead(t, ctx, client, want)
 	}
-	t.Log("graceful owner withdrawal converged; existing and recreated SDK clients read persisted data; restarted owner recovered; losing the seed did not interrupt direct business reads")
+	t.Log("stopping one replica left the other serving persisted data; the original client reconnected to the restarted replica")
 }
 
 func poll(t *testing.T, parent context.Context, description string, check func(context.Context) error) {
@@ -350,7 +284,7 @@ type streamBatchEvidence struct {
 
 func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 	t.Helper()
-	var owners int
+	var replicas int
 	var rpcCount float64
 	labels := map[string]string{"store": evidence.Store, "operation": evidence.Method}
 	storeLabels := map[string]string{"store": evidence.Store}
@@ -359,21 +293,18 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 		after := evidence.After[index]
 		left, beforeFound := before.Sum("weir_store_records_total", labels)
 		right, afterFound := after.Sum("weir_store_records_total", labels)
-		if index < len(evidence.Before)-1 && (!beforeFound || !afterFound) {
-			t.Fatalf("owner %d terminal-record observation unavailable", index)
-		}
-		if index == len(evidence.Before)-1 && (beforeFound || afterFound) {
-			t.Fatal("discovery-only node unexpectedly exposes a local Store")
+		if !beforeFound || !afterFound {
+			t.Fatalf("replica %d terminal-record observation unavailable", index)
 		}
 		if right < left {
 			t.Fatal("owned store metrics reset")
 		}
 		delta := right - left
 		if delta != 0 {
-			if index == len(evidence.Before)-1 || delta != float64(evidence.Records) {
-				t.Fatalf("record stream relayed or split across owners: node=%d delta=%v", index, delta)
+			if delta != float64(evidence.Records) {
+				t.Fatalf("record stream split across replicas: node=%d delta=%v", index, delta)
 			}
-			owners++
+			replicas++
 			count, err := observe.Delta(before, after, "weir_store_batch_operations_count", storeLabels)
 			if err != nil || count < 1 {
 				t.Fatalf("aggregation invocations=%v error=%v", count, err)
@@ -393,12 +324,12 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 		}
 		rpcCount += right - left
 	}
-	if owners != 1 || rpcCount != 1 {
-		t.Fatalf("single owner streamed batch: owners=%d completed RPCs=%v", owners, rpcCount)
+	if replicas != 1 || rpcCount != 1 {
+		t.Fatalf("one replica streams the batch: replicas=%d completed RPCs=%v", replicas, rpcCount)
 	}
 }
 
-func (s *system) testBatchOwnerRouting(t *testing.T, backend *backendData) {
+func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 	t.Helper()
 	before := s.nodeMetrics(t)
 	reads := make([]*weir.ReadRequest, 32)
@@ -411,7 +342,7 @@ func (s *system) testBatchOwnerRouting(t *testing.T, backend *backendData) {
 	results, err := s.client.Read(rpc, opts)
 	cancel()
 	if err != nil || len(results) != len(reads) {
-		t.Fatalf("routed streamed batch: results=%d err=%v", len(results), err)
+		t.Fatalf("streamed batch: results=%d err=%v", len(results), err)
 	}
 	for _, result := range results {
 		backend.assertReadResult(t, result, nil, 5)

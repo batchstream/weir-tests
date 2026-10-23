@@ -26,7 +26,7 @@ const (
 
 type nativeInvoke func(context.Context, weir.NativeOptions) (*weir.NativeResult, error)
 
-func ownerNative(wire pb.StoreServiceClient) nativeInvoke {
+func replicaNative(wire pb.StoreServiceClient) nativeInvoke {
 	return func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
 		return weir.Native(ctx, wire, opts)
 	}

@@ -32,7 +32,6 @@ type CrawlerOptions struct {
 	Profiles                                                      []string
 	Modes                                                         []string
 	Paths                                                         []string
-	AfterUseDefaults, CaptureEffectiveConfig                      bool
 	Processes, PageSize, QueuePages, Rounds                       int
 	AfterMaxInFlight                                              int
 	AfterBatchMaxOperations, AfterBatchMaxBytes, SeedPaddingBytes int
@@ -72,7 +71,6 @@ type crawlerStage struct {
 	BatchMaxWaitNS                                                                    int64
 	ServerSHA256                                                                      string
 	ServerConfiguration                                                               json.RawMessage
-	ServerEffectiveConfiguration                                                      string
 	StartedNS, ElapsedNS, DrainNS                                                     int64
 	Offered, Rejected, Completed, Failed, Indeterminate, TimedOut, Late, WithinWindow uint64
 	CompletedProductsPerSecond                                                        float64
@@ -171,7 +169,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		}
 		resultErr = errors.Join(resultErr, err)
 	}()
-	fixtureOptions := fixture.Options{WeirBinary: opts.Before, Backends: []string{"search"}, OwnerCount: 1, BatchSize: 32, BatchBytes: 8 << 20, SearchRetryAttempts: 4, PendingRecords: 4096, DatabaseCPUs: opts.CPUs}
+	fixtureOptions := fixture.Options{WeirBinary: opts.Before, Backends: []string{"search"}, Replicas: 1, BatchSize: 32, BatchBytes: 8 << 20, SearchRetryAttempts: 4, PendingRecords: 4096, DatabaseCPUs: opts.CPUs}
 	cluster, err := fixture.Start(ctx, fixtureOptions)
 	if err != nil {
 		return report, err
@@ -223,9 +221,6 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 					replacement.BatchBytes = opts.AfterBatchMaxBytes
 					replacement.MaxInFlight = opts.AfterMaxInFlight
 					replacement.BatchMaxWait = opts.AfterBatchMaxWait
-					if opts.AfterUseDefaults {
-						replacement.BatchSize, replacement.BatchBytes, replacement.MaxInFlight, replacement.BatchMaxWait = 0, 0, 0, 0
-					}
 				}
 				if err := cluster.ReplaceServer(ctx, replacement); err != nil {
 					return report, err
@@ -421,12 +416,6 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	if err := auditCrawlerServerConfiguration(stage, config); err != nil {
 		return stage, err
 	}
-	if config.CaptureEffectiveConfig {
-		stage.ServerEffectiveConfiguration, err = opts.Cluster.EffectiveConfiguration(ctx, 0)
-		if err != nil {
-			return stage, err
-		}
-	}
 	reset := crawlerResetOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace, Workers: config.Concurrency[len(config.Concurrency)-1], PageSize: config.PageSize, SeedPaddingBytes: config.SeedPaddingBytes}
 	settle := crawlerSettleOptions{URL: opts.Cluster.SearchURL, Namespace: opts.Namespace}
 	if err := resetCrawler(ctx, opts.HTTP, reset); err != nil {
@@ -448,7 +437,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 		stage.ClientsExited = len(clients) == config.Processes && len(stage.ClientExitErrors) == 0
 	}()
 	for process := range config.Processes {
-		clientConfig := crawlerClientConfig{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, SearchURL: opts.Cluster.SearchURL, Seed: opts.Cluster.Nodes[0].Application, Namespace: opts.Namespace, Offset: process * (opts.Case.Workers / config.Processes), Threads: opts.Case.Workers / config.Processes, PageSize: config.PageSize, Processes: config.Processes, ProcessIndex: process, QueuePages: config.QueuePages, TimeoutNS: int64(config.Timeout), Visibility: config.Visibility, SeedPaddingBytes: config.SeedPaddingBytes}
+		clientConfig := crawlerClientConfig{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, SearchURL: opts.Cluster.SearchURL, Address: opts.Cluster.Address(), Namespace: opts.Namespace, Offset: process * (opts.Case.Workers / config.Processes), Threads: opts.Case.Workers / config.Processes, PageSize: config.PageSize, Processes: config.Processes, ProcessIndex: process, QueuePages: config.QueuePages, TimeoutNS: int64(config.Timeout), Visibility: config.Visibility, SeedPaddingBytes: config.SeedPaddingBytes}
 		client, err := startCrawlerProcess(ctx, config.Executable, clientConfig)
 		if err != nil {
 			return stage, err

@@ -20,7 +20,7 @@ def make_report(kind='single'):
                  reads=100, writes=0, errors=0, indeterminate=0, business_operation_timeouts=0, verified=True,
                  latency=latency, resources=resources, timed_physical_database_command_deltas=commands)
     pair = dict(concurrency=8, batch_size=1, round=1, order='direct-first', direct=stage, weir=copy.deepcopy(stage))
-    dataset = dict(backend='mongo', concurrency=8, namespace='owned', weir_seed='local')
+    dataset = dict(backend='mongo', concurrency=8, namespace='owned', weir_address='local')
     parameters = dict(dataset=dataset, concurrency_levels=[8], batch_sizes=[1], paired_rounds=1)
     report = dict(schema=1, kind=kind, provenance=provenance, parameters=parameters, pairs=[pair])
     return report

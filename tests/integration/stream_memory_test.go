@@ -23,21 +23,14 @@ import (
 const streamPendingRecords = 32
 
 // A ReadStream uses one Execute RPC with no other business RPCs active here.
-// Each owner's retained records fit its transport window. Byte reservations
-// reflect backend document limits and live results rather than a protocol cap.
+// The stream's transport window bounds the records it can have queued.
 func streamReservations(ctx context.Context, nodes []fixture.Node, store string) (bool, error) {
 	idle := true
 	labels := map[string]string{"store": store}
 	for _, node := range nodes {
-		if !node.Owner {
-			continue
-		}
 		snapshot := observe.Fetch(ctx, node.Diagnostics)
 		values := make(map[string]float64)
-		for _, name := range []string{
-			"pending_entries", "pending_reserved_bytes", "result_reserved_entries", "result_reserved_bytes",
-			"working_reserved_bytes", "retained_results", "retained_result_reserved_bytes", "active_executions", "publishers",
-		} {
+		for _, name := range []string{"queued_operations", "queued_bytes", "active_executions", "active_natives"} {
 			value, found := snapshot.Sum("weir_store_"+name, labels)
 			if !found || value < 0 {
 				return false, fmt.Errorf("Store stream metric %s unavailable or negative: value=%v error=%s", name, value, snapshot.Error)
@@ -45,10 +38,8 @@ func streamReservations(ctx context.Context, nodes []fixture.Node, store string)
 			values[name] = value
 			idle = idle && value == 0
 		}
-		if values["result_reserved_entries"] > streamPendingRecords ||
-			values["pending_entries"] > values["result_reserved_entries"] || values["retained_results"] > values["result_reserved_entries"] ||
-			values["retained_result_reserved_bytes"] > values["result_reserved_bytes"] {
-			return false, fmt.Errorf("Store %s stream reservations exceeded transport ownership bounds: %v", store, values)
+		if values["queued_operations"] > streamPendingRecords {
+			return false, fmt.Errorf("Store %s queued more records than one stream's transport window: %v", store, values)
 		}
 	}
 	return idle, nil
@@ -71,18 +62,15 @@ func (s *system) waitStreamIdle(t *testing.T, store string) {
 		select {
 		case <-ticker.C:
 		case <-ctx.Done():
-			t.Fatalf("Store %s retained execution or publication credits after stream completion: %v", store, ctx.Err())
+			t.Fatalf("Store %s retained queued or running work after stream completion: %v", store, ctx.Err())
 		}
 	}
 }
 
-// Sample only processes started by this suite, including both possible owners.
-func ownerResidentBytes(ctx context.Context, nodes []fixture.Node) (uint64, error) {
+// Sample only processes started by this suite, including every replica.
+func residentBytes(ctx context.Context, nodes []fixture.Node) (uint64, error) {
 	var largest uint64
 	for _, node := range nodes {
-		if !node.Owner {
-			continue
-		}
 		if node.ProcessID <= 0 {
 			return 0, errors.New("owned Weir PID unavailable")
 		}
@@ -150,7 +138,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		produced, consumed := 0, uint64(0)
 		var bytes, peak uint64
 		sample := func() error {
-			resident, err := ownerResidentBytes(ctx, s.cluster.Nodes)
+			resident, err := residentBytes(ctx, s.cluster.Nodes)
 			if err != nil {
 				return err
 			}
@@ -203,6 +191,6 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		} else if peak > shortPeak+(96<<20) {
 			t.Fatalf("4x logical output grew Weir RSS excessively: short=%d long=%d", shortPeak, peak)
 		}
-		t.Logf("%s: one Execute stream delivered %d records (%d bytes), sampled max owner RSS=%d bytes", backend.name, count, bytes, peak)
+		t.Logf("%s: one Execute stream delivered %d records (%d bytes), sampled max replica RSS=%d bytes", backend.name, count, bytes, peak)
 	}
 }

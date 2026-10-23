@@ -133,7 +133,7 @@ func testTypedSequence(t *testing.T, ctx context.Context, client *weir.Client, b
 	backend.assertPersisted(t, ctx, "primary", 5)
 }
 
-func testCrossOwnerNativePagination(t *testing.T, ctx context.Context, cluster *fixture.Cluster, backend *backendData) {
+func testCrossReplicaNativePagination(t *testing.T, ctx context.Context, cluster *fixture.Cluster, backend *backendData) {
 	t.Helper()
 	if backend.name == "search" {
 		refresh := httpRequest{method: http.MethodPost, path: "/" + backend.collection + "/_refresh"}
@@ -168,7 +168,7 @@ func testCrossOwnerNativePagination(t *testing.T, ctx context.Context, cluster *
 	slices.Sort(got)
 	want := []int64{5, 11, 12}
 	if pager.pages < 3 || !slices.Equal(got, want) {
-		t.Fatalf("cross-owner Native pagination: pages=%d got=%v want=%v", pager.pages, got, want)
+		t.Fatalf("cross-replica Native pagination: pages=%d got=%v want=%v", pager.pages, got, want)
 	}
 
 	// A caller abandoning a page owns the live backend cursor and its cleanup.
@@ -211,7 +211,7 @@ func testCrossOwnerNativePagination(t *testing.T, ctx context.Context, cluster *
 			t.Fatalf("closed Search scroll business error: metadata=%v body=%s err=%v", metadata, body, err)
 		}
 	}
-	t.Log("backend-owned Native continuation crossed owners and exhausted without omissions/duplicates; caller explicitly reclaimed early-stop cursor; closed continuation retained complete backend error response")
+	t.Log("backend-owned Native continuation crossed replicas and exhausted without omissions/duplicates; caller explicitly reclaimed early-stop cursor; closed continuation retained complete backend error response")
 }
 
 func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {

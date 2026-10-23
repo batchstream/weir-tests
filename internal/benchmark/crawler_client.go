@@ -21,7 +21,7 @@ type crawlerClientConfig struct {
 	InputShape                                                     string
 	Visibility                                                     string
 	SeedPaddingBytes                                               int
-	Path, Profile, SearchURL, Seed, Namespace                      string
+	Path, Profile, SearchURL, Address, Namespace                   string
 	Offset, Threads, PageSize, Processes, ProcessIndex, QueuePages int
 	TimeoutNS                                                      int64
 }
@@ -88,8 +88,7 @@ func newCrawlerClient(ctx context.Context, config crawlerClientConfig) (*crawler
 	transport := &http.Transport{Proxy: nil, DisableCompression: true, MaxConnsPerHost: pool, MaxIdleConnsPerHost: pool, MaxIdleConns: pool}
 	client := &crawlerClient{config: config, http: &http.Client{Transport: transport}}
 	if config.Path != "direct" {
-		opts := weir.OpenOptions{Seed: config.Seed, Stores: []string{"search"}}
-		sdk, err := weir.Open(ctx, opts)
+		sdk, err := weir.New(config.Address)
 		if err != nil {
 			transport.CloseIdleConnections()
 			return nil, err

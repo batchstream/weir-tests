@@ -78,7 +78,7 @@ func (s *system) testLuaSemantics(t *testing.T, backend *backendData) {
 
 func (s *system) testConcurrentLuaCreate(t *testing.T, backend *backendData) {
 	t.Helper()
-	const id = "lua_cross_owner_counter"
+	const id = "lua_cross_replica_counter"
 	const iterations = 4
 	source := []byte(`return function(current, incoming)
   if current == nil then return incoming end
@@ -100,7 +100,7 @@ end`)
 				result, err := weir.AtomicTransform(rpc, wire, opts)
 				cancel()
 				if err != nil || result.GetOutcome() != weir.MutationApplied || result.GetFailure() != nil {
-					finished <- fmt.Errorf("cross-owner Lua: result=%v error=%v", result, err)
+					finished <- fmt.Errorf("cross-replica Lua: result=%v error=%v", result, err)
 					return
 				}
 			}
@@ -137,8 +137,8 @@ func (s *system) testProjectionAndFailures(t *testing.T, backend *backendData) {
 		}
 	}
 	wires := []nativeInvoke{
-		ownerNative(transport(t, s.cluster.Nodes[0].Application)),
-		ownerNative(transport(t, s.cluster.Nodes[1].Application)),
+		replicaNative(transport(t, s.cluster.Nodes[0].Application)),
+		replicaNative(transport(t, s.cluster.Nodes[1].Application)),
 	}
 	calls := 0
 	invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {

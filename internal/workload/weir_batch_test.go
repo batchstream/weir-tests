@@ -26,10 +26,6 @@ type acknowledgementPeer struct {
 	firstMutation chan struct{}
 }
 
-func (p *acknowledgementPeer) ResolveStore(context.Context, *pb.ResolveStoreRequest) (*pb.ResolveStoreResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "test peer handles direct execution only")
-}
-
 func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.ExecuteRequest, pb.ExecuteResponse]) error {
 	p.calls.Add(1)
 	for {

@@ -115,59 +115,42 @@ func TestCrawlerControlsRejectInvalidVisibilityPayloadAndBatchBounds(t *testing.
 func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) {
 	opts := CrawlerOptions{AfterMaxInFlight: 4, AfterBatchMaxWait: 20 * time.Millisecond}
 	labels := map[string]string{"store": "search"}
-	wait := observe.Metric{Name: "weir_store_batch_max_wait_seconds", Labels: labels, Value: .02}
 	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 4}
-	snapshot := observe.Snapshot{Metrics: []observe.Metric{wait, cap}}
+	snapshot := observe.Snapshot{Metrics: []observe.Metric{cap}}
 	stage := crawlerStage{Path: "after", ServerBefore: snapshot, ServerAfter: snapshot}
 	if err := auditCrawlerLiveControls(stage, opts); err != nil {
 		t.Fatal(err)
 	}
-	stage.ServerAfter.Metrics = []observe.Metric{wait}
+	stage.ServerAfter.Metrics = []observe.Metric{}
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
 		t.Fatal("missing cap gauge became a synthetic zero")
 	}
 	cap.Value = 0
-	stage.ServerAfter.Metrics = []observe.Metric{wait, cap}
+	stage.ServerAfter.Metrics = []observe.Metric{cap}
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
 		t.Fatal("changed live cap was accepted despite the route declaration")
 	}
 	cap.Value = 4
-	stage.ServerAfter.Metrics = []observe.Metric{wait, cap, cap}
+	stage.ServerAfter.Metrics = []observe.Metric{cap, cap}
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
 		t.Fatal("ambiguous live gauge series were accepted")
 	}
 }
 
-func TestCrawlerDefaultPathOmitsControlsAndAuditsAllResolvedGauges(t *testing.T) {
-	opts := CrawlerOptions{AfterUseDefaults: true, CaptureEffectiveConfig: true,
-		AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
+func TestCrawlerAuditRequiresEveryExplicitBatchingControl(t *testing.T) {
+	opts := CrawlerOptions{AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
 		AfterBatchMaxWait: 5 * time.Millisecond, Paths: []string{"direct", "after"}}
 	if err := normalizeCrawlerControls(&opts); err != nil {
 		t.Fatal(err)
 	}
-	configuration := json.RawMessage(`{"stores":[{"name":"search"}]}`)
-	stage := crawlerStage{Path: "after", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait),
-		ServerConfiguration: configuration, ServerEffectiveConfiguration: "resolved owned settings"}
-	if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
-		t.Fatal("omitted defaults were not accepted", err)
-	}
-	labels := map[string]string{"store": "search"}
-	wait := observe.Metric{Name: "weir_store_batch_max_wait_seconds", Labels: labels, Value: .005}
-	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 16}
-	count := observe.Metric{Name: "weir_store_batch_max_operations", Labels: labels, Value: 128}
-	bytes := observe.Metric{Name: "weir_store_batch_max_bytes", Labels: labels, Value: 8 << 20}
-	snapshot := observe.Snapshot{Metrics: []observe.Metric{wait, cap, count, bytes}}
-	stage.ServerBefore, stage.ServerAfter = snapshot, snapshot
-	if err := auditCrawlerLiveControls(stage, opts); err != nil {
-		t.Fatal("declared defaults did not match resolved gauges", err)
-	}
-	stage.ServerAfter.Metrics = []observe.Metric{wait, cap, count}
-	if err := auditCrawlerLiveControls(stage, opts); err == nil {
-		t.Fatal("missing byte gauge hid unknown default", err)
+	stage := crawlerStage{Path: "after", BatchMaxWaitNS: int64(opts.AfterBatchMaxWait)}
+	stage.ServerConfiguration = json.RawMessage(`{"stores":[{"name":"search"}]}`)
+	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
+		t.Fatal("a stage without batching controls was accepted")
 	}
 	stage.ServerConfiguration = crawlerTestConfiguration(t, opts, "after")
-	if err := auditCrawlerServerConfiguration(stage, opts); err == nil {
-		t.Fatal("an explicit override was presented as an omitted default")
+	if err := auditCrawlerServerConfiguration(stage, opts); err != nil {
+		t.Fatal("explicit after controls were rejected", err)
 	}
 	stage.Path, stage.BatchMaxWaitNS = "before", 0
 	stage.ServerConfiguration = json.RawMessage(`{"stores":[{"name":"search","batching":{"max_operations":32,"max_bytes":"8388608B"}}]}`)
