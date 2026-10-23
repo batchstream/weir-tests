@@ -200,7 +200,7 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		seen := make(map[string]bool)
 		for _, metric := range snapshot.Metrics {
 			switch metric.Name {
-			case "weir_store_pending_entries", "weir_store_pending_reserved_bytes", "weir_store_active_executions", "weir_store_active_executions_limit", "weir_store_batch_max_wait_seconds", "weir_store_publishers":
+			case "weir_store_queued_operations", "weir_store_queued_bytes", "weir_store_active_executions", "weir_store_active_executions_limit", "weir_store_active_natives", "weir_store_active_natives_limit":
 				sample.Store = append(sample.Store, metric)
 				seen[metric.Name] = true
 			}

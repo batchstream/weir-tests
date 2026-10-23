@@ -92,8 +92,7 @@ func Open(ctx context.Context, dataset *Dataset) (*Paths, error) {
 		return nil, errors.Join(err, paths.Close())
 	}
 	paths.owned = true
-	open := weir.OpenOptions{Seed: dataset.Config.WeirSeed, Stores: []string{dataset.Config.StoreName}}
-	client, err := weir.Open(ctx, open)
+	client, err := weir.New(dataset.Config.WeirAddress)
 	if err != nil {
 		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -104,7 +103,7 @@ func Open(ctx context.Context, dataset *Dataset) (*Paths, error) {
 	paths.client = client
 	info := direct.info
 	info.Protocol = "bidirectional gRPC Execute streams via published Weir SDK"
-	info.Endpoint = dataset.Config.WeirSeed
+	info.Endpoint = dataset.Config.WeirAddress
 	info.RetryPolicy = "SDK never replays business requests"
 	if dataset.Config.LuaMutations {
 		info.WritePolicy = "one Lua AtomicTransform per RPC; revision computed from current document; server batches snapshot transactions or native OCC; no custom document fields"

@@ -37,7 +37,7 @@ func TestIndependentSingleRequestClients(t *testing.T) {
 		t.Fatalf("build real client executable: %v\n%s", err, output)
 	}
 	operationTimeout := 10 * time.Second
-	options := fixture.Options{WeirBinary: serverBinary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"), Backends: []string{"mongo", "search"}, OwnerCount: 1, BatchSize: 32, DatabaseCPUs: 1}
+	options := fixture.Options{WeirBinary: serverBinary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"), Backends: []string{"mongo", "search"}, Replicas: 1, BatchSize: 32, DatabaseCPUs: 1}
 	cluster, err := fixture.Start(ctx, options)
 	if err != nil {
 		t.Fatal(err)
@@ -56,7 +56,7 @@ func TestIndependentSingleRequestClients(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			config := workload.Config{Backend: backend, MongoURI: cluster.MongoURI, SearchURL: cluster.SearchURL, WeirSeed: cluster.Seed(), StoreName: backend, Namespace: namespace, Records: 32, PayloadBytes: 64, Concurrency: 4}
+			config := workload.Config{Backend: backend, MongoURI: cluster.MongoURI, SearchURL: cluster.SearchURL, WeirAddress: cluster.Address(), StoreName: backend, Namespace: namespace, Records: 32, PayloadBytes: 64, Concurrency: 4}
 			dataset, err := workload.New(config)
 			if err != nil {
 				t.Fatal(err)

@@ -246,7 +246,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.mongoBinary == "" || slices.Contains(backends, "search") {
 		provenance["database_docker_cpu_quota"] = fmt.Sprint(opts.databaseCPUs)
 	}
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, OwnerCount: 1, BatchSize: opts.backendBatchLimit, PendingRecords: opts.pendingRecords, ExchangeBytes: opts.exchangeBytes, DatabaseCPUs: opts.databaseCPUs}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, Replicas: 1, BatchSize: opts.backendBatchLimit, PendingRecords: opts.pendingRecords, ExchangeBytes: opts.exchangeBytes, DatabaseCPUs: opts.databaseCPUs}
 	start.BatchBytes, start.BatchMaxWait, start.MaxInFlight = opts.backendBatchBytes, opts.backendBatchWait, opts.backendInFlight
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
@@ -276,7 +276,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if err != nil {
 			return err
 		}
-		config := workload.Config{Backend: backend, MongoURI: cluster.MongoURI, SearchURL: cluster.SearchURL, WeirSeed: cluster.Seed(), StoreName: backend, Namespace: namespace, Records: opts.records, PayloadBytes: opts.payload, Concurrency: opts.concurrency}
+		config := workload.Config{Backend: backend, MongoURI: cluster.MongoURI, SearchURL: cluster.SearchURL, WeirAddress: cluster.Address(), StoreName: backend, Namespace: namespace, Records: opts.records, PayloadBytes: opts.payload, Concurrency: opts.concurrency}
 		config.LuaMutations = opts.luaMutations
 		dataset, err := workload.New(config)
 		if err != nil {

@@ -106,20 +106,13 @@ func auditCrawlerServerConfiguration(stage crawlerStage, opts CrawlerOptions) er
 }
 
 func auditCrawlerLiveControls(stage crawlerStage, opts CrawlerOptions) error {
-	wait, inFlight := float64(0), float64(0)
+	inFlight := float64(0)
 	if stage.Path == "after" {
-		wait, inFlight = opts.AfterBatchMaxWait.Seconds(), float64(opts.AfterMaxInFlight)
+		inFlight = float64(opts.AfterMaxInFlight)
 	}
-	expected := map[string]float64{"weir_store_batch_max_wait_seconds": wait, "weir_store_active_executions_limit": inFlight}
-	if opts.CaptureEffectiveConfig {
-		operations, bytes := 32, 8<<20
-		if stage.Path == "after" {
-			operations, bytes = opts.AfterBatchMaxOperations, opts.AfterBatchMaxBytes
-		}
-		expected["weir_store_batch_max_operations"], expected["weir_store_batch_max_bytes"] = float64(operations), float64(bytes)
-		if stage.ServerEffectiveConfiguration == "" {
-			return errors.New("crawler effective configuration is missing")
-		}
+	expected := map[string]float64{"weir_store_active_executions_limit": inFlight}
+	if opts.CaptureEffectiveConfig && stage.ServerEffectiveConfiguration == "" {
+		return errors.New("crawler effective configuration is missing")
 	}
 	for _, snapshot := range []observe.Snapshot{stage.ServerBefore, stage.ServerAfter} {
 		if snapshot.Error != "" {

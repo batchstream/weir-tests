@@ -156,9 +156,8 @@ func TestPartialUpdateAuditReconstructsAllSeededFieldsAndWait(t *testing.T) {
 		if path == "after" {
 			inFlight = float64(opts.AfterMaxInFlight)
 		}
-		waitMetric := observe.Metric{Name: "weir_store_batch_max_wait_seconds", Labels: map[string]string{"store": "search"}, Value: float64(stage.BatchMaxWaitNS) / 1e9}
 		capMetric := observe.Metric{Name: "weir_store_active_executions_limit", Labels: map[string]string{"store": "search"}, Value: inFlight}
-		snapshot := observe.Snapshot{Metrics: []observe.Metric{waitMetric, capMetric}}
+		snapshot := observe.Snapshot{Metrics: []observe.Metric{capMetric}}
 		stage.ServerBefore, stage.ServerAfter = snapshot, snapshot
 		report.Stages = append(report.Stages, stage)
 	}

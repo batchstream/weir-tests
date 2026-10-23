@@ -33,8 +33,7 @@ func OpenClient(ctx context.Context, opts ClientOptions) (*Client, error) {
 		client := &Client{Executor: direct, Closer: direct}
 		return client, nil
 	}
-	open := weir.OpenOptions{Seed: opts.Dataset.Config.WeirSeed, Stores: []string{opts.Dataset.Config.StoreName}}
-	sdk, err := weir.Open(ctx, open)
+	sdk, err := weir.New(opts.Dataset.Config.WeirAddress)
 	if err != nil {
 		return nil, err
 	}

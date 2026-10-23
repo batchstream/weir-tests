@@ -93,12 +93,12 @@ func TestDockerThrottlingDistinguishesObservedZeroAndMissingCounters(t *testing.
 
 func TestResourceSampleRetainsOnlyFixedStoreGauges(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		fmt.Fprintln(writer, `weir_store_pending_entries{store="search"} 7`)
-		fmt.Fprintln(writer, `weir_store_pending_reserved_bytes{store="search"} 512`)
+		fmt.Fprintln(writer, `weir_store_queued_operations{store="search"} 7`)
+		fmt.Fprintln(writer, `weir_store_queued_bytes{store="search"} 512`)
 		fmt.Fprintln(writer, `weir_store_active_executions{store="search"} 4`)
 		fmt.Fprintln(writer, `weir_store_active_executions_limit{store="search"} 16`)
-		fmt.Fprintln(writer, `weir_store_batch_max_wait_seconds{store="search"} 0.005`)
-		fmt.Fprintln(writer, `weir_store_publishers{store="search"} 2`)
+		fmt.Fprintln(writer, `weir_store_active_natives{store="search"} 1`)
+		fmt.Fprintln(writer, `weir_store_active_natives_limit{store="search"} 64`)
 		fmt.Fprintln(writer, `unrelated_counter 999`)
 	}))
 	defer server.Close()

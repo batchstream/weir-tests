@@ -24,7 +24,7 @@ type settings struct {
 	backend          string
 	mongoURI         string
 	searchURL        string
-	weirSeed         string
+	weirAddress      string
 	store            string
 	operations       int
 	warmup           int
@@ -52,7 +52,7 @@ func run() (resultErr error) {
 	flag.StringVar(&input.backend, "backend", "mongo", "mongo or search")
 	flag.StringVar(&input.mongoURI, "mongo-uri", "", "explicit credential-free Mongo URI")
 	flag.StringVar(&input.searchURL, "search-url", "", "explicit credential-free Search root URL")
-	flag.StringVar(&input.weirSeed, "weir-seed", "", "explicit Weir initialization IP:port")
+	flag.StringVar(&input.weirAddress, "weir-address", "", "explicit Weir application IP:port")
 	flag.StringVar(&input.store, "store", "", "Weir Store connected to the same database")
 	flag.IntVar(&input.operations, "operations", 10000, "total fixed logical operations per path per round")
 	flag.IntVar(&input.warmup, "warmup", 1000, "unmeasured warmup operations per path")
@@ -74,7 +74,7 @@ func run() (resultErr error) {
 	if err != nil {
 		return err
 	}
-	config := workload.Config{AllowRemote: input.allowRemote, Backend: input.backend, MongoURI: input.mongoURI, SearchURL: input.searchURL, WeirSeed: input.weirSeed, StoreName: input.store, Namespace: namespace, Records: input.records, PayloadBytes: input.padding, Concurrency: input.workers}
+	config := workload.Config{AllowRemote: input.allowRemote, Backend: input.backend, MongoURI: input.mongoURI, SearchURL: input.searchURL, WeirAddress: input.weirAddress, StoreName: input.store, Namespace: namespace, Records: input.records, PayloadBytes: input.padding, Concurrency: input.workers}
 	dataset, err := workload.New(config)
 	if err != nil {
 		return err
@@ -123,10 +123,10 @@ func run() (resultErr error) {
 }
 
 func validate(input settings) error {
-	if input.backend != "mongo" && input.backend != "search" || input.weirSeed == "" || input.store == "" || input.timeout <= 0 {
-		return errors.New("requires --backend mongo|search, --weir-seed, --store and a positive timeout")
+	if input.backend != "mongo" && input.backend != "search" || input.weirAddress == "" || input.store == "" || input.timeout <= 0 {
+		return errors.New("requires --backend mongo|search, --weir-address, --store and a positive timeout")
 	}
-	if err := validateAddress(input.weirSeed, input.allowRemote); err != nil {
+	if err := validateAddress(input.weirAddress, input.allowRemote); err != nil {
 		return err
 	}
 	if input.backend == "mongo" {

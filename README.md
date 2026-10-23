@@ -77,17 +77,18 @@ limits.
 make integration
 ```
 
-The opt-in `integration` build tag starts MongoDB, Elasticsearch, two Store
-owners and a discovery node. Tagged tests require a prepared `WEIR_TEST_BINARY`.
-Coverage includes discovery through every node, direct owner connections, typed
-CRUD and Lua transformations, independent persistence checks, same-Store calls
+The opt-in `integration` build tag starts MongoDB, Elasticsearch and two
+independent Weir replicas hosting the same Stores. Tagged tests require a
+prepared `WEIR_TEST_BINARY`. Coverage includes SDK reads through every replica,
+NotFound for an unhosted Store, typed CRUD and Lua transformations, independent persistence checks, same-Store calls
 containing many records, slice preflight and per-record validation, Native MongoDB
-find/getMore and Search scroll pagination through alternating owners, backend-native
-filters and include/exclude projections, Native response metadata,
-cancellation, owner restart, directory convergence and persistent client recovery.
+find/getMore and Search scroll pagination through alternating replicas,
+backend-native filters and include/exclude projections, Native response metadata,
+cancellation, and a replica stop and restart that the other replica and the
+original client survive.
 Lua source returns one function receiving the current and incoming documents as
 ordinary tables. Tests cover object replacements, explicit keep/delete/reject
-actions, first creation, and concurrent read-modify-write through both owners.
+actions, first creation, and concurrent read-modify-write through both replicas.
 Nil, missing or multiple callback results return INVALID_ARGUMENT, including a
 callback that returns a missing current document. Missing records and missing
 backend targets have distinct typed outcomes. Native keeps backend semantics:
@@ -104,7 +105,7 @@ requests use the API common to Elasticsearch and OpenSearch; the fixture uses th
 pinned Elasticsearch version. Separate multi-process tests verify independent
 single-record callers.
 One-RPC reads deliver 64 MiB and 256 MiB across 1024 and 4096 distinct documents while
-checking bounded result credits and sampled owner RSS. Interrupted streams retain
+checking that queued records stay within the stream window and sampling replica RSS. Interrupted streams retain
 confirmed record outcomes; unconfirmed mutations remain indeterminate.
 
 Each Execute request carries one record and its consecutive index. The client

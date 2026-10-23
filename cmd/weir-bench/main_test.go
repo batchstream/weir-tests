@@ -17,7 +17,7 @@ func TestMongoCLISharedProfileValidation(t *testing.T) {
 		{"mongodb://localhost:1/?password=secret", false, false},
 	}
 	for _, test := range tests {
-		input := settings{backend: "mongo", mongoURI: test.uri, allowRemote: test.remote, weirSeed: "127.0.0.1:7447", store: "mongo", timeout: 1}
+		input := settings{backend: "mongo", mongoURI: test.uri, allowRemote: test.remote, weirAddress: "127.0.0.1:7447", store: "mongo", timeout: 1}
 		if err := validate(input); (err == nil) != test.valid {
 			t.Fatalf("valid=%v: %v", test.valid, err)
 		}
@@ -25,7 +25,7 @@ func TestMongoCLISharedProfileValidation(t *testing.T) {
 }
 
 func TestEndpointValidationRequiresExplicitOptInAndNoCredentials(t *testing.T) {
-	valid := settings{backend: "mongo", mongoURI: "mongodb://127.0.0.1:27028/?directConnection=true", weirSeed: "127.0.0.1:7447", store: "mongo", timeout: 1}
+	valid := settings{backend: "mongo", mongoURI: "mongodb://127.0.0.1:27028/?directConnection=true", weirAddress: "127.0.0.1:7447", store: "mongo", timeout: 1}
 	if err := validate(valid); err != nil {
 		t.Fatal(err)
 	}

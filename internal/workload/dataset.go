@@ -19,7 +19,7 @@ type Config struct {
 	Backend      string `json:"backend"`
 	MongoURI     string `json:"-"`
 	SearchURL    string `json:"-"`
-	WeirSeed     string `json:"weir_seed"`
+	WeirAddress  string `json:"weir_address"`
 	StoreName    string `json:"store"`
 	Namespace    string `json:"namespace"`
 	Records      int    `json:"records"`

@@ -171,7 +171,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		}
 		resultErr = errors.Join(resultErr, err)
 	}()
-	fixtureOptions := fixture.Options{WeirBinary: opts.Before, Backends: []string{"search"}, OwnerCount: 1, BatchSize: 32, BatchBytes: 8 << 20, SearchRetryAttempts: 4, PendingRecords: 4096, DatabaseCPUs: opts.CPUs}
+	fixtureOptions := fixture.Options{WeirBinary: opts.Before, Backends: []string{"search"}, Replicas: 1, BatchSize: 32, BatchBytes: 8 << 20, SearchRetryAttempts: 4, PendingRecords: 4096, DatabaseCPUs: opts.CPUs}
 	cluster, err := fixture.Start(ctx, fixtureOptions)
 	if err != nil {
 		return report, err
@@ -448,7 +448,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 		stage.ClientsExited = len(clients) == config.Processes && len(stage.ClientExitErrors) == 0
 	}()
 	for process := range config.Processes {
-		clientConfig := crawlerClientConfig{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, SearchURL: opts.Cluster.SearchURL, Seed: opts.Cluster.Nodes[0].Application, Namespace: opts.Namespace, Offset: process * (opts.Case.Workers / config.Processes), Threads: opts.Case.Workers / config.Processes, PageSize: config.PageSize, Processes: config.Processes, ProcessIndex: process, QueuePages: config.QueuePages, TimeoutNS: int64(config.Timeout), Visibility: config.Visibility, SeedPaddingBytes: config.SeedPaddingBytes}
+		clientConfig := crawlerClientConfig{InputShape: config.InputShape, Profile: opts.Case.Profile, Path: opts.Path, SearchURL: opts.Cluster.SearchURL, Address: opts.Cluster.Address(), Namespace: opts.Namespace, Offset: process * (opts.Case.Workers / config.Processes), Threads: opts.Case.Workers / config.Processes, PageSize: config.PageSize, Processes: config.Processes, ProcessIndex: process, QueuePages: config.QueuePages, TimeoutNS: int64(config.Timeout), Visibility: config.Visibility, SeedPaddingBytes: config.SeedPaddingBytes}
 		client, err := startCrawlerProcess(ctx, config.Executable, clientConfig)
 		if err != nil {
 			return stage, err

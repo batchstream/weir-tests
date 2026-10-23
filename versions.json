@@ -1,13 +1,13 @@
 {
   "go": "1.27.1",
-  "sdk": "v0.16.0",
-  "protocol": "v0.14.0",
-  "weir_source": "298d88ac2378959eef6b88b61e191366cbb25d22",
+  "sdk": "v0.17.0",
+  "protocol": "v0.15.0",
+  "weir_source": "3f3db884e4a39f9d6556c6b7b2af4385afdfae9b",
   "mongodb_version": "8.0.32",
   "elasticsearch_version": "8.19.22",
   "elasticsearch_image": "docker.elastic.co/elasticsearch/elasticsearch@sha256:e98f9c3b09beb2fbb9eaf667d602df3f0e00bd3644138b8458dc17ba1a675595",
-  "weir_version": "v0.2.1-0.20261022105755-298d88ac2378",
-  "weir_sum": "h1:VflMdxwgyqxHN32XirIiCX0w/QhmxsJpUnFfc+HDnd8=",
+  "weir_version": "v0.2.1-0.20261023205513-3f3db884e4a3",
+  "weir_sum": "h1:DU1vos2XfrQo58iuwkWJd4dtSFQhD9KGnaE4GDnBuAw=",
   "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
   "mongodb_native": {
     "darwin/amd64": {
