@@ -61,7 +61,7 @@ func auditCrawlerServerConfiguration(stage crawlerStage, opts CrawlerOptions) er
 		return err
 	}
 	if len(configuration.Stores) != 1 || configuration.Stores[0].Name != "search" {
-		return errors.New("crawler stage lacks its owned Search route configuration")
+		return errors.New("crawler stage lacks its owned Search Store configuration")
 	}
 	operations, bytes, inFlight, wait := 32, 8<<20, 0, time.Duration(0)
 	if stage.Path == "after" {
@@ -99,12 +99,23 @@ func auditCrawlerServerConfiguration(stage crawlerStage, opts CrawlerOptions) er
 	return nil
 }
 
-func auditCrawlerLiveControls(stage crawlerStage, opts CrawlerOptions) error {
-	inFlight := float64(0)
-	if stage.Path == "after" {
-		inFlight = float64(opts.AfterMaxInFlight)
+// weirDefaultMaxInFlight is the execution limit Weir selects for max_in_flight: 0.
+const weirDefaultMaxInFlight = 16
+
+// liveExecutionLimit is the execution limit gauge a declared max_in_flight produces.
+func liveExecutionLimit(inFlight int) float64 {
+	if inFlight == 0 {
+		return weirDefaultMaxInFlight
 	}
-	expected := map[string]float64{"weir_store_active_executions_limit": inFlight}
+	return float64(inFlight)
+}
+
+func auditCrawlerLiveControls(stage crawlerStage, opts CrawlerOptions) error {
+	inFlight := 0
+	if stage.Path == "after" {
+		inFlight = opts.AfterMaxInFlight
+	}
+	expected := map[string]float64{"weir_store_active_executions_limit": liveExecutionLimit(inFlight)}
 	for _, snapshot := range []observe.Snapshot{stage.ServerBefore, stage.ServerAfter} {
 		if snapshot.Error != "" {
 			return errors.New("crawler live batching controls are unavailable")

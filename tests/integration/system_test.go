@@ -41,7 +41,7 @@ func TestSystemIntegration(t *testing.T) {
 		WeirBinary: binary, MongoBinary: os.Getenv("WEIR_TEST_MONGODB_BINARY"),
 		Backends:  []string{"mongo", "search"},
 		Replicas:  2,
-		BatchSize: 513, PendingRecords: streamPendingRecords,
+		BatchSize: 513,
 	}
 	cluster, err := fixture.Start(ctx, options)
 	if err != nil {

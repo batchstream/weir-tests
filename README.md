@@ -203,12 +203,9 @@ ratio is a CI threshold.
 
 The lab leaves server configuration at its defaults unless a run explicitly sets
 `-backend-batch-limit` (`batching.max_operations`), `-backend-batch-bytes`,
-`-backend-batch-wait`, `-backend-max-in-flight`, `-pending-records`
-(`transport.max_pending_records`) or `-exchange-bytes`
-(`backend.max_exchange_bytes`). Zero means omitted; the generated fixture
-configuration and raw metrics preserve the actual settings, and
-`-capture-effective-config` keeps the server's resolved configuration in the
-report. The SDK and native callers both use the complete 10s request budget.
+`-backend-batch-wait` or `-backend-max-in-flight`. Zero means omitted; the
+report keeps the generated Weir configuration, and raw metrics preserve the
+actual settings. The SDK and native callers both use the complete 10s request budget.
 
 These are closed-loop matched-concurrency measurements, not fixed offered-rate
 experiments. Local macOS measurements describe the observed workload on that host

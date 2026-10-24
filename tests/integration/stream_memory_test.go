@@ -20,6 +20,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+// streamPendingRecords is Weir's fixed per-stream transport window.
 const streamPendingRecords = 32
 
 // A ReadStream uses one Execute RPC with no other business RPCs active here.

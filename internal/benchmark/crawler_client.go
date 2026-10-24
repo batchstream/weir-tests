@@ -227,7 +227,7 @@ func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawle
 	}
 	var body bytes.Buffer
 	for _, mutation := range mutations {
-		metadata := map[string]any{"_index": crawlerIndex(c.config.Namespace, mutation.Product), "_id": mutation.ID, "retry_on_conflict": 3}
+		metadata := map[string]any{"_index": crawlerIndex(c.config.Namespace, mutation.Product), "_id": mutation.ID, "retry_on_conflict": 4}
 		action := map[string]any{"update": metadata}
 		script := map[string]any{"lang": "painless", "source": crawlerNative, "params": mutation}
 		payload := map[string]any{"script": script}
@@ -317,7 +317,7 @@ func (c *crawlerClient) executeSingleNative(ctx context.Context, mutation crawle
 	if err != nil {
 		return false, err
 	}
-	query := url.Values{"refresh": {"wait_for"}, "wait_for_active_shards": {"1"}, "timeout": {"10s"}, "retry_on_conflict": {"3"}}
+	query := url.Values{"refresh": {"wait_for"}, "wait_for_active_shards": {"1"}, "timeout": {"10s"}, "retry_on_conflict": {"4"}}
 	if c.config.Profile == "partial-update" {
 		query.Set("retry_on_conflict", "0")
 		if c.config.Visibility == "application_acknowledged" {

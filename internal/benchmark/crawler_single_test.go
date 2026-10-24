@@ -25,7 +25,7 @@ func TestCrawlerSingleNativeHasAtomicEndpointAndConcurrentSellerFanout(t *testin
 			http.Error(writer, "wrong endpoint", 400)
 			return
 		}
-		if request.URL.Query().Get("retry_on_conflict") != "3" || request.URL.Query().Get("refresh") != "wait_for" || request.URL.Query().Get("wait_for_active_shards") != "1" {
+		if request.URL.Query().Get("retry_on_conflict") != "4" || request.URL.Query().Get("refresh") != "wait_for" || request.URL.Query().Get("wait_for_active_shards") != "1" {
 			t.Error("native durability/visibility policy changed", request.URL)
 		}
 		var payload struct {

@@ -46,15 +46,12 @@ type labOptions struct {
 	warmupDuration    time.Duration
 	duration          time.Duration
 	databaseCPUs      float64
-	pendingRecords    int
-	exchangeBytes     int
 	clientProcesses   int
 	backendBatchLimit int
 	backendBatchBytes int
 	backendBatchWait  time.Duration
 	backendInFlight   int
 	luaMutations      bool
-	captureEffective  bool
 }
 
 func main() {
@@ -87,13 +84,10 @@ func main() {
 	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 0, "batching.max_operations override; 0 uses server default, 1 disables aggregation")
 	flag.IntVar(&opts.backendBatchBytes, "backend-batch-bytes", 0, "batching.max_bytes override; 0 uses server default")
 	flag.DurationVar(&opts.backendBatchWait, "backend-batch-wait", 0, "batching.max_wait collection window")
-	flag.IntVar(&opts.backendInFlight, "backend-max-in-flight", 0, "batching.max_in_flight; 0 allows unlimited executions")
+	flag.IntVar(&opts.backendInFlight, "backend-max-in-flight", 0, "batching.max_in_flight override; 0 uses server default")
 	flag.DurationVar(&opts.warmupDuration, "warmup-duration", 10*time.Second, "untimed warmup per saturation stage")
 	flag.DurationVar(&opts.duration, "duration", 20*time.Second, "timed duration per saturation stage, including completion joins")
 	flag.Float64Var(&opts.databaseCPUs, "database-cpus", 1, "enforced CPU quota for each owned Docker database; native Mongo uses all host CPUs")
-	flag.IntVar(&opts.pendingRecords, "pending-records", 0, "transport.max_pending_records override; 0 uses server default")
-	flag.IntVar(&opts.exchangeBytes, "exchange-bytes", 0, "backend.max_exchange_bytes override; 0 uses server default")
-	flag.BoolVar(&opts.captureEffective, "capture-effective-config", false, "retain the owned server's redacted effective configuration")
 	flag.Parse()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -160,8 +154,8 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.databaseCPUs <= 0 || opts.databaseCPUs > float64(runtime.NumCPU()) {
 		return errors.New("database CPU quota exceeds host budget")
 	}
-	if opts.backendBatchLimit < 0 || opts.backendBatchLimit > 1024 || opts.pendingRecords < 0 || opts.pendingRecords > 4096 || opts.exchangeBytes < 0 || opts.exchangeBytes > 1<<30 || opts.exchangeBytes > 0 && opts.exchangeBytes < 4<<20 {
-		return errors.New("invalid batching, pending-records or exchange-bytes override")
+	if opts.backendBatchLimit < 0 || opts.backendBatchLimit > 1024 {
+		return errors.New("invalid batching override")
 	}
 	if opts.backendBatchBytes < 0 || opts.backendBatchBytes > 32<<20 || opts.backendBatchWait < 0 || opts.backendBatchWait > time.Second || opts.backendInFlight < 0 || opts.backendInFlight > 4096 || opts.backendBatchLimit == 0 && (opts.backendBatchBytes > 0 || opts.backendBatchWait > 0 || opts.backendInFlight > 0) {
 		return errors.New("batch byte, wait and concurrency overrides require an explicit batch limit and valid bounds")
@@ -192,16 +186,14 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	}
 	digest := sha256.Sum256(data)
 	provenance := map[string]string{
-		"weir_binary_sha256":                          hex.EncodeToString(digest[:]),
-		"topology":                                    "native client and Weir on one host; dedicated database Docker containers with loopback ports",
-		"client_operation_timeout":                    businessTimeout.String(),
-		"weir_batching_max_operations_override":       fmt.Sprint(opts.backendBatchLimit),
-		"weir_batching_max_bytes_override":            fmt.Sprint(opts.backendBatchBytes),
-		"weir_batching_max_wait_override":             opts.backendBatchWait.String(),
-		"weir_batching_max_in_flight_override":        fmt.Sprint(opts.backendInFlight),
-		"weir_transport_max_pending_records_override": fmt.Sprint(opts.pendingRecords),
-		"weir_backend_max_exchange_bytes_override":    fmt.Sprint(opts.exchangeBytes),
-		"host_cpus": fmt.Sprint(runtime.NumCPU()),
+		"weir_binary_sha256":                    hex.EncodeToString(digest[:]),
+		"topology":                              "native client and Weir on one host; dedicated database Docker containers with loopback ports",
+		"client_operation_timeout":              businessTimeout.String(),
+		"weir_batching_max_operations_override": fmt.Sprint(opts.backendBatchLimit),
+		"weir_batching_max_bytes_override":      fmt.Sprint(opts.backendBatchBytes),
+		"weir_batching_max_wait_override":       opts.backendBatchWait.String(),
+		"weir_batching_max_in_flight_override":  fmt.Sprint(opts.backendInFlight),
+		"host_cpus":                             fmt.Sprint(runtime.NumCPU()),
 	}
 	identityRaw, err := exec.CommandContext(ctx, binary, "version").Output()
 	if err != nil {
@@ -246,7 +238,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	if opts.mongoBinary == "" || slices.Contains(backends, "search") {
 		provenance["database_docker_cpu_quota"] = fmt.Sprint(opts.databaseCPUs)
 	}
-	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, Replicas: 1, BatchSize: opts.backendBatchLimit, PendingRecords: opts.pendingRecords, ExchangeBytes: opts.exchangeBytes, DatabaseCPUs: opts.databaseCPUs}
+	start := fixture.Options{WeirBinary: binary, MongoBinary: opts.mongoBinary, Backends: backends, Replicas: 1, BatchSize: opts.backendBatchLimit, DatabaseCPUs: opts.databaseCPUs}
 	start.BatchBytes, start.BatchMaxWait, start.MaxInFlight = opts.backendBatchBytes, opts.backendBatchWait, opts.backendInFlight
 	cluster, err := fixture.Start(ctx, start)
 	if err != nil {
@@ -258,18 +250,11 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		resultErr = errors.Join(resultErr, cluster.Close(cleanup))
 	}()
 	provenance["fixture_logs"] = cluster.Directory
-	if opts.captureEffective {
-		effective, err := cluster.EffectiveConfiguration(ctx, 0)
-		if err != nil {
-			return err
-		}
-		provenance["weir_effective_config"] = effective
-		routes, err := os.ReadFile(filepath.Join(cluster.Directory, "node-0-routes.json"))
-		if err != nil {
-			return err
-		}
-		provenance["weir_routing_config"] = string(routes)
+	config, err := os.ReadFile(filepath.Join(cluster.Directory, "node-0-config.json"))
+	if err != nil {
+		return err
 	}
+	provenance["weir_config"] = string(config)
 	fmt.Println("Owned fixture logs:", cluster.Directory)
 	for _, backend := range backends {
 		namespace, err := workload.NewNamespace()

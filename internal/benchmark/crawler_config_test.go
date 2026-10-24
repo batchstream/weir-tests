@@ -128,7 +128,7 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 	cap.Value = 0
 	stage.ServerAfter.Metrics = []observe.Metric{cap}
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
-		t.Fatal("changed live cap was accepted despite the route declaration")
+		t.Fatal("changed live cap was accepted despite the Store declaration")
 	}
 	cap.Value = 4
 	stage.ServerAfter.Metrics = []observe.Metric{cap, cap}
