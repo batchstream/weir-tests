@@ -159,7 +159,7 @@ func TestEveryReplicaHostsTheSameStoresOnItsOwnListener(t *testing.T) {
 		if err := c.writeConfiguration(i); err != nil {
 			t.Fatal(err)
 		}
-		data, err := os.ReadFile(c.nodeFile(i, "config.json"))
+		data, err := os.ReadFile(c.ConfigPath(i))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -196,9 +196,22 @@ func TestEveryReplicaHostsTheSameStoresOnItsOwnListener(t *testing.T) {
 	if c.Address() != c.Nodes[0].Application {
 		t.Fatal("cluster address is not the first replica")
 	}
-	first, _ := os.ReadFile(c.nodeFile(0, "config.json"))
-	second, _ := os.ReadFile(c.nodeFile(1, "config.json"))
-	if bytes.Equal(first, second) || !bytes.Equal(first[bytes.Index(first, []byte(`"stores"`)):], second[bytes.Index(second, []byte(`"stores"`)):]) {
+	var replicas [2]map[string]any
+	for i := range replicas {
+		data, err := os.ReadFile(c.ConfigPath(i))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(data, &replicas[i]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if reflect.DeepEqual(replicas[0]["listeners"], replicas[1]["listeners"]) {
+		t.Fatal("replicas share listeners")
+	}
+	delete(replicas[0], "listeners")
+	delete(replicas[1], "listeners")
+	if !reflect.DeepEqual(replicas[0], replicas[1]) {
 		t.Fatal("replicas must differ only in their listeners")
 	}
 }
@@ -379,7 +392,7 @@ func TestOrdinaryConfigurationLeavesServerDefaultsUnchanged(t *testing.T) {
 	if err := c.writeConfiguration(0); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(c.nodeFile(0, "config.json"))
+	data, err := os.ReadFile(c.ConfigPath(0))
 	if err != nil || bytes.Contains(data, []byte(`"batching"`)) || bytes.Contains(data, []byte(`"shutdown_timeout"`)) {
 		t.Fatal("ordinary fixture must leave server defaults unchanged", string(data), err)
 	}
@@ -578,30 +591,30 @@ func TestConfigurationExposesBatchCollectionWaitWithoutChangingDefaults(t *testi
 		if err := cluster.writeConfiguration(0); err != nil {
 			t.Fatal(err)
 		}
-		raw, err := os.ReadFile(cluster.nodeFile(0, "config.json"))
+		raw, err := os.ReadFile(cluster.ConfigPath(0))
 		if err != nil {
 			t.Fatal(err)
 		}
-		var routing struct {
+		var configuration struct {
 			Stores []struct {
 				Batching map[string]any `json:"batching"`
 			} `json:"stores"`
 		}
-		if err := json.Unmarshal(raw, &routing); err != nil {
+		if err := json.Unmarshal(raw, &configuration); err != nil {
 			t.Fatal(err)
 		}
-		batching := routing.Stores[0].Batching
+		batching := configuration.Stores[0].Batching
 		if batching["max_operations"] != float64(64) || batching["max_bytes"] != "65536B" || batching["max_in_flight"] != float64(4) {
 			t.Fatal("explicit batch controls were dropped", string(raw))
 		}
-		configured, exists := routing.Stores[0].Batching["max_wait"]
+		configured, exists := batching["max_wait"]
 		if !exists || configured != wait.String() {
 			t.Fatal("collection wait hidden, dropped, or enabled by default", string(raw))
 		}
 	}
 }
 
-func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t *testing.T) {
+func TestBatchLimitWritesEveryBatchingControl(t *testing.T) {
 	for _, operations := range []int{0, 32} {
 		opts := Options{Backends: []string{"search"}, BatchSize: operations}
 		cluster := &Cluster{Directory: t.TempDir(), options: opts, SearchURL: "http://127.0.0.1:50002", owner: "test"}
@@ -610,19 +623,19 @@ func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t 
 		if err := cluster.writeConfiguration(0); err != nil {
 			t.Fatal(err)
 		}
-		raw, err := os.ReadFile(cluster.nodeFile(0, "config.json"))
+		raw, err := os.ReadFile(cluster.ConfigPath(0))
 		if err != nil {
 			t.Fatal(err)
 		}
-		var routes struct {
+		var configuration struct {
 			Stores []struct {
 				Batching map[string]any `json:"batching"`
 			} `json:"stores"`
 		}
-		if err := json.Unmarshal(raw, &routes); err != nil {
+		if err := json.Unmarshal(raw, &configuration); err != nil {
 			t.Fatal(err)
 		}
-		batch := routes.Stores[0].Batching
+		batch := configuration.Stores[0].Batching
 		if operations == 0 {
 			if batch != nil {
 				t.Fatal("default path emitted a hidden batching override", string(raw))

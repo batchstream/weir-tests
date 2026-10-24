@@ -137,6 +137,22 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 	}
 }
 
+func TestCrawlerBeforePathExpectsWeirDefaultExecutionLimit(t *testing.T) {
+	opts := CrawlerOptions{AfterMaxInFlight: 4}
+	labels := map[string]string{"store": "search"}
+	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 16}
+	snapshot := observe.Snapshot{Metrics: []observe.Metric{cap}}
+	stage := crawlerStage{Path: "before", ServerBefore: snapshot, ServerAfter: snapshot}
+	if err := auditCrawlerLiveControls(stage, opts); err != nil {
+		t.Fatal("max_in_flight 0 must audit as Weir's 16 executions", err)
+	}
+	cap.Value = 0
+	stage.ServerAfter.Metrics = []observe.Metric{cap}
+	if err := auditCrawlerLiveControls(stage, opts); err == nil {
+		t.Fatal("an unlimited live gauge was accepted for the before path")
+	}
+}
+
 func TestCrawlerAuditRequiresEveryExplicitBatchingControl(t *testing.T) {
 	opts := CrawlerOptions{AfterBatchMaxOperations: 128, AfterBatchMaxBytes: 8 << 20, AfterMaxInFlight: 16,
 		AfterBatchMaxWait: 5 * time.Millisecond, Paths: []string{"direct", "after"}}

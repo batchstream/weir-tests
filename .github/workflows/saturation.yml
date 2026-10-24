@@ -26,6 +26,11 @@ on:
         required: true
         type: choice
         options: ['32', '128', '256', '1']
+      backend-max-in-flight:
+        description: Concurrent backend executions per Store; keep at least the highest client level
+        default: '256'
+        required: true
+        type: string
       lua-mutations:
         description: Compare native single-record RMW with server-batched Lua mutations
         default: false
@@ -93,13 +98,14 @@ jobs:
           DATABASE_CPUS: ${{ inputs.database-cpus }}
           CLIENT_LEVELS: ${{ inputs.client-levels }}
           BACKEND_BATCH_LIMIT: ${{ inputs.backend-batch-limit }}
+          BACKEND_MAX_IN_FLIGHT: ${{ inputs.backend-max-in-flight }}
           LUA_MUTATIONS: ${{ inputs.lua-mutations }}
           BACKEND: ${{ inputs.backend }}
           MODE: ${{ inputs.mode }}
           BATCH_SIZES: ${{ inputs.batch-sizes }}
         run: |
           arguments=(-mode "$MODE" -weir .tools/weir -backend "$BACKEND" -database-cpus "$DATABASE_CPUS"
-            -backend-batch-limit "$BACKEND_BATCH_LIMIT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS"
+            -backend-batch-limit "$BACKEND_BATCH_LIMIT" -backend-max-in-flight "$BACKEND_MAX_IN_FLIGHT" -client-processes 4 -concurrency-levels "$CLIENT_LEVELS"
             -batch-sizes "$BATCH_SIZES" -records 8192 -payload-bytes 1024 -write-percent "$WRITE_PERCENT"
             -rounds 3 -warmup-duration 10s -duration 20s -output results/local/saturation)
           if [ "$LUA_MUTATIONS" = true ]; then

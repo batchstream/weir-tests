@@ -201,11 +201,15 @@ low database CPU leaves maximum-capacity comparison unavailable. Reports still
 show observed throughput and latency at each matched concurrency. No performance
 ratio is a CI threshold.
 
-The lab leaves server configuration at its defaults unless a run explicitly sets
-`-backend-batch-limit` (`batching.max_operations`), `-backend-batch-bytes`,
-`-backend-batch-wait` or `-backend-max-in-flight`. Zero means omitted; the
-report keeps the generated Weir configuration, and raw metrics preserve the
-actual settings. The SDK and native callers both use the complete 10s request budget.
+Without `-backend-batch-limit` the lab leaves Weir's batching at its defaults.
+An explicit limit (`batching.max_operations`) writes all four batching controls:
+`-backend-batch-bytes` 0 writes 8 MiB, `-backend-batch-wait` 0 executes
+immediately and `-backend-max-in-flight` 0 selects Weir's default of 16
+concurrent executions per Store. Weir's execution limit bounds matched-concurrency
+comparisons, so raise it to the highest client level when the native path should
+not out-run it. The report keeps the generated Weir configuration, and raw
+metrics preserve the actual settings. The SDK and native callers both use the
+complete 10s request budget.
 
 These are closed-loop matched-concurrency measurements, not fixed offered-rate
 experiments. Local macOS measurements describe the observed workload on that host
@@ -216,8 +220,9 @@ and do not show Linux database saturation or a production capacity limit.
 `saturation.yml` runs only on manual dispatch on a Linux amd64 runner. It prepares
 the pinned server, images and (unless the backend is `search`) the native MongoDB
 fixture, then runs one `weir-lab` saturation matrix with the selected write
-percentage, Search CPU quota, concurrency levels, backend batch limit, Lua
-mutations, backend, mode and records per call. The default curve is
+percentage, Search CPU quota, concurrency levels, backend batch limit and
+execution limit, Lua mutations, backend, mode and records per call. The default
+execution limit of 256 matches the highest default client level. The default curve is
 4/8/32/128/256 total workers across four client processes, three alternating
 rounds and 10s warmup plus 20s measurement per path. Native Mongo uses all host
 CPUs; `database-cpus` applies only to Docker Search. Reports, the run log and
@@ -226,7 +231,7 @@ fixture logs are uploaded as a workflow artifact.
 ```sh
 gh workflow run saturation.yml --ref main \
   -f backend=all -f write-percent=10 -f client-levels=8,32 \
-  -f backend-batch-limit=32 -f mode=saturation -f batch-sizes=1
+  -f backend-batch-limit=32 -f backend-max-in-flight=256 -f mode=saturation -f batch-sizes=1
 ```
 
 ## Performance matrix

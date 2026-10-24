@@ -8,6 +8,8 @@ from pathlib import Path
 
 
 REPORT_SCHEMA = 1
+# Weir's execution limit for an omitted or zero batching.max_in_flight.
+WEIR_DEFAULT_MAX_IN_FLIGHT = 16
 
 
 def cpu_cost(stage):
@@ -111,7 +113,7 @@ def rows(report):
         configuration = stage['ServerConfiguration'] or {}
         stores = configuration.get('stores') or []
         batching = stores[0].get('batching', {}) if len(stores) == 1 else {}
-        row = dict(visibility=parameters['Visibility'], seed_padding_bytes=parameters['SeedPaddingBytes'], batch_max_operations=batching.get('max_operations'), batch_max_bytes=batching.get('max_bytes'), batch_max_in_flight=batching['max_in_flight'] if batching else None, logical_unit='partial_update' if stage['Profile'] == 'partial-update' else 'crawler_product',input_shape=input_shape,http_observer=observer_mode,batch_max_wait_ms=stage['BatchMaxWaitNS'] / 1e6,profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
+        row = dict(visibility=parameters['Visibility'], seed_padding_bytes=parameters['SeedPaddingBytes'], batch_max_operations=batching.get('max_operations'), batch_max_bytes=batching.get('max_bytes'), batch_max_in_flight=(batching.get('max_in_flight') or WEIR_DEFAULT_MAX_IN_FLIGHT) if batching else None, logical_unit='partial_update' if stage['Profile'] == 'partial-update' else 'crawler_product',input_shape=input_shape,http_observer=observer_mode,batch_max_wait_ms=stage['BatchMaxWaitNS'] / 1e6,profile=stage['Profile'], mode=stage['Mode'], offered_products_s=stage['ProductsPerSecond'],
                    workers=stage['Concurrency'], path=stage['Path'], round=stage['Round'],
                    qualified=qualified, stable_arrivals=stable, offered=stage['Offered'],
                    rejected=stage['Rejected'], completed=success, failed=stage['Failed'],

@@ -82,9 +82,9 @@ func main() {
 	flag.StringVar(&opts.batches, "batch-sizes", "1", "records per call: saturation requires 1; bulk-saturation accepts 1 through 64")
 	flag.IntVar(&opts.clientProcesses, "client-processes", 4, "independent client OS processes; each level is evenly divided into concurrent workers and its own connection pool")
 	flag.IntVar(&opts.backendBatchLimit, "backend-batch-limit", 0, "batching.max_operations override; 0 uses server default, 1 disables aggregation")
-	flag.IntVar(&opts.backendBatchBytes, "backend-batch-bytes", 0, "batching.max_bytes override; 0 uses server default")
-	flag.DurationVar(&opts.backendBatchWait, "backend-batch-wait", 0, "batching.max_wait collection window")
-	flag.IntVar(&opts.backendInFlight, "backend-max-in-flight", 0, "batching.max_in_flight override; 0 uses server default")
+	flag.IntVar(&opts.backendBatchBytes, "backend-batch-bytes", 0, "batching.max_bytes override; 0 writes 8 MiB with an explicit batch limit")
+	flag.DurationVar(&opts.backendBatchWait, "backend-batch-wait", 0, "batching.max_wait collection window; 0 executes immediately")
+	flag.IntVar(&opts.backendInFlight, "backend-max-in-flight", 0, "batching.max_in_flight override; 0 selects Weir's default of 16")
 	flag.DurationVar(&opts.warmupDuration, "warmup-duration", 10*time.Second, "untimed warmup per saturation stage")
 	flag.DurationVar(&opts.duration, "duration", 20*time.Second, "timed duration per saturation stage, including completion joins")
 	flag.Float64Var(&opts.databaseCPUs, "database-cpus", 1, "enforced CPU quota for each owned Docker database; native Mongo uses all host CPUs")
@@ -250,7 +250,7 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		resultErr = errors.Join(resultErr, cluster.Close(cleanup))
 	}()
 	provenance["fixture_logs"] = cluster.Directory
-	config, err := os.ReadFile(filepath.Join(cluster.Directory, "node-0-config.json"))
+	config, err := os.ReadFile(cluster.ConfigPath(0))
 	if err != nil {
 		return err
 	}

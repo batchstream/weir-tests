@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
@@ -154,7 +153,7 @@ func RunCrawler(ctx context.Context, opts CrawlerOptions) (report *CrawlerReport
 		server := crawlerServer{Path: binary, SHA256: hex.EncodeToString(sum[:])}
 		servers[name] = server
 	}
-	report = &CrawlerReport{Schema: crawlerReportSchema, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Declared-path same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same crawler Lua on the before and after Weir servers; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two crawler indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=4 and Weir's five conflict attempts (same five total attempts); native script supports every generated value, not arbitrary user Lua"}
+	report = &CrawlerReport{Schema: crawlerReportSchema, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: opts, Sources: crawlerSources(), Servers: servers, Method: "Declared-path same-runner rotation; native atomic Elasticsearch single-record _update (single input) or scripted bulk (page input) versus the same crawler Lua on the before and after Weir servers; 1 product plus 2 seller documents per successful product; products then sellers in two query-visible phases, with an additional first reconciliation phase only in the two-step ablation; per-process pools remain open across warmup/reset/timed phases; QUERY_VISIBLE / refresh=wait_for, two crawler indices, each with one primary shard and zero replicas, request translog durability; bounded per-worker open-loop queues with absolute arrival deadlines; latency starts at scheduled arrival, all drains included in completed throughput and database CPU; full independent Go domain oracle versus normal searchable persisted sources; one shared no-change seller when (worker+page)%100==0, no measured production distribution claimed; native retry_on_conflict=4 and Weir's five conflict attempts (same five total attempts); Weir runs at most 16 concurrent Store executions unless the after path sets max_in_flight; native script supports every generated value, not arbitrary user Lua"}
 	if slices.Contains(opts.Profiles, "partial-update") {
 		report.Sources = partialUpdateSources()
 		report.Method = "Mechanism control, not a crawler-equivalent workload: independent single-record callers update one existing product with the same deterministic partial doc via native _update or Weir BackendExpression; no Lua, external read-modify-write, or seller updates. Declared-path same-runner rotation with recorded binary digests and declared batch operations/bytes/in-flight/wait controls. Explicit application_acknowledged/refresh=false or query_visible/refresh=wait_for completion; request durability, zero conflict retries for both partial-update paths, two one-primary zero-replica indices, 1s refresh. Disjoint worker keys; every operation changes a sequence value. Existing bounded absolute-arrival queues, latency including queue and drain, full seeded-document oracle including untouched fields, database CPU and command counters retained."
@@ -409,7 +408,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	}
 	binarySum := sha256.Sum256(binaryRaw)
 	stage.ServerSHA256 = hex.EncodeToString(binarySum[:])
-	stage.ServerConfiguration, err = os.ReadFile(filepath.Join(opts.Cluster.Directory, "node-0-config.json"))
+	stage.ServerConfiguration, err = os.ReadFile(opts.Cluster.ConfigPath(0))
 	if err != nil {
 		return stage, err
 	}

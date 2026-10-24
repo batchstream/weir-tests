@@ -246,7 +246,12 @@ func (c *Cluster) writeConfiguration(index int) error {
 		stores = append(stores, store)
 	}
 	config := map[string]any{"listeners": listeners, "stores": stores}
-	return writeJSON(c.nodeFile(index, "config.json"), config)
+	return writeJSON(c.ConfigPath(index), config)
+}
+
+// ConfigPath is the Weir configuration file a replica was started with.
+func (c *Cluster) ConfigPath(index int) string {
+	return c.nodeFile(index, "config.json")
 }
 
 func (c *Cluster) nodeFile(index int, suffix string) string {
@@ -276,7 +281,7 @@ func (c *Cluster) startNode(ctx context.Context, index int) error {
 		return err
 	}
 	logOffset := info.Size()
-	cmd := exec.Command(c.options.WeirBinary, "serve", "--config", c.nodeFile(index, "config.json"))
+	cmd := exec.Command(c.options.WeirBinary, "serve", "--config", c.ConfigPath(index))
 	cmd.Stdout, cmd.Stderr = log, log
 	if err := cmd.Start(); err != nil {
 		_ = log.Close()
