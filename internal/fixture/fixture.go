@@ -31,15 +31,12 @@ type Options struct {
 	MongoBinary string
 	Backends    []string
 	// Replicas is the number of independent Weir processes hosting every Store.
-	Replicas            int
-	BatchSize           int
-	BatchBytes          int
-	BatchMaxWait        time.Duration
-	MaxInFlight         int
-	SearchRetryAttempts int
-	PendingRecords      int
-	ExchangeBytes       int
-	DatabaseCPUs        float64
+	Replicas     int
+	BatchSize    int
+	BatchBytes   int
+	BatchMaxWait time.Duration
+	MaxInFlight  int
+	DatabaseCPUs float64
 }
 
 type Node struct {
@@ -157,8 +154,8 @@ func validateOptions(options Options) (Options, error) {
 	if options.Replicas < 1 || options.Replicas > 8 {
 		return options, errors.New("Replicas must be between 1 and 8")
 	}
-	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.BatchBytes < 0 || options.BatchBytes > 32<<20 || options.BatchBytes > 0 && options.BatchSize == 0 || options.SearchRetryAttempts < 0 || options.SearchRetryAttempts > 100 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.MaxInFlight > 0 && options.BatchSize == 0 || options.BatchSize < 0 || options.BatchSize > 1024 || options.PendingRecords < 0 || options.PendingRecords > 4096 || options.ExchangeBytes < 0 || options.ExchangeBytes > 1<<30 || options.ExchangeBytes > 0 && options.ExchangeBytes < 4<<20 {
-		return options, errors.New("invalid batching, transport or exchange limit")
+	if options.BatchMaxWait < 0 || options.BatchMaxWait > time.Second || options.BatchMaxWait > 0 && options.BatchSize == 0 || options.BatchBytes < 0 || options.BatchBytes > 32<<20 || options.BatchBytes > 0 && options.BatchSize == 0 || options.MaxInFlight < 0 || options.MaxInFlight > 4096 || options.MaxInFlight > 0 && options.BatchSize == 0 || options.BatchSize < 0 || options.BatchSize > 1024 {
+		return options, errors.New("invalid batching limit")
 	}
 	return options, nil
 }
@@ -223,34 +220,19 @@ func (c *Cluster) start(ctx context.Context) error {
 	return c.writeManifest()
 }
 
+// writeConfiguration writes one node's complete Weir configuration. JSON is a
+// YAML subset, so the server reads it directly.
 func (c *Cluster) writeConfiguration(index int) error {
 	node := c.Nodes[index]
-	listeners := map[string]any{"application": node.Application}
-	diagnostics := map[string]any{"address": node.Diagnostics}
-	transport := map[string]any{}
-	if c.options.PendingRecords > 0 {
-		transport["max_pending_records"] = c.options.PendingRecords
-	}
-	basic := map[string]any{"listeners": listeners, "diagnostics": diagnostics, "transport": transport}
-	if err := writeJSON(c.nodeFile(index, "config.json"), basic); err != nil {
-		return err
-	}
+	listeners := map[string]any{"application": node.Application, "diagnostics": node.Diagnostics}
 	stores := make([]map[string]any, 0, len(c.options.Backends))
 	for _, backend := range c.options.Backends {
-		adapter := map[string]any{}
-		if c.options.ExchangeBytes > 0 {
-			adapter["max_exchange_bytes"] = fmt.Sprintf("%dB", c.options.ExchangeBytes)
-		}
+		store := map[string]any{"name": backend}
 		if backend == "mongo" {
-			adapter["mongodb"] = map[string]any{"uri": c.MongoURI}
+			store["mongodb"] = map[string]any{"uri": c.MongoURI}
 		} else {
-			searchOptions := map[string]any{"url": c.SearchURL}
-			if c.options.SearchRetryAttempts > 0 {
-				searchOptions["retry_attempts"] = c.options.SearchRetryAttempts
-			}
-			adapter["search"] = searchOptions
+			store["search"] = map[string]any{"url": c.SearchURL}
 		}
-		store := map[string]any{"name": backend, "backend": adapter}
 		if c.options.BatchSize > 0 {
 			batchBytes := c.options.BatchBytes
 			if batchBytes == 0 {
@@ -263,34 +245,17 @@ func (c *Cluster) writeConfiguration(index int) error {
 		}
 		stores = append(stores, store)
 	}
-	routes := map[string]any{"stores": stores}
-	return writeJSON(c.nodeFile(index, "routes.json"), routes)
+	config := map[string]any{"listeners": listeners, "stores": stores}
+	return writeJSON(c.ConfigPath(index), config)
+}
+
+// ConfigPath is the Weir configuration file a replica was started with.
+func (c *Cluster) ConfigPath(index int) string {
+	return c.nodeFile(index, "config.json")
 }
 
 func (c *Cluster) nodeFile(index int, suffix string) string {
 	return filepath.Join(c.Directory, fmt.Sprintf("node-%d-%s", index, suffix))
-}
-
-// EffectiveConfiguration records the owned binary's redacted resolved configuration.
-// It reads only files created by this fixture and does not query a running service.
-func (c *Cluster) EffectiveConfiguration(ctx context.Context, index int) (string, error) {
-	if index < 0 || index >= len(c.Nodes) {
-		return "", errors.New("node index out of range")
-	}
-	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	command := exec.CommandContext(checkCtx, c.options.WeirBinary, "check", "--effective", "--config", c.nodeFile(index, "config.json"), "--routes", c.nodeFile(index, "routes.json"))
-	raw, err := command.Output()
-	if err != nil {
-		return "", fmt.Errorf("owned effective configuration: %w", err)
-	}
-	if len(raw) == 0 || len(raw) > 1<<20 {
-		return "", errors.New("owned effective configuration is empty or exceeds 1 MiB")
-	}
-	if err := os.WriteFile(c.nodeFile(index, "effective.yaml"), raw, 0600); err != nil {
-		return "", err
-	}
-	return string(raw), nil
 }
 
 func writeJSON(path string, value any) error {
@@ -316,7 +281,7 @@ func (c *Cluster) startNode(ctx context.Context, index int) error {
 		return err
 	}
 	logOffset := info.Size()
-	cmd := exec.Command(c.options.WeirBinary, "serve", "--config", c.nodeFile(index, "config.json"), "--routes", c.nodeFile(index, "routes.json"))
+	cmd := exec.Command(c.options.WeirBinary, "serve", "--config", c.ConfigPath(index))
 	cmd.Stdout, cmd.Stderr = log, log
 	if err := cmd.Start(); err != nil {
 		_ = log.Close()

@@ -44,9 +44,6 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		{WeirBinary: binary, BatchSize: 32, BatchBytes: (32 << 20) + 1},
 		{WeirBinary: binary, BatchSize: 1025},
 		{WeirBinary: binary, MaxInFlight: 4},
-		{WeirBinary: binary, PendingRecords: -1},
-		{WeirBinary: binary, PendingRecords: 4097},
-		{WeirBinary: binary, ExchangeBytes: (4 << 20) - 1},
 		{WeirBinary: binary, MongoBinary: filepath.Join(t.TempDir(), "missing-mongod")},
 	}
 	for _, options := range cases {
@@ -61,7 +58,7 @@ func TestValidateOptionsRejectsInvalidBeforeExternalWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	backends[0] = "search"
-	if validated.Backends[0] != "mongo" || validated.Replicas != 1 || validated.BatchSize != 0 || validated.PendingRecords != 0 || validated.ExchangeBytes != 0 {
+	if validated.Backends[0] != "mongo" || validated.Replicas != 1 || validated.BatchSize != 0 {
 		t.Fatalf("invalid defaults or retained caller slice: %+v", validated)
 	}
 	large := Options{WeirBinary: binary, BatchSize: 513}
@@ -152,7 +149,7 @@ func TestPublishedPortMustBeOneLoopbackBinding(t *testing.T) {
 }
 
 func TestEveryReplicaHostsTheSameStoresOnItsOwnListener(t *testing.T) {
-	options := Options{Backends: []string{"mongo", "search"}, Replicas: 2, BatchSize: 16, PendingRecords: 128, ExchangeBytes: 8 << 20}
+	options := Options{Backends: []string{"mongo", "search"}, Replicas: 2, BatchSize: 16}
 	c := &Cluster{Directory: t.TempDir(), options: options, owner: "test", MongoURI: "mongodb://127.0.0.1:50001/?directConnection=true", SearchURL: "http://127.0.0.1:50002"}
 	c.Nodes = []Node{
 		{Application: "127.0.0.1:50100", Diagnostics: "127.0.0.1:50102"},
@@ -162,52 +159,60 @@ func TestEveryReplicaHostsTheSameStoresOnItsOwnListener(t *testing.T) {
 		if err := c.writeConfiguration(i); err != nil {
 			t.Fatal(err)
 		}
-		data, err := os.ReadFile(c.nodeFile(i, "config.json"))
+		data, err := os.ReadFile(c.ConfigPath(i))
 		if err != nil {
 			t.Fatal(err)
 		}
-		var configuration map[string]map[string]any
-		if err := json.Unmarshal(data, &configuration); err != nil {
-			t.Fatal(err)
-		}
-		listeners := map[string]any{"application": node.Application}
-		if len(configuration) != 3 || !reflect.DeepEqual(configuration["listeners"], listeners) || configuration["diagnostics"]["address"] != node.Diagnostics || configuration["transport"]["max_pending_records"] != float64(128) {
-			t.Fatalf("node configuration differs from its own listeners and transport policy: %s", data)
-		}
-		routes, err := os.ReadFile(c.nodeFile(i, "routes.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		var routing struct {
-			Stores []struct {
-				Name     string `json:"name"`
+		var configuration struct {
+			Listeners map[string]any `json:"listeners"`
+			Stores    []struct {
+				Name     string         `json:"name"`
+				MongoDB  map[string]any `json:"mongodb"`
+				Search   map[string]any `json:"search"`
 				Batching struct {
 					MaxOperations int `json:"max_operations"`
 				} `json:"batching"`
-				Backend struct {
-					MaxExchangeBytes string `json:"max_exchange_bytes"`
-				} `json:"backend"`
-			}
+			} `json:"stores"`
 		}
-		if err := json.Unmarshal(routes, &routing); err != nil {
+		if err := json.Unmarshal(data, &configuration); err != nil {
 			t.Fatal(err)
 		}
-		if len(routing.Stores) != 2 {
-			t.Fatal("replica does not host every Store", string(routes))
+		listeners := map[string]any{"application": node.Application, "diagnostics": node.Diagnostics}
+		if !reflect.DeepEqual(configuration.Listeners, listeners) {
+			t.Fatalf("node configuration differs from its own listeners: %s", data)
 		}
-		for position, store := range routing.Stores {
-			if store.Name != options.Backends[position] || store.Batching.MaxOperations != 16 || store.Backend.MaxExchangeBytes != "8388608B" {
-				t.Fatal("replica backend did not receive the current batching/exchange overrides", string(routes))
+		if len(configuration.Stores) != 2 {
+			t.Fatal("replica does not host every Store", string(data))
+		}
+		for position, store := range configuration.Stores {
+			if store.Name != options.Backends[position] || store.Batching.MaxOperations != 16 {
+				t.Fatal("replica Store did not receive the current batching override", string(data))
 			}
+		}
+		if configuration.Stores[0].MongoDB["uri"] != c.MongoURI || configuration.Stores[1].Search["url"] != c.SearchURL {
+			t.Fatal("replica Stores do not name their backends", string(data))
 		}
 	}
 	if c.Address() != c.Nodes[0].Application {
 		t.Fatal("cluster address is not the first replica")
 	}
-	first, _ := os.ReadFile(c.nodeFile(0, "routes.json"))
-	second, _ := os.ReadFile(c.nodeFile(1, "routes.json"))
-	if !bytes.Equal(first, second) {
-		t.Fatal("replicas have different Store definitions")
+	var replicas [2]map[string]any
+	for i := range replicas {
+		data, err := os.ReadFile(c.ConfigPath(i))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(data, &replicas[i]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if reflect.DeepEqual(replicas[0]["listeners"], replicas[1]["listeners"]) {
+		t.Fatal("replicas share listeners")
+	}
+	delete(replicas[0], "listeners")
+	delete(replicas[1], "listeners")
+	if !reflect.DeepEqual(replicas[0], replicas[1]) {
+		t.Fatal("replicas must differ only in their listeners")
 	}
 }
 
@@ -387,13 +392,9 @@ func TestOrdinaryConfigurationLeavesServerDefaultsUnchanged(t *testing.T) {
 	if err := c.writeConfiguration(0); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(c.nodeFile(0, "config.json"))
-	if err != nil || bytes.Contains(data, []byte(`"max_pending_records"`)) {
-		t.Fatal("ordinary fixture must leave transport defaults unchanged", string(data), err)
-	}
-	routes, err := os.ReadFile(c.nodeFile(0, "routes.json"))
-	if err != nil || bytes.Contains(routes, []byte(`"batching"`)) || bytes.Contains(routes, []byte(`"max_exchange_bytes"`)) {
-		t.Fatal("ordinary fixture must leave server defaults unchanged", string(routes), err)
+	data, err := os.ReadFile(c.ConfigPath(0))
+	if err != nil || bytes.Contains(data, []byte(`"batching"`)) || bytes.Contains(data, []byte(`"shutdown_timeout"`)) {
+		t.Fatal("ordinary fixture must leave server defaults unchanged", string(data), err)
 	}
 }
 
@@ -590,30 +591,30 @@ func TestConfigurationExposesBatchCollectionWaitWithoutChangingDefaults(t *testi
 		if err := cluster.writeConfiguration(0); err != nil {
 			t.Fatal(err)
 		}
-		raw, err := os.ReadFile(cluster.nodeFile(0, "routes.json"))
+		raw, err := os.ReadFile(cluster.ConfigPath(0))
 		if err != nil {
 			t.Fatal(err)
 		}
-		var routing struct {
+		var configuration struct {
 			Stores []struct {
 				Batching map[string]any `json:"batching"`
 			} `json:"stores"`
 		}
-		if err := json.Unmarshal(raw, &routing); err != nil {
+		if err := json.Unmarshal(raw, &configuration); err != nil {
 			t.Fatal(err)
 		}
-		batching := routing.Stores[0].Batching
+		batching := configuration.Stores[0].Batching
 		if batching["max_operations"] != float64(64) || batching["max_bytes"] != "65536B" || batching["max_in_flight"] != float64(4) {
 			t.Fatal("explicit batch controls were dropped", string(raw))
 		}
-		configured, exists := routing.Stores[0].Batching["max_wait"]
+		configured, exists := batching["max_wait"]
 		if !exists || configured != wait.String() {
 			t.Fatal("collection wait hidden, dropped, or enabled by default", string(raw))
 		}
 	}
 }
 
-func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t *testing.T) {
+func TestBatchLimitWritesEveryBatchingControl(t *testing.T) {
 	for _, operations := range []int{0, 32} {
 		opts := Options{Backends: []string{"search"}, BatchSize: operations}
 		cluster := &Cluster{Directory: t.TempDir(), options: opts, SearchURL: "http://127.0.0.1:50002", owner: "test"}
@@ -622,19 +623,19 @@ func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t 
 		if err := cluster.writeConfiguration(0); err != nil {
 			t.Fatal(err)
 		}
-		raw, err := os.ReadFile(cluster.nodeFile(0, "routes.json"))
+		raw, err := os.ReadFile(cluster.ConfigPath(0))
 		if err != nil {
 			t.Fatal(err)
 		}
-		var routes struct {
+		var configuration struct {
 			Stores []struct {
 				Batching map[string]any `json:"batching"`
 			} `json:"stores"`
 		}
-		if err := json.Unmarshal(raw, &routes); err != nil {
+		if err := json.Unmarshal(raw, &configuration); err != nil {
 			t.Fatal(err)
 		}
-		batch := routes.Stores[0].Batching
+		batch := configuration.Stores[0].Batching
 		if operations == 0 {
 			if batch != nil {
 				t.Fatal("default path emitted a hidden batching override", string(raw))
@@ -642,7 +643,7 @@ func TestExplicitZeroBatchControlsRemainDistinctFromOmittedProductionDefaults(t 
 			continue
 		}
 		if len(batch) != 4 || batch["max_operations"] != float64(32) || batch["max_bytes"] != "8388608B" || batch["max_wait"] != "0s" || batch["max_in_flight"] != float64(0) {
-			t.Fatal("explicit controls inherited a server default", string(raw))
+			t.Fatal("explicit controls were not all written", string(raw))
 		}
 	}
 }

@@ -96,7 +96,6 @@ jobs:
             /tmp/weir-tests-*/manifest.json
             /tmp/weir-tests-*/cleanup.json
             /tmp/weir-tests-*/*config.json
-            /tmp/weir-tests-*/*routes.json
             /tmp/weir-tests-*/*process.log
             /tmp/weir-tests-*/docker-engine.json
           retention-days: 14

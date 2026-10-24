@@ -61,7 +61,7 @@ func main() {
 	flag.IntVar(&opts.SeedPaddingBytes, "seed-padding-bytes", 0, "additional untouched product payload bytes, partial-update only")
 	flag.IntVar(&opts.AfterBatchMaxOperations, "after-batch-max-operations", 32, "after server batching.max_operations")
 	flag.IntVar(&opts.AfterBatchMaxBytes, "after-batch-max-bytes", 8<<20, "after server batching.max_bytes in bytes")
-	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "after server batching.max_in_flight; zero is unlimited")
+	flag.IntVar(&opts.AfterMaxInFlight, "after-max-in-flight", 0, "after server batching.max_in_flight; zero uses the server default")
 	flag.IntVar(&opts.Processes, "client-processes", 4, "independent OS clients, one pool per process")
 	flag.IntVar(&opts.PageSize, "page-size", 1, "products per page, each with two sellers")
 	flag.IntVar(&opts.QueuePages, "queue-pages", 1, "bounded queued pages per worker, counted explicitly")

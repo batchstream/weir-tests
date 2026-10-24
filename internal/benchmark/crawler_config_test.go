@@ -128,12 +128,28 @@ func TestCrawlerLiveControlsRequireBothSnapshotsAndDeclaredValues(t *testing.T) 
 	cap.Value = 0
 	stage.ServerAfter.Metrics = []observe.Metric{cap}
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
-		t.Fatal("changed live cap was accepted despite the route declaration")
+		t.Fatal("changed live cap was accepted despite the Store declaration")
 	}
 	cap.Value = 4
 	stage.ServerAfter.Metrics = []observe.Metric{cap, cap}
 	if err := auditCrawlerLiveControls(stage, opts); err == nil {
 		t.Fatal("ambiguous live gauge series were accepted")
+	}
+}
+
+func TestCrawlerBeforePathExpectsWeirDefaultExecutionLimit(t *testing.T) {
+	opts := CrawlerOptions{AfterMaxInFlight: 4}
+	labels := map[string]string{"store": "search"}
+	cap := observe.Metric{Name: "weir_store_active_executions_limit", Labels: labels, Value: 16}
+	snapshot := observe.Snapshot{Metrics: []observe.Metric{cap}}
+	stage := crawlerStage{Path: "before", ServerBefore: snapshot, ServerAfter: snapshot}
+	if err := auditCrawlerLiveControls(stage, opts); err != nil {
+		t.Fatal("max_in_flight 0 must audit as Weir's 16 executions", err)
+	}
+	cap.Value = 0
+	stage.ServerAfter.Metrics = []observe.Metric{cap}
+	if err := auditCrawlerLiveControls(stage, opts); err == nil {
+		t.Fatal("an unlimited live gauge was accepted for the before path")
 	}
 }
 
