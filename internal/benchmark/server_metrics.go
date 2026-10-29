@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/batchstream/weir-tests/internal/fixture"
 	"github.com/batchstream/weir-tests/internal/observe"
 )
 
@@ -23,10 +24,10 @@ type ServerMetrics struct {
 	Scope                string             `json:"scope"`
 }
 
-func fetchServerMetrics(ctx context.Context, address string) observe.Snapshot {
+func fetchServerMetrics(ctx context.Context, target fixture.ResourceTarget) observe.Snapshot {
 	observationCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	return observe.Fetch(observationCtx, address)
+	return observe.Fetch(observationCtx, target.Diagnostics, target.Remote)
 }
 
 func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetrics {

@@ -1,5 +1,5 @@
-// Package observe reads the public diagnostics of explicitly supplied local
-// fixtures. It never imports Weir server code or discovers deployments.
+// Package observe reads the public diagnostics of explicitly supplied fixtures
+// or deployments. It never imports Weir server code or discovers deployments.
 package observe
 
 import (
@@ -33,12 +33,19 @@ type Snapshot struct {
 var samplePattern = regexp.MustCompile(`^([a-zA-Z_:][a-zA-Z0-9_:]*)(?:\{(.*)\})?\s+([^\s]+)(?:\s+[0-9]+)?$`)
 var labelPattern = regexp.MustCompile(`^([a-zA-Z_][a-zA-Z0-9_]*)=("(?:[^"\\]|\\.)*")`)
 
-func Fetch(ctx context.Context, address string) Snapshot {
+// Fetch scrapes /metrics from an explicit IP:port. Non-loopback addresses
+// require allowRemote.
+func Fetch(ctx context.Context, address string, allowRemote bool) Snapshot {
 	snapshot := Snapshot{At: time.Now().UTC().Format(time.RFC3339Nano), Endpoint: address}
 	host, port, err := net.SplitHostPort(address)
 	numericPort, portErr := strconv.Atoi(port)
-	if err != nil || portErr != nil || numericPort < 1 || numericPort > 65535 || net.ParseIP(host) == nil || !net.ParseIP(host).IsLoopback() {
-		snapshot.Error = "diagnostics requires an explicit loopback IP:port"
+	ip := net.ParseIP(host)
+	if err != nil || portErr != nil || numericPort < 1 || numericPort > 65535 || ip == nil || ip.IsUnspecified() || ip.IsMulticast() {
+		snapshot.Error = "diagnostics requires an explicit IP:port"
+		return snapshot
+	}
+	if !allowRemote && !ip.IsLoopback() {
+		snapshot.Error = "non-loopback diagnostics require an explicit remote opt-in"
 		return snapshot
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+address+"/metrics", nil)

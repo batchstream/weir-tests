@@ -152,7 +152,7 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		} else {
 			sample.CPUTimeNS, sample.MemoryBytes = &cpu, memory
 		}
-	} else {
+	} else if !target.Remote {
 		sample.Error = "database resource identity unavailable"
 	}
 	sample.ElapsedNS = time.Since(options.Started).Nanoseconds()
@@ -194,11 +194,29 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 			sample.Database = counters
 		}
 	}
+	if target.Remote {
+		// The database API reports cumulative process CPU and when it read it.
+		if sample.Database.ProcessCPUNS != nil && sample.Database.ProcessCPUAtNS != nil {
+			sample.CPUTimeNS = sample.Database.ProcessCPUNS
+			sample.CPUClockNS = *sample.Database.ProcessCPUAtNS
+		} else {
+			sample.Error = "remote database process CPU counter unavailable"
+		}
+	}
 	if target.Diagnostics != "" {
-		snapshot := fetchServerMetrics(ctx, target.Diagnostics)
+		snapshot := fetchServerMetrics(ctx, target)
 		sample.StoreSampleAt, sample.StoreSampleError = snapshot.At, snapshot.Error
 		seen := make(map[string]bool)
 		for _, metric := range snapshot.Metrics {
+			if target.Remote && len(metric.Labels) == 0 {
+				switch metric.Name {
+				case "process_cpu_seconds_total":
+					cpu := int64(metric.Value * float64(time.Second))
+					sample.WeirCPUTimeNS = &cpu
+				case "process_resident_memory_bytes":
+					sample.WeirMemoryBytes = uint64(metric.Value)
+				}
+			}
 			switch metric.Name {
 			case "weir_store_queued_operations", "weir_store_queued_bytes", "weir_store_active_executions", "weir_store_active_executions_limit", "weir_store_active_natives", "weir_store_active_natives_limit":
 				sample.Store = append(sample.Store, metric)
@@ -291,6 +309,9 @@ func sampleDocker(ctx context.Context, client *http.Client, container string) (R
 }
 
 func processStats(ctx context.Context, pid int) (int64, uint64, error) {
+	if stat, err := os.ReadFile("/proc/" + strconv.Itoa(pid) + "/stat"); err == nil {
+		return parseProcStat(stat, os.Getpagesize())
+	}
 	raw, err := exec.CommandContext(ctx, "ps", "-p", strconv.Itoa(pid), "-o", "time=", "-o", "rss=").Output()
 	if err != nil {
 		return 0, 0, err
@@ -305,6 +326,28 @@ func processStats(ctx context.Context, pid int) (int64, uint64, error) {
 	}
 	memory, err := strconv.ParseUint(fields[1], 10, 64)
 	return cpu, memory * 1024, err
+}
+
+// parseProcStat reads utime+stime (USER_HZ ticks) and RSS pages from
+// /proc/<pid>/stat, so minimal Linux images without ps still report clients.
+func parseProcStat(raw []byte, pageSize int) (int64, uint64, error) {
+	text := string(raw)
+	end := strings.LastIndexByte(text, ')')
+	if end < 0 {
+		return 0, 0, errors.New("invalid /proc stat")
+	}
+	// Fields after the command name start at field 3 (state).
+	fields := strings.Fields(text[end+1:])
+	if len(fields) < 22 {
+		return 0, 0, errors.New("short /proc stat")
+	}
+	user, userErr := strconv.ParseInt(fields[11], 10, 64)
+	system, systemErr := strconv.ParseInt(fields[12], 10, 64)
+	pages, pagesErr := strconv.ParseUint(fields[21], 10, 64)
+	if userErr != nil || systemErr != nil || pagesErr != nil || user < 0 || system < 0 {
+		return 0, 0, errors.New("invalid /proc stat fields")
+	}
+	return (user + system) * int64(time.Second/100), pages * uint64(pageSize), nil
 }
 
 func parseCPUTime(raw string) (int64, error) {

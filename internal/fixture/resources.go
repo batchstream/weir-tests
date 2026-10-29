@@ -2,8 +2,8 @@ package fixture
 
 import "runtime"
 
-// ResourceTarget exposes only the identities of resources owned by this lab.
-// No existing deployment, container or process is discovered or adopted.
+// ResourceTarget exposes only the identities of resources owned by this lab,
+// or of an explicitly supplied remote deployment. Nothing is discovered or adopted.
 type ResourceTarget struct {
 	Container     string
 	DockerHost    string
@@ -12,6 +12,9 @@ type ResourceTarget struct {
 	WeirProcessID int
 	AllocatedCPUs float64
 	Diagnostics   string
+	// Remote samples an explicitly supplied deployment: database CPU from the
+	// database's own API, Weir CPU from its diagnostics, which may be non-loopback.
+	Remote bool
 }
 
 func (c *Cluster) Resources(backend string) ResourceTarget {
