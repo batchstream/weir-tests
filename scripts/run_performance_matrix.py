@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Run the read, mixed, write and Lua weir-lab saturation cases, plus optional bulk cases, in sequence."""
 import argparse
-import os
 from pathlib import Path
 import subprocess
 
