@@ -12,62 +12,44 @@ Go SDK and public protocol. It imports no server packages.
 | `cmd/weir-crawler` | [Crawler mutation benchmark](docs/crawler-benchmark.md) on an owned Search fixture |
 | `cmd/weir-bench` | Comparisons against independently provisioned endpoints |
 
-The SDK, protocol, server revision, Go toolchain and database artifacts are
-locked in [versions.json](versions.json). The server binary is built separately
-from an isolated, clean, full checkout of the exact public Git SHA. Go module
-Path/Version/Sum/Origin metadata verifies the lock, but the module cache's source
-`Dir` is never a build input. Module replacements and floating revisions are
-rejected by the test-module dependency check and by the server source snapshot.
+The Weir server commit and the database images are pinned in
+[versions.json](versions.json) by full commit; `go.mod` pins released SDK and
+protocol versions without replacements. The tests depend on no server module or
+package.
 
-## Preparation and offline tests
+## Preparation and tests
 
-Requires Go 1.27.1, Python 3 and a local Docker daemon with a Unix socket.
+Requires Go, Python 3, `jq` and a local Docker daemon with a Unix socket.
 Fixtures use ordinary endpoints and processes and work without Kubernetes.
-Downloads happen during explicit preparation:
 
 ```sh
 make prepare
 make test
-GOWORK=off GOPROXY=off GOSUMDB=off python3 scripts/check_dependencies.py
 ```
 
-Server preparation fetches only `https://github.com/batchstream/weir.git` at the
-locked full SHA, with isolated Git configuration and no credential helpers.
-`prepare_weir.py --offline` disables Go downloads, not the public Git fetch for
-a new preparation. The binary is written to `.tools/weir` with a small
-`.tools/weir.json` metadata file. The build stamps the locked SHA with
-`-X main.revision`, and `weir version` must report exactly product `weir`,
-version `dev`, that revision and the native Go toolchain/target. An existing
-binary is reused only after its digest, version, CLI identity and native
-toolchain/target match the lock; a mismatched binary, or one without metadata,
-is preserved and reported rather than silently rebuilt.
-A checkout, manifest or checksum failure has no module-cache/archive fallback.
-
+`make prepare` runs `go install` for `github.com/batchstream/weir/cmd/weir` at
+the pinned commit into `.tools/weir` and stamps that commit as its `revision`.
 Default Go tests, including race tests, launch no databases or Weir processes.
 They validate request accounting, mutation outcomes without replay, scheduling,
-resource sampling, saturation checks, fixture ownership and dependency boundaries.
+resource sampling, saturation checks and fixture ownership.
 
 ### Native MongoDB fixture
 
-On macOS (arm64/amd64) or Ubuntu 24.04 amd64, an explicitly selected isolated
-native MongoDB fixture is also available:
+On macOS (arm64/amd64) or Ubuntu 24.04 amd64, an explicitly selected native
+MongoDB fixture is also available:
 
 ```sh
-python3 scripts/prepare_native_mongo.py
-export WEIR_TEST_MONGODB_BINARY="$PWD/.tools/mongod"
+mongod=$(scripts/mongod.sh) && export WEIR_TEST_MONGODB_BINARY="$mongod"
 ```
 
-The prepared binary is checksum-locked. Each test owns a new replica set, data
-directory and loopback port. Direct and Weir paths use the same database mode.
-`versions.json` locks one stock MongoDB archive per target under
-`mongodb_native`. Preparation verifies the archive's exact size/hash and the
-regular `mongod` member's path, size and hash before version verification, and
-fails closed on unsupported platforms or mismatches. The
-blackbox CI job prepares this native fixture and exports
-`WEIR_TEST_MONGODB_BINARY` for integration and both comparison smokes; Search
-uses its Docker fixture. Without that explicit selection the Mongo fixture is
-Docker; there is no runtime fallback. The native fixture has no database cgroup
-limits.
+`scripts/mongod.sh` downloads the MongoDB 8.0.32 archive for the host (the Linux
+build targets Ubuntu 24.04), checks
+its pinned SHA-256 and prints the installed `mongod` path. Each test owns a new
+replica set, data directory and loopback port. Direct and Weir paths use the
+same database mode. The blackbox CI job exports `WEIR_TEST_MONGODB_BINARY` for
+integration and both comparison smokes; Search uses its Docker fixture. Without
+that explicit selection the Mongo fixture is Docker; there is no runtime
+fallback. The native fixture has no database cgroup limits.
 
 ## Integration tests
 
@@ -217,8 +199,8 @@ and do not show Linux database saturation or a production capacity limit.
 
 ### Saturation workflow
 
-`saturation.yml` runs only on manual dispatch on a Linux amd64 runner. It prepares
-the pinned server, images and (unless the backend is `search`) the native MongoDB
+`saturation.yml` runs only on manual dispatch on a Linux amd64 runner. It installs
+the pinned server and (unless the backend is `search`) the native MongoDB
 fixture, then runs one `weir-lab` saturation matrix with the selected write
 percentage, Search CPU quota, concurrency levels, backend batch limit and
 execution limit, Lua mutations, backend, mode and records per call. The default
@@ -253,9 +235,9 @@ before and after a `versions.json` update or with different batch limits:
 
 ```sh
 python3 scripts/run_performance_matrix.py --backend mongo \
-  --mongod .tools/mongod --output results/local/mongo-before --bulk
+  --mongod "$(scripts/mongod.sh)" --output results/local/mongo-before --bulk
 python3 scripts/run_performance_matrix.py --backend mongo \
-  --mongod .tools/mongod --batch-limit 128 --output results/local/mongo-after --bulk
+  --mongod "$(scripts/mongod.sh)" --batch-limit 128 --output results/local/mongo-after --bulk
 python3 scripts/summarize_performance.py --backend mongo \
   --before results/local/mongo-before --after results/local/mongo-after \
   --output results/local/mongo-comparison
@@ -318,7 +300,7 @@ primary movement need a separate replica-set fixture.
 
 ## CI and output
 
-CI runs offline unit/race/vet and dependency checks, real multi-node integration,
+CI runs unit, race, vet and module-boundary checks, real multi-node integration,
 and verified ordinary and Lua comparison smoke tests on both databases, and
 uploads results and fixture logs as a workflow artifact.
 

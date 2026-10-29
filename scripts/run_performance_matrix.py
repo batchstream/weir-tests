@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Run the read, mixed, write and Lua weir-lab saturation cases, plus optional bulk cases, in sequence."""
 import argparse
-import os
 from pathlib import Path
 import subprocess
 
@@ -53,8 +52,7 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     # Build once so every case runs the same client binary.
     client = output / 'weir-lab'
-    build_env = dict(os.environ, GOWORK='off', GOFLAGS='-mod=readonly')
-    subprocess.run(['go', 'build', '-o', str(client), './cmd/weir-lab'], cwd=root, env=build_env, check=True, timeout=600)
+    subprocess.run(['go', 'build', '-o', str(client), './cmd/weir-lab'], cwd=root, check=True, timeout=600)
     cases = CASES + (BULK_CASES if args.bulk else [])
     for case in cases:
         name = case[0]

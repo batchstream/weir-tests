@@ -13,7 +13,9 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -65,7 +67,7 @@ func main() {
 		return
 	}
 	var opts labOptions
-	flag.StringVar(&opts.binary, "weir", ".tools/weir", "locked Weir executable from scripts/prepare_weir.py")
+	flag.StringVar(&opts.binary, "weir", ".tools/weir", "Weir executable installed by make prepare")
 	flag.StringVar(&opts.mongoBinary, "mongod", os.Getenv("WEIR_TEST_MONGODB_BINARY"), "optional locked native MongoDB executable; empty uses Docker")
 	flag.StringVar(&opts.output, "output", "results/local/benchmark", "new report directory")
 	flag.StringVar(&opts.backend, "backend", "all", "mongo, search or all")
@@ -217,11 +219,14 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 		if identity.Revision != pins["weir_source"] {
 			return errors.New("Weir binary does not match versions.json")
 		}
-		for _, key := range []string{"sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
+		for _, key := range []string{"mongodb_image", "elasticsearch_image"} {
 			provenance[key] = pins[key]
 		}
 	} else {
 		return errors.New("run the lab from the repository root with its versions.json lock")
+	}
+	for key, version := range clientModules() {
+		provenance[key] = version
 	}
 	if revision, err := exec.CommandContext(ctx, "git", "rev-parse", "HEAD").Output(); err == nil {
 		provenance["test_source"] = strings.TrimSpace(string(revision))
@@ -294,15 +299,16 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	return nil
 }
 
-// parseLabVersionPins reads only the lab's required scalar pins. Other lock
-// entries, such as native MongoDB profiles, are objects owned by their own tools.
+var fullCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
+
+// parseLabVersionPins reads the lab's required pins from versions.json.
 func parseLabVersionPins(raw []byte) (map[string]string, error) {
 	var entries map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &entries); err != nil {
 		return nil, err
 	}
 	pins := make(map[string]string)
-	for _, key := range []string{"weir_source", "sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
+	for _, key := range []string{"weir_source", "mongodb_image", "elasticsearch_image"} {
 		var value string
 		if err := json.Unmarshal(entries[key], &value); err != nil {
 			return nil, fmt.Errorf("invalid required version pin %s: %w", key, err)
@@ -312,7 +318,28 @@ func parseLabVersionPins(raw []byte) (map[string]string, error) {
 		}
 		pins[key] = value
 	}
+	if !fullCommit.MatchString(pins["weir_source"]) {
+		return nil, errors.New("weir_source must be a full 40-character commit")
+	}
 	return pins, nil
+}
+
+// clientModules reports the SDK and protocol versions built into weir-lab.
+func clientModules() map[string]string {
+	modules := make(map[string]string)
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return modules
+	}
+	for _, dependency := range info.Deps {
+		switch dependency.Path {
+		case "github.com/batchstream/weir-go":
+			modules["sdk"] = dependency.Version
+		case "github.com/batchstream/weir-protocol":
+			modules["protocol"] = dependency.Version
+		}
+	}
+	return modules
 }
 
 func parsePositiveList(raw string) ([]int, error) {
