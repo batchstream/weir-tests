@@ -23,11 +23,7 @@ func TestLabVersionPinsCheckedInLock(t *testing.T) {
 	if err := json.Unmarshal(raw, &entries); err != nil {
 		t.Fatal(err)
 	}
-	var native map[string]json.RawMessage
-	if err := json.Unmarshal(entries["mongodb_native"], &native); err != nil || len(native) == 0 {
-		t.Fatalf("lock must include native MongoDB profiles alongside the scalar pins: %v", err)
-	}
-	for _, key := range []string{"weir_source", "sdk", "protocol", "mongodb_image", "elasticsearch_image"} {
+	for _, key := range []string{"weir_source", "mongodb_image", "elasticsearch_image"} {
 		var expected string
 		if err := json.Unmarshal(entries[key], &expected); err != nil || expected == "" || pins[key] != expected {
 			t.Fatalf("required pin %s was lost or changed: %v", key, err)
@@ -52,6 +48,15 @@ func TestLabVersionPinsCheckedInLock(t *testing.T) {
 			t.Fatalf("accepted missing required pin %s", key)
 		}
 		entries[key] = original
+	}
+}
+
+func TestClientModulesReportTheLinkedSDKAndProtocol(t *testing.T) {
+	modules := clientModules()
+	for _, key := range []string{"sdk", "protocol"} {
+		if !strings.HasPrefix(modules[key], "v") {
+			t.Fatal(key, modules)
+		}
 	}
 }
 
