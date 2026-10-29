@@ -1,9 +1,8 @@
 .PHONY: prepare test integration benchmark diagnostic
 
-WEIR_SOURCE := $(shell jq -r .weir_source versions.json)
-
 prepare:
-	GOBIN="$(CURDIR)/.tools" go install -ldflags "-X main.revision=$(WEIR_SOURCE)" github.com/batchstream/weir/cmd/weir@$(WEIR_SOURCE)
+	revision=$$(jq -er .weir_source versions.json) && \
+		GOBIN="$(CURDIR)/.tools" go install -ldflags "-X main.revision=$$revision" github.com/batchstream/weir/cmd/weir@$$revision
 
 test:
 	go test -race -count=1 ./...

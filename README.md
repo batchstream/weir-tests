@@ -13,8 +13,9 @@ Go SDK and public protocol. It imports no server packages.
 | `cmd/weir-bench` | Comparisons against independently provisioned endpoints |
 
 The Weir server commit and the database images are pinned in
-[versions.json](versions.json); `go.mod` pins the SDK and protocol. The tests
-depend on no server module or package.
+[versions.json](versions.json) by full commit; `go.mod` pins released SDK and
+protocol versions without replacements. The tests depend on no server module or
+package.
 
 ## Preparation and tests
 
@@ -34,14 +35,15 @@ resource sampling, saturation checks and fixture ownership.
 
 ### Native MongoDB fixture
 
-On macOS (arm64/amd64) or Linux amd64, an explicitly selected native MongoDB
-fixture is also available:
+On macOS (arm64/amd64) or Ubuntu 24.04 amd64, an explicitly selected native
+MongoDB fixture is also available:
 
 ```sh
-export WEIR_TEST_MONGODB_BINARY=$(scripts/mongod.sh)
+mongod=$(scripts/mongod.sh) && export WEIR_TEST_MONGODB_BINARY="$mongod"
 ```
 
-`scripts/mongod.sh` downloads the MongoDB 8.0.32 archive for the host, checks
+`scripts/mongod.sh` downloads the MongoDB 8.0.32 archive for the host (the Linux
+build targets Ubuntu 24.04), checks
 its pinned SHA-256 and prints the installed `mongod` path. Each test owns a new
 replica set, data directory and loopback port. Direct and Weir paths use the
 same database mode. The blackbox CI job exports `WEIR_TEST_MONGODB_BINARY` for

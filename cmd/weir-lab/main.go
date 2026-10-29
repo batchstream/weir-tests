@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"slices"
@@ -298,6 +299,8 @@ func runLab(ctx context.Context, opts labOptions) (resultErr error) {
 	return nil
 }
 
+var fullCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
+
 // parseLabVersionPins reads the lab's required pins from versions.json.
 func parseLabVersionPins(raw []byte) (map[string]string, error) {
 	var entries map[string]json.RawMessage
@@ -314,6 +317,9 @@ func parseLabVersionPins(raw []byte) (map[string]string, error) {
 			return nil, fmt.Errorf("empty required version pin %s", key)
 		}
 		pins[key] = value
+	}
+	if !fullCommit.MatchString(pins["weir_source"]) {
+		return nil, errors.New("weir_source must be a full 40-character commit")
 	}
 	return pins, nil
 }

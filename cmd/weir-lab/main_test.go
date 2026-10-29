@@ -29,7 +29,11 @@ func TestLabVersionPinsCheckedInLock(t *testing.T) {
 			t.Fatalf("required pin %s was lost or changed: %v", key, err)
 		}
 		original := entries[key]
-		for _, invalid := range []string{`null`, `""`, `{}`, `[]`, `7`, `true`} {
+		invalids := []string{`null`, `""`, `{}`, `[]`, `7`, `true`}
+		if key == "weir_source" {
+			invalids = append(invalids, `"main"`, `"b0687cc450fb"`, `"B0687CC450FB0133A0B2E0592A5058EC797BA47F"`)
+		}
+		for _, invalid := range invalids {
 			entries[key] = json.RawMessage(invalid)
 			changed, err := json.Marshal(entries)
 			if err != nil {
