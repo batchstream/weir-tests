@@ -10,7 +10,7 @@ Go SDK and public protocol. It imports no server packages.
 | `cmd/weir-lab` | Paired native-versus-Weir throughput comparisons on owned fixtures |
 | `scripts/run_performance_matrix.py`, `scripts/summarize_performance.py` | Run a read/mixed/write/Lua matrix and compare two matrix runs |
 | `cmd/weir-crawler` | [Crawler mutation benchmark](docs/crawler-benchmark.md) on an owned Search fixture |
-| `cmd/weir-bench` | Comparisons against independently provisioned endpoints |
+| `cmd/weir-bench` | Fixed and saturation comparisons against independently deployed endpoints |
 
 The Weir server commit and the database images are pinned in
 [versions.json](versions.json) by full commit; `go.mod` pins released SDK and
@@ -273,6 +273,38 @@ benchmark.
 For independently provisioned endpoints, see `cmd/weir-bench -help`. It requires
 explicit endpoints and creates an exclusive namespace. Remote addresses require
 an explicit flag; credential-bearing URLs are rejected.
+
+### Saturation against deployed services
+
+`weir-bench -mode saturation` runs the saturation benchmark above against a
+database and Weir that you deploy, for example on separate Kubernetes nodes so
+that clients, Weir and the database never share CPU. The command starts the
+same independent client processes, each with its own pool, and drives the same
+alternating direct/Weir ladder. Reports have the same format as `weir-lab`.
+
+```sh
+weir-bench -mode saturation -allow-remote -backend mongo \
+  -mongo-uri 'mongodb://10.0.1.20:27017/?directConnection=true' \
+  -weir-address 10.0.2.30:7447 -weir-diagnostics 10.0.2.30:7449 -store mongo \
+  -database-cpus 2 -client-processes 16 -concurrency-levels 64,256,1024,2048 \
+  -records 32768 -padding-bytes 1024 -write-percent 100 \
+  -rounds 3 -warmup-duration 10s -duration 20s -output results/local/eks-mongo
+```
+
+Weir and Search endpoints are explicit IP:port values; resolve a Kubernetes
+headless Service to its Pod IP first. The Weir Store must point at the same
+database. Database CPU comes from the database itself: `serverStatus`
+`extra_info` on Linux `mongod` and `_nodes/stats/process` on Elasticsearch,
+divided by `-database-cpus`, which must equal the database's CPU limit.
+Weir CPU and RSS come from its diagnostics `/metrics`. Database CPU is
+unavailable where `mongod` does not report process times, such as macOS.
+Client CPU uses `/proc` on Linux, so a minimal image without `ps` works.
+The whole run is bounded by `-timeout`, derived from the ladder when unset.
+
+Run the client on its own node with enough CPU for the highest level; give the
+database fixed CPU requests and limits so its utilization has a stable
+denominator. Results describe that database size and topology, not a
+production capacity limit.
 
 Mongo endpoints use a bounded (4096-byte), credential-free `mongodb://` profile
 with an empty or root path and explicit numeric ports (1–65535). A direct profile
