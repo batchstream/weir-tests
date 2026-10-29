@@ -296,9 +296,12 @@ headless Service to its Pod IP first. The Weir Store must point at the same
 database. Database CPU comes from the database itself: `serverStatus`
 `extra_info` on Linux `mongod` and `_nodes/stats/process` on Elasticsearch,
 divided by `-database-cpus`, which must equal the database's CPU limit.
-Weir CPU and RSS come from its diagnostics `/metrics`. Database CPU is
-unavailable where `mongod` does not report process times, such as macOS.
-Client CPU uses `/proc` on Linux, so a minimal image without `ps` works.
+Each sample uses the database's own read time, and Weir CPU and RSS come from
+its diagnostics `/metrics`. The MongoDB URI must reach the `mongod` that takes
+the writes, usually a single node or the primary; a `mongos` router is
+rejected. Elasticsearch must be a single node. The run stops before the ladder
+when the database reports no process CPU, such as `mongod` on macOS. Client CPU
+uses `/proc` on Linux, so a minimal image without `ps` works.
 The whole run is bounded by `-timeout`, derived from the ladder when unset.
 
 Run the client on its own node with enough CPU for the highest level; give the

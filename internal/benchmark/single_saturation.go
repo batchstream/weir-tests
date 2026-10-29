@@ -62,7 +62,7 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 	if err != nil {
 		return nil, err
 	}
-	params := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: []int{1}, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, OperationTimeout: options.OperationTimeout.String(), CPUThreshold: options.CPUThreshold, ClientProcesses: options.ClientProcesses, ClientRequestRecords: 1}
+	params := SaturationParameters{Dataset: options.Dataset.Config, Concurrency: options.Concurrency, BatchSizes: []int{1}, Warmup: options.Warmup.String(), Duration: options.Duration.String(), Rounds: options.Rounds, WritePercent: options.WritePercent, OperationTimeout: options.OperationTimeout.String(), CPUThreshold: options.CPUThreshold, ClientProcesses: options.ClientProcesses, ClientRequestRecords: 1, RemoteResources: options.Resources.Remote}
 	provenance := make(map[string]string, len(options.Provenance)+3)
 	for key, value := range options.Provenance {
 		provenance[key] = value
@@ -70,6 +70,9 @@ func runSingleSaturation(ctx context.Context, options SaturationOptions) (*Satur
 	provenance["go"], provenance["client_os_arch"] = runtime.Version(), runtime.GOOS+"/"+runtime.GOARCH
 	provenance["client_process_model"] = "independent OS client processes; one SDK/driver pool each; sequential single-request goroutine workers; total native pool limit equals total client concurrency"
 	provenance["resource_observation"] = "host cumulative CPU ticks/PSI and sampler affinity; Docker cumulative CPU throttling; sampled Store gauges; projected Search pressure/GC and boundary effective settings/index stats"
+	if options.Resources.Remote {
+		provenance["resource_observation"] = "database process CPU and its read clock from the database API; Weir CPU/RSS from diagnostics; client-node CPU ticks/PSI and sampler affinity; sampled Store gauges; projected Search pressure/GC and boundary effective settings/index stats"
+	}
 	provenance["timed_completion_buckets"] = "fixed 10s completion windows from planned phase start; offered arrivals by scheduled offset; separate open completion tail; pooled 256-bin latency histograms; failed includes unknown"
 	report := &SaturationReport{Schema: 1, Kind: SaturationKindSingle, Started: time.Now().UTC().Format(time.RFC3339Nano), Parameters: params, Provenance: provenance, CPUQuota: quota, Method: "independent OS client processes send one record per native call or streaming SDK RPC; native FindOne/ReplaceOne or single-ID mget/PUT; no client aggregation; worker-owned disjoint IDs; common phase barriers and unchanged pools across warmup and measurement; alternating AB/BA; latency is each business request including validation, queueing and any server aggregation; independent persisted postflight; Search uses explicit refresh_interval=1s, translog.durability=request, one primary and zero replicas; sustained database CPU requires >=5 intervals, >=80% measurement coverage, mean CPU>=threshold and CPU>=threshold during >=80% measurement duration in every round, plus <=10% next-level throughput gain"}
 	if options.Dataset.Config.LuaMutations {
@@ -188,9 +191,9 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	started := now.Add(-time.Duration(now.UnixNano() - command.StartUnixNS))
 	var monitor sync.WaitGroup
 	stop := make(chan struct{})
-	source := "owned Docker Engine cumulative CPU and timestamps; DB counters; individual owned client PID ps CPU/RSS and Weir CPU/RSS; 1s samples; common timed barrier"
+	source := "owned Docker Engine cumulative CPU and timestamps; DB counters; individual owned client PID CPU/RSS (/proc, else ps) and Weir CPU/RSS; 1s samples; common timed barrier"
 	if options.Resources.Remote {
-		source = "remote database process CPU from its own API against the declared database CPU limit; DB counters; individual owned client PID CPU/RSS; Weir process CPU/RSS from diagnostics; 1s samples; common timed barrier"
+		source = "remote database process CPU and its read clock from the database API against the declared database CPU limit; DB counters; individual owned client PID CPU/RSS (/proc, else ps); Weir process CPU/RSS from diagnostics; 1s samples; common timed barrier"
 	}
 	resources := Resources{AllocatedCPUs: options.Resources.AllocatedCPUs, Source: source}
 	monitor.Add(1)

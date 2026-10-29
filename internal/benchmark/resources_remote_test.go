@@ -30,7 +30,7 @@ func TestRemoteTargetSamplesDatabaseAndWeirCPUThroughTheirAPIs(t *testing.T) {
 	search := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		process := ""
 		if processCPU {
-			process = `,"process":{"cpu":{"total_in_millis":1500}}`
+			process = `,"process":{"timestamp":1793347200000,"cpu":{"total_in_millis":1500}}`
 		}
 		fmt.Fprintf(writer, `{"nodes":{"remote":{"http":{"current_open":3},"transport":{"rx_size_in_bytes":1,"tx_size_in_bytes":2}%s}}}`, process)
 	}))
@@ -42,7 +42,7 @@ func TestRemoteTargetSamplesDatabaseAndWeirCPUThroughTheirAPIs(t *testing.T) {
 	target := fixture.ResourceTarget{AllocatedCPUs: 2, Diagnostics: strings.TrimPrefix(weir.URL, "http://"), Remote: true}
 	options := resourceSampleOptions{Target: target, Started: time.Now(), SearchURL: search.URL, SearchClient: search.Client()}
 	sample := sampleResources(t.Context(), options)
-	if sample.Error != "" || sample.CPUTimeNS == nil || *sample.CPUTimeNS != int64(1500*time.Millisecond) || sample.CPUClockNS == 0 {
+	if sample.Error != "" || sample.CPUTimeNS == nil || *sample.CPUTimeNS != int64(1500*time.Millisecond) || sample.CPUClockNS != 1793347200000*int64(time.Millisecond) {
 		t.Fatal("remote database process CPU was not sampled with its read clock", sample.Error, sample.CPUTimeNS)
 	}
 	if sample.WeirCPUTimeNS == nil || *sample.WeirCPUTimeNS != int64(2500*time.Millisecond) || sample.WeirMemoryBytes != 1000000 {
@@ -58,5 +58,20 @@ func TestRemoteTargetSamplesDatabaseAndWeirCPUThroughTheirAPIs(t *testing.T) {
 	sample = sampleResources(t.Context(), options)
 	if sample.WeirCPUTimeNS != nil || !strings.Contains(sample.Error, "identity unavailable") {
 		t.Fatal("owned fixture target adopted remote CPU evidence", sample.Error)
+	}
+}
+
+func TestRemoteCPUUsesTheDatabaseReadClockNotTheSampleArrival(t *testing.T) {
+	// Samples arrive 1s apart, but the database read its counter 2s apart.
+	var samples []ResourceSample
+	for index := range 7 {
+		cpu := int64(index) * int64(2*time.Second)
+		sample := ResourceSample{ElapsedNS: int64(index) * int64(time.Second), CPUTimeNS: &cpu, CPUClockNS: int64(index+1) * int64(2*time.Second)}
+		samples = append(samples, sample)
+	}
+	resources := &Resources{Samples: samples, AllocatedCPUs: 2, MeasurementNS: int64(6 * time.Second)}
+	resources.qualify(90)
+	if resources.Intervals != 6 || resources.MeanCPUPercent != 50 || resources.CPUSaturated {
+		t.Fatal("remote CPU utilization used arrival time instead of the database clock", resources.Intervals, resources.MeanCPUPercent)
 	}
 }

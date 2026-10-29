@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"testing"
 	"time"
 )
@@ -61,7 +62,7 @@ func TestEndpointValidationRequiresExplicitOptInAndNoCredentials(t *testing.T) {
 }
 
 func TestSaturationModeRequiresDiagnosticsCPUBudgetAndEvenLadder(t *testing.T) {
-	valid := settings{mode: "saturation", backend: "mongo", mongoURI: "mongodb://127.0.0.1:27028/?directConnection=true", weirAddress: "127.0.0.1:7447", weirDiagnostics: "127.0.0.1:7449", store: "mongo", databaseCPUs: 2, levels: "64,256", clientProcesses: 16, records: 256, writes: 100, rounds: 1, warmupDuration: time.Second, duration: 5 * time.Second}
+	valid := settings{mode: "saturation", backend: "mongo", mongoURI: "mongodb://127.0.0.1:27028/?directConnection=true", weirAddress: "127.0.0.1:7447", weirDiagnostics: "127.0.0.1:7449", store: "mongo", databaseCPUs: 2, levels: "64,256", clientProcesses: 16, records: 256, writes: 100, rounds: 1, warmupDuration: time.Second, duration: 5 * time.Second, operationTimeout: 10 * time.Second}
 	if err := validate(valid); err != nil {
 		t.Fatal(err)
 	}
@@ -76,6 +77,11 @@ func TestSaturationModeRequiresDiagnosticsCPUBudgetAndEvenLadder(t *testing.T) {
 		"too many per process":    func(s *settings) { s.clientProcesses = 1; s.levels = "2048" },
 		"records below workers":   func(s *settings) { s.records = 255 },
 		"short measurement stage": func(s *settings) { s.duration = time.Second },
+		"unbound diagnostics":     func(s *settings) { s.weirDiagnostics = "127.0.0.1:0" },
+		"NaN CPU budget":          func(s *settings) { s.databaseCPUs = math.NaN() },
+		"too many rounds":         func(s *settings) { s.rounds = 11 },
+		"no operation timeout":    func(s *settings) { s.operationTimeout = 0 },
+		"long operation timeout":  func(s *settings) { s.operationTimeout = 2 * time.Minute },
 	}
 	for name, mutate := range invalid {
 		input := valid
@@ -101,7 +107,8 @@ func TestRunTimeoutCoversEverySaturationStageUnlessSet(t *testing.T) {
 	if runTimeout(input, 4) != time.Minute {
 		t.Fatal("explicit timeout was not honoured")
 	}
-	if runTimeout(settings{mode: "fixed"}, 1) != 3*time.Minute {
+	fixed := settings{mode: "fixed"}
+	if runTimeout(fixed, 1) != 3*time.Minute {
 		t.Fatal("fixed mode lost its default timeout")
 	}
 }

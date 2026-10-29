@@ -38,6 +38,7 @@ type SaturationParameters struct {
 	CPUThreshold         float64         `json:"database_cpu_budget_threshold_percent"`
 	ClientProcesses      int             `json:"client_process_count,omitempty"`
 	ClientRequestRecords int             `json:"records_per_business_request,omitempty"`
+	RemoteResources      bool            `json:"remote_resources,omitempty"`
 }
 
 type SaturationResult struct {

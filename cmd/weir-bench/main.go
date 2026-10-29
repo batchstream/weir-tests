@@ -173,6 +173,14 @@ func runSaturation(ctx context.Context, run saturationRun) error {
 	if err != nil {
 		return err
 	}
+	// Database CPU is the saturation evidence, so stop before the ladder without it.
+	counters, err := run.paths.DatabaseCounters(ctx)
+	if err != nil {
+		return fmt.Errorf("database CPU preflight: %w", err)
+	}
+	if counters.ProcessCPUNS == nil || counters.ProcessCPUAtNS == nil {
+		return errors.New("database CPU preflight: the database reports no process CPU; saturation needs a Linux mongod or a single Elasticsearch node")
+	}
 	run.provenance["database_cpu_limit"] = strconv.FormatFloat(run.input.databaseCPUs, 'f', -1, 64)
 	run.provenance["weir_diagnostics"] = run.input.weirDiagnostics
 	resources := fixture.ResourceTarget{AllocatedCPUs: run.input.databaseCPUs, Diagnostics: run.input.weirDiagnostics, Remote: true}
@@ -239,13 +247,14 @@ func validate(input settings) error {
 }
 
 func validateSaturation(input settings) error {
-	if _, err := netip.ParseAddrPort(input.weirDiagnostics); err != nil {
+	diagnostics, err := netip.ParseAddrPort(input.weirDiagnostics)
+	if err != nil || diagnostics.Port() == 0 {
 		return errors.New("saturation mode requires --weir-diagnostics as an explicit IP:port")
 	}
 	if err := validateAddress(input.weirDiagnostics, input.allowRemote); err != nil {
 		return err
 	}
-	if input.databaseCPUs <= 0 || input.databaseCPUs > 1024 {
+	if !(input.databaseCPUs > 0 && input.databaseCPUs <= 1024) {
 		return errors.New("saturation mode requires --database-cpus, the database CPU limit")
 	}
 	levels, err := parseLevels(input.levels)
@@ -260,8 +269,11 @@ func validateSaturation(input settings) error {
 			return errors.New("concurrency levels must divide evenly into at most 1024 workers per client process")
 		}
 	}
-	if input.records < levels[len(levels)-1] || input.writes < 0 || input.writes > 100 || input.rounds < 1 || input.rounds > 100 {
-		return errors.New("saturation mode requires records >= highest concurrency, write-percent 0-100 and 1-100 rounds")
+	if input.records < levels[len(levels)-1] || input.writes < 0 || input.writes > 100 || input.rounds < 1 || input.rounds > 10 {
+		return errors.New("saturation mode requires records >= highest concurrency, write-percent 0-100 and 1-10 rounds")
+	}
+	if input.operationTimeout <= 0 || input.operationTimeout > time.Minute {
+		return errors.New("saturation mode requires an operation timeout above 0 and at most 1m")
 	}
 	if input.warmupDuration < time.Second || input.warmupDuration > 5*time.Minute || input.duration < 5*time.Second || input.duration > 10*time.Minute {
 		return errors.New("saturation mode requires 1s-5m warmup and 5s-10m measurement per stage")

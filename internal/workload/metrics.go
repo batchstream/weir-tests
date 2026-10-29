@@ -28,9 +28,11 @@ type DatabaseCounters struct {
 	SearchUnavailable  string            `json:"search_pressure_observation_unavailable,omitempty"`
 	// ProcessCPUNS is the database process's cumulative CPU time from its own API.
 	ProcessCPUNS *int64 `json:"process_cpu_ns,omitempty"`
+	// ProcessCPUAtNS is the database clock, in Unix nanoseconds, when it read ProcessCPUNS.
+	ProcessCPUAtNS *int64 `json:"process_cpu_at_ns,omitempty"`
 }
 
-const searchNodeProjection = "nodes.*.fs.io_stats.total.read_kilobytes,nodes.*.fs.io_stats.total.write_kilobytes,nodes.*.fs.io_stats.total.operations,nodes.*.fs.io_stats.total.io_time_in_millis,nodes.*.transport.rx_size_in_bytes,nodes.*.transport.tx_size_in_bytes,nodes.*.http.current_open,nodes.*.thread_pool.write,nodes.*.thread_pool.write_coordination,nodes.*.indexing_pressure.memory,nodes.*.jvm.gc.collectors,nodes.*.jvm.mem.heap_used_in_bytes,nodes.*.jvm.mem.heap_max_in_bytes,nodes.*.process.cpu.total_in_millis"
+const searchNodeProjection = "nodes.*.fs.io_stats.total.read_kilobytes,nodes.*.fs.io_stats.total.write_kilobytes,nodes.*.fs.io_stats.total.operations,nodes.*.fs.io_stats.total.io_time_in_millis,nodes.*.transport.rx_size_in_bytes,nodes.*.transport.tx_size_in_bytes,nodes.*.http.current_open,nodes.*.thread_pool.write,nodes.*.thread_pool.write_coordination,nodes.*.indexing_pressure.memory,nodes.*.jvm.gc.collectors,nodes.*.jvm.mem.heap_used_in_bytes,nodes.*.jvm.mem.heap_max_in_bytes,nodes.*.process.timestamp,nodes.*.process.cpu.total_in_millis"
 
 type mongoCommandCounter struct {
 	Total *uint64 `bson:"total"`
@@ -61,6 +63,8 @@ type mongoServerStatus struct {
 			Written uint64 `bson:"bytes written from cache"`
 		} `bson:"cache"`
 	} `bson:"wiredTiger"`
+	Process   string    `bson:"process"`
+	LocalTime time.Time `bson:"localTime"`
 	// Linux mongod reports its cumulative process CPU time here.
 	ExtraInfo struct {
 		User   *int64 `bson:"user_time_us"`
@@ -81,9 +85,12 @@ func (s mongoServerStatus) counters() DatabaseCounters {
 		counters.Commands[name] = *total
 	}
 	counters.IOScope = "MongoDB WiredTiger cache storage bytes; excludes other files and does not measure device busy time"
-	if s.ExtraInfo.User != nil && s.ExtraInfo.System != nil {
-		cpu := (*s.ExtraInfo.User + *s.ExtraInfo.System) * int64(time.Microsecond)
-		counters.ProcessCPUNS = &cpu
+	// A mongos router reports its own CPU, never a database server's.
+	user, system := s.ExtraInfo.User, s.ExtraInfo.System
+	if s.Process == "mongod" && user != nil && system != nil && *user >= 0 && *system >= 0 && !s.LocalTime.IsZero() {
+		cpu := (*user + *system) * int64(time.Microsecond)
+		at := s.LocalTime.UnixNano()
+		counters.ProcessCPUNS, counters.ProcessCPUAtNS = &cpu, &at
 	}
 	return counters
 }
@@ -136,7 +143,8 @@ func SearchDatabaseCounters(ctx context.Context, client *http.Client, baseURL st
 				CurrentOpen *uint64 `json:"current_open"`
 			} `json:"http"`
 			Process struct {
-				CPU struct {
+				Timestamp *int64 `json:"timestamp"`
+				CPU       struct {
 					Total *int64 `json:"total_in_millis"`
 				} `json:"cpu"`
 			} `json:"process"`
@@ -162,9 +170,13 @@ func SearchDatabaseCounters(ctx context.Context, client *http.Client, baseURL st
 			return counters, errors.New("Elasticsearch projected connection or transport counter unavailable")
 		}
 		counters.Connections = node.HTTP.CurrentOpen
-		if node.Process.CPU.Total != nil {
-			cpu := *node.Process.CPU.Total * int64(time.Millisecond)
-			counters.ProcessCPUNS = &cpu
+		// Elasticsearch caches process stats and reports -1 when CPU is
+		// unreadable; the timestamp marks when the cached total was read.
+		total, stamp := node.Process.CPU.Total, node.Process.Timestamp
+		if total != nil && stamp != nil && *total >= 0 && *stamp > 0 {
+			cpu := *total * int64(time.Millisecond)
+			at := *stamp * int64(time.Millisecond)
+			counters.ProcessCPUNS, counters.ProcessCPUAtNS = &cpu, &at
 		}
 		counters.NetworkIn, counters.NetworkOut = *node.Transport.RX, *node.Transport.TX
 		var unavailable []string

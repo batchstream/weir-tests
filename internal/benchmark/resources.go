@@ -195,10 +195,10 @@ func sampleResources(ctx context.Context, options resourceSampleOptions) Resourc
 		}
 	}
 	if target.Remote {
-		// The database API reports cumulative process CPU; stamp it on return.
-		if sample.Database.ProcessCPUNS != nil {
+		// The database API reports cumulative process CPU and when it read it.
+		if sample.Database.ProcessCPUNS != nil && sample.Database.ProcessCPUAtNS != nil {
 			sample.CPUTimeNS = sample.Database.ProcessCPUNS
-			sample.CPUClockNS = time.Now().UnixNano()
+			sample.CPUClockNS = *sample.Database.ProcessCPUAtNS
 		} else {
 			sample.Error = "remote database process CPU counter unavailable"
 		}
