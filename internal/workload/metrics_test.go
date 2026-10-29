@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -52,6 +53,23 @@ func TestMongoCommandCountersIgnoreHeterogeneousUnknownAndPreserveMissing(t *tes
 	if len(counters.Commands) != 5 || counters.Commands["bulkWrite"] != 71 || counters.Commands["commitTransaction"] != 71 || counters.Connections == nil || *counters.Connections != 9 || counters.NetworkIn != 12 || counters.NetworkOut != 34 || counters.ReadBytes != 56 || counters.WriteBytes != 78 {
 		t.Fatal("known physical command, connection or storage evidence lost", counters)
 	}
+	if counters.ProcessCPUNS != nil {
+		t.Fatal("missing extra_info became a process CPU sample", *counters.ProcessCPUNS)
+	}
+	extra := bson.D{{Key: "user_time_us", Value: int64(1500)}, {Key: "system_time_us", Value: int64(500)}}
+	withCPU := append(status, bson.E{Key: "extra_info", Value: extra})
+	raw, err = bson.Marshal(withCPU)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cpuReply mongoServerStatus
+	if err := bson.Unmarshal(raw, &cpuReply); err != nil {
+		t.Fatal(err)
+	}
+	cpu := cpuReply.counters().ProcessCPUNS
+	if cpu == nil || *cpu != int64(2*time.Millisecond) {
+		t.Fatal("mongod user+system CPU was not converted to nanoseconds", cpu)
+	}
 }
 
 func TestSearchCountersProjectScalarsAndExcludeLargeClientHistory(t *testing.T) {
@@ -64,7 +82,7 @@ func TestSearchCountersProjectScalarsAndExcludeLargeClientHistory(t *testing.T) 
 	if len(full) <= limit {
 		t.Fatal("test must produce a response exceeding the business workspace")
 	}
-	projected := `{"nodes":{"owned":{"http":{"current_open":7},"transport":{"rx_size_in_bytes":20,"tx_size_in_bytes":30},"fs":{"io_stats":{"total":{"read_kilobytes":2,"write_kilobytes":3}}}}}}`
+	projected := `{"nodes":{"owned":{"http":{"current_open":7},"transport":{"rx_size_in_bytes":20,"tx_size_in_bytes":30},"fs":{"io_stats":{"total":{"read_kilobytes":2,"write_kilobytes":3}}},"process":{"cpu":{"total_in_millis":1500}}}}}`
 	allowed := map[string]bool{
 		"nodes.*.http.current_open":                   true,
 		"nodes.*.transport.rx_size_in_bytes":          true,
@@ -79,9 +97,10 @@ func TestSearchCountersProjectScalarsAndExcludeLargeClientHistory(t *testing.T) 
 		"nodes.*.jvm.gc.collectors":                   true,
 		"nodes.*.jvm.mem.heap_used_in_bytes":          true,
 		"nodes.*.jvm.mem.heap_max_in_bytes":           true,
+		"nodes.*.process.cpu.total_in_millis":         true,
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.Method != http.MethodGet || request.URL.Path != "/_nodes/stats/fs,transport,http,thread_pool,indexing_pressure,jvm" {
+		if request.Method != http.MethodGet || request.URL.Path != "/_nodes/stats/fs,transport,http,thread_pool,indexing_pressure,jvm,process" {
 			t.Error("unexpected monitor request", request.Method, request.URL.Path)
 		}
 		filters := strings.Split(request.URL.Query().Get("filter_path"), ",")
@@ -101,7 +120,7 @@ func TestSearchCountersProjectScalarsAndExcludeLargeClientHistory(t *testing.T) 
 	direct := &directPath{dataset: dataset, search: server.Client(), baseURL: server.URL}
 	paths := &Paths{direct: direct}
 	counters, err := paths.DatabaseCounters(context.Background())
-	if err != nil || counters.Connections == nil || *counters.Connections != 7 || counters.NetworkIn != 20 || counters.NetworkOut != 30 || counters.ReadBytes != 2*1024 || counters.WriteBytes != 3*1024 {
+	if err != nil || counters.Connections == nil || *counters.Connections != 7 || counters.NetworkIn != 20 || counters.NetworkOut != 30 || counters.ReadBytes != 2*1024 || counters.WriteBytes != 3*1024 || counters.ProcessCPUNS == nil || *counters.ProcessCPUNS != int64(1500*time.Millisecond) {
 		t.Fatal("projected counters lost independent statistics or grew with history", counters, err)
 	}
 }

@@ -162,7 +162,7 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 		result.PhysicalCommandUnavailable = counterErr.Error()
 	}
 	if opts.Path == "weir" {
-		metricsBefore.Before = fetchServerMetrics(ctx, options.Resources.Diagnostics)
+		metricsBefore.Before = fetchServerMetrics(ctx, options.Resources)
 	}
 	resourceClient, err := resourceHTTPClient(options.Resources)
 	if err != nil {
@@ -188,7 +188,11 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	started := now.Add(-time.Duration(now.UnixNano() - command.StartUnixNS))
 	var monitor sync.WaitGroup
 	stop := make(chan struct{})
-	resources := Resources{AllocatedCPUs: options.Resources.AllocatedCPUs, Source: "owned Docker Engine cumulative CPU and timestamps; DB counters; individual owned client PID ps CPU/RSS and Weir CPU/RSS; 1s samples; common timed barrier"}
+	source := "owned Docker Engine cumulative CPU and timestamps; DB counters; individual owned client PID ps CPU/RSS and Weir CPU/RSS; 1s samples; common timed barrier"
+	if options.Resources.Remote {
+		source = "remote database process CPU from its own API against the declared database CPU limit; DB counters; individual owned client PID CPU/RSS; Weir process CPU/RSS from diagnostics; 1s samples; common timed barrier"
+	}
+	resources := Resources{AllocatedCPUs: options.Resources.AllocatedCPUs, Source: source}
 	monitor.Add(1)
 	go func() {
 		defer monitor.Done()
@@ -228,7 +232,7 @@ func runSingleStage(ctx context.Context, opts singleStageOptions) (result Satura
 	result.Resources.qualify(options.CPUThreshold)
 	result.ElapsedNS = elapsed.Nanoseconds()
 	if opts.Path == "weir" {
-		after := fetchServerMetrics(ctx, options.Resources.Diagnostics)
+		after := fetchServerMetrics(ctx, options.Resources)
 		result.ServerMetrics = serverMetricDelta(metricsBefore.Before, after, options.Dataset.Config.StoreName)
 	}
 	if readErr != nil {

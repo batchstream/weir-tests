@@ -268,7 +268,7 @@ func (s *system) nodeMetrics(t *testing.T) []observe.Snapshot {
 	t.Helper()
 	snapshots := make([]observe.Snapshot, len(s.cluster.Nodes))
 	for index, node := range s.cluster.Nodes {
-		snapshots[index] = observe.Fetch(s.ctx, node.Diagnostics)
+		snapshots[index] = observe.Fetch(s.ctx, node.Diagnostics, false)
 		if snapshots[index].Error != "" {
 			t.Fatalf("node %d diagnostic observation failed: %s", index, snapshots[index].Error)
 		}

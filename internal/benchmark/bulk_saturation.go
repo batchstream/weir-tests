@@ -107,7 +107,7 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 	var metricsBefore observe.Snapshot
 	measureServer := options.Sample && options.Executor.Name() == "weir"
 	if measureServer {
-		metricsBefore = fetchServerMetrics(ctx, options.Target.Diagnostics)
+		metricsBefore = fetchServerMetrics(ctx, options.Target)
 	}
 	workers := make([]workerResult, len(options.State.workers))
 	reads, writes, requests := make([]uint64, len(workers)), make([]uint64, len(workers)), make([]uint64, len(workers))
@@ -224,7 +224,7 @@ func measureDuration(ctx context.Context, options durationMeasureOptions) Satura
 	monitorJoined.Wait()
 	var metricsAfter observe.Snapshot
 	if measureServer {
-		metricsAfter = fetchServerMetrics(ctx, options.Target.Diagnostics)
+		metricsAfter = fetchServerMetrics(ctx, options.Target)
 	}
 	if options.Sample && options.Paths != nil {
 		counters, err := options.Paths.DatabaseCounters(ctx)

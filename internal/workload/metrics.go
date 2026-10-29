@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -25,9 +26,11 @@ type DatabaseCounters struct {
 	SearchIndexStats   json.RawMessage   `json:"search_index_stats,omitempty"`
 	SearchSettings     json.RawMessage   `json:"search_index_settings,omitempty"`
 	SearchUnavailable  string            `json:"search_pressure_observation_unavailable,omitempty"`
+	// ProcessCPUNS is the database process's cumulative CPU time from its own API.
+	ProcessCPUNS *int64 `json:"process_cpu_ns,omitempty"`
 }
 
-const searchNodeProjection = "nodes.*.fs.io_stats.total.read_kilobytes,nodes.*.fs.io_stats.total.write_kilobytes,nodes.*.fs.io_stats.total.operations,nodes.*.fs.io_stats.total.io_time_in_millis,nodes.*.transport.rx_size_in_bytes,nodes.*.transport.tx_size_in_bytes,nodes.*.http.current_open,nodes.*.thread_pool.write,nodes.*.thread_pool.write_coordination,nodes.*.indexing_pressure.memory,nodes.*.jvm.gc.collectors,nodes.*.jvm.mem.heap_used_in_bytes,nodes.*.jvm.mem.heap_max_in_bytes"
+const searchNodeProjection = "nodes.*.fs.io_stats.total.read_kilobytes,nodes.*.fs.io_stats.total.write_kilobytes,nodes.*.fs.io_stats.total.operations,nodes.*.fs.io_stats.total.io_time_in_millis,nodes.*.transport.rx_size_in_bytes,nodes.*.transport.tx_size_in_bytes,nodes.*.http.current_open,nodes.*.thread_pool.write,nodes.*.thread_pool.write_coordination,nodes.*.indexing_pressure.memory,nodes.*.jvm.gc.collectors,nodes.*.jvm.mem.heap_used_in_bytes,nodes.*.jvm.mem.heap_max_in_bytes,nodes.*.process.cpu.total_in_millis"
 
 type mongoCommandCounter struct {
 	Total *uint64 `bson:"total"`
@@ -58,6 +61,11 @@ type mongoServerStatus struct {
 			Written uint64 `bson:"bytes written from cache"`
 		} `bson:"cache"`
 	} `bson:"wiredTiger"`
+	// Linux mongod reports its cumulative process CPU time here.
+	ExtraInfo struct {
+		User   *int64 `bson:"user_time_us"`
+		System *int64 `bson:"system_time_us"`
+	} `bson:"extra_info"`
 }
 
 func (s mongoServerStatus) counters() DatabaseCounters {
@@ -73,6 +81,10 @@ func (s mongoServerStatus) counters() DatabaseCounters {
 		counters.Commands[name] = *total
 	}
 	counters.IOScope = "MongoDB WiredTiger cache storage bytes; excludes other files and does not measure device busy time"
+	if s.ExtraInfo.User != nil && s.ExtraInfo.System != nil {
+		cpu := (*s.ExtraInfo.User + *s.ExtraInfo.System) * int64(time.Microsecond)
+		counters.ProcessCPUNS = &cpu
+	}
 	return counters
 }
 
@@ -100,7 +112,7 @@ func SearchDatabaseCounters(ctx context.Context, client *http.Client, baseURL st
 	}
 	// HTTP client history grows as each independent process opens new pools.
 	// Project only the scalar counters used by the monitor, never that history.
-	path := "/_nodes/stats/fs,transport,http,thread_pool,indexing_pressure,jvm?filter_path=" + searchNodeProjection
+	path := "/_nodes/stats/fs,transport,http,thread_pool,indexing_pressure,jvm,process?filter_path=" + searchNodeProjection
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+path, nil)
 	if err != nil {
 		return counters, err
@@ -123,6 +135,11 @@ func SearchDatabaseCounters(ctx context.Context, client *http.Client, baseURL st
 			HTTP struct {
 				CurrentOpen *uint64 `json:"current_open"`
 			} `json:"http"`
+			Process struct {
+				CPU struct {
+					Total *int64 `json:"total_in_millis"`
+				} `json:"cpu"`
+			} `json:"process"`
 			Transport struct {
 				RX *uint64 `json:"rx_size_in_bytes"`
 				TX *uint64 `json:"tx_size_in_bytes"`
@@ -145,6 +162,10 @@ func SearchDatabaseCounters(ctx context.Context, client *http.Client, baseURL st
 			return counters, errors.New("Elasticsearch projected connection or transport counter unavailable")
 		}
 		counters.Connections = node.HTTP.CurrentOpen
+		if node.Process.CPU.Total != nil {
+			cpu := *node.Process.CPU.Total * int64(time.Millisecond)
+			counters.ProcessCPUNS = &cpu
+		}
 		counters.NetworkIn, counters.NetworkOut = *node.Transport.RX, *node.Transport.TX
 		var unavailable []string
 		if node.FS.IO.Total.Read != nil {

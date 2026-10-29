@@ -29,7 +29,7 @@ func streamReservations(ctx context.Context, nodes []fixture.Node, store string)
 	idle := true
 	labels := map[string]string{"store": store}
 	for _, node := range nodes {
-		snapshot := observe.Fetch(ctx, node.Diagnostics)
+		snapshot := observe.Fetch(ctx, node.Diagnostics, false)
 		values := make(map[string]float64)
 		for _, name := range []string{"queued_operations", "queued_bytes", "active_executions", "active_natives"} {
 			value, found := snapshot.Sum("weir_store_"+name, labels)

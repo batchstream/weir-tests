@@ -481,7 +481,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	if opts.Observer != nil {
 		stage.HTTPBefore = opts.Observer.snapshot()
 	}
-	stage.ServerBefore = fetchServerMetrics(ctx, target.Diagnostics)
+	stage.ServerBefore = fetchServerMetrics(ctx, target)
 	phase := crawlerPhase{Phase: "timed", StartNS: time.Now().Add(200 * time.Millisecond).UnixNano(), DurationNS: int64(config.Duration), ProductsPerSecond: opts.Case.Rate}
 	stage.StartedNS = phase.StartNS
 	for _, client := range clients {
@@ -554,7 +554,7 @@ func runCrawlerStage(ctx context.Context, opts crawlerStageOptions) (stage crawl
 	}
 	stage.DatabaseAfter, err = crawlerStats(ctx, opts.HTTP, opts.Cluster.SearchURL, opts.Namespace)
 	resultErr = errors.Join(resultErr, err)
-	stage.ServerAfter = fetchServerMetrics(ctx, target.Diagnostics)
+	stage.ServerAfter = fetchServerMetrics(ctx, target)
 	resultErr = errors.Join(resultErr, auditCrawlerLiveControls(stage, config))
 	stage.Clients = replies
 	for _, reply := range replies {
