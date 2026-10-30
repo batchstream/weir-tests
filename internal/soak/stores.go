@@ -40,6 +40,7 @@ type mongoStore struct {
 	client    *mongo.Client
 	namespace string
 	records   *mongo.Collection
+	latest    *mongo.Collection
 }
 
 func openMongo(ctx context.Context, uri, namespace string) (*mongoStore, error) {
@@ -51,11 +52,16 @@ func openMongo(ctx context.Context, uri, namespace string) (*mongoStore, error) 
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
 		return nil, errors.Join(fmt.Errorf("direct Mongo ping: %w", err), client.Disconnect(ctx))
 	}
-	// Checks read majority-committed data from the primary, the durability
-	// Weir's majority write concern promises for APPLIED writes.
-	collectionOptions := options.Collection().SetReadConcern(readconcern.Majority()).SetReadPreference(readpref.Primary())
-	records := client.Database(namespace).Collection(mongoCollection, collectionOptions)
-	opened := &mongoStore{client: client, namespace: namespace, records: records}
+	// The final check reads majority-committed data from the primary, the
+	// durability Weir's majority write concern promises for APPLIED writes.
+	// Single-key checks read linearizably, so they also see a write the primary
+	// applied just before a refusal and are never stale after a failover.
+	database := client.Database(namespace)
+	majority := options.Collection().SetReadConcern(readconcern.Majority()).SetReadPreference(readpref.Primary())
+	linearizable := options.Collection().SetReadConcern(readconcern.Linearizable()).SetReadPreference(readpref.Primary())
+	records := database.Collection(mongoCollection, majority)
+	latest := database.Collection(mongoCollection, linearizable)
+	opened := &mongoStore{client: client, namespace: namespace, records: records, latest: latest}
 	return opened, nil
 }
 
@@ -82,7 +88,7 @@ func (m *mongoStore) read(ctx context.Context, id string) (int64, error) {
 	filter := bson.D{{Key: "_id", Value: id}}
 	projection := bson.D{{Key: "seq", Value: 1}}
 	findOptions := options.FindOne().SetProjection(projection)
-	raw, err := m.records.FindOne(ctx, filter, findOptions).Raw()
+	raw, err := m.latest.FindOne(ctx, filter, findOptions).Raw()
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return 0, nil
 	}
@@ -155,7 +161,8 @@ func openSearch(ctx context.Context, rawURL, namespace string) (*searchStore, er
 	transport := &http.Transport{Proxy: nil, MaxIdleConnsPerHost: 64}
 	client := &http.Client{Transport: transport, Timeout: 30 * time.Second}
 	opened := &searchStore{base: strings.TrimSuffix(rawURL, "/"), namespace: namespace, http: client}
-	if _, _, err := opened.request(ctx, http.MethodGet, "/", nil); err != nil {
+	_, _, err = opened.request(ctx, http.MethodGet, "/", nil)
+	if err != nil {
 		return nil, fmt.Errorf("direct Search ping: %w", err)
 	}
 	return opened, nil
@@ -189,6 +196,7 @@ type searchHit struct {
 	ID     string          `json:"_id"`
 	Found  bool            `json:"found"`
 	Source json.RawMessage `json:"_source"`
+	Error  json.RawMessage `json:"error"`
 }
 
 func (s *searchStore) read(ctx context.Context, id string) (int64, error) {
@@ -227,7 +235,12 @@ func (s *searchStore) readAll(ctx context.Context, ids []string) (map[string]int
 		if status != http.StatusOK || json.Unmarshal(raw, &reply) != nil || len(reply.Docs) != len(chunk) {
 			return nil, fmt.Errorf("Search _mget status %d", status)
 		}
-		for _, hit := range reply.Docs {
+		for index, hit := range reply.Docs {
+			// An unavailable shard answers each document with an error, which
+			// says nothing about whether the document exists.
+			if hit.ID != chunk[index] || hit.Error != nil {
+				return nil, fmt.Errorf("Search _mget document %s: %s", chunk[index], hit.Error)
+			}
 			if !hit.Found {
 				continue
 			}

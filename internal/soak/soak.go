@@ -70,6 +70,7 @@ type FinalCheck struct {
 	Present    int    `json:"present"`
 	Unknown    int    `json:"keys_with_unknown_writes"`
 	Violations int    `json:"violations"`
+	Retries    int    `json:"retries,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
 
@@ -247,9 +248,19 @@ func finalCheck(run *backendRun, violations *violationLog) FinalCheck {
 		ids[index] = key.id
 		written[key.id] = true
 	}
+	// A backend still recovering from the last fault may refuse the reads for
+	// a while, which says nothing about the records.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	found, err := run.store.readAll(ctx, ids)
+	for err != nil && ctx.Err() == nil {
+		check.Retries++
+		select {
+		case <-ctx.Done():
+		case <-time.After(10 * time.Second):
+			found, err = run.store.readAll(ctx, ids)
+		}
+	}
 	if err != nil {
 		check.Error = err.Error()
 		return check

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"math/rand/v2"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
@@ -161,6 +163,27 @@ func TestLostAppliedWriteFailsTheFinalCheck(t *testing.T) {
 	check := finalCheck(run, load.violations)
 	if check.Violations != 1 || key.applied != 2 {
 		t.Fatalf("check=%+v key=%+v", check, key)
+	}
+}
+
+func TestSearchDocumentErrorsFailTheCheckInsteadOfReadingAbsent(t *testing.T) {
+	handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/soak/_mget" {
+			_, _ = writer.Write([]byte(`{"docs":[{"_id":"a","found":true,"_source":{"seq":3}},` +
+				`{"_id":"b","error":{"type":"no_shard_available_action_exception"}}]}`))
+			return
+		}
+		_, _ = writer.Write([]byte(`{}`))
+	})
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	store, err := openSearch(context.Background(), server.URL, "soak")
+	if err != nil {
+		t.Fatal(err)
+	}
+	found, err := store.readAll(context.Background(), []string{"a", "b"})
+	if err == nil {
+		t.Fatalf("found=%v, want an error for the unavailable document", found)
 	}
 }
 
