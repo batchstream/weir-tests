@@ -378,7 +378,8 @@ Deployments there. After `quiet` seconds it rotates through a MongoDB primary
 stepdown, a rolling restart of the weir-charts release, an Elasticsearch process
 restart, a MongoDB primary Pod deletion and a Weir Pod deletion, one every
 `every` seconds for `window` seconds, and waits for recovery after each. A
-fault that does not recover in time ends the schedule with a non-zero exit. A
+fault that does not take effect or recover in time ends the schedule with a
+non-zero exit. A
 fault-free first half shows whether memory, goroutines, files, connections and
 latency stay flat; the second half checks outcomes across failover and restarts.
 End the window at least 20 minutes before the load so the last recovery

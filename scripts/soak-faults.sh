@@ -4,8 +4,8 @@
 # window-seconds, rotating through five faults and waiting for recovery after
 # each. The namespace holds a three-member MongoDB StatefulSet "mongo", a Pod
 # "elasticsearch" whose readiness probe requires green health, and a
-# weir-charts release; only those are touched. A fault that does not recover
-# ends the schedule. KUBECTL selects the kubectl binary.
+# weir-charts release; only those are touched. A fault that does not take
+# effect or recover ends the schedule. KUBECTL selects the kubectl binary.
 NS=$1 RELEASE=$2 QUIET=$3 WINDOW=$4 EVERY=$5
 K="${KUBECTL:-kubectl} -n $NS"
 WEIR=$RELEASE-weir
@@ -52,18 +52,24 @@ wait_until() {
   done
 }
 
+# moved <old-primary> reports whether another member is primary now.
+moved() { now=$(primary); [ -n "$now" ] && [ "$now" != "$1" ]; }
+
 stepdown() {
   p=$(primary)
+  [ -n "$p" ] || { log "no primary to step down"; return 1; }
   log "fault mongo-stepdown $p"
   mongo_eval "$p" 'rs.stepDown(60)' > /dev/null
   sleep 5
-  wait_until mongo_healthy 600
+  wait_until mongo_healthy 600 || return 1
+  moved "$p" || { log "primary did not move from $p"; return 1; }
 }
 
 mongo_kill() {
   p=$(primary)
+  [ -n "$p" ] || { log "no primary to kill"; return 1; }
   log "fault mongo-primary-kill $p"
-  $K delete pod "$p" --grace-period=1 --wait=false > /dev/null
+  $K delete pod "$p" --grace-period=1 --wait=false > /dev/null || { log "delete failed"; return 1; }
   sleep 20
   wait_until mongo_healthy 900
 }
