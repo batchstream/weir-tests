@@ -256,6 +256,7 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 		read := &weir.ReadRequest{Resource: write.Resource}
 		reads[count-1-index] = read
 	}
+	s.quiesce(t)
 	before := s.nodeMetrics(t)
 	opts := weir.MutateOptions{StoreName: backend.name, Requests: mutations}
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)

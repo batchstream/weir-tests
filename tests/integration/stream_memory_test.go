@@ -134,6 +134,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 	var shortPeak uint64
 	for _, count := range []int{1024, 4096} {
 		s.waitStreamIdle(t, backend.name)
+		s.quiesce(t)
 		before := s.nodeMetrics(t)
 		ctx, stop := context.WithTimeout(s.ctx, 90*time.Second)
 		produced, consumed := 0, uint64(0)
