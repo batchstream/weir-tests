@@ -11,6 +11,7 @@ Go SDK and public protocol. It imports no server packages.
 | `scripts/run_performance_matrix.py`, `scripts/summarize_performance.py` | Run a read/mixed/write/Lua matrix and compare two matrix runs |
 | `cmd/weir-crawler` | [Crawler mutation benchmark](docs/crawler-benchmark.md) on an owned Search fixture |
 | `cmd/weir-bench` | Fixed and saturation comparisons against independently deployed endpoints |
+| `cmd/weir-soak`, `scripts/soak-faults.sh` | Long-running load through deployed Weir replicas, with every outcome checked against the databases, under scheduled faults |
 
 The Weir server commit and the database images are pinned in
 [versions.json](versions.json) by full commit; `go.mod` pins released SDK and
@@ -332,6 +333,49 @@ direct profiles retain the driver's default heartbeat. Reports record canonical
 credential-free seeds, profile, replica-set name and polling policy for the
 native connection. Parser/options tests are offline checks; live discovery and
 primary movement need a separate replica-set fixture.
+
+## Soak
+
+`weir-soak` drives a steady write and read load through deployed Weir replicas
+for hours, then checks every key against the databases directly. It creates a
+fresh MongoDB database and Search index, drops them at the end unless
+`-keep-data` is set, and never starts, stops or faults services.
+
+Each worker alone writes its own keys, one operation at a time, with increasing
+sequence numbers. The database may therefore hold only a key's latest APPLIED
+sequence or one whose outcome was UNKNOWN, and a key with no APPLIED write may
+be absent. Reads through Weir must return such a sequence. After NOT_STARTED or
+NOT_APPLIED the worker reads the key directly to confirm the write took no
+effect, then retries with a fresh sequence, so a refusal that took effect
+stays visible. An SDK error without a result counts as UNKNOWN. An UNKNOWN
+write is assumed to land within four operation timeouts of being issued; a
+later APPLIED write retires it. `-verify-percent` of APPLIED writes are also
+read back directly. MongoDB checks read majority-committed data from the
+primary; Search checks use realtime GET and `_mget`.
+
+```sh
+weir-soak -weir-address weir.soak.svc:7447 -weir-diagnostics weir.soak.svc:7449 \
+  -mongo-uri 'mongodb://mongo-0.mongo.soak.svc:27017,mongo-1.mongo.soak.svc:27017,mongo-2.mongo.soak.svc:27017/?replicaSet=soak' \
+  -search-url http://elasticsearch.soak.svc:9200 -duration 12h -output /work/soak
+```
+
+The Weir addresses are names that resolve to every replica, such as a headless
+Service; the diagnostics name is resolved at every sample to scrape each
+replica's goroutines, live memory, RSS, open files and sessions. `<output>.jsonl`
+holds one sample per `-sample-interval` with per-backend outcomes, latency
+quantiles and database connections, and `<output>.json` the totals and final
+check. The run fails on any violation, a backend without APPLIED writes or an
+incomplete final check.
+
+`scripts/soak-faults.sh <namespace> <weir-release> <quiet> <window> <every>`
+injects faults from a Pod in the same namespace, whose service account may get,
+list, delete and exec into Pods, watch Deployments and ReplicaSets, and patch
+Deployments there. After `quiet` seconds it rotates through a MongoDB primary
+stepdown, a rolling restart of the weir-charts release, an Elasticsearch process
+restart, a MongoDB primary Pod deletion and a Weir Pod deletion, one every
+`every` seconds for `window` seconds, and waits for recovery after each. A
+fault-free first half shows whether memory, goroutines, files, connections and
+latency stay flat; the second half checks outcomes across failover and restarts.
 
 ## CI and output
 
