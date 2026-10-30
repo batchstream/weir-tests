@@ -63,20 +63,20 @@ func TestSystemIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal("create SDK client:", err)
 	}
+	suite := &system{ctx: ctx, cluster: cluster, client: client, backends: backends}
 	t.Cleanup(func() {
-		if err := client.Close(); err != nil {
+		if err := suite.client.Close(); err != nil {
 			t.Error("close SDK:", err)
 		}
 	})
-	suite := &system{ctx: ctx, cluster: cluster, client: client, backends: backends}
 	if !t.Run("native_reset_and_write_change_evidence", func(t *testing.T) { testNativeWriteChangeEvidence(t, ctx, cluster) }) {
 		return
 	}
 	for _, backend := range backends {
 		if !t.Run(backend.name+"_lifecycle", func(t *testing.T) {
-			testLifecycle(t, ctx, client, backend)
+			testLifecycle(t, ctx, suite.client, backend)
 			testCrossReplicaNativePagination(t, ctx, cluster, backend)
-			testPublicBatch(t, ctx, client, backend)
+			testPublicBatch(t, ctx, suite.client, backend)
 			suite.testLargeDistinctBatch(t, backend)
 			suite.testStreamMemory(t, backend)
 			suite.testLuaSemantics(t, backend)
@@ -264,6 +264,38 @@ func poll(t *testing.T, parent context.Context, description string, check func(c
 	}
 }
 
+// quiesce replaces the suite's Client, whose idle shared streams could retire
+// during a measurement, and waits until no replica has an open session.
+func (s *system) quiesce(t *testing.T) {
+	t.Helper()
+	if err := s.client.Close(); err != nil {
+		t.Fatal("close SDK:", err)
+	}
+	client, err := weir.New(s.cluster.Address())
+	if err != nil {
+		t.Fatal("create SDK client:", err)
+	}
+	s.client = client
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		sessions := 0.0
+		for index, snapshot := range s.nodeMetrics(t) {
+			value, found := snapshot.Sum("weir_ingress_sessions", nil)
+			if !found {
+				t.Fatalf("node %d session observation unavailable", index)
+			}
+			sessions += value
+		}
+		if sessions == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("closed SDK left %v sessions open", sessions)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
 func (s *system) nodeMetrics(t *testing.T) []observe.Snapshot {
 	t.Helper()
 	snapshots := make([]observe.Snapshot, len(s.cluster.Nodes))
@@ -331,6 +363,7 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 
 func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 	t.Helper()
+	s.quiesce(t)
 	before := s.nodeMetrics(t)
 	reads := make([]*weir.ReadRequest, 32)
 	for index := range reads {
