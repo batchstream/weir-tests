@@ -137,6 +137,8 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		before := s.nodeMetrics(t)
 		ctx, stop := context.WithTimeout(s.ctx, 90*time.Second)
 		produced, consumed := 0, uint64(0)
+		// Results arrive in completion order; each index appears once.
+		seen := make([]bool, count+1)
 		var bytes, peak uint64
 		sample := func() error {
 			resident, err := residentBytes(ctx, s.cluster.Nodes)
@@ -162,9 +164,10 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 				return request, nil
 			},
 			Consume: func(_ context.Context, index uint64, result *weir.ReadResult) error {
-				if index != consumed+1 || result == nil || result.Document == nil || result.Failure != nil || result.Missing {
+				if index == 0 || index > uint64(count) || seen[index] || result == nil || result.Document == nil || result.Failure != nil || result.Missing {
 					return fmt.Errorf("unexpected stream result at %d", index)
 				}
+				seen[index] = true
 				if n, err := backend.number(result.Document); err != nil || n != 42 || len(result.Document.Data) < payloadBytes {
 					return fmt.Errorf("large streamed document changed: n=%v error=%v", n, err)
 				}
