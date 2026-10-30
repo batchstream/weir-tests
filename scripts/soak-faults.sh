@@ -3,8 +3,9 @@
 # Waits quiet-seconds, then injects one fault every every-seconds for
 # window-seconds, rotating through five faults and waiting for recovery after
 # each. The namespace holds a three-member MongoDB StatefulSet "mongo", a Pod
-# "elasticsearch" and a weir-charts release; only those are touched.
-# KUBECTL selects the kubectl binary.
+# "elasticsearch" whose readiness probe requires green health, and a
+# weir-charts release; only those are touched. A fault that does not recover
+# ends the schedule. KUBECTL selects the kubectl binary.
 NS=$1 RELEASE=$2 QUIET=$3 WINDOW=$4 EVERY=$5
 K="${KUBECTL:-kubectl} -n $NS"
 WEIR=$RELEASE-weir
@@ -28,7 +29,11 @@ mongo_members() {
 }
 
 mongo_healthy() { [ -n "$(primary)" ] && [ "$(mongo_members)" = "3" ]; }
-es_ready() { [ "$($K get pod elasticsearch -o jsonpath='{.status.containerStatuses[0].ready}')" = "true" ]; }
+es_restarts() { $K get pod elasticsearch -o jsonpath='{.status.containerStatuses[0].restartCount}'; }
+es_restarted() {
+  [ "$(es_restarts)" -gt "$ES_RESTARTS" ] &&
+    [ "$($K get pod elasticsearch -o jsonpath='{.status.containerStatuses[0].ready}')" = "true" ]
+}
 weir_ready() {
   counts=$($K get deployment "$WEIR" -o jsonpath='{.spec.replicas} {.status.availableReplicas} {.status.updatedReplicas} {.status.replicas}')
   set -- $counts
@@ -64,21 +69,25 @@ mongo_kill() {
 }
 
 es_restart() {
+  ES_RESTARTS=$(es_restarts)
   log "fault elasticsearch-restart"
-  $K exec elasticsearch -- kill 1 > /dev/null 2>&1
+  $K exec elasticsearch -- kill 1 > /dev/null || log "kill failed"
   sleep 15
-  wait_until es_ready 600
+  wait_until es_restarted 600
 }
 
 weir_rollout() {
   log "fault weir-rolling-restart"
   $K rollout restart "deployment/$WEIR" > /dev/null
-  $K rollout status "deployment/$WEIR" --timeout=15m > /dev/null || log "TIMEOUT rollout"
+  if ! $K rollout status "deployment/$WEIR" --timeout=15m > /dev/null; then
+    log "TIMEOUT waiting for rollout"
+    return 1
+  fi
   wait_until weir_ready 300
 }
 
 weir_kill() {
-  pods=$($K get pods -l "app.kubernetes.io/instance=$RELEASE" -o name)
+  pods=$($K get pods -l "app.kubernetes.io/name=weir,app.kubernetes.io/instance=$RELEASE" -o name)
   p=$(echo "$pods" | sed -n "$(( $(date +%s) % $(echo "$pods" | wc -l) + 1 ))p")
   log "fault weir-pod-kill $p"
   $K delete "$p" --grace-period=1 --wait=false > /dev/null
@@ -93,14 +102,18 @@ n=0
 while [ "$(date +%s)" -lt "$end" ]; do
   started=$(date +%s)
   case $(( n % 5 )) in
-    0) stepdown ;;
-    1) weir_rollout ;;
-    2) es_restart ;;
-    3) mongo_kill ;;
-    4) weir_kill ;;
+    0) fault=stepdown ;;
+    1) fault=weir_rollout ;;
+    2) fault=es_restart ;;
+    3) fault=mongo_kill ;;
+    4) fault=weir_kill ;;
   esac
-  log "recovered after $(( $(date +%s) - started ))s"
   n=$(( n + 1 ))
+  if ! $fault; then
+    log "faults stopped: $fault did not recover"
+    exit 1
+  fi
+  log "recovered after $(( $(date +%s) - started ))s"
   rest=$(( EVERY - ($(date +%s) - started) ))
   [ "$rest" -gt 0 ] && sleep "$rest"
 done
