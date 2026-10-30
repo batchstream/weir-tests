@@ -211,13 +211,18 @@ func (s *system) testServerPreflight(t *testing.T, backend *backendData) {
 				operation := &pb.Command_Mutate{Mutate: mutation}
 				command := &pb.Command{Operation: operation}
 				request := &pb.ExecuteRequest{StoreName: backend.name, Index: index, Command: command}
-				if err := stream.Send(request); err != nil {
+				message := &pb.ExecuteRequests{Requests: []*pb.ExecuteRequest{request}}
+				if err := stream.Send(message); err != nil {
 					t.Fatal(err)
 				}
-				response, err := stream.Recv()
+				reply, err := stream.Recv()
+				if err != nil || len(reply.GetResponses()) != 1 {
+					t.Fatal("valid prefix lacks its acknowledgement", reply, err)
+				}
+				response := reply.Responses[0]
 				result := response.GetEvent().GetMutationResult()
-				if err != nil || response.GetIndex() != index || result.GetOutcome() != pb.MutationOutcome_APPLIED || result.GetFailure() != nil {
-					t.Fatal("valid prefix lacks successful acknowledgement", response, err)
+				if response.GetIndex() != index || result.GetOutcome() != pb.MutationOutcome_APPLIED || result.GetFailure() != nil {
+					t.Fatal("valid prefix lacks successful acknowledgement", response)
 				}
 				index++
 			}
@@ -226,7 +231,8 @@ func (s *system) testServerPreflight(t *testing.T, backend *backendData) {
 			operation := &pb.Command_Mutate{Mutate: mutation}
 			command := &pb.Command{Operation: operation}
 			request := &pb.ExecuteRequest{StoreName: backend.name, Index: index, Command: command}
-			if err := stream.Send(request); err != nil {
+			message := &pb.ExecuteRequests{Requests: []*pb.ExecuteRequest{request}}
+			if err := stream.Send(message); err != nil {
 				t.Fatal(err)
 			}
 			if err := stream.CloseSend(); err != nil {
