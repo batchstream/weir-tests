@@ -148,13 +148,14 @@ func (s *system) assertUnhostedStore(t *testing.T, wire pb.StoreServiceClient) {
 	operation := &pb.Command_Read{Read: read}
 	command := &pb.Command{Operation: operation}
 	request := &pb.ExecuteRequest{StoreName: "unconfigured", Index: 1, Command: command}
+	message := &pb.ExecuteRequests{Requests: []*pb.ExecuteRequest{request}}
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
 	defer cancel()
 	stream, err := wire.Execute(rpc)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Send(request); err != nil {
+	if err := stream.Send(message); err != nil {
 		t.Fatal(err)
 	}
 	if err := stream.CloseSend(); err != nil {

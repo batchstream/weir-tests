@@ -26,57 +26,70 @@ type acknowledgementPeer struct {
 	firstMutation chan struct{}
 }
 
-func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.ExecuteRequest, pb.ExecuteResponse]) error {
+func (p *acknowledgementPeer) Execute(stream grpc.BidiStreamingServer[pb.ExecuteRequests, pb.ExecuteResponses]) error {
 	p.calls.Add(1)
 	for {
-		request, err := stream.Recv()
+		message, err := stream.Recv()
 		if err == io.EOF {
 			return nil
 		}
 		if err != nil {
 			return err
 		}
-		if request.Command.GetRead() != nil {
-			document := &pb.Document{ContentType: "application/json", Data: p.document}
-			payload := &pb.ReadResult_Document{Document: document}
-			result := &pb.ReadResult{Result: payload}
-			value := &pb.Event_ReadResult{ReadResult: result}
-			event := &pb.Event{Value: value}
-			response := &pb.ExecuteResponse{Index: request.Index, Event: event}
-			if err := stream.Send(response); err != nil {
+		for _, request := range message.Requests {
+			if err := p.respond(stream, request); err != nil {
 				return err
 			}
-			return status.Error(codes.Unavailable, "later read result lost")
-		}
-		if request.Command.GetMutate() == nil {
-			return status.Error(codes.InvalidArgument, "mutation required")
-		}
-		// Durable writes can precede lost acknowledgements; never infer replay safety.
-		if p.applied.Add(1) == 1 && p.firstMutation != nil {
-			close(p.firstMutation)
-		}
-		switch p.mode {
-		case "lost_after_apply":
-			return status.Error(codes.Unavailable, "record acknowledgement lost")
-		case "deadline_after_apply", "canceled_after_apply":
-			<-stream.Context().Done()
-			return status.FromContextError(stream.Context().Err()).Err()
-		}
-		var failure *pb.Failure
-		if p.mode == "applied_failure" {
-			failure = protocol.Fail(pb.FailureCode_UNAVAILABLE, "write applied but replica confirmation failed")
-		}
-		result := protocol.Mutation(pb.MutationOutcome_APPLIED, failure)
-		payload := &pb.Event_MutationResult{MutationResult: result}
-		event := &pb.Event{Value: payload}
-		response := &pb.ExecuteResponse{Index: request.Index, Event: event}
-		if err := stream.Send(response); err != nil {
-			return err
-		}
-		if p.mode == "partial_after_apply" {
-			return status.Error(codes.Unavailable, "later acknowledgement lost")
 		}
 	}
+}
+
+// respond answers one record, or ends the stream as the peer's mode requires.
+func (p *acknowledgementPeer) respond(stream grpc.BidiStreamingServer[pb.ExecuteRequests, pb.ExecuteResponses], request *pb.ExecuteRequest) error {
+	send := func(event *pb.Event) error {
+		response := &pb.ExecuteResponse{Index: request.Index, Event: event}
+		message := &pb.ExecuteResponses{Responses: []*pb.ExecuteResponse{response}}
+		return stream.Send(message)
+	}
+	if request.Command.GetRead() != nil {
+		document := &pb.Document{ContentType: "application/json", Data: p.document}
+		payload := &pb.ReadResult_Document{Document: document}
+		result := &pb.ReadResult{Result: payload}
+		value := &pb.Event_ReadResult{ReadResult: result}
+		event := &pb.Event{Value: value}
+		if err := send(event); err != nil {
+			return err
+		}
+		return status.Error(codes.Unavailable, "later read result lost")
+	}
+	if request.Command.GetMutate() == nil {
+		return status.Error(codes.InvalidArgument, "mutation required")
+	}
+	// Durable writes can precede lost acknowledgements; never infer replay safety.
+	if p.applied.Add(1) == 1 && p.firstMutation != nil {
+		close(p.firstMutation)
+	}
+	switch p.mode {
+	case "lost_after_apply":
+		return status.Error(codes.Unavailable, "record acknowledgement lost")
+	case "deadline_after_apply", "canceled_after_apply":
+		<-stream.Context().Done()
+		return status.FromContextError(stream.Context().Err()).Err()
+	}
+	var failure *pb.Failure
+	if p.mode == "applied_failure" {
+		failure = protocol.Fail(pb.FailureCode_UNAVAILABLE, "write applied but replica confirmation failed")
+	}
+	result := protocol.Mutation(pb.MutationOutcome_APPLIED, failure)
+	payload := &pb.Event_MutationResult{MutationResult: result}
+	event := &pb.Event{Value: payload}
+	if err := send(event); err != nil {
+		return err
+	}
+	if p.mode == "partial_after_apply" {
+		return status.Error(codes.Unavailable, "later acknowledgement lost")
+	}
+	return nil
 }
 
 func TestSDKStreamReadPreservesConfirmedPrefixThroughLaterFailure(t *testing.T) {
