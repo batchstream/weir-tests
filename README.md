@@ -350,8 +350,11 @@ effect, then retries with a fresh sequence, so a refusal that took effect
 stays visible. An SDK error without a result counts as UNKNOWN. An UNKNOWN
 write is assumed to land within four operation timeouts of being issued; a
 later APPLIED write retires it. `-verify-percent` of APPLIED writes are also
-read back directly. MongoDB checks read majority-committed data from the
-primary; Search checks use realtime GET and `_mget`.
+read back directly. Single-key MongoDB checks read linearizably from the
+primary, so they see a write applied just before a refusal and are never stale
+after a failover; the final check reads majority-committed data. Search checks
+use realtime GET and `_mget`, and a document its shard cannot serve fails the
+check instead of reading as absent.
 
 ```sh
 weir-soak -weir-address weir.soak.svc:7447 -weir-diagnostics weir.soak.svc:7449 \
@@ -364,7 +367,8 @@ Service; the diagnostics name is resolved at every sample to scrape each
 replica's goroutines, live memory, RSS, open files and sessions. `<output>.jsonl`
 holds one sample per `-sample-interval` with per-backend outcomes, latency
 quantiles and database connections, and `<output>.json` the totals and final
-check. The run fails on any violation, a backend without APPLIED writes or an
+check. The final check retries a backend that refuses reads for up to five
+minutes. The run fails on any violation, a backend without APPLIED writes or an
 incomplete final check.
 
 `scripts/soak-faults.sh <namespace> <weir-release> <quiet> <window> <every>`
@@ -374,8 +378,11 @@ Deployments there. After `quiet` seconds it rotates through a MongoDB primary
 stepdown, a rolling restart of the weir-charts release, an Elasticsearch process
 restart, a MongoDB primary Pod deletion and a Weir Pod deletion, one every
 `every` seconds for `window` seconds, and waits for recovery after each. A
+fault that does not recover in time ends the schedule with a non-zero exit. A
 fault-free first half shows whether memory, goroutines, files, connections and
 latency stay flat; the second half checks outcomes across failover and restarts.
+End the window at least 20 minutes before the load so the last recovery
+finishes first.
 
 ## CI and output
 
