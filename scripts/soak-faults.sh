@@ -1,0 +1,126 @@
+#!/bin/sh
+# usage: soak-faults.sh <namespace> <weir-release> <quiet-seconds> <window-seconds> <every-seconds>
+# Waits quiet-seconds, then injects one fault every every-seconds for
+# window-seconds, rotating through five faults and waiting for recovery after
+# each. The namespace holds a three-member MongoDB StatefulSet "mongo", a Pod
+# "elasticsearch" whose readiness probe requires green health, and a
+# weir-charts release; only those are touched. A fault that does not take
+# effect or recover ends the schedule. KUBECTL selects the kubectl binary.
+NS=$1 RELEASE=$2 QUIET=$3 WINDOW=$4 EVERY=$5
+K="${KUBECTL:-kubectl} -n $NS"
+WEIR=$RELEASE-weir
+
+log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*"; }
+
+mongo_eval() { $K exec "$1" -- mongosh --quiet --eval "$2" 2>/dev/null | tail -1; }
+
+primary() {
+  for i in 0 1 2; do
+    [ "$(mongo_eval mongo-$i 'db.hello().isWritablePrimary')" = "true" ] && echo mongo-$i && return
+  done
+}
+
+mongo_members() {
+  for i in 0 1 2; do
+    n=$(mongo_eval mongo-$i 'rs.status().members.filter(m => m.stateStr == "PRIMARY" || m.stateStr == "SECONDARY").length')
+    case $n in [0-9]) echo "$n"; return;; esac
+  done
+  echo 0
+}
+
+mongo_healthy() { [ -n "$(primary)" ] && [ "$(mongo_members)" = "3" ]; }
+es_restarts() { $K get pod elasticsearch -o jsonpath='{.status.containerStatuses[0].restartCount}'; }
+es_restarted() {
+  [ "$(es_restarts)" -gt "$ES_RESTARTS" ] &&
+    [ "$($K get pod elasticsearch -o jsonpath='{.status.containerStatuses[0].ready}')" = "true" ]
+}
+weir_ready() {
+  counts=$($K get deployment "$WEIR" -o jsonpath='{.spec.replicas} {.status.availableReplicas} {.status.updatedReplicas} {.status.replicas}')
+  set -- $counts
+  [ "$#" -eq 4 ] && [ "$1" = "$2" ] && [ "$1" = "$3" ] && [ "$1" = "$4" ]
+}
+
+# wait_until <check> <timeout-seconds>
+wait_until() {
+  deadline=$(( $(date +%s) + $2 ))
+  while ! $1; do
+    if [ "$(date +%s)" -ge "$deadline" ]; then
+      log "TIMEOUT waiting for $1"
+      return 1
+    fi
+    sleep 5
+  done
+}
+
+# moved <old-primary> reports whether another member is primary now.
+moved() { now=$(primary); [ -n "$now" ] && [ "$now" != "$1" ]; }
+
+stepdown() {
+  p=$(primary)
+  [ -n "$p" ] || { log "no primary to step down"; return 1; }
+  log "fault mongo-stepdown $p"
+  mongo_eval "$p" 'rs.stepDown(60)' > /dev/null
+  sleep 5
+  wait_until mongo_healthy 600 || return 1
+  moved "$p" || { log "primary did not move from $p"; return 1; }
+}
+
+mongo_kill() {
+  p=$(primary)
+  [ -n "$p" ] || { log "no primary to kill"; return 1; }
+  log "fault mongo-primary-kill $p"
+  $K delete pod "$p" --grace-period=1 --wait=false > /dev/null || { log "delete failed"; return 1; }
+  sleep 20
+  wait_until mongo_healthy 900
+}
+
+es_restart() {
+  ES_RESTARTS=$(es_restarts)
+  log "fault elasticsearch-restart"
+  $K exec elasticsearch -- kill 1 > /dev/null || log "kill failed"
+  sleep 15
+  wait_until es_restarted 600
+}
+
+weir_rollout() {
+  log "fault weir-rolling-restart"
+  $K rollout restart "deployment/$WEIR" > /dev/null
+  if ! $K rollout status "deployment/$WEIR" --timeout=15m > /dev/null; then
+    log "TIMEOUT waiting for rollout"
+    return 1
+  fi
+  wait_until weir_ready 300
+}
+
+weir_kill() {
+  pods=$($K get pods -l "app.kubernetes.io/name=weir,app.kubernetes.io/instance=$RELEASE" -o name)
+  p=$(echo "$pods" | sed -n "$(( $(date +%s) % $(echo "$pods" | wc -l) + 1 ))p")
+  log "fault weir-pod-kill $p"
+  $K delete "$p" --grace-period=1 --wait=false > /dev/null
+  sleep 10
+  wait_until weir_ready 600
+}
+
+log "quiet for ${QUIET}s"
+sleep "$QUIET"
+end=$(( $(date +%s) + WINDOW ))
+n=0
+while [ "$(date +%s)" -lt "$end" ]; do
+  started=$(date +%s)
+  case $(( n % 5 )) in
+    0) fault=stepdown ;;
+    1) fault=weir_rollout ;;
+    2) fault=es_restart ;;
+    3) fault=mongo_kill ;;
+    4) fault=weir_kill ;;
+  esac
+  n=$(( n + 1 ))
+  if ! $fault; then
+    log "faults stopped: $fault did not recover"
+    exit 1
+  fi
+  log "recovered after $(( $(date +%s) - started ))s"
+  rest=$(( EVERY - ($(date +%s) - started) ))
+  [ "$rest" -gt 0 ] && sleep "$rest"
+done
+log "faults done: $n"
