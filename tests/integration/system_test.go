@@ -321,7 +321,6 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 	var rpcCount float64
 	labels := map[string]string{"store": evidence.Store, "operation": evidence.Method}
 	storeLabels := map[string]string{"store": evidence.Store}
-	methodLabels := map[string]string{"method": "execute"}
 	for index, before := range evidence.Before {
 		after := evidence.After[index]
 		left, beforeFound := before.Sum("weir_store_records_total", labels)
@@ -347,8 +346,8 @@ func assertStreamBatchMetrics(t *testing.T, evidence streamBatchEvidence) {
 				t.Fatalf("aggregated operations=%v error=%v", operations, err)
 			}
 		}
-		left, beforeFound = before.Sum("weir_rpc_completions_total", methodLabels)
-		right, afterFound = after.Sum("weir_rpc_completions_total", methodLabels)
+		left, beforeFound = before.Sum("weir_rpc_completions_total", nil)
+		right, afterFound = after.Sum("weir_rpc_completions_total", nil)
 		if !beforeFound || !afterFound {
 			t.Fatalf("node %d streamed completion observation unavailable", index)
 		}

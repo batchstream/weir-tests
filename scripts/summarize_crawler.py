@@ -51,7 +51,7 @@ SEARCH_METRICS = (
     'weir_search_http_request_duration_seconds_',
     'weir_search_http_request_records_',
     'weir_search_http_request_body_bytes_',
-    'weir_search_lua_evaluation_duration_seconds_',
+    'weir_lua_evaluation_seconds_',
 )
 
 
@@ -174,8 +174,8 @@ def rows(report):
                 row[prefix + '_wire_records_count'] = records_count
                 row[prefix + '_wire_records_sum'] = records_sum
                 row[prefix + '_wire_records_mean'] = records_sum / records_count if records_sum is not None and records_count else None
-        lua_count = search_metric_sum(deltas, 'weir_search_lua_evaluation_duration_seconds_count', {})
-        lua_seconds = search_metric_sum(deltas, 'weir_search_lua_evaluation_duration_seconds_sum', {})
+        lua_count = search_metric_sum(deltas, 'weir_lua_evaluation_seconds_count', {})
+        lua_seconds = search_metric_sum(deltas, 'weir_lua_evaluation_seconds_sum', {})
         row['search_lua_duration_count'] = lua_count
         row['search_lua_duration_seconds'] = lua_seconds
         row['search_lua_duration_mean_ms'] = lua_seconds * 1000 / lua_count if lua_seconds is not None and lua_count else None

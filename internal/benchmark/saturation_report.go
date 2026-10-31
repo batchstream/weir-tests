@@ -49,7 +49,7 @@ func (r *SaturationReport) Markdown() string {
 			continue
 		}
 		fmt.Fprintf(&text, "| %d | %d | %d | %s | %s | %s | %s | %s | %s |\n", pair.BatchSize, pair.Concurrency, pair.Round,
-			metricCounter(metrics, "weir_store_executions_total"), metricMean(metrics.AdapterBatchAverage, 1), metricCounter(metrics, "weir_rpc_completions_total:execute"),
+			metricCounter(metrics, "weir_store_batch_operations_count"), metricMean(metrics.AdapterBatchAverage, 1), metricCounter(metrics, "weir_rpc_completions_total"),
 			metricMean(metrics.QueueWaitMeanSeconds, 1000), metricMean(metrics.ExecutionMeanSeconds, 1000), metricCounter(metrics, "weir_store_rejections_total"))
 		if metrics.Unavailable != "" {
 			warning := fmt.Sprintf("Metrics unavailable (batch %d, workers %d, round %d): %s.", pair.BatchSize, pair.Concurrency, pair.Round, strings.ReplaceAll(metrics.Unavailable, "\n", " "))
