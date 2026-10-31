@@ -12,8 +12,7 @@ func metricsSnapshot(t *testing.T, measured bool) observe.Snapshot {
 	t.Helper()
 	var raw strings.Builder
 	values := map[string]float64{
-		"weir_store_batch_operations_sum": 3200, "weir_store_batch_operations_count": 100,
-		"weir_store_executions_total": 100, "weir_store_records_total": 3200,
+		"weir_store_batch_operations_sum": 3200, "weir_store_batch_operations_count": 100, "weir_store_records_total": 3200,
 		"weir_store_queue_wait_seconds_sum": .1, "weir_store_queue_wait_seconds_count": 100,
 		"weir_store_execution_seconds_sum": .5, "weir_store_execution_seconds_count": 100,
 		"weir_store_rejections_total": 0,
@@ -28,7 +27,7 @@ func metricsSnapshot(t *testing.T, measured bool) observe.Snapshot {
 	if measured {
 		rpc += 100
 	}
-	fmt.Fprintf(&raw, "weir_rpc_completions_total{method=\"execute\",status=\"ok\"} %d\n", rpc)
+	fmt.Fprintf(&raw, "weir_rpc_completions_total{status=\"ok\"} %d\n", rpc)
 	metrics, err := observe.Parse(raw.String())
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +40,7 @@ func TestServerMetricsUseMeasuredDeltaAndReportMissingObservations(t *testing.T)
 	before := metricsSnapshot(t, false)
 	after := metricsSnapshot(t, true)
 	metrics := serverMetricDelta(before, after, "mongo")
-	if metrics.Unavailable != "" || metrics.AdapterBatchAverage == nil || *metrics.AdapterBatchAverage != 32 || metrics.Deltas["weir_store_executions_total"] != 100 || metrics.Deltas["weir_rpc_completions_total:execute"] != 100 {
+	if metrics.Unavailable != "" || metrics.AdapterBatchAverage == nil || *metrics.AdapterBatchAverage != 32 || metrics.Deltas["weir_store_batch_operations_count"] != 100 || metrics.Deltas["weir_rpc_completions_total"] != 100 {
 		t.Fatalf("measured batch did not exclude warmup/other store: %+v", metrics)
 	}
 	if metrics.QueueWaitMeanSeconds == nil || *metrics.QueueWaitMeanSeconds != .001 || metrics.ExecutionMeanSeconds == nil || *metrics.ExecutionMeanSeconds != .005 {

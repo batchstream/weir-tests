@@ -34,7 +34,7 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 	metrics := &ServerMetrics{Before: before, After: after, Deltas: make(map[string]float64), RPCUnavailable: make(map[string]string), Scope: "only the measured Weir stage, after warmup and before independent postflight; adapter invocation batch size, not a claim that every invocation maps to one physical wire command"}
 	labels := map[string]string{"store": store}
 	var err error
-	for _, name := range []string{"weir_store_batch_operations_sum", "weir_store_batch_operations_count", "weir_store_executions_total", "weir_store_records_total", "weir_store_queue_wait_seconds_sum", "weir_store_queue_wait_seconds_count", "weir_store_execution_seconds_sum", "weir_store_execution_seconds_count", "weir_store_rejections_total"} {
+	for _, name := range []string{"weir_store_batch_operations_sum", "weir_store_batch_operations_count", "weir_store_records_total", "weir_store_queue_wait_seconds_sum", "weir_store_queue_wait_seconds_count", "weir_store_execution_seconds_sum", "weir_store_execution_seconds_count", "weir_store_rejections_total"} {
 		value, deltaErr := observe.Delta(before, after, name, labels)
 		if deltaErr != nil {
 			err = errors.Join(err, deltaErr)
@@ -43,14 +43,11 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 		metrics.Deltas[name] = value
 	}
 
-	for _, method := range []string{"execute"} {
-		methodLabels := map[string]string{"method": method}
-		value, deltaErr := observe.Delta(before, after, "weir_rpc_completions_total", methodLabels)
-		if deltaErr == nil {
-			metrics.Deltas["weir_rpc_completions_total:"+method] = value
-		} else {
-			metrics.RPCUnavailable[method] = deltaErr.Error()
-		}
+	value, deltaErr := observe.Delta(before, after, "weir_rpc_completions_total", nil)
+	if deltaErr == nil {
+		metrics.Deltas["weir_rpc_completions_total"] = value
+	} else {
+		metrics.RPCUnavailable["execute"] = deltaErr.Error()
 	}
 	if err != nil {
 		metrics.Unavailable = err.Error()
@@ -59,7 +56,7 @@ func serverMetricDelta(before, after observe.Snapshot, store string) *ServerMetr
 	if count := metrics.Deltas["weir_store_batch_operations_count"]; count > 0 {
 		average := metrics.Deltas["weir_store_batch_operations_sum"] / count
 		metrics.AdapterBatchAverage = &average
-		if streams, found := metrics.Deltas["weir_rpc_completions_total:execute"]; found {
+		if streams, found := metrics.Deltas["weir_rpc_completions_total"]; found {
 			ratio := streams / count
 			metrics.RPCsPerAdapter = &ratio
 		}
@@ -96,7 +93,7 @@ func (m *ServerMetrics) qualifySingleRequests(reads, writes uint64) {
 	if m.Unavailable != "" || m.AdapterBatchAverage == nil {
 		return
 	}
-	observed, found := m.Deltas["weir_rpc_completions_total:execute"]
+	observed, found := m.Deltas["weir_rpc_completions_total"]
 	if !found {
 		return
 	}
