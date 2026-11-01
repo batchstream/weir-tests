@@ -357,13 +357,15 @@ use realtime GET and `_mget`, and a document its shard cannot serve fails the
 check instead of reading as absent.
 
 ```sh
-weir-soak -weir-address weir.soak.svc:7447 -weir-diagnostics weir.soak.svc:7449 \
+weir-soak -weir-address weir.soak.svc.cluster.local.:7447 \
+  -weir-diagnostics weir.soak.svc.cluster.local.:7449 \
   -mongo-uri 'mongodb://mongo-0.mongo.soak.svc:27017,mongo-1.mongo.soak.svc:27017,mongo-2.mongo.soak.svc:27017/?replicaSet=soak' \
   -search-url http://elasticsearch.soak.svc:9200 -duration 12h -output /work/soak
 ```
 
 The Weir addresses are names that resolve to every replica, such as a headless
-Service; the diagnostics name is resolved at every sample to scrape each
+Service's full name with a trailing dot, which skips the Pod's DNS search
+domains; the diagnostics name is resolved at every sample to scrape each
 replica's goroutines, live memory, RSS, open files and sessions. `<output>.jsonl`
 holds one sample per `-sample-interval` with per-backend outcomes, latency
 quantiles and database connections, and `<output>.json` the totals and final
