@@ -1,5 +1,5 @@
 {
-  "weir_source": "5f986fe0184c9ff784434f25dd24948b079b3c79",
+  "weir_source": "29b1a85f5a2c2fd062ec10bfc8084117111bce79",
   "mongodb_version": "8.0.32",
   "mongodb_image": "mongo@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c",
   "elasticsearch_version": "8.19.22",
