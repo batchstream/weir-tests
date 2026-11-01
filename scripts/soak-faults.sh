@@ -12,6 +12,8 @@ NS=$1 RELEASE=$2 QUIET=$3 WINDOW=$4 EVERY=$5
 K="${KUBECTL:-kubectl} -n $NS"
 WEIR=$RELEASE-weir
 FAULTS=${FAULTS:-stepdown weir_rollout es_restart mongo_kill weir_kill}
+set -- $FAULTS
+[ $# -gt 0 ] || { echo "FAULTS lists no fault" >&2; exit 2; }
 for fault in $FAULTS; do
   case $fault in
     stepdown|weir_rollout|es_restart|mongo_kill|weir_kill|weir_scale_up|weir_scale_down) ;;
@@ -101,7 +103,11 @@ weir_rollout() {
   wait_until weir_ready 300
 }
 
-weir_pods() { $K get pods -l "app.kubernetes.io/name=weir,app.kubernetes.io/instance=$RELEASE" -o name; }
+# weir_pods lists the release's Pods, leaving out finished ones such as evicted Pods.
+weir_pods() {
+  $K get pods -l "app.kubernetes.io/name=weir,app.kubernetes.io/instance=$RELEASE" \
+    --field-selector=status.phase!=Failed,status.phase!=Succeeded -o name
+}
 # weir_settled reports a ready Deployment with no replica still terminating.
 weir_settled() {
   weir_ready && [ "$(( $(weir_pods | wc -l) ))" -eq "$($K get deployment "$WEIR" -o jsonpath='{.spec.replicas}')" ]
@@ -109,7 +115,9 @@ weir_settled() {
 
 # weir_scale <delta> changes the replica count, as an autoscaler would.
 weir_scale() {
-  replicas=$(( $($K get deployment "$WEIR" -o jsonpath='{.spec.replicas}') + $1 ))
+  current=$($K get deployment "$WEIR" -o jsonpath='{.spec.replicas}')
+  case $current in ''|*[!0-9]*) log "cannot read the replica count"; return 1 ;; esac
+  replicas=$(( current + $1 ))
   [ "$replicas" -ge 1 ] || { log "cannot scale below one replica"; return 1; }
   log "fault weir-scale-to-$replicas"
   $K scale "deployment/$WEIR" --replicas="$replicas" > /dev/null || { log "scale failed"; return 1; }
