@@ -1,14 +1,23 @@
 #!/bin/sh
 # usage: soak-faults.sh <namespace> <weir-release> <quiet-seconds> <window-seconds> <every-seconds>
 # Waits quiet-seconds, then injects one fault every every-seconds for
-# window-seconds, rotating through five faults and waiting for recovery after
-# each. The namespace holds a three-member MongoDB StatefulSet "mongo", a Pod
+# window-seconds, rotating through FAULTS and waiting for recovery after each.
+# The namespace holds a three-member MongoDB StatefulSet "mongo", a Pod
 # "elasticsearch" whose readiness probe requires green health, and a
 # weir-charts release; only those are touched. A fault that does not take
 # effect or recover ends the schedule. KUBECTL selects the kubectl binary.
+# FAULTS lists the rotation; weir_scale_up and weir_scale_down change the
+# release's replica count by one and are not part of the default.
 NS=$1 RELEASE=$2 QUIET=$3 WINDOW=$4 EVERY=$5
 K="${KUBECTL:-kubectl} -n $NS"
 WEIR=$RELEASE-weir
+FAULTS=${FAULTS:-stepdown weir_rollout es_restart mongo_kill weir_kill}
+for fault in $FAULTS; do
+  case $fault in
+    stepdown|weir_rollout|es_restart|mongo_kill|weir_kill|weir_scale_up|weir_scale_down) ;;
+    *) echo "unknown fault $fault" >&2; exit 2 ;;
+  esac
+done
 
 log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*"; }
 
@@ -92,8 +101,26 @@ weir_rollout() {
   wait_until weir_ready 300
 }
 
+weir_pods() { $K get pods -l "app.kubernetes.io/name=weir,app.kubernetes.io/instance=$RELEASE" -o name; }
+# weir_settled reports a ready Deployment with no replica still terminating.
+weir_settled() {
+  weir_ready && [ "$(( $(weir_pods | wc -l) ))" -eq "$($K get deployment "$WEIR" -o jsonpath='{.spec.replicas}')" ]
+}
+
+# weir_scale <delta> changes the replica count, as an autoscaler would.
+weir_scale() {
+  replicas=$(( $($K get deployment "$WEIR" -o jsonpath='{.spec.replicas}') + $1 ))
+  [ "$replicas" -ge 1 ] || { log "cannot scale below one replica"; return 1; }
+  log "fault weir-scale-to-$replicas"
+  $K scale "deployment/$WEIR" --replicas="$replicas" > /dev/null || { log "scale failed"; return 1; }
+  sleep 5
+  wait_until weir_settled 600
+}
+weir_scale_up() { weir_scale 1; }
+weir_scale_down() { weir_scale -1; }
+
 weir_kill() {
-  pods=$($K get pods -l "app.kubernetes.io/name=weir,app.kubernetes.io/instance=$RELEASE" -o name)
+  pods=$(weir_pods)
   p=$(echo "$pods" | sed -n "$(( $(date +%s) % $(echo "$pods" | wc -l) + 1 ))p")
   log "fault weir-pod-kill $p"
   $K delete "$p" --grace-period=1 --wait=false > /dev/null
@@ -107,13 +134,9 @@ end=$(( $(date +%s) + WINDOW ))
 n=0
 while [ "$(date +%s)" -lt "$end" ]; do
   started=$(date +%s)
-  case $(( n % 5 )) in
-    0) fault=stepdown ;;
-    1) fault=weir_rollout ;;
-    2) fault=es_restart ;;
-    3) fault=mongo_kill ;;
-    4) fault=weir_kill ;;
-  esac
+  set -- $FAULTS
+  shift $(( n % $# ))
+  fault=$1
   n=$(( n + 1 ))
   if ! $fault; then
     log "faults stopped: $fault did not recover"

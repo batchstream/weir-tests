@@ -23,6 +23,9 @@ type PodSample struct {
 	RSSBytes   float64 `json:"rss_bytes"`
 	OpenFDs    float64 `json:"open_fds"`
 	Sessions   float64 `json:"sessions"`
+	// Records counts the replica's final record results since it started, so
+	// the difference between samples is its share of the traffic.
+	Records    float64 `json:"records_total"`
 	Overloaded float64 `json:"memory_overloaded"`
 	CPUSeconds float64 `json:"cpu_seconds_total"`
 	Error      string  `json:"error,omitempty"`
@@ -108,7 +111,8 @@ func (s *sampler) sample(ctx context.Context, started time.Time) Sample {
 	return sample
 }
 
-// pods resolves the diagnostics name to every Ready replica and scrapes each.
+// pods resolves the diagnostics name to its replicas and scrapes each. A name
+// that also publishes not-ready addresses follows a replica through its drain.
 func (s *sampler) pods(ctx context.Context) ([]PodSample, error) {
 	host, port, err := net.SplitHostPort(s.config.WeirDiagnostics)
 	if err != nil {
@@ -131,6 +135,7 @@ func (s *sampler) pods(ctx context.Context) ([]PodSample, error) {
 			pod.RSSBytes = metricSum(snapshot.Raw, "process_resident_memory_bytes")
 			pod.OpenFDs = metricSum(snapshot.Raw, "process_open_fds")
 			pod.Sessions = metricSum(snapshot.Raw, "weir_ingress_sessions")
+			pod.Records = metricSum(snapshot.Raw, "weir_store_records_total")
 			pod.Overloaded = metricSum(snapshot.Raw, "weir_memory_overloaded")
 			pod.CPUSeconds = metricSum(snapshot.Raw, "process_cpu_seconds_total")
 		}

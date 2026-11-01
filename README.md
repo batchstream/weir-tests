@@ -374,12 +374,24 @@ incomplete final check.
 `scripts/soak-faults.sh <namespace> <weir-release> <quiet> <window> <every>`
 injects faults from a Pod in the same namespace, whose service account may get,
 list, delete and exec into Pods, watch Deployments and ReplicaSets, and patch
-Deployments there. After `quiet` seconds it rotates through a MongoDB primary
-stepdown, a rolling restart of the weir-charts release, an Elasticsearch process
-restart, a MongoDB primary Pod deletion and a Weir Pod deletion, one every
-`every` seconds for `window` seconds, and waits for recovery after each. A
-fault that does not take effect or recover in time ends the schedule with a
-non-zero exit. A
+Deployments and `deployments/scale` there. After `quiet` seconds it rotates
+through a MongoDB primary stepdown, a rolling restart of the weir-charts
+release, an Elasticsearch process restart, a MongoDB primary Pod deletion and a
+Weir Pod deletion, one every `every` seconds for `window` seconds, and waits for
+recovery after each. A fault that does not take effect or recover in time ends
+the schedule with a non-zero exit. `FAULTS` replaces the rotation with a
+space-separated list of those faults, `stepdown weir_rollout es_restart
+mongo_kill weir_kill`, plus `weir_scale_up` and `weir_scale_down`, which change
+the release's replica count by one as an autoscaler would and wait until no
+replica is still terminating. Run scaling without KEDA on the release, which
+would undo the change.
+
+Each sample records every replica's `weir_store_records_total`, so the change
+between samples is that replica's share of the traffic. A diagnostics name that
+also publishes not-ready addresses, such as a headless Service with
+`publishNotReadyAddresses: true`, keeps a scaled-down replica in the samples
+until it exits, showing when its traffic stopped. A short `-sample-interval`,
+such as 5s, resolves how quickly traffic moves. A
 fault-free first half shows whether memory, goroutines, files, connections and
 latency stay flat; the second half checks outcomes across failover and restarts.
 End the window at least 20 minutes before the load so the last recovery
