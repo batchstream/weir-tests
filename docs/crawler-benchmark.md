@@ -42,7 +42,7 @@ Partial updates can select `-visibility application_acknowledged` or `query_visi
 
 `-after-batch-max-wait 20ms` sets the after path's explicit `batching.max_wait` collection window; the default `0s` preserves immediate execution. Every stage stores `BatchMaxWaitNS`.
 
-`-after-max-in-flight 0` keeps Weir's default of 16 concurrent executions. Values such as 4 or 64 apply only to the after path. `QUERY_VISIBLE` can hold a slot until a refresh completes, so a small slot cap may reduce throughput even when the database CPU is idle.
+`-after-max-in-flight 0` keeps Weir's default of 16 concurrent executions. Values such as 4 or 64 apply only to the after path and set the maximum. `QUERY_VISIBLE` can hold a slot until a refresh completes, so a small slot cap may reduce throughput even when the database CPU is idle. Batches that wait for a refresh and full batches use every slot; other batches follow Weir's adaptive limit, which restarts with Weir before every stage at two batches and can grow after the Store's second probe. Read `weir_store_adaptive_executions_limit` in the stage's server snapshots for that limit.
 
 Automatic unchanged-document detection can avoid replacing an existing seller while still issuing an explicit `_refresh` barrier to satisfy query visibility. Compare physical `_refresh` requests, native refresh count/time, merge time, actual index/get work, request/response bytes and database CPU together. Fewer indexed documents alone do not establish a reduction in database load.
 
