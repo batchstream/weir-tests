@@ -190,8 +190,11 @@ An explicit limit (`batching.max_operations`) writes all four batching controls:
 immediately and `-backend-max-in-flight` 0 selects Weir's default of 16
 concurrent executions per Store. Weir's execution limit bounds matched-concurrency
 comparisons, so raise it to the highest client level when the native path should
-not out-run it. The report keeps the generated Weir configuration, and raw
-metrics preserve the actual settings. The SDK and native callers both use the
+not out-run it. Batches that are not full also follow Weir's adaptive limit,
+which stays at that maximum until executions take more than four times their
+baseline and then holds them back while the database queues. The report keeps
+the generated Weir configuration, and the raw metrics preserve the actual
+settings and `weir_store_adaptive_executions_limit`. The SDK and native callers both use the
 complete 10s request budget.
 
 These are closed-loop matched-concurrency measurements, not fixed offered-rate
