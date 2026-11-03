@@ -88,6 +88,12 @@ type Counters struct {
 	APIs map[string]Counters `json:"apis,omitempty"`
 }
 
+// sawErrors reports whether a caller received anything but a success: an SDK
+// error, a deadline, a refusal, an unknown or failed outcome or a failed read.
+func (c Counters) sawErrors() bool {
+	return c.SDKErrors+c.Timeouts+c.Unknown+c.NotApplied+c.NotStarted+c.AppliedWithFault+c.ReadFailures > 0
+}
+
 type period struct {
 	counters     Counters
 	writeLatency histogram

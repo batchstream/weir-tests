@@ -47,6 +47,7 @@ func run() error {
 	flag.IntVar(&config.ReadPercent, "read-percent", 10, "share of operations that read a key through Weir")
 	flag.IntVar(&config.VerifyPercent, "verify-percent", 1, "share of APPLIED writes read back directly from the database")
 	flag.IntVar(&config.PaddingBytes, "padding-bytes", 1024, "document padding")
+	flag.BoolVar(&config.NoErrors, "no-errors", false, "fail the run if a caller saw any error, for rollouts and scaling that callers must not notice")
 	flag.StringVar(&config.Output, "output", "", "report path prefix; writes .json and .jsonl")
 	flag.BoolVar(&config.KeepData, "keep-data", false, "keep the run's database namespace")
 	flag.Parse()

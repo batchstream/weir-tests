@@ -684,6 +684,25 @@ func TestStatsBreakDownByCallAndCountTimeouts(t *testing.T) {
 	}
 }
 
+func TestSawErrorsCoversEverythingButSuccess(t *testing.T) {
+	if (Counters{Writes: 3, Applied: 3, Reads: 2, Verified: 1}).sawErrors() {
+		t.Fatal("successes count as errors")
+	}
+	for name, counters := range map[string]Counters{
+		"sdk error":   {SDKErrors: 1},
+		"deadline":    {Timeouts: 1},
+		"unknown":     {Unknown: 1},
+		"not applied": {NotApplied: 1},
+		"not started": {NotStarted: 1},
+		"failure":     {AppliedWithFault: 1},
+		"read":        {ReadFailures: 1},
+	} {
+		if !counters.sawErrors() {
+			t.Errorf("%s does not count as an error", name)
+		}
+	}
+}
+
 func TestParseProfiles(t *testing.T) {
 	shares, err := ParseProfiles(DefaultProfiles)
 	if err != nil {

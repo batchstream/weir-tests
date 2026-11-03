@@ -95,6 +95,11 @@ func TestSystemIntegration(t *testing.T) {
 	}) {
 		return
 	}
+	if !t.Run("silent_connection", func(t *testing.T) {
+		suite.testSilentConnection(t)
+	}) {
+		return
+	}
 	t.Run("replica_stop_and_restart", func(t *testing.T) {
 		suite.testRecovery(t)
 	})
