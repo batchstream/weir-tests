@@ -57,6 +57,7 @@ func TestSoakEverySDKCall(t *testing.T) {
 		ReadPercent:      30,
 		VerifyPercent:    5,
 		PaddingBytes:     256,
+		NoErrors:         true,
 		Output:           output,
 	}
 	runErr := soak.Run(ctx, config)
@@ -72,9 +73,6 @@ func TestSoakEverySDKCall(t *testing.T) {
 		for api, counters := range backend.Totals.APIs {
 			t.Logf("%s %s: calls=%d writes=%d applied=%d reads=%d read_failures=%d sdk_errors=%d timeouts=%d last_error=%q last_failure=%q",
 				kind, api, counters.Calls, counters.Writes, counters.Applied, counters.Reads, counters.ReadFailures, counters.SDKErrors, counters.Timeouts, counters.LastSDKError, counters.LastFailure)
-		}
-		if backend.Totals.SDKErrors != 0 || backend.Totals.ReadFailures != 0 || backend.Totals.Unknown != 0 {
-			t.Errorf("%s reported errors in a run without faults: %+v", kind, backend.Totals)
 		}
 	}
 	if runErr != nil {

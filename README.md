@@ -66,8 +66,9 @@ persistence checks, same-Store calls containing many records sent on one stream,
 slice preflight and per-record validation, Native MongoDB
 find/getMore and Search scroll pagination through alternating replicas,
 backend-native filters and include/exclude projections, Native response metadata,
-cancellation, and a replica stop and restart that the other replica and the
-original client survive.
+cancellation, calls recovering within keepalive from a connection that goes
+silent, the soak's default profiles without faults, and a replica stop and
+restart that the other replica and the original client survive.
 Lua source returns one function receiving the current and incoming documents as
 ordinary tables. Tests cover object replacements, explicit keep/delete/reject
 actions, first creation, and concurrent read-modify-write through both replicas.
@@ -400,7 +401,8 @@ those that ended at a deadline and the last error and failure, so a call that
 fails during a rollout shows by name; the longest read includes reads that
 failed. The final check retries a backend that refuses reads for up to five
 minutes. The run fails on any violation, an incomplete final check or a
-configured SDK call that never succeeded on a backend.
+configured SDK call that never succeeded on a backend, and with `-no-errors` on
+any error a caller saw.
 
 `scripts/soak-faults.sh <namespace> <weir-release> <quiet> <window> <every>`
 injects faults from a Pod in the same namespace, whose service account may get,
@@ -416,6 +418,22 @@ mongo_kill weir_kill`, plus `weir_scale_up` and `weir_scale_down`, which change
 the release's replica count by one as an autoscaler would and wait until no
 replica is still terminating. Run scaling without KEDA on the release, which
 would undo the change.
+
+`scripts/rollout-scenarios.sh <namespace> <release> <chart> <values> <digest>
+<other-digest>` checks what operators do to a release under load, from a machine
+with `helm` and `kubectl`. At each replica count in `REPLICAS`, default `1 3`, it
+installs the release, starts `CLIENTS`, default 2, soak processes with
+`-no-errors` in the Pod `SOAK_POD`, and goes through a chart upgrade from
+`FROM_CHART` if set, a version upgrade and downgrade, scaling up and down by one,
+a replacement that starts `LATE_START` seconds late, a deleted Pod and an image
+that cannot be pulled, held until the progress deadline and then recovered from.
+Each is a real change of the release, and it waits for every old Pod to leave. The
+script exits non-zero if a change does not complete, the old replicas stop
+serving during the failed upgrade, or a client fails, which `-no-errors` makes
+any error a caller saw. `SOAK_ARGS` holds the soak's addresses and load, and the
+namespace must already hold the backends and the Pod. Check that the namespace's
+nodes have room for one replica more than the largest count: a Pod that cannot
+be scheduled ends the run with the release scaled to zero.
 
 Each sample records every replica's `weir_store_records_total`, so the change
 between samples is that replica's share of the traffic. A diagnostics name that

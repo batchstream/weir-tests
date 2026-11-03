@@ -42,6 +42,7 @@ type Config struct {
 	ReadPercent      int            `json:"read_percent"`
 	VerifyPercent    int            `json:"verify_percent"`
 	PaddingBytes     int            `json:"padding_bytes"`
+	NoErrors         bool           `json:"no_errors"`
 	Output           string         `json:"-"`
 	KeepData         bool           `json:"keep_data"`
 }
@@ -97,7 +98,7 @@ type BackendReport struct {
 
 // Report is the soak outcome; Pass requires no violations, a complete final
 // check of every backend and at least one success of every configured SDK call
-// on each.
+// on each, and with NoErrors that no caller saw an error.
 type Report struct {
 	Started    string                    `json:"started_utc"`
 	Finished   string                    `json:"finished_utc"`
@@ -203,12 +204,15 @@ func Run(ctx context.Context, config Config) (resultErr error) {
 	report.Pass = report.Violations == 0
 	for _, backend := range report.Backends {
 		report.Pass = report.Pass && backend.Final.Error == "" && len(backend.Untested) == 0
+		if config.NoErrors {
+			report.Pass = report.Pass && !backend.Totals.sawErrors()
+		}
 	}
 	if err := writeReport(config.Output+".json", report); err != nil {
 		return err
 	}
 	if !report.Pass {
-		return fmt.Errorf("soak failed: %d violations, or a backend without a final check or a success of every configured SDK call; see %s.json", report.Violations, config.Output)
+		return fmt.Errorf("soak failed: %d violations, or a backend without a final check or a success of every configured SDK call, or with -no-errors a caller saw an error; see %s.json", report.Violations, config.Output)
 	}
 	return nil
 }
