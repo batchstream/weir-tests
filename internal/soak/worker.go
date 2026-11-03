@@ -143,16 +143,25 @@ func (w *worker) settle(pending pendingWrite, result *weir.MutationResult, elaps
 	return reported
 }
 
-// checkDatabase reads key directly after a refusal and for a sample of APPLIED
-// writes. Nothing may be in flight for the key.
-func (w *worker) checkDatabase(key *keyState, reported outcome) {
+// checkAfter names the direct database check a write's outcome calls for, if
+// any: one after every refusal and for a sample of APPLIED writes.
+func (w *worker) checkAfter(reported outcome) string {
 	switch reported {
 	case outcomeApplied:
 		if w.random.IntN(100) < w.verifyPercent {
-			w.verify(key, "applied")
+			return "applied"
 		}
 	case outcomeNotApplied, outcomeNotStarted:
-		w.verify(key, "refused")
+		return "refused"
+	}
+	return ""
+}
+
+// checkDatabase runs the check a write's outcome calls for. Nothing may be in
+// flight for the key.
+func (w *worker) checkDatabase(key *keyState, reported outcome) {
+	if after := w.checkAfter(reported); after != "" {
+		w.verify(key, after)
 	}
 }
 
@@ -280,10 +289,19 @@ type streamTurn struct {
 	tokens   <-chan struct{}
 	lifetime context.Context
 	credits  chan struct{}
-	mu       sync.Mutex
-	started  bool
-	busy     map[*keyState]bool
-	sent     uint64
+	// checks holds keys awaiting a direct database check, which stay busy and
+	// keep their credit until it ran, so no later write can hide what it finds.
+	checks  chan streamCheck
+	checked chan struct{}
+	mu      sync.Mutex
+	started bool
+	busy    map[*keyState]bool
+	sent    uint64
+}
+
+type streamCheck struct {
+	key   *keyState
+	after string
 }
 
 // streamWindow is the most records a worker's stream keeps in flight, the most
@@ -340,6 +358,52 @@ func (t *streamTurn) release(key *keyState) {
 	t.credits <- struct{}{}
 }
 
+// startChecks runs direct database checks apart from Consume, which must return
+// promptly. A stream's checks wait for one another, as a worker's single writes
+// wait for theirs.
+func (t *streamTurn) startChecks() {
+	t.checks = make(chan streamCheck, cap(t.credits))
+	t.checked = make(chan struct{})
+	go func() {
+		defer close(t.checked)
+		for check := range t.checks {
+			t.worker.verify(check.key, check.after)
+			t.mu.Lock()
+			t.release(check.key)
+			t.mu.Unlock()
+		}
+	}()
+}
+
+// endChecks waits for the checks of a stream whose Consume has returned for good.
+func (t *streamTurn) endChecks() {
+	close(t.checks)
+	<-t.checked
+}
+
+// settled queues the check a record's outcome calls for, or returns its room.
+// Checks never outnumber the credits, so this cannot block.
+func (t *streamTurn) settled(key *keyState, reported outcome) {
+	after := t.worker.checkAfter(reported)
+	if after == "" {
+		t.release(key)
+		return
+	}
+	check := streamCheck{key: key, after: after}
+	t.checks <- check
+}
+
+// settleStreamWrite settles a stream's record. It has no deadline of its own, so
+// one whose outcome stays unknown may land as late after the stream gave up on
+// it as a single write may after being issued.
+func (w *worker) settleStreamWrite(write pendingWrite, result *weir.MutationResult) outcome {
+	elapsed := time.Since(write.issued)
+	if classify(result) == outcomeUnknown {
+		write.issued = time.Now()
+	}
+	return w.settle(write, result, elapsed)
+}
+
 func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 	if !w.take(tokens, 1) {
 		return false
@@ -349,8 +413,8 @@ func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 	lifetime, ended := context.WithTimeout(ctx, w.streamLifetime)
 	defer ended()
 	turn := w.newStreamTurn(apiMutateStream, tokens, lifetime)
+	turn.startChecks()
 	flight := make(map[uint64]pendingWrite)
-	reported := make(map[*keyState]outcome)
 	options := weir.MutateStreamOptions{StoreName: w.storeName}
 	options.Next = func(ctx context.Context) (*weir.MutateRequest, error) {
 		key, index, err := turn.reserve(ctx)
@@ -372,8 +436,7 @@ func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 		defer turn.mu.Unlock()
 		write := flight[index]
 		delete(flight, index)
-		reported[write.key] = w.settle(write, result, time.Since(write.issued))
-		turn.release(write.key)
+		turn.settled(write.key, w.settleStreamWrite(write, result))
 		return nil
 	}
 	err := w.client.MutateStream(ctx, options)
@@ -382,14 +445,12 @@ func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 		w.stats.sdkError(apiMutateStream, err)
 	}
 	turn.mu.Lock()
-	defer turn.mu.Unlock()
-	// Records without a result stay unknown; nothing is in flight any more.
+	// Records without a result stay unknown.
 	for _, write := range flight {
-		reported[write.key] = w.settle(write, nil, time.Since(write.issued))
+		w.settleStreamWrite(write, nil)
 	}
-	for key, last := range reported {
-		w.checkDatabase(key, last)
-	}
+	turn.mu.Unlock()
+	turn.endChecks()
 	return true
 }
 

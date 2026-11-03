@@ -43,7 +43,7 @@ func run() error {
 	flag.DurationVar(&config.Settle, "settle", 30*time.Second, "wait after the load stops so unknown writes finish before the final check")
 	profileSpec := flag.String("profiles", soak.DefaultProfiles, "share of each backend's workers per way of using the SDK: single, visible, lua, batch, stream, native")
 	flag.IntVar(&config.BatchSize, "batch-size", 16, "records per Mutate or Read call of the batch profile")
-	flag.DurationVar(&config.StreamLifetime, "stream-lifetime", 2*time.Minute, "how long the stream profile keeps each stream open; longer than a rollout's overlap of old and new replicas, or the stream never meets a draining replica")
+	flag.DurationVar(&config.StreamLifetime, "stream-lifetime", 2*time.Minute, "how long the stream profile keeps each stream open; longer than a rollout's overlap of old and new replicas, or the stream never meets a draining replica; a run lasts more than two")
 	flag.IntVar(&config.ReadPercent, "read-percent", 10, "share of operations that read a key through Weir")
 	flag.IntVar(&config.VerifyPercent, "verify-percent", 1, "share of APPLIED writes read back directly from the database")
 	flag.IntVar(&config.PaddingBytes, "padding-bytes", 1024, "document padding")

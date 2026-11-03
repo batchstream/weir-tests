@@ -359,8 +359,9 @@ shares of a backend's workers. The default exercises every call:
 | `native` | `Put` | the backend's own read through `Native` |
 
 `-read-percent` chooses between a worker's reads and writes; a worker in the
-`stream` profile alternates, because each of its turns lasts for many records.
-Every record takes one token of the backend's rate.
+`stream` profile alternates, because each of its turns lasts for many records,
+so a run lasts more than two `-stream-lifetime`s. Every record takes one token
+of the backend's rate.
 
 Each worker alone writes its own keys, with increasing sequence numbers and at
 most one write in flight per key. The database may therefore hold only a key's
@@ -369,15 +370,17 @@ APPLIED write may be absent. Reads through Weir must return such a sequence.
 After NOT_STARTED or NOT_APPLIED the worker reads the key directly to confirm
 the write took no effect, so a refusal that took effect stays visible. Single
 writes then retry with a fresh sequence; batches and streams leave the key for a
-later write, as they do not send a record again. An SDK error without a result
-counts as UNKNOWN, including every record of a batch or stream it left
-unanswered. An UNKNOWN write is assumed to land within four operation timeouts
-of being issued; a later APPLIED write retires it. `-verify-percent` of APPLIED
-writes are also read back directly. Single-key MongoDB checks read linearizably
-from the primary, so they see a write applied just before a refusal and are
-never stale after a failover; the final check reads majority-committed data.
-Search checks use realtime GET and `_mget`, and a document its shard cannot
-serve fails the check instead of reading as absent.
+later write, as they do not send a record again, and a stream keeps a key out of
+use until its check ran. An SDK error without a result counts as UNKNOWN,
+including every record of a batch or stream it left unanswered. An UNKNOWN write
+is assumed to land within four operation timeouts of being issued, or for a
+stream's record, which has no deadline of its own, of the stream giving up on
+it; a later APPLIED write retires it. `-verify-percent` of APPLIED writes are
+also read back directly. Single-key MongoDB checks read linearizably from the
+primary, so they see a write applied just before a refusal and are never stale
+after a failover; the final check reads majority-committed data. Search checks
+use realtime GET and `_mget`, and a document its shard cannot serve fails the
+check instead of reading as absent.
 
 ```sh
 weir-soak -weir-address weir.soak.svc.cluster.local.:7447 \

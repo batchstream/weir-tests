@@ -56,6 +56,9 @@ func (c Config) validate() error {
 	if len(c.Profiles) == 0 || c.BatchSize < 1 || c.StreamLifetime <= 0 {
 		return errors.New("soak needs profiles, a positive batch size and a positive stream lifetime")
 	}
+	if alternates(c.Profiles, c.ReadPercent) && c.Duration <= 2*c.StreamLifetime {
+		return fmt.Errorf("a duration of %s leaves stream workers no time for both a write and a read stream of %s; shorten -stream-lifetime", c.Duration, c.StreamLifetime)
+	}
 	if c.ReadPercent < 0 || c.ReadPercent > 100 || c.VerifyPercent < 0 || c.VerifyPercent > 100 || c.PaddingBytes < 0 {
 		return errors.New("soak percentages must lie in 0..100 and padding must not be negative")
 	}

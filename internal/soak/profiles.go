@@ -108,12 +108,13 @@ func checkShares(shares []ProfileShare, workers int) error {
 }
 
 // untestedCalls lists the SDK calls the configured profiles and read percent
-// should exercise that never succeeded, so a run cannot pass without them.
+// should exercise that never succeeded, so a run cannot pass without them. An
+// APPLIED write with a Failure, as when its query visibility failed, did not.
 func untestedCalls(shares []ProfileShare, readPercent int, totals Counters) []string {
 	var missing []string
 	for _, share := range shares {
 		chosen := profiles[share.Name]
-		if written := totals.APIs[chosen.writeAPI]; readPercent < 100 && written.Applied == 0 && !slices.Contains(missing, chosen.writeAPI) {
+		if written := totals.APIs[chosen.writeAPI]; readPercent < 100 && written.Applied <= written.AppliedWithFault && !slices.Contains(missing, chosen.writeAPI) {
 			missing = append(missing, chosen.writeAPI)
 		}
 		if read := totals.APIs[chosen.readAPI]; readPercent > 0 && read.Reads <= read.ReadFailures && !slices.Contains(missing, chosen.readAPI) {
@@ -121,4 +122,10 @@ func untestedCalls(shares []ProfileShare, readPercent int, totals Counters) []st
 		}
 	}
 	return missing
+}
+
+// alternates reports whether a worker that holds streams takes turns between
+// writing and reading, which a run must be long enough to see.
+func alternates(shares []ProfileShare, readPercent int) bool {
+	return readPercent > 0 && readPercent < 100 && slices.ContainsFunc(shares, func(share ProfileShare) bool { return profiles[share.Name].alternate })
 }

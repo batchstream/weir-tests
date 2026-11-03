@@ -384,6 +384,95 @@ func TestMutateStreamLeavesRecordsWithoutAResultUnknown(t *testing.T) {
 	}
 }
 
+func TestStreamChecksEveryRefusalBeforeTheKeyIsWrittenAgain(t *testing.T) {
+	store := &memoryStore{seqs: map[string]int64{}}
+	client := &scriptedClient{store: store}
+	refused := &weir.MutationResult{Outcome: weir.MutationNotApplied}
+	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
+		// The refused write took effect, and a later write replaces it.
+		if _, err := options.Next(ctx); err != nil {
+			t.Fatal(err)
+		}
+		store.seqs["k"] = 1
+		if err := options.Consume(ctx, 1, refused); err != nil {
+			t.Fatal(err)
+		}
+		// The only key stays busy until its check ran.
+		if _, err := options.Next(ctx); err != nil {
+			t.Fatal(err)
+		}
+		store.seqs["k"] = 2
+		return options.Consume(ctx, 2, applied())
+	}
+	load, key := newTestWorker(store, client)
+	load.verifyPercent = 0
+	load.streamLifetime = time.Hour
+	load.mutateStreamTurn(readyTokens(2))
+	count, kept := load.violations.snapshot()
+	if count != 1 || kept[0].Kind != "direct-after-refused" || kept[0].Observed != 1 || key.applied != 2 {
+		t.Fatalf("count=%d kept=%+v key=%+v", count, kept, key)
+	}
+}
+
+func TestStreamSamplesAppliedWritesForTheDatabaseCheck(t *testing.T) {
+	store := &memoryStore{seqs: map[string]int64{}}
+	client := &scriptedClient{store: store}
+	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
+		if _, err := options.Next(ctx); err != nil {
+			t.Fatal(err)
+		}
+		// The database lost this APPLIED write.
+		return options.Consume(ctx, 1, applied())
+	}
+	load, _ := newTestWorker(store, client)
+	load.streamLifetime = time.Hour
+	load.mutateStreamTurn(readyTokens(1))
+	if count, kept := load.violations.snapshot(); count != 1 || kept[0].Kind != "direct-after-applied" {
+		t.Fatalf("count=%d kept=%+v", count, kept)
+	}
+}
+
+func TestStreamRecordsWithoutAResultMayLandAfterTheStreamGaveUp(t *testing.T) {
+	store := &memoryStore{seqs: map[string]int64{}}
+	client := &scriptedClient{store: store}
+	var gaveUp time.Time
+	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
+		if _, err := options.Next(ctx); err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(10 * time.Millisecond)
+		gaveUp = time.Now()
+		return errors.New("broken")
+	}
+	load, key := newTestWorker(store, client)
+	load.streamLifetime = time.Hour
+	load.mutateStreamTurn(readyTokens(1))
+	if len(key.unknown) != 1 || key.unknown[0].issued.Before(gaveUp) {
+		t.Fatalf("unknown=%+v gaveUp=%v", key.unknown, gaveUp)
+	}
+}
+
+func TestRunMustFitBothStreamTurns(t *testing.T) {
+	config := Config{
+		WeirAddress: "weir:7447", WeirDiagnostics: "weir:7449", Output: "out",
+		Backends: []Backend{{Kind: "mongo", Store: "mongo", URI: "mongodb://mongo", Workers: 4, KeysPerWorker: 1, Rate: 1}},
+		Duration: time.Minute, SampleInterval: time.Second, OperationTimeout: time.Second,
+		Profiles: []ProfileShare{{Name: "stream", Weight: 1}}, BatchSize: 1, StreamLifetime: 30 * time.Second, ReadPercent: 10,
+	}
+	if err := config.validate(); err == nil || !strings.Contains(err.Error(), "stream-lifetime") {
+		t.Fatalf("err=%v", err)
+	}
+	config.ReadPercent = 0
+	if err := config.validate(); err != nil {
+		t.Fatal(err)
+	}
+	config.ReadPercent = 10
+	config.StreamLifetime = 20 * time.Second
+	if err := config.validate(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStreamEndsItsInputAtItsLifetime(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
@@ -650,6 +739,7 @@ func TestEveryConfiguredCallMustSucceed(t *testing.T) {
 		{name: "both", readPercent: 10, apis: map[string]Counters{apiMutateStream: writes, apiReadStream: reads}},
 		{name: "no write", readPercent: 10, apis: map[string]Counters{apiReadStream: reads}, want: apiMutateStream},
 		{name: "reads all failed", readPercent: 10, apis: map[string]Counters{apiMutateStream: writes, apiReadStream: failed}, want: apiReadStream},
+		{name: "writes all APPLIED with a failure", readPercent: 10, apis: map[string]Counters{apiMutateStream: {Applied: 2, AppliedWithFault: 2}, apiReadStream: reads}, want: apiMutateStream},
 		{name: "reads not configured", readPercent: 0, apis: map[string]Counters{apiMutateStream: writes}},
 		{name: "writes not configured", readPercent: 100, apis: map[string]Counters{apiReadStream: reads}},
 	}
