@@ -453,7 +453,14 @@ finishes first.
 
 CI runs unit, race, vet and module-boundary checks, real multi-node integration,
 and verified ordinary and Lua comparison smoke tests on both databases, and
-uploads results and fixture logs as a workflow artifact.
+uploads results and fixture logs as a workflow artifact. It also runs the
+integration tests with each side one version behind, since a server and its
+clients are not upgraded together: `make integration-previous-server` uses the
+current SDK with the `weir_previous_source` server and `make
+integration-previous-sdk` uses the current server with the `weir_go_previous` SDK.
+Update both when pinning a new server or SDK. A test of behaviour that only the
+current versions have fails there, which shows what callers lose until they
+upgrade.
 
 All generated output belongs under the ignored `results/` directory, conventionally
 `results/local/`. Nothing under `results/` is committed.

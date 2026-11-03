@@ -50,6 +50,28 @@ jobs:
           python3 -O -m unittest discover -s scripts -p '*_test.py'
           test -z "$(gofmt -l cmd internal tests)"
           git diff --exit-code
+  version-skew:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [integration-previous-server, integration-previous-sdk]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+      - name: Install the pinned Weir and mongod
+        run: |
+          make prepare
+          mongod=$(scripts/mongod.sh)
+          printf 'WEIR_TEST_MONGODB_BINARY=%s\n' "$mongod" >> "$GITHUB_ENV"
+      - name: Real multi-node integration, one side a version behind
+        run: make ${{ matrix.target }}
   blackbox:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
