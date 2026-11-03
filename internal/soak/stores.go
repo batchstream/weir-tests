@@ -17,7 +17,13 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+
+	weir "github.com/batchstream/weir-go"
 )
+
+// errBackendRefused marks a Native response in which the backend itself reports
+// an error, as it may during a failover. It says nothing about the records.
+var errBackendRefused = errors.New("backend refused the command")
 
 // store reaches one backend directly, without Weir, to create the workload's
 // namespace and check what the database holds. A sequence of 0 means absent.
@@ -27,6 +33,11 @@ type store interface {
 	encode(id string, seq int64, padding string) ([]byte, error)
 	decode(raw []byte) (int64, error)
 	read(ctx context.Context, id string) (int64, error)
+	// nativeRead is the backend's own command that reads id through Native, and
+	// nativeSeq the sequence in its complete response.
+	// A response in which the backend reports an error yields errBackendRefused.
+	nativeRead(id string) (*weir.NativeRequest, error)
+	nativeSeq(response *weir.NativeResponse, body []byte) (int64, error)
 	readAll(ctx context.Context, ids []string) (map[string]int64, error)
 	connections(ctx context.Context) (int64, error)
 	create(ctx context.Context) error
@@ -96,6 +107,43 @@ func (m *mongoStore) read(ctx context.Context, id string) (int64, error) {
 		return 0, err
 	}
 	return m.decode(raw)
+}
+
+func (m *mongoStore) nativeRead(id string) (*weir.NativeRequest, error) {
+	filter := bson.D{{Key: "_id", Value: id}}
+	projection := bson.D{{Key: "seq", Value: 1}}
+	// A deposed primary could otherwise answer from before an APPLIED write.
+	concern := bson.D{{Key: "level", Value: "linearizable"}}
+	command := bson.D{{Key: "find", Value: mongoCollection}, {Key: "filter", Value: filter}, {Key: "projection", Value: projection}, {Key: "limit", Value: 1}, {Key: "singleBatch", Value: true}, {Key: "readConcern", Value: concern}}
+	data, err := bson.Marshal(command)
+	if err != nil {
+		return nil, err
+	}
+	document := &weir.Document{ContentType: m.contentType(), Data: data}
+	request := &weir.NativeRequest{Resource: weir.EncodeSegment(m.namespace), Request: document}
+	return request, nil
+}
+
+func (m *mongoStore) nativeSeq(_ *weir.NativeResponse, body []byte) (int64, error) {
+	reply := bson.Raw(body)
+	if err := reply.Validate(); err != nil {
+		return 0, err
+	}
+	if ok, found := reply.Lookup("ok").AsFloat64OK(); !found || ok != 1 {
+		return 0, fmt.Errorf("%w: %s", errBackendRefused, reply.Lookup("errmsg"))
+	}
+	batch, found := reply.Lookup("cursor", "firstBatch").ArrayOK()
+	if !found {
+		return 0, errors.New("find reply lacks a first batch")
+	}
+	documents, err := batch.Values()
+	if err != nil {
+		return 0, err
+	}
+	if len(documents) == 0 {
+		return 0, nil
+	}
+	return m.decode(documents[0].Document())
 }
 
 func (m *mongoStore) readAll(ctx context.Context, ids []string) (map[string]int64, error) {
@@ -207,6 +255,35 @@ func (s *searchStore) read(ctx context.Context, id string) (int64, error) {
 	var hit searchHit
 	if status != http.StatusOK && status != http.StatusNotFound || json.Unmarshal(body, &hit) != nil || hit.ID != id {
 		return 0, fmt.Errorf("Search GET status %d", status)
+	}
+	if !hit.Found {
+		return 0, nil
+	}
+	return s.decode(hit.Source)
+}
+
+func (s *searchStore) nativeRead(id string) (*weir.NativeRequest, error) {
+	request, err := http.NewRequest(http.MethodGet, "http://weir.invalid/_doc/"+url.PathEscape(id)+"?_source_includes=seq", nil)
+	if err != nil {
+		return nil, err
+	}
+	return weir.NewHTTPNativeRequest(s.namespace, request)
+}
+
+func (s *searchStore) nativeSeq(response *weir.NativeResponse, body []byte) (int64, error) {
+	metadata, err := weir.ParseHTTPNativeResponse(response)
+	if err != nil {
+		return 0, err
+	}
+	if metadata.StatusCode != http.StatusOK && metadata.StatusCode != http.StatusNotFound {
+		return 0, fmt.Errorf("%w: Search GET status %d", errBackendRefused, metadata.StatusCode)
+	}
+	var hit searchHit
+	if err := json.Unmarshal(body, &hit); err != nil {
+		return 0, err
+	}
+	if len(hit.Error) > 0 {
+		return 0, fmt.Errorf("%w: %s", errBackendRefused, hit.Error)
 	}
 	if !hit.Found {
 		return 0, nil
