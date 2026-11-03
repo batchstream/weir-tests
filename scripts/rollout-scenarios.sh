@@ -8,10 +8,12 @@
 #
 # The namespace already holds SOAK_POD and the backends. SOAK_ARGS holds the
 # soak's addresses and load; it may use double quotes, not single ones. A Pod
-# that cannot be scheduled ends the run with the release scaled to zero, so that
-# nothing stays Pending for a cluster autoscaler to act on.
+# that cannot be scheduled ends the run. Any run that does not pass, interrupted
+# ones included, ends its clients and scales the release to zero, so that nothing
+# stays Pending for a cluster autoscaler to act on or keeps loading the backends.
 NS=$1 RELEASE=$2 CHART=$3 VALUES=$4 DIGEST=$5 OTHER=$6
 [ -n "$OTHER" ] && [ -f "$VALUES" ] || { sed -n 2p "$0" >&2; exit 2; }
+[ "$DIGEST" != "$OTHER" ] || { echo "the two digests must differ, or the upgrades change nothing" >&2; exit 2; }
 [ -n "$SOAK_ARGS" ] || { echo "SOAK_ARGS names the soak's addresses and load" >&2; exit 2; }
 K="${KUBECTL:-kubectl} -n $NS"
 H="${HELM:-helm} -n $NS"
@@ -31,14 +33,27 @@ log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*"; }
 
 fail() {
   log "FAILED: $*"
-  stop_clients
   exit 1
 }
 
 deployment() { $K get deployment -l "$SELECTOR" -o name; }
 
+cleanup() {
+  code=$?
+  trap - EXIT
+  stop_clients
+  if [ "$code" -ne 0 ]; then
+    name=$(deployment)
+    [ -z "$name" ] || $K scale "$name" --replicas=0 >/dev/null
+  fi
+  exit "$code"
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM
+
 # helm_set <chart> <replicas> <digest> starts an upgrade without waiting for it.
 helm_set() {
+  WANT_REPLICAS=$2 WANT_DIGEST=$3
   $H upgrade --install "$RELEASE" "$1" -f "$VALUES" --set "replicaCount=$2" --set "image.digest=$3" >/dev/null ||
     fail "helm upgrade to replicas=$2 digest=$3"
 }
@@ -46,18 +61,18 @@ helm_set() {
 check_schedulable() {
   reasons=$($K get pods -l "$SELECTOR" -o jsonpath='{range .items[*]}{.status.conditions[?(@.type=="PodScheduled")].reason}{"\n"}{end}')
   case $reasons in
-    *Unschedulable*)
-      $K scale "$(deployment)" --replicas=0 >/dev/null
-      fail "a Weir Pod cannot be scheduled" ;;
+    *Unschedulable*) fail "a Weir Pod cannot be scheduled" ;;
   esac
 }
 
-# settled reports that every replica runs the current template and no other
-# Pod remains, terminating ones included.
+# settled reports that every replica runs the current template, which holds the
+# replica count and digest last asked for, and no other Pod remains, terminating
+# ones included.
 settled() {
-  counts=$($K get "$(deployment)" -o jsonpath='{.metadata.generation} {.status.observedGeneration} {.spec.replicas} {.status.updatedReplicas} {.status.availableReplicas}')
+  counts=$($K get "$(deployment)" -o jsonpath='{.metadata.generation} {.status.observedGeneration} {.spec.replicas} {.status.updatedReplicas} {.status.availableReplicas} {.spec.template.spec.containers[0].image}')
   set -- $counts
-  [ "$#" -eq 5 ] && [ "$1" = "$2" ] && [ "$3" = "$4" ] && [ "$3" = "$5" ] || return 1
+  [ "$#" -eq 6 ] && [ "$1" = "$2" ] && [ "$3" = "$WANT_REPLICAS" ] && [ "$3" = "$4" ] && [ "$3" = "$5" ] || return 1
+  case $6 in *"@$WANT_DIGEST") ;; *) return 1 ;; esac
   pods=$($K get pods -l "$SELECTOR" --no-headers 2>/dev/null | wc -l)
   [ "$pods" -eq "$3" ]
 }

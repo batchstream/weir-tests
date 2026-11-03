@@ -431,9 +431,12 @@ Each is a real change of the release, and it waits for every old Pod to leave. T
 script exits non-zero if a change does not complete, the old replicas stop
 serving during the failed upgrade, or a client fails, which `-no-errors` makes
 any error a caller saw. `SOAK_ARGS` holds the soak's addresses and load, and the
-namespace must already hold the backends and the Pod. Check that the namespace's
-nodes have room for one replica more than the largest count: a Pod that cannot
-be scheduled ends the run with the release scaled to zero.
+namespace must already hold the backends and the Pod, and the values must not
+enable autoscaling, which leaves the replica count to the autoscaler. Check that
+the namespace's nodes have room for three replicas more than the largest count:
+a rollout adds one replica while terminating ones still hold theirs, and a Pod
+that cannot be scheduled ends the run. A run that does not pass, interrupted ones
+included, ends with its clients stopped and the release scaled to zero.
 
 Each sample records every replica's `weir_store_records_total`, so the change
 between samples is that replica's share of the traffic. A diagnostics name that
