@@ -39,6 +39,15 @@ jobs:
             echo "$module $version"
             [[ $version =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           done
+      - name: The previous pins are the versions right before the current ones
+        run: |
+          current=$(go list -m -f '{{.Version}}' github.com/batchstream/weir-go)
+          previous=$(go list -m -versions github.com/batchstream/weir-go | tr ' ' '\n' | grep -B1 -x "$current" | head -n 1)
+          echo "weir-go $previous then $current"
+          [[ $previous =~ ^v && $previous != "$current" && $(jq -er .weir_go_previous versions.json) == "$previous" ]]
+          server=$(jq -er .weir_previous_source versions.json)
+          echo "server $server then $(jq -er .weir_source versions.json)"
+          [[ $server =~ ^[0-9a-f]{40}$ && $server != "$(jq -er .weir_source versions.json)" ]]
       - name: Tests, vet and formatting
         run: |
           go mod tidy -diff
@@ -67,11 +76,23 @@ jobs:
           go-version-file: go.mod
       - name: Install the pinned Weir and mongod
         run: |
-          make prepare
+          make prepare prepare-previous
           mongod=$(scripts/mongod.sh)
           printf 'WEIR_TEST_MONGODB_BINARY=%s\n' "$mongod" >> "$GITHUB_ENV"
       - name: Real multi-node integration, one side a version behind
         run: make ${{ matrix.target }}
+      - name: Upload fixture logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.target }}-${{ github.sha }}
+          path: |
+            /tmp/weir-tests-*/manifest.json
+            /tmp/weir-tests-*/cleanup.json
+            /tmp/weir-tests-*/*config.json
+            /tmp/weir-tests-*/*process.log
+            /tmp/weir-tests-*/docker-engine.json
+          retention-days: 14
   blackbox:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
