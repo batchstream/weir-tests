@@ -346,16 +346,37 @@ for hours, then checks every key against the databases directly. It creates a
 fresh MongoDB database and Search index, drops them at the end unless
 `-keep-data` is set, and never starts, stops or faults services.
 
-Each worker alone writes its own keys, one operation at a time, with increasing
-sequence numbers. The database may therefore hold only a key's latest APPLIED
-sequence or one whose outcome was UNKNOWN, and a key with no APPLIED write may
-be absent. Reads through Weir must return such a sequence. After NOT_STARTED or
-NOT_APPLIED the worker reads the key directly to confirm the write took no
-effect, then retries with a fresh sequence, so a refusal that took effect
-stays visible. An SDK error without a result counts as UNKNOWN. An UNKNOWN
-write is assumed to land within four operation timeouts of being issued; a
-later APPLIED write retires it. `-verify-percent` of APPLIED writes are also
-read back directly. Single-key MongoDB checks read linearizably from the
+Each worker uses the SDK in one way, its profile, and `-profiles` sets their
+shares of a backend's workers. The default exercises every call:
+
+| Profile | Writes | Reads |
+| --- | --- | --- |
+| `single` | `Put` | `ReadOne` |
+| `visible` | query-visible `Put` | `ReadOne` |
+| `lua` | `AtomicTransform` | `ReadOne` |
+| `batch` | `Mutate` of `-batch-size` keys | `Read` of as many |
+| `stream` | a `MutateStream` held for `-stream-lifetime` | a `ReadStream` held as long |
+| `native` | `Put` | the backend's own read through `Native` |
+
+`-read-percent` chooses between a worker's reads and writes; a worker in the
+`stream` profile alternates, because each of its turns lasts for many records,
+so a run lasts more than two `-stream-lifetime`s. Every record takes one token
+of the backend's rate.
+
+Each worker alone writes its own keys, with increasing sequence numbers and at
+most one write in flight per key. The database may therefore hold only a key's
+latest APPLIED sequence or one whose outcome was UNKNOWN, and a key with no
+APPLIED write may be absent. Reads through Weir must return such a sequence.
+After NOT_STARTED or NOT_APPLIED the worker reads the key directly to confirm
+the write took no effect, so a refusal that took effect stays visible. Single
+writes then retry with a fresh sequence; batches and streams leave the key for a
+later write, as they do not send a record again, and a stream keeps a key out of
+use until its check ran. An SDK error without a result counts as UNKNOWN,
+including every record of a batch or stream it left unanswered. An UNKNOWN write
+is assumed to land within four operation timeouts of being issued, or for a
+stream's record, which has no deadline of its own, of the stream giving up on
+it; a later APPLIED write retires it. `-verify-percent` of APPLIED writes are
+also read back directly. Single-key MongoDB checks read linearizably from the
 primary, so they see a write applied just before a refusal and are never stale
 after a failover; the final check reads majority-committed data. Search checks
 use realtime GET and `_mget`, and a document its shard cannot serve fails the
@@ -374,9 +395,12 @@ domains; the diagnostics name is resolved at every sample to scrape each
 replica's goroutines, live memory, RSS, open files and sessions. `<output>.jsonl`
 holds one sample per `-sample-interval` with per-backend outcomes, latency
 quantiles and database connections, and `<output>.json` the totals and final
-check. The final check retries a backend that refuses reads for up to five
-minutes. The run fails on any violation, a backend without APPLIED writes or an
-incomplete final check.
+check. Both break these down by SDK call under `apis`, with the calls made,
+those that ended at a deadline and the last error and failure, so a call that
+fails during a rollout shows by name; the longest read includes reads that
+failed. The final check retries a backend that refuses reads for up to five
+minutes. The run fails on any violation, an incomplete final check or a
+configured SDK call that never succeeded on a backend.
 
 `scripts/soak-faults.sh <namespace> <weir-release> <quiet> <window> <every>`
 injects faults from a Pod in the same namespace, whose service account may get,

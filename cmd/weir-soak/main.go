@@ -41,12 +41,20 @@ func run() error {
 	flag.DurationVar(&config.SampleInterval, "sample-interval", time.Minute, "timeline interval")
 	flag.DurationVar(&config.OperationTimeout, "operation-timeout", 30*time.Second, "per-call deadline; an expired write counts as unknown")
 	flag.DurationVar(&config.Settle, "settle", 30*time.Second, "wait after the load stops so unknown writes finish before the final check")
+	profileSpec := flag.String("profiles", soak.DefaultProfiles, "share of each backend's workers per way of using the SDK: single, visible, lua, batch, stream, native")
+	flag.IntVar(&config.BatchSize, "batch-size", 16, "records per Mutate or Read call of the batch profile")
+	flag.DurationVar(&config.StreamLifetime, "stream-lifetime", 2*time.Minute, "how long the stream profile keeps each stream open; longer than a rollout's overlap of old and new replicas, or the stream never meets a draining replica; a run lasts more than two")
 	flag.IntVar(&config.ReadPercent, "read-percent", 10, "share of operations that read a key through Weir")
 	flag.IntVar(&config.VerifyPercent, "verify-percent", 1, "share of APPLIED writes read back directly from the database")
 	flag.IntVar(&config.PaddingBytes, "padding-bytes", 1024, "document padding")
 	flag.StringVar(&config.Output, "output", "", "report path prefix; writes .json and .jsonl")
 	flag.BoolVar(&config.KeepData, "keep-data", false, "keep the run's database namespace")
 	flag.Parse()
+	shares, err := soak.ParseProfiles(*profileSpec)
+	if err != nil {
+		return err
+	}
+	config.Profiles = shares
 	for _, backend := range []soak.Backend{mongo, search} {
 		if backend.URI != "" {
 			backend.KeysPerWorker = *keys

@@ -29,18 +29,21 @@ type Backend struct {
 
 // Config describes one soak run.
 type Config struct {
-	WeirAddress      string        `json:"weir_address"`
-	WeirDiagnostics  string        `json:"weir_diagnostics"`
-	Backends         []Backend     `json:"backends"`
-	Duration         time.Duration `json:"duration"`
-	SampleInterval   time.Duration `json:"sample_interval"`
-	OperationTimeout time.Duration `json:"operation_timeout"`
-	Settle           time.Duration `json:"settle"`
-	ReadPercent      int           `json:"read_percent"`
-	VerifyPercent    int           `json:"verify_percent"`
-	PaddingBytes     int           `json:"padding_bytes"`
-	Output           string        `json:"-"`
-	KeepData         bool          `json:"keep_data"`
+	WeirAddress      string         `json:"weir_address"`
+	WeirDiagnostics  string         `json:"weir_diagnostics"`
+	Backends         []Backend      `json:"backends"`
+	Duration         time.Duration  `json:"duration"`
+	SampleInterval   time.Duration  `json:"sample_interval"`
+	OperationTimeout time.Duration  `json:"operation_timeout"`
+	Settle           time.Duration  `json:"settle"`
+	Profiles         []ProfileShare `json:"profiles"`
+	BatchSize        int            `json:"batch_size"`
+	StreamLifetime   time.Duration  `json:"stream_lifetime"`
+	ReadPercent      int            `json:"read_percent"`
+	VerifyPercent    int            `json:"verify_percent"`
+	PaddingBytes     int            `json:"padding_bytes"`
+	Output           string         `json:"-"`
+	KeepData         bool           `json:"keep_data"`
 }
 
 func (c Config) validate() error {
@@ -49,6 +52,12 @@ func (c Config) validate() error {
 	}
 	if c.Duration <= 0 || c.SampleInterval <= 0 || c.OperationTimeout <= 0 || c.Settle < 0 {
 		return errors.New("soak durations must be positive")
+	}
+	if len(c.Profiles) == 0 || c.BatchSize < 1 || c.StreamLifetime <= 0 {
+		return errors.New("soak needs profiles, a positive batch size and a positive stream lifetime")
+	}
+	if alternates(c.Profiles, c.ReadPercent) && c.Duration <= 2*c.StreamLifetime {
+		return fmt.Errorf("a duration of %s leaves stream workers no time for both a write and a read stream of %s; shorten -stream-lifetime", c.Duration, c.StreamLifetime)
 	}
 	if c.ReadPercent < 0 || c.ReadPercent > 100 || c.VerifyPercent < 0 || c.VerifyPercent > 100 || c.PaddingBytes < 0 {
 		return errors.New("soak percentages must lie in 0..100 and padding must not be negative")
@@ -59,6 +68,9 @@ func (c Config) validate() error {
 		}
 		if backend.Workers < 1 || backend.KeysPerWorker < 1 || backend.Rate <= 0 {
 			return fmt.Errorf("%s needs positive workers, keys per worker and rate", backend.Kind)
+		}
+		if err := checkShares(c.Profiles, backend.Workers); err != nil {
+			return fmt.Errorf("%s: %w", backend.Kind, err)
 		}
 	}
 	return nil
@@ -79,10 +91,13 @@ type BackendReport struct {
 	Namespace string     `json:"namespace"`
 	Totals    Counters   `json:"totals"`
 	Final     FinalCheck `json:"final"`
+	// Untested names the configured SDK calls that never succeeded.
+	Untested []string `json:"untested_calls,omitempty"`
 }
 
 // Report is the soak outcome; Pass requires no violations, a complete final
-// check of every backend and APPLIED writes on each.
+// check of every backend and at least one success of every configured SDK call
+// on each.
 type Report struct {
 	Started    string                    `json:"started_utc"`
 	Finished   string                    `json:"finished_utc"`
@@ -139,20 +154,23 @@ func Run(ctx context.Context, config Config) (resultErr error) {
 		for index := range run.config.Workers {
 			seed := mathrand.Uint64()
 			load := &worker{
-				backend:       run.config.Kind,
-				storeName:     run.config.Store,
-				store:         run.store,
-				client:        client,
-				keys:          run.keys[index*run.config.KeysPerWorker : (index+1)*run.config.KeysPerWorker],
-				padding:       padding,
-				readPercent:   config.ReadPercent,
-				verifyPercent: config.VerifyPercent,
-				timeout:       config.OperationTimeout,
-				lateWindow:    lateWindow * config.OperationTimeout,
-				random:        mathrand.New(mathrand.NewPCG(seed, uint64(index))),
-				stats:         run.stats,
-				violations:    violations,
-				stop:          stop,
+				backend:        run.config.Kind,
+				storeName:      run.config.Store,
+				store:          run.store,
+				client:         client,
+				keys:           run.keys[index*run.config.KeysPerWorker : (index+1)*run.config.KeysPerWorker],
+				padding:        padding,
+				profile:        profileOf(config.Profiles, index, run.config.Workers),
+				batch:          config.BatchSize,
+				streamLifetime: config.StreamLifetime,
+				readPercent:    config.ReadPercent,
+				verifyPercent:  config.VerifyPercent,
+				timeout:        config.OperationTimeout,
+				lateWindow:     lateWindow * config.OperationTimeout,
+				random:         mathrand.New(mathrand.NewPCG(seed, uint64(index))),
+				stats:          run.stats,
+				violations:     violations,
+				stop:           stop,
 			}
 			workers.Go(func() { load.run(tokens) })
 		}
@@ -177,19 +195,20 @@ func Run(ctx context.Context, config Config) (resultErr error) {
 	for _, run := range runs {
 		backend := &BackendReport{Namespace: run.namespace, Totals: run.stats.total()}
 		backend.Final = finalCheck(run, violations)
+		backend.Untested = untestedCalls(config.Profiles, config.ReadPercent, backend.Totals)
 		report.Backends[run.config.Kind] = backend
 	}
 	report.Finished = time.Now().UTC().Format(time.RFC3339)
 	report.Violations, report.Kept = violations.snapshot()
 	report.Pass = report.Violations == 0
 	for _, backend := range report.Backends {
-		report.Pass = report.Pass && backend.Final.Error == "" && backend.Totals.Applied > 0
+		report.Pass = report.Pass && backend.Final.Error == "" && len(backend.Untested) == 0
 	}
 	if err := writeReport(config.Output+".json", report); err != nil {
 		return err
 	}
 	if !report.Pass {
-		return fmt.Errorf("soak failed: %d violations, or a backend without APPLIED writes or a final check; see %s.json", report.Violations, config.Output)
+		return fmt.Errorf("soak failed: %d violations, or a backend without a final check or a success of every configured SDK call; see %s.json", report.Violations, config.Output)
 	}
 	return nil
 }
