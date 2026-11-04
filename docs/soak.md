@@ -58,12 +58,14 @@ weir-soak -weir-address weir.soak.svc.cluster.local.:7447 \
   -search-url http://elasticsearch.soak.svc:9200 -duration 12h -output /work/soak
 ```
 
-## Output
-
 The Weir addresses are names that resolve to every replica, such as a headless
 Service's full name with a trailing dot, which skips the Pod's DNS search
 domains; the diagnostics name is resolved at every sample to scrape each
-replica's goroutines, live memory, RSS, open files and sessions. `<output>.jsonl`
+replica's goroutines, live memory, RSS, open files and sessions.
+
+## Output
+
+`<output>.jsonl`
 holds one sample per `-sample-interval` with per-backend outcomes, latency
 quantiles and database connections, and `<output>.json` the totals and final
 check. Both break these down by SDK call under `apis`, with the calls made,

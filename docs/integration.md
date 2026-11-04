@@ -2,7 +2,7 @@
 
 What `make prepare`, `make test` and `make integration` do and cover.
 
-## Preparation
+## Preparation and default tests
 
 `make prepare` runs `go install` for `github.com/batchstream/weir/cmd/weir` at
 the pinned commit into `.tools/weir` and stamps that commit as its `revision`.

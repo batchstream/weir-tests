@@ -22,7 +22,7 @@ protocol. It imports no server packages.
 | `cmd/weir-bench` | Fixed and saturation comparisons against independently deployed endpoints |
 | `cmd/weir-soak`, `scripts/soak-faults.sh` | Long-running load through deployed Weir replicas, with every outcome checked against the databases, under scheduled faults |
 
-### Make targets
+### Common Make targets
 
 | Target | Action |
 | --- | --- |
@@ -32,15 +32,21 @@ protocol. It imports no server packages.
 | `make benchmark` | Run the saturation benchmark |
 | `make diagnostic` | Run a finite single-operation comparison |
 
+`make benchmark` and `make diagnostic` write to a fixed directory under
+`results/local/` and refuse an existing one. Remove it before running them again.
+
 ## Requirements
 
 | Item | Requirement |
 | --- | --- |
 | Go | 1.27.3 |
+| Operating system | Linux or macOS |
 | Python | Python 3 |
-| `jq` | Any version |
+| `make`, `jq` | Any version |
+| C compiler | On Linux, for `go test -race` |
 | Docker | A local daemon with a Unix socket |
-| Benchmarks | Linux with Docker, to enforce database CPU quotas |
+| Saturation benchmark | Linux with Docker, to enforce database CPU quotas |
+| Soak and rollout tools | Deployed Weir replicas. The fault and rollout scripts also use `kubectl` and `helm`. |
 
 Fixtures use ordinary endpoints and processes and work without Kubernetes.
 
@@ -65,15 +71,23 @@ make prepare
 make test
 ```
 
-**Step 4.** Run the integration tests. Docker must be running. The run has a
-10-minute limit.
+**Step 4.** Pull the database images. This downloads about 1 GB once. The first
+integration test allows only 4 minutes for fixtures to start, so pull them first.
+
+```sh
+docker pull "$(jq -r .mongodb_image versions.json)"
+docker pull "$(jq -r .elasticsearch_image versions.json)"
+```
+
+**Step 5.** Run the integration tests. The run has a 10-minute limit.
 
 ```sh
 make integration
 ```
 
-Both test targets print `ok` for each passing package. Generated output belongs
-under the ignored `results/` directory.
+Both test targets print `ok` for each passing package. The integration tests log
+their fixture directory as `fixture artifacts:`. Benchmark output belongs under the
+ignored `results/` directory.
 
 ## Documentation
 
@@ -90,6 +104,7 @@ under the ignored `results/` directory.
 ```sh
 go test -race ./...
 go vet ./...
+go vet -tags=integration ./...
 python3 -m unittest discover -s scripts -p '*_test.py'
 ```
 
