@@ -193,9 +193,10 @@ immediately and `-backend-max-in-flight` 0 selects Weir's default of 16
 concurrent executions per Store. Weir's execution limit bounds matched-concurrency
 comparisons, so raise it to the highest client level when the native path should
 not out-run it. Batches that are not full also follow Weir's adaptive limit,
-which starts at two batches, can grow to that maximum after the Store's second
-probe, within about 20 seconds when executions are fast, and holds them back
-while executions take more than four times their baseline. A measurement that
+which starts at two batches, can grow to that maximum from a little over one
+probe interval after its first execution, about 12.5 seconds when executions are
+fast, and holds them back while executions take more than four times their
+baseline. A measurement that
 starts within that time includes it. The report keeps
 the generated Weir configuration, and the raw metrics preserve the actual
 settings and `weir_store_adaptive_executions_limit`. The SDK and native callers both use the
