@@ -1,5 +1,7 @@
 # Weir system tests
 
+[![CI](https://github.com/batchstream/weir-tests/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/batchstream/weir-tests/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Independent blackbox integration tests and database throughput comparisons for
 [Weir](https://github.com/batchstream/weir). This module uses the published
 Go SDK and public protocol. It imports no server packages.
