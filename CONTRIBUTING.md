@@ -25,7 +25,7 @@ make integration
 ```
 
 `make test` launches no databases or Weir processes. See
-[Native MongoDB fixture](README.md#native-mongodb-fixture) for the fixture option.
+[Native MongoDB fixture](docs/integration.md#native-mongodb-fixture) for the fixture option.
 
 ## Prepare a pull request
 
