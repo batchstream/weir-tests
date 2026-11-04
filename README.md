@@ -1,19 +1,6 @@
-<p align="center">
-  <img src=".github/assets/banner.svg" alt="weir-tests: blackbox tests and throughput comparisons." width="100%">
-</p>
-
-<p align="center">
-  <a href="https://github.com/batchstream/weir-tests/actions/workflows/ci.yml"><img src="https://github.com/batchstream/weir-tests/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-  <a href="https://github.com/batchstream/weir-tests/actions/workflows/vulnerabilities.yml"><img src="https://github.com/batchstream/weir-tests/actions/workflows/vulnerabilities.yml/badge.svg?branch=main" alt="Vulnerabilities"></a>
-  <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/batchstream/weir-tests" alt="Go version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/batchstream/weir">Server</a> &nbsp;·&nbsp; <a href="https://github.com/batchstream/weir-go">Go SDK</a> &nbsp;·&nbsp; <a href="https://github.com/batchstream/weir-protocol">Protocol</a> &nbsp;·&nbsp; <a href="https://github.com/batchstream/weir-charts">Helm chart</a> &nbsp;·&nbsp; <strong>System tests</strong>
-</p>
-
 # Weir system tests
+
+[![CI](https://github.com/batchstream/weir-tests/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/batchstream/weir-tests/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Independent blackbox integration tests and database throughput comparisons for
 [Weir](https://github.com/batchstream/weir). This module uses the published
@@ -485,9 +472,3 @@ behaviour too.
 
 All generated output belongs under the ignored `results/` directory, conventionally
 `results/local/`. Nothing under `results/` is committed.
-
-## Contributing and license
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and report
-vulnerabilities as described in [SECURITY.md](SECURITY.md). This repository is
-released under the [MIT License](LICENSE).
