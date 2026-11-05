@@ -32,7 +32,7 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	duplicate := backend.write(t, "primary", 999)
 	mutations[24] = &weir.MutateRequest{Resource: duplicate.Resource, Action: weir.MutationCreate, Document: duplicate.Document}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	results, err := mutateRecords(rpc, client, backend.name, mutations...)
+	results, err := client.Mutate(rpc, backend.name, weir.WithRequests(mutations...))
 	cancel()
 	if err != nil || len(results) != count {
 		t.Fatalf("public batch Mutate: length=%d error=%v", len(results), err)
@@ -56,7 +56,7 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	missing := &weir.ReadRequest{Resource: backend.resource("public_batch_absent")}
 	reads[count] = missing
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	readResults, err := readRecords(rpc, client, backend.name, reads...)
+	readResults, err := client.Read(rpc, backend.name, weir.WithRequests(reads...))
 	cancel()
 	if err != nil || len(readResults) != count+1 {
 		t.Fatalf("public batch Read: length=%d error=%v", len(readResults), err)
@@ -81,7 +81,7 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	}
 	rejected[count-1].Action = 0
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	invalidResults, err := mutateRecords(rpc, client, backend.name, rejected...)
+	invalidResults, err := client.Mutate(rpc, backend.name, weir.WithRequests(rejected...))
 	cancel()
 	confirmed := func(result *weir.MutationResult) bool { return result != nil }
 	if err == nil || slices.ContainsFunc(invalidResults, confirmed) {
@@ -140,7 +140,7 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 		requests[index] = request
 	}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	results, err := mutateRecords(rpc, client, backend.name, requests...)
+	results, err := client.Mutate(rpc, backend.name, weir.WithRequests(requests...))
 	cancel()
 	if err != nil || len(results) != len(requests) {
 		t.Fatalf("same-URI mutation batch: results=%v err=%v", results, err)
@@ -169,7 +169,7 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 		}
 	}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	readResults, err := readRecords(rpc, client, backend.name, reads...)
+	readResults, err := client.Read(rpc, backend.name, weir.WithRequests(reads...))
 	cancel()
 	if err != nil || len(readResults) != len(reads) {
 		t.Fatalf("513 duplicate URI reads: results=%d err=%v", len(readResults), err)
@@ -262,7 +262,7 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	s.quiesce(t)
 	before := s.nodeMetrics(t)
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	results, err := mutateRecords(rpc, s.client, backend.name, mutations...)
+	results, err := s.client.Mutate(rpc, backend.name, weir.WithRequests(mutations...))
 	cancel()
 	if err != nil || len(results) != count {
 		t.Fatalf("513 distinct Put batch: results=%d err=%v", len(results), err)
@@ -277,7 +277,7 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	}
 	before = s.nodeMetrics(t)
 	rpc, cancel = context.WithTimeout(s.ctx, rpcTimeout)
-	readResults, err := readRecords(rpc, s.client, backend.name, reads...)
+	readResults, err := s.client.Read(rpc, backend.name, weir.WithRequests(reads...))
 	cancel()
 	if err != nil || len(readResults) != count {
 		t.Fatalf("513 distinct Read batch: results=%d err=%v", len(readResults), err)
