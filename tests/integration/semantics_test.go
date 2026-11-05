@@ -275,7 +275,7 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 	requests := []*weir.ReadRequest{
 		{Resource: target.resource("1")}, {Resource: target.resource("absent")}, {Resource: missing.resource("1")},
 	}
-	results, err := readRecords(s.ctx, s.client, target.name, requests...)
+	results, err := s.client.Read(s.ctx, target.name, weir.WithRequests(requests...))
 	if err != nil || len(results) != 3 {
 		t.Fatalf("mixed read results: %v %v", results, err)
 	}

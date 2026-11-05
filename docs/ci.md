@@ -27,15 +27,6 @@ only the current versions can pass goes in a file with a `!previous` build
 constraint so that the rest keeps running, until the previous pin has that
 behaviour too.
 
-The SDK's API changed at v0.24.0, so `integration-previous-sdk` also sets the
-`previous_sdk` tag. `sdk_current_test.go` and `sdk_previous_test.go` hold the calls
-that differ. The soak and benchmark tests use packages built on the current API
-only, so they do not run on the previous SDK, and neither does the native write
-evidence subtest, which lives with them. That leaves the previous SDK's `MutateStream`
-and query-visible writes untested against a newer server. When `weir_go_previous`
-reaches v0.24.0, delete the tag, `sdk_previous_test.go` and the constraints on those
-tests.
-
 ## Output
 
 All generated output belongs under the ignored `results/` directory, conventionally

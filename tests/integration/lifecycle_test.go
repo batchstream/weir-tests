@@ -101,7 +101,7 @@ func testTypedSequence(t *testing.T, ctx context.Context, client *weir.Client, b
 	t.Helper()
 	read := &weir.ReadRequest{Resource: backend.resource("primary")}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	before, err := readRecords(rpc, client, backend.name, read)
+	before, err := client.Read(rpc, backend.name, weir.WithRequests(read))
 	cancel()
 	if err != nil || len(before) != 1 {
 		t.Fatalf("typed Read before mutation: results=%v err=%v", before, err)
@@ -109,14 +109,14 @@ func testTypedSequence(t *testing.T, ctx context.Context, client *weir.Client, b
 	backend.assertReadResult(t, before[0], nil, 4)
 	mutation := backend.writeAs(t, weir.MutationReplace, "primary", 5)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	results, err := mutateRecords(rpc, client, backend.name, mutation)
+	results, err := client.Mutate(rpc, backend.name, weir.WithRequests(mutation))
 	cancel()
 	if err != nil || len(results) != 1 {
 		t.Fatalf("typed Mutate: results=%v err=%v", results, err)
 	}
 	assertApplied(t, results[0], nil)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	after, err := readRecords(rpc, client, backend.name, read)
+	after, err := client.Read(rpc, backend.name, weir.WithRequests(read))
 	cancel()
 	if err != nil || len(after) != 1 {
 		t.Fatalf("typed Read after mutation: results=%v err=%v", after, err)

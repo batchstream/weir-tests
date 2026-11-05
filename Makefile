@@ -27,7 +27,7 @@ integration-previous-sdk:
 	version=$$(jq -er .weir_go_previous versions.json) && \
 		protocol=$$(go mod download -json github.com/batchstream/weir-go@$$version | jq -er .GoMod | xargs awk '$$1 == "github.com/batchstream/weir-protocol" {print $$2}') && \
 		go get -modfile=.tools/previous-sdk.mod github.com/batchstream/weir-go@$$version github.com/batchstream/weir-protocol@$$protocol
-	GOFLAGS=-modfile="$(CURDIR)/.tools/previous-sdk.mod" WEIR_TEST_BINARY="$(CURDIR)/.tools/weir" go test -race -tags=integration,previous,previous_sdk -count=1 -timeout=10m -v ./tests/integration
+	GOFLAGS=-modfile="$(CURDIR)/.tools/previous-sdk.mod" WEIR_TEST_BINARY="$(CURDIR)/.tools/weir" go test -race -tags=integration,previous -count=1 -timeout=10m -v ./tests/integration
 
 benchmark:
 	go run ./cmd/weir-lab -mode saturation -weir "$(CURDIR)/.tools/weir" -backend all -database-cpus 1 -client-processes 4 -concurrency-levels 4,8,32,128,256 -batch-sizes 1 -records 8192 -write-percent 0 -rounds 3 -warmup-duration 10s -duration 20s -output results/local/benchmark

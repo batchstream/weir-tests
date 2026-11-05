@@ -381,7 +381,7 @@ func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 		reads[index] = request
 	}
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	results, err := readRecords(rpc, s.client, backend.name, reads...)
+	results, err := s.client.Read(rpc, backend.name, weir.WithRequests(reads...))
 	cancel()
 	if err != nil || len(results) != len(reads) {
 		t.Fatalf("streamed batch: results=%d err=%v", len(results), err)

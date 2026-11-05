@@ -9,16 +9,14 @@ import (
 	weir "github.com/batchstream/weir-go"
 )
 
-// These tests run against the current SDK and, with the previous_sdk tag, the one
-// before it. sdk_current_test.go and sdk_previous_test.go hold the calls whose API
-// differs, with these types in common.
+func readRecord(ctx context.Context, client *weir.Client, store string, request *weir.ReadRequest) (*weir.ReadResult, error) {
+	results, err := client.Read(ctx, store, weir.WithRequests(request))
+	return results[0], err
+}
 
-// readStream is a read call fed record by record, with results handed over as they
-// complete. The index is the record's position in the input, from 0.
-type readStream struct {
-	store   string
-	next    func(context.Context) (*weir.ReadRequest, error)
-	consume func(ctx context.Context, index int, result *weir.ReadResult) error
+func mutateRecord(ctx context.Context, client *weir.Client, store string, request *weir.MutateRequest) (*weir.MutationResult, error) {
+	results, err := client.Mutate(ctx, store, weir.WithRequests(request))
+	return results[0], err
 }
 
 // nativeCall is one Native call whose body goes to consume.
@@ -29,6 +27,10 @@ type nativeCall struct {
 }
 
 type nativeInvoke func(context.Context, nativeCall) (*weir.NativeResult, error)
+
+func runNative(ctx context.Context, client *weir.Client, call nativeCall) (*weir.NativeResult, error) {
+	return client.Native(ctx, call.store, call.request, weir.WithChunks(call.consume))
+}
 
 // clientNative sends Native calls through client.
 func clientNative(client *weir.Client) nativeInvoke {

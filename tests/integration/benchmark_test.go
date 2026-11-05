@@ -1,4 +1,4 @@
-//go:build integration && !previous_sdk
+//go:build integration
 
 package integration_test
 

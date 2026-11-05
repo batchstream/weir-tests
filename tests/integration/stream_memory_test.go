@@ -120,7 +120,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		reads[index] = read
 	}
 	rpc, cancel := context.WithTimeout(s.ctx, 90*time.Second)
-	results, err := mutateRecords(rpc, s.client, backend.name, requests...)
+	results, err := s.client.Mutate(rpc, backend.name, weir.WithRequests(requests...))
 	cancel()
 	if err != nil || len(results) != distinctRecords {
 		t.Fatal("prepare distinct stream documents", len(results), err)
@@ -153,33 +153,30 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 			stop()
 			t.Fatal(err)
 		}
-		stream := readStream{
-			store: backend.name,
-			next: func(context.Context) (*weir.ReadRequest, error) {
-				if produced == count {
-					return nil, io.EOF
-				}
-				request := reads[produced%distinctRecords]
-				produced++
-				return request, nil
-			},
-			consume: func(_ context.Context, index int, result *weir.ReadResult) error {
-				if index < 0 || index >= count || seen[index] || result == nil || result.Document == nil || result.Failure != nil || result.Missing {
-					return fmt.Errorf("unexpected stream result at %d", index)
-				}
-				seen[index] = true
-				if n, err := backend.number(result.Document); err != nil || n != 42 || len(result.Document.Data) < payloadBytes {
-					return fmt.Errorf("large streamed document changed: n=%v error=%v", n, err)
-				}
-				consumed++
-				bytes += uint64(len(result.Document.Data))
-				if consumed%128 == 0 {
-					return sample()
-				}
-				return nil
-			},
+		next := func(context.Context) (*weir.ReadRequest, error) {
+			if produced == count {
+				return nil, io.EOF
+			}
+			request := reads[produced%distinctRecords]
+			produced++
+			return request, nil
 		}
-		err := streamReads(ctx, s.client, stream)
+		consume := func(_ context.Context, index int, result *weir.ReadResult) error {
+			if index < 0 || index >= count || seen[index] || result == nil || result.Document == nil || result.Failure != nil || result.Missing {
+				return fmt.Errorf("unexpected stream result at %d", index)
+			}
+			seen[index] = true
+			if n, err := backend.number(result.Document); err != nil || n != 42 || len(result.Document.Data) < payloadBytes {
+				return fmt.Errorf("large streamed document changed: n=%v error=%v", n, err)
+			}
+			consumed++
+			bytes += uint64(len(result.Document.Data))
+			if consumed%128 == 0 {
+				return sample()
+			}
+			return nil
+		}
+		_, err := s.client.Read(ctx, backend.name, weir.WithNext(next), weir.WithReadConsume(consume))
 		if err == nil {
 			err = sample()
 		}
