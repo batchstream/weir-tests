@@ -16,12 +16,12 @@ shares of a backend's workers. The default exercises every call:
 
 | Profile | Writes | Reads |
 | --- | --- | --- |
-| `single` | `Put` | `ReadOne` |
-| `visible` | query-visible `Put` | `ReadOne` |
-| `lua` | `AtomicTransform` | `ReadOne` |
-| `batch` | `Mutate` of `-batch-size` keys | `Read` of as many |
-| `stream` | a `MutateStream` held for `-stream-lifetime` | a `ReadStream` held as long |
-| `native` | `Put` | the backend's own read through `Native` |
+| `single` | a `Mutate` of one `MutationPut` | a `Read` of one key |
+| `visible` | the same, with `WithQueryVisible` | a `Read` of one key |
+| `lua` | a `Mutate` of one `MutationAtomicTransform` | a `Read` of one key |
+| `batch` | a `Mutate` of `-batch-size` keys | a `Read` of as many |
+| `stream` | a `Mutate` with `WithNext` and `WithMutateConsume`, held for `-stream-lifetime` | a `Read` with `WithNext` and `WithReadConsume`, held as long |
+| `native` | a `Mutate` of one `MutationPut` | the backend's own read through `Native` |
 
 `-read-percent` chooses between a worker's reads and writes; a worker in the
 `stream` profile alternates, because each of its turns lasts for many records,
