@@ -3,7 +3,6 @@ package workload
 import (
 	"context"
 	"io"
-	"net"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -11,11 +10,10 @@ import (
 	weir "github.com/batchstream/weir-go"
 	"github.com/batchstream/weir-protocol/api/protocol"
 	pb "github.com/batchstream/weir-protocol/api/weir/v1"
+	"github.com/batchstream/weir-tests/internal/wiretest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 )
 
 type acknowledgementPeer struct {
@@ -97,11 +95,10 @@ func TestSDKStreamReadPreservesConfirmedPrefixThroughLaterFailure(t *testing.T) 
 	first := Operation{Record: 0}
 	second := Operation{Record: 1}
 	peer := &acknowledgementPeer{document: dataset.Document(first)}
-	client := mutationTransport(t, peer)
+	client := wiretest.Client(t, peer)
 	firstRequest := &weir.ReadRequest{Resource: dataset.Resource(first.Record)}
 	secondRequest := &weir.ReadRequest{Resource: dataset.Resource(second.Record)}
-	options := weir.ReadOptions{StoreName: "search", Requests: []*weir.ReadRequest{firstRequest, secondRequest}}
-	replies, err := weir.Read(t.Context(), client, options)
+	replies, err := client.Read(t.Context(), "search", weir.WithRequests(firstRequest, secondRequest))
 	if err == nil || len(replies) != 2 || replies[0] == nil || replies[1] != nil || peer.calls.Load() != 1 {
 		t.Fatal("unexpected partial read evidence", replies, err)
 	}
@@ -113,25 +110,19 @@ func TestSDKStreamReadPreservesConfirmedPrefixThroughLaterFailure(t *testing.T) 
 	}
 }
 
-func mutationTransport(t *testing.T, peer *acknowledgementPeer) pb.StoreServiceClient {
-	t.Helper()
-	listener := bufconn.Listen(1 << 20)
-	server := grpc.NewServer()
-	pb.RegisterStoreServiceServer(server, peer)
-	done := make(chan error, 1)
-	go func() { done <- server.Serve(listener) }()
-	t.Cleanup(func() { server.Stop(); listener.Close(); <-done })
-	dialOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithNoProxy(),
-		grpc.WithDisableRetry(), grpc.WithDisableServiceConfig(),
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) { return listener.DialContext(ctx) }),
+func TestWeirPathWritesAPutOfTheRecord(t *testing.T) {
+	dataset := testDataset(t, "search")
+	server := &wiretest.Recorder{}
+	path := &weirPath{dataset: dataset, client: wiretest.Client(t, server)}
+	operation := Operation{Record: 3, Write: true, Revision: 1}
+	outcome := path.Execute(t.Context(), operation)
+	received := server.Mutations()
+	if outcome.Status != Success || len(received) != 1 {
+		t.Fatal("write did not apply one record", outcome, received)
 	}
-	connection, err := grpc.NewClient("passthrough:///offline-weir", dialOptions...)
-	if err != nil {
-		t.Fatal(err)
+	if received[0].GetResource() != dataset.Resource(operation.Record) || received[0].GetPut() == nil {
+		t.Fatal("write sent another action or resource", received[0])
 	}
-	t.Cleanup(func() { connection.Close() })
-	return pb.NewStoreServiceClient(connection)
 }
 
 func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
@@ -141,11 +132,10 @@ func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
 			if mode == "canceled_after_apply" {
 				peer.firstMutation = make(chan struct{})
 			}
-			client := mutationTransport(t, peer)
+			client := wiretest.Client(t, peer)
 			document := &weir.Document{ContentType: "application/json", Data: []byte(`{"n":1}`)}
 			first := &weir.MutateRequest{Resource: "records/s:first", Action: weir.MutationPut, Document: document}
 			second := &weir.MutateRequest{Resource: "records/s:second", Action: weir.MutationPut, Document: document}
-			opts := weir.MutateOptions{StoreName: "search", Requests: []*weir.MutateRequest{first, second}}
 			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 			defer cancel()
 			if mode == "canceled_after_apply" {
@@ -157,7 +147,7 @@ func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
 					}
 				}()
 			}
-			replies, rpcErr := weir.Mutate(ctx, client, opts)
+			replies, rpcErr := client.Mutate(ctx, "search", weir.WithRequests(first, second))
 			applied := int64(1)
 			if mode == "applied_failure" {
 				applied = 2
@@ -188,13 +178,12 @@ func TestSDKStreamMutationAcknowledgementAndNoReplay(t *testing.T) {
 
 func TestSDKStreamMutationPreflightSendsNoRecord(t *testing.T) {
 	peer := &acknowledgementPeer{mode: "applied_failure"}
-	client := mutationTransport(t, peer)
+	client := wiretest.Client(t, peer)
 	document := &weir.Document{ContentType: "application/json", Data: []byte(`{"n":1}`)}
 	first := &weir.MutateRequest{Resource: "records/s:first", Action: weir.MutationPut, Document: document}
 	invalid := &weir.MutateRequest{Resource: "records/s:second", Action: 0, Document: document}
-	opts := weir.MutateOptions{StoreName: "search", Requests: []*weir.MutateRequest{first, invalid}}
-	replies, err := weir.Mutate(t.Context(), client, opts)
-	if err == nil || replies != nil || peer.calls.Load() != 0 || peer.applied.Load() != 0 {
+	replies, err := client.Mutate(t.Context(), "search", weir.WithRequests(first, invalid))
+	if err == nil || len(replies) != 2 || replies[0] != nil || replies[1] != nil || peer.calls.Load() != 0 || peer.applied.Load() != 0 {
 		t.Fatalf("late-invalid batch reached backend: replies=%v calls=%d err=%v", replies, peer.calls.Load(), err)
 	}
 }

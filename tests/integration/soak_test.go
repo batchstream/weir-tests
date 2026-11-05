@@ -1,4 +1,4 @@
-//go:build integration
+//go:build integration && !previous_sdk
 
 package integration_test
 
@@ -14,10 +14,10 @@ import (
 	"github.com/batchstream/weir-tests/internal/soak"
 )
 
-// TestSoakEverySDKCall runs the soak workload with its default profiles against
-// real backends without faults: every SDK call must succeed, without an error,
-// and every outcome must match the databases.
-func TestSoakEverySDKCall(t *testing.T) {
+// TestSoakEveryProfile runs the soak workload with its default profiles against
+// real backends without faults: every call must succeed, without an error, and
+// every outcome must match the databases.
+func TestSoakEveryProfile(t *testing.T) {
 	binary := os.Getenv("WEIR_TEST_BINARY")
 	if binary == "" {
 		t.Fatal("integration tests require WEIR_TEST_BINARY pointing to a built Weir binary")

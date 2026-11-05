@@ -484,21 +484,18 @@ func (p *weirPath) Execute(ctx context.Context, operation Operation) Outcome {
 	if operation.Write {
 		if p.dataset.Config.LuaMutations {
 			program := &weir.LuaTransform{Source: []byte(p.dataset.luaSource())}
-			request := &weir.AtomicTransformRequest{Resource: p.dataset.Resource(operation.Record), Lua: program}
-			opts := weir.AtomicTransformOptions{StoreName: p.dataset.Config.StoreName, Request: request}
-			result, err := p.client.AtomicTransform(ctx, opts)
-			return mutationOutcome(result, 0, err)
+			request := &weir.MutateRequest{Resource: p.dataset.Resource(operation.Record), Action: weir.MutationAtomicTransform, Lua: program}
+			results, err := p.client.Mutate(ctx, p.dataset.Config.StoreName, weir.WithRequests(request))
+			return mutationOutcome(results[0], 0, err)
 		}
 		document := &weir.Document{ContentType: p.dataset.ContentType(), Data: p.dataset.Document(operation)}
-		request := &weir.WriteRequest{Resource: p.dataset.Resource(operation.Record), Document: document}
-		opts := weir.WriteOptions{StoreName: p.dataset.Config.StoreName, Request: request}
-		result, err := p.client.Put(ctx, opts)
-		return mutationOutcome(result, len(document.Data), err)
+		request := &weir.MutateRequest{Resource: p.dataset.Resource(operation.Record), Action: weir.MutationPut, Document: document}
+		results, err := p.client.Mutate(ctx, p.dataset.Config.StoreName, weir.WithRequests(request))
+		return mutationOutcome(results[0], len(document.Data), err)
 	}
 	request := &weir.ReadRequest{Resource: p.dataset.Resource(operation.Record)}
-	opts := weir.ReadOneOptions{StoreName: p.dataset.Config.StoreName, Request: request}
-	result, err := p.client.ReadOne(ctx, opts)
-	return p.readOutcome(result, operation, err)
+	results, err := p.client.Read(ctx, p.dataset.Config.StoreName, weir.WithRequests(request))
+	return p.readOutcome(results[0], operation, err)
 }
 
 func (p *weirPath) readOutcome(result *weir.ReadResult, operation Operation, rpcErr error) Outcome {

@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	weir "github.com/batchstream/weir-go"
-	pb "github.com/batchstream/weir-protocol/api/weir/v1"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -23,14 +22,6 @@ const (
 	nativeMaxBody  = 1 << 20
 	nativeMaxBytes = nativeMaxBody * nativeMaxCalls
 )
-
-type nativeInvoke func(context.Context, weir.NativeOptions) (*weir.NativeResult, error)
-
-func replicaNative(wire pb.StoreServiceClient) nativeInvoke {
-	return func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
-		return weir.Native(ctx, wire, opts)
-	}
-}
 
 type nativeHTTPQuery struct {
 	resource, method, path string
@@ -84,8 +75,8 @@ func (p *nativePager) exchange(ctx context.Context, request *weir.NativeRequest)
 	p.calls++
 	var head *weir.NativeResponse
 	var body []byte
-	opts := weir.NativeOptions{StoreName: p.store, Request: request}
-	opts.Consume = func(_ context.Context, response *weir.NativeResponse, chunk []byte) error {
+	call := nativeCall{store: p.store, request: request}
+	call.consume = func(_ context.Context, response *weir.NativeResponse, chunk []byte) error {
 		if response == nil || head != nil && head != response {
 			return errors.New("Native metadata changed")
 		}
@@ -99,7 +90,7 @@ func (p *nativePager) exchange(ctx context.Context, request *weir.NativeRequest)
 	}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
 	defer cancel()
-	end, err := p.invoke(rpc, opts)
+	end, err := p.invoke(rpc, call)
 	if err != nil {
 		return nil, nil, err
 	}

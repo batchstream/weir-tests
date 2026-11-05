@@ -31,8 +31,7 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 			request := &weir.MutateRequest{Resource: p.dataset.Resource(operation.Record), Action: weir.MutationPut, Document: document}
 			requests[index] = request
 		}
-		opts := weir.MutateOptions{StoreName: p.dataset.Config.StoreName, Requests: requests}
-		replies, err := p.client.Mutate(ctx, opts)
+		replies, err := p.client.Mutate(ctx, p.dataset.Config.StoreName, weir.WithRequests(requests...))
 		if len(replies) != len(operations) {
 			return batchFailure(operations, errors.Join(errors.New("Weir Mutate result count mismatch"), err))
 		}
@@ -47,8 +46,7 @@ func (p *weirPath) ExecuteBatch(ctx context.Context, operations []Operation) []O
 		request := &weir.ReadRequest{Resource: p.dataset.Resource(operation.Record)}
 		requests[index] = request
 	}
-	opts := weir.ReadOptions{StoreName: p.dataset.Config.StoreName, Requests: requests}
-	replies, err := p.client.Read(ctx, opts)
+	replies, err := p.client.Read(ctx, p.dataset.Config.StoreName, weir.WithRequests(requests...))
 	if len(replies) != len(operations) {
 		return batchFailure(operations, errors.Join(errors.New("Weir Read result count mismatch"), err))
 	}

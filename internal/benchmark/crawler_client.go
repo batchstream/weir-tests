@@ -204,9 +204,12 @@ func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawle
 		if err != nil {
 			return false, err
 		}
-		opts := weir.MutateOptions{StoreName: "search", Requests: requests}
+		options := []weir.MutateOption{weir.WithRequests(requests...)}
+		if crawlerQueryVisible(c.config) {
+			options = append(options, weir.WithQueryVisible())
+		}
 		ledger.record(len(requests))
-		replies, err := c.sdk.Mutate(ctx, opts)
+		replies, err := c.sdk.Mutate(ctx, "search", options...)
 		unknown := len(replies) != len(requests)
 		var failures []error
 		if err != nil {
@@ -271,6 +274,12 @@ func (c *crawlerClient) executeMutations(ctx context.Context, mutations []crawle
 	return false, nil
 }
 
+// crawlerQueryVisible reports whether a call waits for query visibility. Only the
+// partial-update profile may wait for application acknowledgement instead.
+func crawlerQueryVisible(config crawlerClientConfig) bool {
+	return config.Visibility != "application_acknowledged"
+}
+
 func crawlerWeirRequests(config crawlerClientConfig, mutations []crawlerMutation) ([]*weir.MutateRequest, error) {
 	if config.InputShape == "single" && len(mutations) != 1 {
 		return nil, errors.New("single-record SDK call contains a client batch")
@@ -298,8 +307,7 @@ func crawlerWeirRequests(config crawlerClientConfig, mutations []crawlerMutation
 		}
 		input := &weir.Document{ContentType: "application/json", Data: raw}
 		program := &weir.LuaTransform{Source: []byte(source), Input: input}
-		visibility := &weir.MutationOptions{Visibility: weir.MutationQueryVisible}
-		request := &weir.MutateRequest{Resource: crawlerIndex(config.Namespace, mutation.Product) + "/s:" + mutation.ID, Action: weir.MutationAtomicTransform, Lua: program, Options: visibility}
+		request := &weir.MutateRequest{Resource: crawlerIndex(config.Namespace, mutation.Product) + "/s:" + mutation.ID, Action: weir.MutationAtomicTransform, Lua: program}
 		requests[index] = request
 	}
 	return requests, nil

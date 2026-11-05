@@ -12,6 +12,7 @@ import (
 	"time"
 
 	weir "github.com/batchstream/weir-go"
+	"github.com/batchstream/weir-tests/internal/wiretest"
 )
 
 func TestCrawlerSingleNativeHasAtomicEndpointAndConcurrentSellerFanout(t *testing.T) {
@@ -125,6 +126,37 @@ func TestCrawlerSingleMissingAcknowledgementStopsCausalCallsWithoutReplay(t *tes
 	}
 }
 
+func TestCrawlerCallsSendTheirCompletionOnTheWire(t *testing.T) {
+	tests := []struct {
+		name         string
+		profile      string
+		visibility   string
+		mutation     crawlerMutation
+		queryVisible bool
+	}{
+		{name: "lua", mutation: crawlerPage(0, 1, 1)[0], queryVisible: true},
+		{name: "partial update", profile: "partial-update", mutation: partialUpdateMutation(1, 2), queryVisible: true},
+		{name: "partial update acknowledged", profile: "partial-update", visibility: "application_acknowledged", mutation: partialUpdateMutation(1, 2)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := &wiretest.Recorder{}
+			config := crawlerClientConfig{InputShape: "single", Namespace: "fixture", PageSize: 1, Profile: test.profile, Visibility: test.visibility}
+			client := &crawlerClient{config: config, sdk: wiretest.Client(t, server)}
+			mutations := []crawlerMutation{test.mutation}
+			var ledger crawlerApplicationLedger
+			unknown, err := client.executeMutations(t.Context(), mutations, &ledger)
+			if err != nil || unknown {
+				t.Fatal(unknown, err)
+			}
+			received := server.Mutations()
+			if len(received) != 1 || wiretest.QueryVisible(received[0]) != test.queryVisible {
+				t.Fatalf("query visible=%v, sent %v", test.queryVisible, received)
+			}
+		})
+	}
+}
+
 func TestCrawlerSingleSDKConstructsExactlyOneRecordAndRejectsBatches(t *testing.T) {
 	config := crawlerClientConfig{InputShape: "single", Namespace: "fixture", PageSize: 1}
 	mutation := crawlerPage(0, 1, 1)[0]
@@ -134,8 +166,8 @@ func TestCrawlerSingleSDKConstructsExactlyOneRecordAndRejectsBatches(t *testing.
 		t.Fatal("single SDK call was not one record", requests, err)
 	}
 	request := requests[0]
-	if request.Options == nil || request.Options.Visibility != weir.MutationQueryVisible || request.Action != weir.MutationAtomicTransform || request.Lua == nil || request.Lua.Input == nil {
-		t.Fatal("single SDK call lost Lua or completion semantics", request)
+	if request.Action != weir.MutationAtomicTransform || request.Lua == nil || request.Lua.Input == nil {
+		t.Fatal("single SDK call lost Lua", request)
 	}
 	var actual crawlerMutation
 	if err := json.Unmarshal(request.Lua.Input.Data, &actual); err != nil || !reflect.DeepEqual(actual, mutation) {

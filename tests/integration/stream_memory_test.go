@@ -23,7 +23,7 @@ import (
 // streamPendingRecords is Weir's fixed per-stream transport window.
 const streamPendingRecords = 32
 
-// A ReadStream uses one Execute RPC with no other business RPCs active here.
+// A streamed Read uses one Execute RPC with no other business RPCs active here.
 // The stream's transport window bounds the records it can have queued.
 func streamReservations(ctx context.Context, nodes []fixture.Node, store string) (bool, error) {
 	idle := true
@@ -120,8 +120,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		reads[index] = read
 	}
 	rpc, cancel := context.WithTimeout(s.ctx, 90*time.Second)
-	writeOptions := weir.MutateOptions{StoreName: backend.name, Requests: requests}
-	results, err := s.client.Mutate(rpc, writeOptions)
+	results, err := mutateRecords(rpc, s.client, backend.name, requests...)
 	cancel()
 	if err != nil || len(results) != distinctRecords {
 		t.Fatal("prepare distinct stream documents", len(results), err)
@@ -139,7 +138,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 		ctx, stop := context.WithTimeout(s.ctx, 90*time.Second)
 		produced, consumed := 0, uint64(0)
 		// Results arrive in completion order; each index appears once.
-		seen := make([]bool, count+1)
+		seen := make([]bool, count)
 		var bytes, peak uint64
 		sample := func() error {
 			resident, err := residentBytes(ctx, s.cluster.Nodes)
@@ -154,9 +153,9 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 			stop()
 			t.Fatal(err)
 		}
-		options := weir.ReadStreamOptions{
-			StoreName: backend.name,
-			Next: func(context.Context) (*weir.ReadRequest, error) {
+		stream := readStream{
+			store: backend.name,
+			next: func(context.Context) (*weir.ReadRequest, error) {
 				if produced == count {
 					return nil, io.EOF
 				}
@@ -164,8 +163,8 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 				produced++
 				return request, nil
 			},
-			Consume: func(_ context.Context, index uint64, result *weir.ReadResult) error {
-				if index == 0 || index > uint64(count) || seen[index] || result == nil || result.Document == nil || result.Failure != nil || result.Missing {
+			consume: func(_ context.Context, index int, result *weir.ReadResult) error {
+				if index < 0 || index >= count || seen[index] || result == nil || result.Document == nil || result.Failure != nil || result.Missing {
 					return fmt.Errorf("unexpected stream result at %d", index)
 				}
 				seen[index] = true
@@ -180,7 +179,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 				return nil
 			},
 		}
-		err := s.client.ReadStream(ctx, options)
+		err := streamReads(ctx, s.client, stream)
 		if err == nil {
 			err = sample()
 		}
@@ -189,7 +188,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 			t.Fatalf("large call failed: count=%d consumed=%d bytes=%d error=%v", count, consumed, bytes, err)
 		}
 		s.waitStreamIdle(t, backend.name)
-		evidence := streamBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "read", Records: count}
+		evidence := streamBatchEvidence{Before: before, After: s.metricsAtRest(t), Store: backend.name, Method: "read", Records: count}
 		assertStreamBatchMetrics(t, evidence)
 		if count == 1024 {
 			shortPeak = peak

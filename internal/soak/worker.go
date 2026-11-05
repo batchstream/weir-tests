@@ -11,16 +11,54 @@ import (
 	weir "github.com/batchstream/weir-go"
 )
 
-// records is the part of the Weir SDK a worker calls.
+// nextMutation and nextRead produce a stream's records, and consumeMutation and
+// consumeRead receive its results, as WithNext and the consume options do.
+type (
+	nextMutation    = func(context.Context) (*weir.MutateRequest, error)
+	consumeMutation = func(context.Context, int, *weir.MutationResult) error
+	nextRead        = func(context.Context) (*weir.ReadRequest, error)
+	consumeRead     = func(context.Context, int, *weir.ReadResult) error
+)
+
+// records holds the SDK calls a worker makes. An SDK option cannot be inspected
+// outside the SDK, so tests script this rather than the SDK's own methods.
 type records interface {
-	Put(ctx context.Context, options weir.WriteOptions) (*weir.MutationResult, error)
-	AtomicTransform(ctx context.Context, options weir.AtomicTransformOptions) (*weir.MutationResult, error)
-	Mutate(ctx context.Context, options weir.MutateOptions) ([]*weir.MutationResult, error)
-	MutateStream(ctx context.Context, options weir.MutateStreamOptions) error
-	ReadOne(ctx context.Context, options weir.ReadOneOptions) (*weir.ReadResult, error)
-	Read(ctx context.Context, options weir.ReadOptions) ([]*weir.ReadResult, error)
-	ReadStream(ctx context.Context, options weir.ReadStreamOptions) error
-	Native(ctx context.Context, options weir.NativeOptions) (*weir.NativeResult, error)
+	mutate(ctx context.Context, store string, visible bool, requests ...*weir.MutateRequest) ([]*weir.MutationResult, error)
+	mutateStream(ctx context.Context, store string, next nextMutation, consume consumeMutation) error
+	read(ctx context.Context, store string, requests ...*weir.ReadRequest) ([]*weir.ReadResult, error)
+	readStream(ctx context.Context, store string, next nextRead, consume consumeRead) error
+	native(ctx context.Context, store string, request *weir.NativeRequest, chunks func(context.Context, *weir.NativeResponse, []byte) error) (*weir.NativeResult, error)
+}
+
+// sdkRecords makes a worker's calls through a Client.
+type sdkRecords struct {
+	client *weir.Client
+}
+
+func (s sdkRecords) mutate(ctx context.Context, store string, visible bool, requests ...*weir.MutateRequest) ([]*weir.MutationResult, error) {
+	options := []weir.MutateOption{weir.WithRequests(requests...)}
+	if visible {
+		options = append(options, weir.WithQueryVisible())
+	}
+	return s.client.Mutate(ctx, store, options...)
+}
+
+func (s sdkRecords) mutateStream(ctx context.Context, store string, next nextMutation, consume consumeMutation) error {
+	_, err := s.client.Mutate(ctx, store, weir.WithNext(next), weir.WithMutateConsume(consume))
+	return err
+}
+
+func (s sdkRecords) read(ctx context.Context, store string, requests ...*weir.ReadRequest) ([]*weir.ReadResult, error) {
+	return s.client.Read(ctx, store, weir.WithRequests(requests...))
+}
+
+func (s sdkRecords) readStream(ctx context.Context, store string, next nextRead, consume consumeRead) error {
+	_, err := s.client.Read(ctx, store, weir.WithNext(next), weir.WithReadConsume(consume))
+	return err
+}
+
+func (s sdkRecords) native(ctx context.Context, store string, request *weir.NativeRequest, chunks func(context.Context, *weir.NativeResponse, []byte) error) (*weir.NativeResult, error) {
+	return s.client.Native(ctx, store, request, weir.WithChunks(chunks))
 }
 
 // worker writes and reads its own keys through the SDK calls of its profile,
@@ -197,11 +235,11 @@ func (w *worker) write(api string, key *keyState, call writeCall) {
 	}
 }
 
-func (w *worker) putCall(options *weir.MutationOptions) writeCall {
+func (w *worker) putCall(visible bool) writeCall {
 	call := func(ctx context.Context, key *keyState, document *weir.Document) (*weir.MutationResult, error) {
-		request := &weir.WriteRequest{Resource: w.store.resource(key.id), Document: document, Options: options}
-		writeOptions := weir.WriteOptions{StoreName: w.storeName, Request: request}
-		return w.client.Put(ctx, writeOptions)
+		request := &weir.MutateRequest{Resource: w.store.resource(key.id), Action: weir.MutationPut, Document: document}
+		results, err := w.client.mutate(ctx, w.storeName, visible, request)
+		return results[0], err
 	}
 	return call
 }
@@ -212,16 +250,16 @@ const luaReplace = `return function(current, incoming) return incoming end`
 
 func (w *worker) luaCall(ctx context.Context, key *keyState, document *weir.Document) (*weir.MutationResult, error) {
 	program := &weir.LuaTransform{Source: []byte(luaReplace), Input: document}
-	request := &weir.AtomicTransformRequest{Resource: w.store.resource(key.id), Lua: program}
-	options := weir.AtomicTransformOptions{StoreName: w.storeName, Request: request}
-	return w.client.AtomicTransform(ctx, options)
+	request := &weir.MutateRequest{Resource: w.store.resource(key.id), Action: weir.MutationAtomicTransform, Lua: program}
+	results, err := w.client.mutate(ctx, w.storeName, false, request)
+	return results[0], err
 }
 
 func (w *worker) putTurn(tokens <-chan struct{}) bool {
 	if !w.take(tokens, 1) {
 		return false
 	}
-	w.write(apiPut, w.nextKey(), w.putCall(nil))
+	w.write(apiPut, w.nextKey(), w.putCall(false))
 	return true
 }
 
@@ -229,8 +267,7 @@ func (w *worker) visibleTurn(tokens <-chan struct{}) bool {
 	if !w.take(tokens, 1) {
 		return false
 	}
-	visible := &weir.MutationOptions{Visibility: weir.MutationQueryVisible}
-	w.write(apiPutVisible, w.nextKey(), w.putCall(visible))
+	w.write(apiPutVisible, w.nextKey(), w.putCall(true))
 	return true
 }
 
@@ -263,8 +300,7 @@ func (w *worker) mutateTurn(tokens <-chan struct{}) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), w.timeout)
 	defer cancel()
 	started := time.Now()
-	options := weir.MutateOptions{StoreName: w.storeName, Requests: requests}
-	results, err := w.client.Mutate(ctx, options)
+	results, err := w.client.mutate(ctx, w.storeName, false, requests...)
 	elapsed := time.Since(started)
 	w.stats.called(apiMutate)
 	if err != nil {
@@ -296,7 +332,7 @@ type streamTurn struct {
 	mu      sync.Mutex
 	started bool
 	busy    map[*keyState]bool
-	sent    uint64
+	sent    int
 }
 
 type streamCheck struct {
@@ -319,8 +355,9 @@ func (w *worker) newStreamTurn(api string, tokens <-chan struct{}, lifetime cont
 
 // reserve waits for room and a token for the next record, the first one
 // without waiting because the worker took its token before opening the stream,
-// and returns the key it goes to. io.EOF ends the stream's input.
-func (t *streamTurn) reserve(ctx context.Context) (*keyState, uint64, error) {
+// and returns the key it goes to and the record's index. io.EOF ends the stream's
+// input.
+func (t *streamTurn) reserve(ctx context.Context) (*keyState, int, error) {
 	t.mu.Lock()
 	first := !t.started
 	t.started = true
@@ -348,8 +385,9 @@ func (t *streamTurn) reserve(ctx context.Context) (*keyState, uint64, error) {
 		key = t.worker.nextKey()
 	}
 	t.busy[key] = true
+	index := t.sent
 	t.sent++
-	return key, t.sent, nil
+	return key, index, nil
 }
 
 // release returns a record's room once its result arrived.
@@ -414,9 +452,8 @@ func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 	defer ended()
 	turn := w.newStreamTurn(apiMutateStream, tokens, lifetime)
 	turn.startChecks()
-	flight := make(map[uint64]pendingWrite)
-	options := weir.MutateStreamOptions{StoreName: w.storeName}
-	options.Next = func(ctx context.Context) (*weir.MutateRequest, error) {
+	flight := make(map[int]pendingWrite)
+	next := func(ctx context.Context) (*weir.MutateRequest, error) {
 		key, index, err := turn.reserve(ctx)
 		if err != nil {
 			return nil, err
@@ -431,7 +468,7 @@ func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 		request := &weir.MutateRequest{Resource: w.store.resource(key.id), Action: weir.MutationPut, Document: document}
 		return request, nil
 	}
-	options.Consume = func(_ context.Context, index uint64, result *weir.MutationResult) error {
+	consume := func(_ context.Context, index int, result *weir.MutationResult) error {
 		turn.mu.Lock()
 		defer turn.mu.Unlock()
 		write := flight[index]
@@ -439,7 +476,7 @@ func (w *worker) mutateStreamTurn(tokens <-chan struct{}) bool {
 		turn.settled(write.key, w.settleStreamWrite(write, result))
 		return nil
 	}
-	err := w.client.MutateStream(ctx, options)
+	err := w.client.mutateStream(ctx, w.storeName, next, consume)
 	w.stats.called(apiMutateStream)
 	if err != nil {
 		w.stats.sdkError(apiMutateStream, err)
@@ -466,17 +503,16 @@ func (w *worker) readOneTurn(tokens <-chan struct{}) bool {
 // reported outcomes allow.
 func (w *worker) read(key *keyState) {
 	request := &weir.ReadRequest{Resource: w.store.resource(key.id)}
-	options := weir.ReadOneOptions{StoreName: w.storeName, Request: request}
 	ctx, cancel := context.WithTimeout(context.Background(), w.timeout)
 	started := time.Now()
-	result, err := w.client.ReadOne(ctx, options)
+	results, err := w.client.read(ctx, w.storeName, request)
 	elapsed := time.Since(started)
 	cancel()
 	w.stats.called(apiReadOne)
-	if result == nil && err != nil {
+	if results[0] == nil && err != nil {
 		w.stats.sdkError(apiReadOne, err)
 	}
-	w.checkRead(apiReadOne, key, result, elapsed)
+	w.checkRead(apiReadOne, key, results[0], elapsed)
 }
 
 // checkRead records one read's result, which must return a sequence the
@@ -516,8 +552,7 @@ func (w *worker) readBatchTurn(tokens <-chan struct{}) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), w.timeout)
 	defer cancel()
 	started := time.Now()
-	options := weir.ReadOptions{StoreName: w.storeName, Requests: requests}
-	results, err := w.client.Read(ctx, options)
+	results, err := w.client.read(ctx, w.storeName, requests...)
 	elapsed := time.Since(started)
 	w.stats.called(apiRead)
 	if err != nil {
@@ -546,9 +581,8 @@ func (w *worker) readStreamTurn(tokens <-chan struct{}) bool {
 		key    *keyState
 		issued time.Time
 	}
-	flight := make(map[uint64]pendingRead)
-	options := weir.ReadStreamOptions{StoreName: w.storeName}
-	options.Next = func(ctx context.Context) (*weir.ReadRequest, error) {
+	flight := make(map[int]pendingRead)
+	next := func(ctx context.Context) (*weir.ReadRequest, error) {
 		key, index, err := turn.reserve(ctx)
 		if err != nil {
 			return nil, err
@@ -560,7 +594,7 @@ func (w *worker) readStreamTurn(tokens <-chan struct{}) bool {
 		request := &weir.ReadRequest{Resource: w.store.resource(key.id)}
 		return request, nil
 	}
-	options.Consume = func(_ context.Context, index uint64, result *weir.ReadResult) error {
+	consume := func(_ context.Context, index int, result *weir.ReadResult) error {
 		turn.mu.Lock()
 		defer turn.mu.Unlock()
 		read := flight[index]
@@ -569,7 +603,7 @@ func (w *worker) readStreamTurn(tokens <-chan struct{}) bool {
 		turn.release(read.key)
 		return nil
 	}
-	err := w.client.ReadStream(ctx, options)
+	err := w.client.readStream(ctx, w.storeName, next, consume)
 	w.stats.called(apiReadStream)
 	if err != nil {
 		w.stats.sdkError(apiReadStream, err)
@@ -595,15 +629,14 @@ func (w *worker) nativeTurn(tokens <-chan struct{}) bool {
 		return true
 	}
 	var body []byte
-	options := weir.NativeOptions{StoreName: w.storeName, Request: request}
-	options.Consume = func(_ context.Context, _ *weir.NativeResponse, chunk []byte) error {
+	chunks := func(_ context.Context, _ *weir.NativeResponse, chunk []byte) error {
 		body = append(body, chunk...)
 		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), w.timeout)
 	defer cancel()
 	started := time.Now()
-	result, err := w.client.Native(ctx, options)
+	result, err := w.client.native(ctx, w.storeName, request, chunks)
 	elapsed := time.Since(started)
 	w.stats.called(apiNative)
 	if err != nil {

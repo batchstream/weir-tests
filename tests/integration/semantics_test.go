@@ -38,17 +38,15 @@ func (s *system) testLuaSemantics(t *testing.T, backend *backendData) {
 			t.Run(fmt.Sprintf("lua/%s/existing=%t", tc.name, existing), func(t *testing.T) {
 				id := fmt.Sprintf("lua_%s_%t", tc.name, existing)
 				if existing {
-					write := backend.write(t, id, 1)
-					opts := weir.WriteOptions{StoreName: backend.name, Request: write}
-					result, err := s.client.Create(s.ctx, opts)
+					write := backend.writeAs(t, weir.MutationCreate, id, 1)
+					result, err := mutateRecord(s.ctx, s.client, backend.name, write)
 					assertApplied(t, result, err)
 				}
 				input := backend.write(t, id, 42).Document
 				program := &weir.LuaTransform{Source: []byte(tc.source), Input: input}
-				request := &weir.AtomicTransformRequest{Resource: backend.resource(id), Lua: program}
-				opts := weir.AtomicTransformOptions{StoreName: backend.name, Request: request}
+				request := &weir.MutateRequest{Resource: backend.resource(id), Action: weir.MutationAtomicTransform, Lua: program}
 				rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-				result, err := s.client.AtomicTransform(rpc, opts)
+				result, err := mutateRecord(rpc, s.client, backend.name, request)
 				cancel()
 				failure := tc.failure
 				if tc.name == "current" && !existing {
@@ -88,16 +86,15 @@ end`)
 	start := make(chan struct{})
 	finished := make(chan error, 2)
 	for _, node := range s.cluster.Nodes[:2] {
-		wire := transport(t, node.Application)
+		replica := replicaClient(t, node.Application)
 		input := backend.write(t, id, 1).Document
 		go func() {
 			<-start
 			for range iterations {
 				program := &weir.LuaTransform{Source: source, Input: input}
-				request := &weir.AtomicTransformRequest{Resource: backend.resource(id), Lua: program}
-				opts := weir.AtomicTransformOptions{StoreName: backend.name, Request: request}
+				request := &weir.MutateRequest{Resource: backend.resource(id), Action: weir.MutationAtomicTransform, Lua: program}
 				rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-				result, err := weir.AtomicTransform(rpc, wire, opts)
+				result, err := mutateRecord(rpc, replica, backend.name, request)
 				cancel()
 				if err != nil || result.GetOutcome() != weir.MutationApplied || result.GetFailure() != nil {
 					finished <- fmt.Errorf("cross-replica Lua: result=%v error=%v", result, err)
@@ -124,9 +121,8 @@ func (s *system) testProjectionAndFailures(t *testing.T, backend *backendData) {
 	t.Helper()
 	target := backend.provisionTarget(t, s.ctx, "projection.entries")
 	for n := int64(1); n <= 3; n++ {
-		write := target.write(t, fmt.Sprint(n), n)
-		opts := weir.WriteOptions{StoreName: target.name, Request: write}
-		result, err := s.client.Create(s.ctx, opts)
+		write := target.writeAs(t, weir.MutationCreate, fmt.Sprint(n), n)
+		result, err := mutateRecord(s.ctx, s.client, target.name, write)
 		assertApplied(t, result, err)
 	}
 	if target.name == "search" {
@@ -136,15 +132,15 @@ func (s *system) testProjectionAndFailures(t *testing.T, backend *backendData) {
 			t.Fatalf("refresh projection fixture: %d %s", code, body)
 		}
 	}
-	wires := []nativeInvoke{
-		replicaNative(transport(t, s.cluster.Nodes[0].Application)),
-		replicaNative(transport(t, s.cluster.Nodes[1].Application)),
+	replicas := []nativeInvoke{
+		clientNative(replicaClient(t, s.cluster.Nodes[0].Application)),
+		clientNative(replicaClient(t, s.cluster.Nodes[1].Application)),
 	}
 	calls := 0
-	invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
-		call := wires[calls%len(wires)]
+	invoke := func(ctx context.Context, call nativeCall) (*weir.NativeResult, error) {
+		replica := replicas[calls%len(replicas)]
 		calls++
-		return call(ctx, opts)
+		return replica(ctx, call)
 	}
 	bound := bson.D{{Key: "$gte", Value: int64(2)}}
 	query := nativeQuery{
@@ -185,7 +181,7 @@ func (s *system) testProjectionAndFailures(t *testing.T, backend *backendData) {
 		mongoProjection: bson.D{{Key: "n", Value: 0}},
 		searchSource:    map[string]any{"excludes": []string{"n"}},
 	}
-	pager, err = target.nativePager(s.client.Native, exclude)
+	pager, err = target.nativePager(clientNative(s.client), exclude)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,9 +212,9 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 	if target.name == "mongo" {
 		native.Resource = weir.EncodeSegment(target.mongo.Database().Name())
 	}
-	options := weir.NativeOptions{StoreName: target.name, Request: native, Consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
+	call := nativeCall{store: target.name, request: native, consume: func(context.Context, *weir.NativeResponse, []byte) error { return nil }}
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	result, err := s.client.Native(rpc, options)
+	result, err := runNative(rpc, s.client, call)
 	cancel()
 	if err != nil || result == nil || result.Response != nil || result.Completion != weir.NativeNotStarted || result.Failure.GetCode() != weir.FailureUnsupported {
 		t.Fatalf("unknown format must reach adapter classification: %v %v", result, err)
@@ -231,7 +227,7 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		caller := &nativePager{store: target.name, invoke: s.client.Native}
+		caller := &nativePager{store: target.name, invoke: clientNative(s.client)}
 		_, body, err := caller.exchange(s.ctx, request)
 		raw := bson.Raw(body)
 		if err != nil || raw.Validate() != nil {
@@ -246,9 +242,8 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 	}
 	literal := target.provisionTarget(t, s.ctx, "literal.fields")
 	document := &weir.Document{ContentType: "application/json", Data: []byte(`{"$literal":42,"n":1}`)}
-	write := &weir.WriteRequest{Resource: literal.resource("literal"), Document: document}
-	writeOptions := weir.WriteOptions{StoreName: literal.name, Request: write}
-	mutation, err := s.client.Create(s.ctx, writeOptions)
+	write := &weir.MutateRequest{Resource: literal.resource("literal"), Action: weir.MutationCreate, Document: document}
+	mutation, err := mutateRecord(s.ctx, s.client, literal.name, write)
 	assertApplied(t, mutation, err)
 	refresh := httpRequest{method: http.MethodPost, path: "/" + literal.collection + "/_refresh"}
 	code, body := literal.httpDo(t, s.ctx, refresh)
@@ -256,7 +251,7 @@ func (s *system) testAdapterOwnedEnvelopes(t *testing.T, target *backendData) {
 		t.Fatalf("refresh literal field: %d %s", code, body)
 	}
 	query := nativeQuery{searchSource: []string{"$literal"}}
-	pager, err := literal.nativePager(s.client.Native, query)
+	pager, err := literal.nativePager(clientNative(s.client), query)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,8 +275,7 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 	requests := []*weir.ReadRequest{
 		{Resource: target.resource("1")}, {Resource: target.resource("absent")}, {Resource: missing.resource("1")},
 	}
-	opts := weir.ReadOptions{StoreName: target.name, Requests: requests}
-	results, err := s.client.Read(s.ctx, opts)
+	results, err := readRecords(s.ctx, s.client, target.name, requests...)
 	if err != nil || len(results) != 3 {
 		t.Fatalf("mixed read results: %v %v", results, err)
 	}
@@ -292,7 +286,7 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 		mongoFilter: bson.D{{Key: "n", Value: int64(999)}},
 		searchQuery: map[string]any{"term": map[string]any{"n": 999}},
 	}
-	pager, err := target.nativePager(s.client.Native, empty)
+	pager, err := target.nativePager(clientNative(s.client), empty)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +294,7 @@ func (s *system) testMissingTargets(t *testing.T, target *backendData) {
 		t.Fatalf("empty Native query returned %d records", len(documents))
 	}
 	query := nativeQuery{}
-	pager, err = missing.nativePager(s.client.Native, query)
+	pager, err = missing.nativePager(clientNative(s.client), query)
 	if err != nil {
 		t.Fatal(err)
 	}

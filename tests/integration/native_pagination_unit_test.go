@@ -21,14 +21,14 @@ import (
 
 // These tests exercise only consumer parsing, budgets and cleanup. They are not
 // evidence of real MongoDB/Search behavior or Store routing.
-func nativeTestReply(opts weir.NativeOptions, body []byte, status int) (*weir.NativeResult, error) {
+func nativeTestReply(opts nativeCall, body []byte, status int) (*weir.NativeResult, error) {
 	head := &weir.NativeResponse{}
 	if status != 0 {
 		metadata := &weir.Document{ContentType: "application/http", Data: fmt.Appendf(nil, "HTTP/1.1 %d %s\r\n\r\n", status, http.StatusText(status))}
 		head.Metadata = metadata
 	}
 	if len(body) != 0 {
-		if err := opts.Consume(context.Background(), head, body); err != nil {
+		if err := opts.consume(context.Background(), head, body); err != nil {
 			return nil, err
 		}
 	}
@@ -76,9 +76,9 @@ func testNativeHTTPRequest(t *testing.T, request *weir.NativeRequest) (*http.Req
 
 func TestNativePaginationMongoPages(t *testing.T) {
 	calls := 0
-	invoke := func(_ context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
-		command := bson.Raw(opts.Request.Request.Data)
-		if opts.StoreName != "mongo" || opts.Request.Resource != "owned" {
+	invoke := func(_ context.Context, opts nativeCall) (*weir.NativeResult, error) {
+		command := bson.Raw(opts.request.Request.Data)
+		if opts.store != "mongo" || opts.request.Resource != "owned" {
 			t.Fatal("Mongo Native routing changed", opts)
 		}
 		batch := "next"
@@ -121,18 +121,18 @@ func TestNativePaginationMongoPages(t *testing.T) {
 
 func TestNativePaginationSearchRotatingScrollAndCleanup(t *testing.T) {
 	calls := 0
-	invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
-		request, body := testNativeHTTPRequest(t, opts.Request)
+	invoke := func(ctx context.Context, opts nativeCall) (*weir.NativeResult, error) {
+		request, body := testNativeHTTPRequest(t, opts.request)
 		var response string
 		switch calls {
 		case 0:
-			if opts.Request.Resource != "owned" || request.URL.RequestURI() != "/_search?scroll=1m" {
+			if opts.request.Resource != "owned" || request.URL.RequestURI() != "/_search?scroll=1m" {
 				t.Fatal("wrong Search opening request")
 			}
 			response = `{"_scroll_id":"a","hits":{"hits":[{"_source":{"n":1}}]}}`
 		case 1, 2:
 			want := []string{"", "a", "b"}[calls]
-			if opts.Request.Resource != "" || request.Method != http.MethodPost || request.URL.Path != "/_search/scroll" || body["scroll_id"] != want {
+			if opts.request.Resource != "" || request.Method != http.MethodPost || request.URL.Path != "/_search/scroll" || body["scroll_id"] != want {
 				t.Fatal("wrong backend-owned scroll continuation", body)
 			}
 			response = `{"_scroll_id":"b","hits":{"hits":[{"_source":{"n":2}}]}}`
@@ -181,7 +181,7 @@ func TestNativePaginationCleanupAfterCanceledQuery(t *testing.T) {
 	for _, store := range []string{"mongo", "search"} {
 		t.Run(store, func(t *testing.T) {
 			calls := 0
-			invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+			invoke := func(ctx context.Context, opts nativeCall) (*weir.NativeResult, error) {
 				if calls == 0 {
 					calls++
 					return nil, ctx.Err()
@@ -196,7 +196,7 @@ func TestNativePaginationCleanupAfterCanceledQuery(t *testing.T) {
 				if store == "search" {
 					return nativeTestReply(opts, []byte(`{"succeeded":true,"num_freed":1}`), http.StatusOK)
 				}
-				raw := bson.Raw(opts.Request.Request.Data)
+				raw := bson.Raw(opts.request.Request.Data)
 				if raw.Lookup("killCursors").StringValue() != "records" {
 					t.Fatal("wrong Mongo cleanup", raw)
 				}
@@ -223,7 +223,7 @@ func TestNativePaginationCleanupAfterCanceledQuery(t *testing.T) {
 func TestNativePaginationBounds(t *testing.T) {
 	t.Run("pages_reserve_cleanup", func(t *testing.T) {
 		calls := 0
-		invoke := func(_ context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+		invoke := func(_ context.Context, opts nativeCall) (*weir.NativeResult, error) {
 			calls++
 			body := `{"_scroll_id":"live","hits":{"hits":[{"_source":{"n":1}}]}}`
 			if calls > nativeMaxPages {
@@ -247,7 +247,7 @@ func TestNativePaginationBounds(t *testing.T) {
 	for _, bound := range []string{"body", "total", "calls"} {
 		t.Run(bound, func(t *testing.T) {
 			calls := 0
-			invoke := func(_ context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+			invoke := func(_ context.Context, opts nativeCall) (*weir.NativeResult, error) {
 				calls++
 				body := []byte("xx")
 				if bound == "body" {
@@ -297,7 +297,7 @@ func TestNativePaginationMalformedPagesAndBusinessErrors(t *testing.T) {
 	if _, err := pager.mongoPage(body, true); err == nil || pager.mongoCursor != 17 || pager.exhausted {
 		t.Fatal("malformed Mongo page lost cleanup identity", err, pager)
 	}
-	invoke := func(_ context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+	invoke := func(_ context.Context, opts nativeCall) (*weir.NativeResult, error) {
 		return nativeTestReply(opts, []byte(`{"error":{"type":"backend_failure"}}`), http.StatusInternalServerError)
 	}
 	pager = &nativePager{store: "search", invoke: invoke}
@@ -311,7 +311,7 @@ func TestNativePaginationMalformedPagesAndBusinessErrors(t *testing.T) {
 }
 
 func TestNativePaginationIncompleteTransferAndCleanupFailure(t *testing.T) {
-	invoke := func(_ context.Context, _ weir.NativeOptions) (*weir.NativeResult, error) {
+	invoke := func(_ context.Context, _ nativeCall) (*weir.NativeResult, error) {
 		head := &weir.NativeResponse{}
 		result := &weir.NativeResult{Response: head, Completion: weir.NativeResponseIncomplete}
 		return result, nil
@@ -321,7 +321,7 @@ func TestNativePaginationIncompleteTransferAndCleanupFailure(t *testing.T) {
 		t.Fatal("partial transfer accepted")
 	}
 	pager.scrollID = "live"
-	pager.invoke = func(_ context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
+	pager.invoke = func(_ context.Context, opts nativeCall) (*weir.NativeResult, error) {
 		return nativeTestReply(opts, []byte(`{"succeeded":true,"num_freed":0}`), http.StatusOK)
 	}
 	if err := pager.close(); err == nil || pager.closed {
