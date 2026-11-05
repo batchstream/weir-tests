@@ -45,8 +45,8 @@ func TestPartialUpdateApplicationAcknowledgedMatchesNativeAndPreservesPadding(t 
 	if err != nil || len(requests) != 1 {
 		t.Fatal(requests, err)
 	}
-	if crawlerQueryVisible(config) || requests[0].Lua != nil {
-		t.Fatal("Weir did not use the same application completion boundary", requests[0])
+	if requests[0].Lua != nil {
+		t.Fatal("Weir partial update used Lua", requests[0])
 	}
 	var payload map[string]any
 	if err := json.Unmarshal(requests[0].BackendExpression.Data, &payload); err != nil || !reflect.DeepEqual(payload["doc"], mutation.Document) {

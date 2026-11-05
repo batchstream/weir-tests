@@ -8,13 +8,13 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
-	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	weir "github.com/batchstream/weir-go"
+	"github.com/batchstream/weir-tests/internal/wiretest"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -82,13 +82,11 @@ type scriptedClient struct {
 	streamMutations func(context.Context, nextMutation, consumeMutation) error
 	streamReads     func(context.Context, nextRead, consumeRead) error
 	transforms      []*weir.MutateRequest
-	visible         []bool
 }
 
 // mutate answers a transform and a single Put from the script, and any other call
 // through mutations.
-func (c *scriptedClient) mutate(_ context.Context, _ string, visible bool, requests ...*weir.MutateRequest) ([]*weir.MutationResult, error) {
-	c.visible = append(c.visible, visible)
+func (c *scriptedClient) mutate(_ context.Context, _ string, _ bool, requests ...*weir.MutateRequest) ([]*weir.MutationResult, error) {
 	if len(requests) != 1 {
 		return c.mutations(requests)
 	}
@@ -203,15 +201,28 @@ func TestKeyAllowsOnlyTheLatestAppliedOrAnUnknownSequence(t *testing.T) {
 	}
 }
 
-func TestOnlyTheVisibleProfileWaitsForQueryVisibility(t *testing.T) {
+func TestWriteProfilesSendTheirMutationOnTheWire(t *testing.T) {
+	server := &wiretest.Recorder{}
 	store := &memoryStore{seqs: map[string]int64{}}
-	steps := []step{{outcome: weir.MutationApplied, lands: true}, {outcome: weir.MutationApplied, lands: true}}
-	client := &scriptedClient{store: store, steps: steps}
-	load, _ := newTestWorker(store, client)
+	load, _ := newTestWorker(store, nil)
+	load.client = sdkRecords{client: wiretest.Client(t, server)}
+	load.storeName = "search"
+	load.verifyPercent = 0
 	load.putTurn(readyTokens(1))
 	load.visibleTurn(readyTokens(1))
-	if !slices.Equal(client.visible, []bool{false, true}) {
-		t.Fatalf("visible=%v", client.visible)
+	load.luaTurn(readyTokens(1))
+	received := server.Mutations()
+	if len(received) != 3 {
+		t.Fatalf("mutations=%d", len(received))
+	}
+	if received[0].GetPut() == nil || wiretest.QueryVisible(received[0]) {
+		t.Errorf("single profile sent %v", received[0])
+	}
+	if received[1].GetPut() == nil || !wiretest.QueryVisible(received[1]) {
+		t.Errorf("visible profile sent %v", received[1])
+	}
+	if received[2].GetAtomicTransform().GetLua() == nil || wiretest.QueryVisible(received[2]) {
+		t.Errorf("lua profile sent %v", received[2])
 	}
 }
 
