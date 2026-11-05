@@ -16,7 +16,7 @@ import (
 	"github.com/batchstream/weir-tests/internal/workload"
 )
 
-// This opt-in test proves actual client OS processes, independent native/SDK
+// This test proves actual client OS processes, independent native/SDK
 // pools, one-record requests and persisted final state against both databases.
 // It intentionally makes no assertion that Weir wins or saturates a database.
 func TestIndependentSingleRequestClients(t *testing.T) {
