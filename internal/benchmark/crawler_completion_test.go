@@ -9,8 +9,6 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-
-	weir "github.com/batchstream/weir-go"
 )
 
 func TestPartialUpdateApplicationAcknowledgedMatchesNativeAndPreservesPadding(t *testing.T) {
@@ -47,7 +45,7 @@ func TestPartialUpdateApplicationAcknowledgedMatchesNativeAndPreservesPadding(t 
 	if err != nil || len(requests) != 1 {
 		t.Fatal(requests, err)
 	}
-	if requests[0].Options.Visibility != weir.MutationApplicationAcknowledged || requests[0].Lua != nil {
+	if crawlerQueryVisible(config) || requests[0].Lua != nil {
 		t.Fatal("Weir did not use the same application completion boundary", requests[0])
 	}
 	var payload map[string]any

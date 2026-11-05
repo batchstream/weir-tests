@@ -83,10 +83,9 @@ func (s *system) testSilentConnection(t *testing.T) {
 	defer client.Close()
 	put := func(n int64, timeout time.Duration) (*weir.MutationResult, error) {
 		request := backend.write(t, "silent", n)
-		options := weir.WriteOptions{StoreName: backend.name, Request: request}
 		rpc, cancel := context.WithTimeout(s.ctx, timeout)
 		defer cancel()
-		return client.Put(rpc, options)
+		return mutateRecord(rpc, client, backend.name, request)
 	}
 	result, err := put(1, rpcTimeout)
 	assertApplied(t, result, err)

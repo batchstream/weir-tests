@@ -12,44 +12,41 @@ import (
 	"testing"
 
 	weir "github.com/batchstream/weir-go"
-	pb "github.com/batchstream/weir-protocol/api/weir/v1"
 	"github.com/batchstream/weir-tests/internal/fixture"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func testLifecycle(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
 	t.Helper()
-	write := backend.write(t, "primary", 1)
-	options := weir.WriteOptions{StoreName: backend.name, Request: write}
+	write := backend.writeAs(t, weir.MutationCreate, "primary", 1)
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	result, err := client.Create(rpc, options)
+	result, err := mutateRecord(rpc, client, backend.name, write)
 	cancel()
 	assertApplied(t, result, err)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.Create(rpc, options)
+	result, err = mutateRecord(rpc, client, backend.name, write)
 	cancel()
 	assertPrecondition(t, result, err)
-	options.Request = backend.write(t, "missing_replace", 42)
+	write = backend.writeAs(t, weir.MutationReplace, "missing_replace", 42)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.Replace(rpc, options)
+	result, err = mutateRecord(rpc, client, backend.name, write)
 	cancel()
 	assertPrecondition(t, result, err)
 	backend.assertMissing(t, ctx, "missing_replace")
 
-	options.Request = backend.write(t, "primary", 2)
+	write = backend.writeAs(t, weir.MutationReplace, "primary", 2)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.Replace(rpc, options)
+	result, err = mutateRecord(rpc, client, backend.name, write)
 	cancel()
 	assertApplied(t, result, err)
-	options.Request = backend.write(t, "primary", 3)
+	write = backend.write(t, "primary", 3)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.Put(rpc, options)
+	result, err = mutateRecord(rpc, client, backend.name, write)
 	cancel()
 	assertApplied(t, result, err)
 	transform := backend.transform(t, "primary")
-	transformOptions := weir.AtomicTransformOptions{StoreName: backend.name, Request: transform}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.AtomicTransform(rpc, transformOptions)
+	result, err = mutateRecord(rpc, client, backend.name, transform)
 	cancel()
 	assertApplied(t, result, err)
 	want := record{id: "primary", n: 4}
@@ -58,30 +55,28 @@ func testLifecycle(t *testing.T, ctx context.Context, client *weir.Client, backe
 	testTypedSequence(t, ctx, client, backend)
 	testNative(t, ctx, client, backend)
 
-	options.Request = backend.write(t, "disposable", 7)
+	write = backend.write(t, "disposable", 7)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.Put(rpc, options)
+	result, err = mutateRecord(rpc, client, backend.name, write)
 	cancel()
 	assertApplied(t, result, err)
-	remove := &weir.DeleteRequest{Resource: backend.resource("disposable")}
-	removeOptions := weir.DeleteOptions{StoreName: backend.name, Request: remove}
+	remove := &weir.MutateRequest{Resource: backend.resource("disposable"), Action: weir.MutationDelete}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	result, err = client.Delete(rpc, removeOptions)
+	result, err = mutateRecord(rpc, client, backend.name, remove)
 	cancel()
 	assertApplied(t, result, err)
 	read := &weir.ReadRequest{Resource: backend.resource("disposable")}
-	readOptions := weir.ReadOneOptions{StoreName: backend.name, Request: read}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	missing, err := client.ReadOne(rpc, readOptions)
+	missing, err := readRecord(rpc, client, backend.name, read)
 	cancel()
 	if err != nil || missing == nil || !missing.Missing || missing.Failure != nil {
 		t.Fatalf("Read after Delete: result=%v err=%v", missing, err)
 	}
 	backend.assertMissing(t, ctx, "disposable")
 	for i := 1; i <= 2; i++ {
-		options.Request = backend.write(t, fmt.Sprintf("page%d", i), int64(10+i))
+		write = backend.writeAs(t, weir.MutationCreate, fmt.Sprintf("page%d", i), int64(10+i))
 		rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-		result, err = client.Create(rpc, options)
+		result, err = mutateRecord(rpc, client, backend.name, write)
 		cancel()
 		assertApplied(t, result, err)
 	}
@@ -105,26 +100,23 @@ func assertPrecondition(t *testing.T, result *weir.MutationResult, err error) {
 func testTypedSequence(t *testing.T, ctx context.Context, client *weir.Client, backend *backendData) {
 	t.Helper()
 	read := &weir.ReadRequest{Resource: backend.resource("primary")}
-	readOptions := weir.ReadOptions{StoreName: backend.name, Requests: []*weir.ReadRequest{read}}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	before, err := client.Read(rpc, readOptions)
+	before, err := readRecords(rpc, client, backend.name, read)
 	cancel()
 	if err != nil || len(before) != 1 {
 		t.Fatalf("typed Read before mutation: results=%v err=%v", before, err)
 	}
 	backend.assertReadResult(t, before[0], nil, 4)
-	write := backend.write(t, "primary", 5)
-	mutation := &weir.MutateRequest{Resource: write.Resource, Action: weir.MutationReplace, Document: write.Document}
-	mutationOptions := weir.MutateOptions{StoreName: backend.name, Requests: []*weir.MutateRequest{mutation}}
+	mutation := backend.writeAs(t, weir.MutationReplace, "primary", 5)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	results, err := client.Mutate(rpc, mutationOptions)
+	results, err := mutateRecords(rpc, client, backend.name, mutation)
 	cancel()
 	if err != nil || len(results) != 1 {
 		t.Fatalf("typed Mutate: results=%v err=%v", results, err)
 	}
 	assertApplied(t, results[0], nil)
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	after, err := client.Read(rpc, readOptions)
+	after, err := readRecords(rpc, client, backend.name, read)
 	cancel()
 	if err != nil || len(after) != 1 {
 		t.Fatalf("typed Read after mutation: results=%v err=%v", after, err)
@@ -142,14 +134,14 @@ func testCrossReplicaNativePagination(t *testing.T, ctx context.Context, cluster
 			t.Fatalf("refresh owned Search index: status=%d body=%s", code, body)
 		}
 	}
-	transports := []pb.StoreServiceClient{
-		transport(t, cluster.Nodes[0].Application), transport(t, cluster.Nodes[1].Application),
+	replicas := []*weir.Client{
+		replicaClient(t, cluster.Nodes[0].Application), replicaClient(t, cluster.Nodes[1].Application),
 	}
 	calls := 0
-	invoke := func(ctx context.Context, opts weir.NativeOptions) (*weir.NativeResult, error) {
-		wire := transports[calls%len(transports)]
+	invoke := func(ctx context.Context, call nativeCall) (*weir.NativeResult, error) {
+		replica := replicas[calls%len(replicas)]
 		calls++
-		return weir.Native(ctx, wire, opts)
+		return runNative(ctx, replica, call)
 	}
 	query := nativeQuery{}
 	pager, err := backend.nativePager(invoke, query)
@@ -227,8 +219,8 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 	}
 	var head *weir.NativeResponse
 	var body []byte
-	options := weir.NativeOptions{StoreName: backend.name, Request: request}
-	options.Consume = func(_ context.Context, response *weir.NativeResponse, chunk []byte) error {
+	call := nativeCall{store: backend.name, request: request}
+	call.consume = func(_ context.Context, response *weir.NativeResponse, chunk []byte) error {
 		if response == nil || head != nil && head != response {
 			return errors.New("Native response metadata changed between chunks")
 		}
@@ -240,15 +232,15 @@ func testNative(t *testing.T, ctx context.Context, client *weir.Client, backend 
 		return nil
 	}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	end, err := client.Native(rpc, options)
+	end, err := runNative(rpc, client, call)
 	cancel()
 	if err != nil || head == nil || end == nil || end.Response != head || end.Failure != nil || end.Completion != weir.NativeResponseComplete {
 		t.Fatalf("Native evidence: head=%v end=%v err=%v", head, end, err)
 	}
 	refused := errors.New("Native consumer refused body")
-	options.Consume = func(context.Context, *weir.NativeResponse, []byte) error { return refused }
+	call.consume = func(context.Context, *weir.NativeResponse, []byte) error { return refused }
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	interrupted, err := client.Native(rpc, options)
+	interrupted, err := runNative(rpc, client, call)
 	cancel()
 	if !errors.Is(err, refused) || interrupted == nil || interrupted.Response == nil || interrupted.Completion == weir.NativeResponseComplete {
 		t.Fatalf("refused Native body claimed complete transfer: result=%v err=%v", interrupted, err)

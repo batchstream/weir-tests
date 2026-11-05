@@ -134,7 +134,7 @@ func TestCrawlerSingleSDKConstructsExactlyOneRecordAndRejectsBatches(t *testing.
 		t.Fatal("single SDK call was not one record", requests, err)
 	}
 	request := requests[0]
-	if request.Options == nil || request.Options.Visibility != weir.MutationQueryVisible || request.Action != weir.MutationAtomicTransform || request.Lua == nil || request.Lua.Input == nil {
+	if !crawlerQueryVisible(config) || request.Action != weir.MutationAtomicTransform || request.Lua == nil || request.Lua.Input == nil {
 		t.Fatal("single SDK call lost Lua or completion semantics", request)
 	}
 	var actual crawlerMutation

@@ -101,18 +101,25 @@ func (b *backendData) resource(id string) string {
 	return b.collection + "/s:" + weir.EncodeSegment(id)
 }
 
-func (b *backendData) write(t *testing.T, id string, n int64) *weir.WriteRequest {
+// write returns a Put of a record.
+func (b *backendData) write(t *testing.T, id string, n int64) *weir.MutateRequest {
+	t.Helper()
+	return b.writeAs(t, weir.MutationPut, id, n)
+}
+
+// writeAs returns a mutation that writes a record through action.
+func (b *backendData) writeAs(t *testing.T, action weir.MutationAction, id string, n int64) *weir.MutateRequest {
 	t.Helper()
 	document := &weir.Document{ContentType: "application/json", Data: []byte(fmt.Sprintf("{\"n\":%d}", n))}
 	if b.name == "mongo" {
 		value := bson.D{{Key: "_id", Value: id}, {Key: "n", Value: n}}
 		document = bsonDocument(t, value)
 	}
-	request := &weir.WriteRequest{Resource: b.resource(id), Document: document}
+	request := &weir.MutateRequest{Resource: b.resource(id), Action: action, Document: document}
 	return request
 }
 
-func (b *backendData) transform(t *testing.T, id string) *weir.AtomicTransformRequest {
+func (b *backendData) transform(t *testing.T, id string) *weir.MutateRequest {
 	t.Helper()
 	expression := &weir.Document{
 		ContentType: "application/vnd.weir.search-update.v1+json",
@@ -124,7 +131,7 @@ func (b *backendData) transform(t *testing.T, id string) *weir.AtomicTransformRe
 		expression = bsonDocument(t, update)
 		expression.ContentType = "application/vnd.weir.mongodb-update.v1+bson"
 	}
-	request := &weir.AtomicTransformRequest{Resource: b.resource(id), BackendExpression: expression}
+	request := &weir.MutateRequest{Resource: b.resource(id), Action: weir.MutationAtomicTransform, BackendExpression: expression}
 	return request
 }
 
@@ -243,9 +250,8 @@ func (b *backendData) httpDo(t *testing.T, ctx context.Context, request httpRequ
 func (b *backendData) assertRead(t *testing.T, ctx context.Context, client *weir.Client, want record) {
 	t.Helper()
 	request := &weir.ReadRequest{Resource: b.resource(want.id)}
-	options := weir.ReadOneOptions{StoreName: b.name, Request: request}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	result, err := client.ReadOne(rpc, options)
+	result, err := readRecord(rpc, client, b.name, request)
 	cancel()
 	b.assertReadResult(t, result, err, want.n)
 }
@@ -264,9 +270,8 @@ func (b *backendData) assertReadResult(t *testing.T, result *weir.ReadResult, er
 func (b *backendData) waitRead(t *testing.T, ctx context.Context, client *weir.Client, want record) {
 	t.Helper()
 	request := &weir.ReadRequest{Resource: b.resource(want.id)}
-	options := weir.ReadOneOptions{StoreName: b.name, Request: request}
 	poll(t, ctx, "read-only recovery "+b.name, func(attempt context.Context) error {
-		result, err := client.ReadOne(attempt, options)
+		result, err := readRecord(attempt, client, b.name, request)
 		if err != nil {
 			return err
 		}

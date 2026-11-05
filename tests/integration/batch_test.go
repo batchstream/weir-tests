@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	weir "github.com/batchstream/weir-go"
@@ -30,9 +31,8 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	// without converting successful independent mutations into an RPC error.
 	duplicate := backend.write(t, "primary", 999)
 	mutations[24] = &weir.MutateRequest{Resource: duplicate.Resource, Action: weir.MutationCreate, Document: duplicate.Document}
-	opts := weir.MutateOptions{StoreName: backend.name, Requests: mutations}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	results, err := client.Mutate(rpc, opts)
+	results, err := mutateRecords(rpc, client, backend.name, mutations...)
 	cancel()
 	if err != nil || len(results) != count {
 		t.Fatalf("public batch Mutate: length=%d error=%v", len(results), err)
@@ -55,9 +55,8 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 	}
 	missing := &weir.ReadRequest{Resource: backend.resource("public_batch_absent")}
 	reads[count] = missing
-	readOptions := weir.ReadOptions{StoreName: backend.name, Requests: reads}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	readResults, err := client.Read(rpc, readOptions)
+	readResults, err := readRecords(rpc, client, backend.name, reads...)
 	cancel()
 	if err != nil || len(readResults) != count+1 {
 		t.Fatalf("public batch Read: length=%d error=%v", len(readResults), err)
@@ -81,11 +80,11 @@ func testPublicBatch(t *testing.T, ctx context.Context, client *weir.Client, bac
 		rejected[index] = request
 	}
 	rejected[count-1].Action = 0
-	invalidOptions := weir.MutateOptions{StoreName: backend.name, Requests: rejected}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	invalidResults, err := client.Mutate(rpc, invalidOptions)
+	invalidResults, err := mutateRecords(rpc, client, backend.name, rejected...)
 	cancel()
-	if err == nil || invalidResults != nil {
+	confirmed := func(result *weir.MutationResult) bool { return result != nil }
+	if err == nil || slices.ContainsFunc(invalidResults, confirmed) {
 		t.Fatalf("invalid request slice accepted: length=%d error=%v", len(invalidResults), err)
 	}
 	for index := range count {
@@ -140,9 +139,8 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 		}
 		requests[index] = request
 	}
-	opts := weir.MutateOptions{StoreName: backend.name, Requests: requests}
 	rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-	results, err := client.Mutate(rpc, opts)
+	results, err := mutateRecords(rpc, client, backend.name, requests...)
 	cancel()
 	if err != nil || len(results) != len(requests) {
 		t.Fatalf("same-URI mutation batch: results=%v err=%v", results, err)
@@ -170,9 +168,8 @@ func testDuplicateURIOrder(t *testing.T, ctx context.Context, client *weir.Clien
 			reads[index] = primary
 		}
 	}
-	readOpts := weir.ReadOptions{StoreName: backend.name, Requests: reads}
 	rpc, cancel = context.WithTimeout(ctx, rpcTimeout)
-	readResults, err := client.Read(rpc, readOpts)
+	readResults, err := readRecords(rpc, client, backend.name, reads...)
 	cancel()
 	if err != nil || len(readResults) != len(reads) {
 		t.Fatalf("513 duplicate URI reads: results=%d err=%v", len(readResults), err)
@@ -264,9 +261,8 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	}
 	s.quiesce(t)
 	before := s.nodeMetrics(t)
-	opts := weir.MutateOptions{StoreName: backend.name, Requests: mutations}
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	results, err := s.client.Mutate(rpc, opts)
+	results, err := mutateRecords(rpc, s.client, backend.name, mutations...)
 	cancel()
 	if err != nil || len(results) != count {
 		t.Fatalf("513 distinct Put batch: results=%d err=%v", len(results), err)
@@ -274,15 +270,14 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	for _, result := range results {
 		assertApplied(t, result, nil)
 	}
-	evidence := streamBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "mutate", Records: count}
+	evidence := streamBatchEvidence{Before: before, After: s.metricsAfterStream(t, before), Store: backend.name, Method: "mutate", Records: count}
 	assertStreamBatchMetrics(t, evidence)
 	for index := range mutations {
 		backend.assertPersisted(t, s.ctx, fmt.Sprintf("large_distinct_%03d", index), int64(10000+index))
 	}
 	before = s.nodeMetrics(t)
-	readOptions := weir.ReadOptions{StoreName: backend.name, Requests: reads}
 	rpc, cancel = context.WithTimeout(s.ctx, rpcTimeout)
-	readResults, err := s.client.Read(rpc, readOptions)
+	readResults, err := readRecords(rpc, s.client, backend.name, reads...)
 	cancel()
 	if err != nil || len(readResults) != count {
 		t.Fatalf("513 distinct Read batch: results=%d err=%v", len(readResults), err)
@@ -290,7 +285,7 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	for index, result := range readResults {
 		backend.assertReadResult(t, result, nil, int64(10000+count-1-index))
 	}
-	evidence.Before, evidence.After, evidence.Method = before, s.nodeMetrics(t), "read"
+	evidence.Before, evidence.After, evidence.Method = before, s.metricsAfterStream(t, before), "read"
 	assertStreamBatchMetrics(t, evidence)
 	t.Log("513 distinct native documents Put and Read in aggregation groups on one streamed call; every value independently persisted and reverse-order results verified")
 }

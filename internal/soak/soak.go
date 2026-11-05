@@ -158,7 +158,7 @@ func Run(ctx context.Context, config Config) (resultErr error) {
 				backend:        run.config.Kind,
 				storeName:      run.config.Store,
 				store:          run.store,
-				client:         client,
+				client:         sdkRecords{client: client},
 				keys:           run.keys[index*run.config.KeysPerWorker : (index+1)*run.config.KeysPerWorker],
 				padding:        padding,
 				profile:        profileOf(config.Profiles, index, run.config.Workers),

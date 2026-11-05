@@ -8,6 +8,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -70,57 +71,66 @@ type step struct {
 }
 
 type scriptedClient struct {
-	store  *memoryStore
-	steps  []step
-	read   *weir.ReadResult
-	native []byte
-	// mutate answers a Mutate call; mutateStream and readStream run a stream.
-	mutate       func(weir.MutateOptions) ([]*weir.MutationResult, error)
-	reads        func(weir.ReadOptions) ([]*weir.ReadResult, error)
-	mutateStream func(context.Context, weir.MutateStreamOptions) error
-	readStream   func(context.Context, weir.ReadStreamOptions) error
-	transforms   []*weir.AtomicTransformRequest
+	store      *memoryStore
+	steps      []step
+	readResult *weir.ReadResult
+	nativeBody []byte
+	// mutations answers a call of several records; streamMutations and streamReads
+	// run a stream.
+	mutations       func([]*weir.MutateRequest) ([]*weir.MutationResult, error)
+	reads           func([]*weir.ReadRequest) ([]*weir.ReadResult, error)
+	streamMutations func(context.Context, nextMutation, consumeMutation) error
+	streamReads     func(context.Context, nextRead, consumeRead) error
+	transforms      []*weir.MutateRequest
+	visible         []bool
 }
 
-func (c *scriptedClient) Put(_ context.Context, options weir.WriteOptions) (*weir.MutationResult, error) {
+// mutate answers a transform and a single Put from the script, and any other call
+// through mutations.
+func (c *scriptedClient) mutate(_ context.Context, _ string, visible bool, requests ...*weir.MutateRequest) ([]*weir.MutationResult, error) {
+	c.visible = append(c.visible, visible)
+	if len(requests) != 1 {
+		return c.mutations(requests)
+	}
+	request := requests[0]
+	if request.Action == weir.MutationAtomicTransform {
+		c.transforms = append(c.transforms, request)
+		result := &weir.MutationResult{Outcome: weir.MutationApplied}
+		results := []*weir.MutationResult{result}
+		return results, nil
+	}
+	if c.mutations != nil {
+		return c.mutations(requests)
+	}
 	next := c.steps[0]
 	c.steps = c.steps[1:]
 	if next.lands {
-		seq, _ := c.store.decode(options.Request.Document.Data)
+		seq, _ := c.store.decode(request.Document.Data)
 		c.store.seqs["k"] = seq
 	}
 	result := &weir.MutationResult{Outcome: next.outcome}
-	return result, nil
+	results := []*weir.MutationResult{result}
+	return results, nil
 }
 
-func (c *scriptedClient) ReadOne(context.Context, weir.ReadOneOptions) (*weir.ReadResult, error) {
-	return c.read, nil
+func (c *scriptedClient) read(_ context.Context, _ string, requests ...*weir.ReadRequest) ([]*weir.ReadResult, error) {
+	if c.reads != nil {
+		return c.reads(requests)
+	}
+	results := []*weir.ReadResult{c.readResult}
+	return results, nil
 }
 
-func (c *scriptedClient) AtomicTransform(_ context.Context, options weir.AtomicTransformOptions) (*weir.MutationResult, error) {
-	c.transforms = append(c.transforms, options.Request)
-	result := &weir.MutationResult{Outcome: weir.MutationApplied}
-	return result, nil
+func (c *scriptedClient) mutateStream(ctx context.Context, _ string, next nextMutation, consume consumeMutation) error {
+	return c.streamMutations(ctx, next, consume)
 }
 
-func (c *scriptedClient) Mutate(_ context.Context, options weir.MutateOptions) ([]*weir.MutationResult, error) {
-	return c.mutate(options)
+func (c *scriptedClient) readStream(ctx context.Context, _ string, next nextRead, consume consumeRead) error {
+	return c.streamReads(ctx, next, consume)
 }
 
-func (c *scriptedClient) Read(_ context.Context, options weir.ReadOptions) ([]*weir.ReadResult, error) {
-	return c.reads(options)
-}
-
-func (c *scriptedClient) MutateStream(ctx context.Context, options weir.MutateStreamOptions) error {
-	return c.mutateStream(ctx, options)
-}
-
-func (c *scriptedClient) ReadStream(ctx context.Context, options weir.ReadStreamOptions) error {
-	return c.readStream(ctx, options)
-}
-
-func (c *scriptedClient) Native(ctx context.Context, options weir.NativeOptions) (*weir.NativeResult, error) {
-	if err := options.Consume(ctx, nil, c.native); err != nil {
+func (c *scriptedClient) native(ctx context.Context, _ string, _ *weir.NativeRequest, chunks func(context.Context, *weir.NativeResponse, []byte) error) (*weir.NativeResult, error) {
+	if err := chunks(ctx, nil, c.nativeBody); err != nil {
 		return nil, err
 	}
 	result := &weir.NativeResult{Completion: weir.NativeResponseComplete}
@@ -193,12 +203,24 @@ func TestKeyAllowsOnlyTheLatestAppliedOrAnUnknownSequence(t *testing.T) {
 	}
 }
 
+func TestOnlyTheVisibleProfileWaitsForQueryVisibility(t *testing.T) {
+	store := &memoryStore{seqs: map[string]int64{}}
+	steps := []step{{outcome: weir.MutationApplied, lands: true}, {outcome: weir.MutationApplied, lands: true}}
+	client := &scriptedClient{store: store, steps: steps}
+	load, _ := newTestWorker(store, client)
+	load.putTurn(readyTokens(1))
+	load.visibleTurn(readyTokens(1))
+	if !slices.Equal(client.visible, []bool{false, true}) {
+		t.Fatalf("visible=%v", client.visible)
+	}
+}
+
 func TestRefusedWritesRetryWithFreshSequencesUntilApplied(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	steps := []step{{outcome: weir.MutationNotStarted}, {outcome: weir.MutationNotApplied}, {outcome: weir.MutationApplied, lands: true}}
 	client := &scriptedClient{store: store, steps: steps}
 	load, key := newTestWorker(store, client)
-	load.write(apiPut, key, load.putCall(nil))
+	load.write(apiPut, key, load.putCall(false))
 	totals := load.stats.total()
 	if key.applied != 3 || store.seqs["k"] != 3 || totals.Writes != 3 || totals.Retries != 2 || totals.NotStarted != 1 || totals.NotApplied != 1 || totals.Applied != 1 || totals.Verified != 3 {
 		t.Fatalf("key=%+v store=%v totals=%+v", key, store.seqs, totals)
@@ -213,7 +235,7 @@ func TestRefusalThatTookEffectIsAViolation(t *testing.T) {
 	steps := []step{{outcome: weir.MutationNotApplied, lands: true}, {outcome: weir.MutationApplied, lands: true}}
 	client := &scriptedClient{store: store, steps: steps}
 	load, key := newTestWorker(store, client)
-	load.write(apiPut, key, load.putCall(nil))
+	load.write(apiPut, key, load.putCall(false))
 	count, kept := load.violations.snapshot()
 	if count != 1 || kept[0].Kind != "direct-after-refused" || kept[0].Observed != 1 || key.applied != 2 {
 		t.Fatalf("count=%d kept=%+v key=%+v", count, kept, key)
@@ -225,8 +247,8 @@ func TestUnknownWritesWidenWhatTheDatabaseMayHold(t *testing.T) {
 	steps := []step{{outcome: weir.MutationUnknown, lands: true}, {outcome: weir.MutationUnknown}}
 	client := &scriptedClient{store: store, steps: steps}
 	load, key := newTestWorker(store, client)
-	load.write(apiPut, key, load.putCall(nil))
-	load.write(apiPut, key, load.putCall(nil))
+	load.write(apiPut, key, load.putCall(false))
+	load.write(apiPut, key, load.putCall(false))
 	run := &backendRun{config: Backend{Kind: "test"}, store: store, keys: load.keys}
 	check := finalCheck(run, load.violations)
 	if len(key.unknown) != 2 || check.Violations != 0 || check.Present != 1 || check.Unknown != 1 {
@@ -240,8 +262,8 @@ func TestLostAppliedWriteFailsTheFinalCheck(t *testing.T) {
 	client := &scriptedClient{store: store, steps: steps}
 	load, key := newTestWorker(store, client)
 	load.verifyPercent = 0
-	load.write(apiPut, key, load.putCall(nil))
-	load.write(apiPut, key, load.putCall(nil))
+	load.write(apiPut, key, load.putCall(false))
+	load.write(apiPut, key, load.putCall(false))
 	run := &backendRun{config: Backend{Kind: "test"}, store: store, keys: load.keys}
 	check := finalCheck(run, load.violations)
 	if check.Violations != 1 || key.applied != 2 {
@@ -278,7 +300,7 @@ func TestStopAbandonsARetryingWrite(t *testing.T) {
 	stop := make(chan struct{})
 	close(stop)
 	load.stop = stop
-	load.write(apiPut, key, load.putCall(nil))
+	load.write(apiPut, key, load.putCall(false))
 	totals := load.stats.total()
 	if totals.Abandoned != 1 || totals.VerifyUnavailable != 1 || key.applied != 0 {
 		t.Fatalf("totals=%+v key=%+v", totals, key)
@@ -288,7 +310,7 @@ func TestStopAbandonsARetryingWrite(t *testing.T) {
 func TestWeirReadsMustReturnAnAllowedSequence(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	document := &weir.Document{ContentType: "text/plain", Data: []byte("1")}
-	client := &scriptedClient{store: store, read: &weir.ReadResult{Document: document}}
+	client := &scriptedClient{store: store, readResult: &weir.ReadResult{Document: document}}
 	load, key := newTestWorker(store, client)
 	key.applied = 2
 	load.read(key)
@@ -318,9 +340,9 @@ func TestLuaWritesStoreTheirInput(t *testing.T) {
 func TestMutateLeavesPositionsWithoutAResultUnknown(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
-	client.mutate = func(options weir.MutateOptions) ([]*weir.MutationResult, error) {
-		if len(options.Requests) != 3 {
-			t.Errorf("requests=%d", len(options.Requests))
+	client.mutations = func(requests []*weir.MutateRequest) ([]*weir.MutationResult, error) {
+		if len(requests) != 3 {
+			t.Errorf("requests=%d", len(requests))
 		}
 		return []*weir.MutationResult{applied(), nil, notStarted()}, errors.New("broken")
 	}
@@ -360,12 +382,12 @@ func sendAll(t *testing.T, ctx context.Context, next func(context.Context) (*wei
 func TestMutateStreamLeavesRecordsWithoutAResultUnknown(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
-	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
-		sendAll(t, ctx, options.Next, 3)
-		if err := options.Consume(ctx, 1, applied()); err != nil {
+	client.streamMutations = func(ctx context.Context, next nextMutation, consume consumeMutation) error {
+		sendAll(t, ctx, next, 3)
+		if err := consume(ctx, 0, applied()); err != nil {
 			t.Fatal(err)
 		}
-		if err := options.Consume(ctx, 3, notStarted()); err != nil {
+		if err := consume(ctx, 2, notStarted()); err != nil {
 			t.Fatal(err)
 		}
 		return status.Error(codes.Unavailable, "connection lost")
@@ -388,21 +410,21 @@ func TestStreamChecksEveryRefusalBeforeTheKeyIsWrittenAgain(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
 	refused := &weir.MutationResult{Outcome: weir.MutationNotApplied}
-	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
+	client.streamMutations = func(ctx context.Context, next nextMutation, consume consumeMutation) error {
 		// The refused write took effect, and a later write replaces it.
-		if _, err := options.Next(ctx); err != nil {
+		if _, err := next(ctx); err != nil {
 			t.Fatal(err)
 		}
 		store.seqs["k"] = 1
-		if err := options.Consume(ctx, 1, refused); err != nil {
+		if err := consume(ctx, 0, refused); err != nil {
 			t.Fatal(err)
 		}
 		// The only key stays busy until its check ran.
-		if _, err := options.Next(ctx); err != nil {
+		if _, err := next(ctx); err != nil {
 			t.Fatal(err)
 		}
 		store.seqs["k"] = 2
-		return options.Consume(ctx, 2, applied())
+		return consume(ctx, 1, applied())
 	}
 	load, key := newTestWorker(store, client)
 	load.verifyPercent = 0
@@ -417,12 +439,12 @@ func TestStreamChecksEveryRefusalBeforeTheKeyIsWrittenAgain(t *testing.T) {
 func TestStreamSamplesAppliedWritesForTheDatabaseCheck(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
-	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
-		if _, err := options.Next(ctx); err != nil {
+	client.streamMutations = func(ctx context.Context, next nextMutation, consume consumeMutation) error {
+		if _, err := next(ctx); err != nil {
 			t.Fatal(err)
 		}
 		// The database lost this APPLIED write.
-		return options.Consume(ctx, 1, applied())
+		return consume(ctx, 0, applied())
 	}
 	load, _ := newTestWorker(store, client)
 	load.streamLifetime = time.Hour
@@ -436,8 +458,8 @@ func TestStreamRecordsWithoutAResultMayLandAfterTheStreamGaveUp(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
 	var gaveUp time.Time
-	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
-		if _, err := options.Next(ctx); err != nil {
+	client.streamMutations = func(ctx context.Context, next nextMutation, consume consumeMutation) error {
+		if _, err := next(ctx); err != nil {
 			t.Fatal(err)
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -477,8 +499,8 @@ func TestStreamEndsItsInputAtItsLifetime(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
 	sent := 0
-	client.mutateStream = func(ctx context.Context, options weir.MutateStreamOptions) error {
-		sent = sendAll(t, ctx, options.Next, 2)
+	client.streamMutations = func(ctx context.Context, next nextMutation, consume consumeMutation) error {
+		sent = sendAll(t, ctx, next, 2)
 		return nil
 	}
 	load, _ := newTestWorker(store, client)
@@ -543,14 +565,14 @@ func TestReadStreamChecksResultsAndCountsTheRestAsFailed(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	stale := &weir.Document{ContentType: "text/plain", Data: []byte("1")}
 	client := &scriptedClient{store: store}
-	client.readStream = func(ctx context.Context, options weir.ReadStreamOptions) error {
+	client.streamReads = func(ctx context.Context, next nextRead, consume consumeRead) error {
 		for range 2 {
-			if _, err := options.Next(ctx); err != nil {
+			if _, err := next(ctx); err != nil {
 				t.Fatal(err)
 			}
 		}
 		result := &weir.ReadResult{Document: stale}
-		if err := options.Consume(ctx, 1, result); err != nil {
+		if err := consume(ctx, 0, result); err != nil {
 			t.Fatal(err)
 		}
 		return context.DeadlineExceeded
@@ -573,7 +595,7 @@ func TestReadStreamChecksResultsAndCountsTheRestAsFailed(t *testing.T) {
 func TestReadBatchChecksEveryKey(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
 	client := &scriptedClient{store: store}
-	client.reads = func(weir.ReadOptions) ([]*weir.ReadResult, error) {
+	client.reads = func([]*weir.ReadRequest) ([]*weir.ReadResult, error) {
 		missing := &weir.ReadResult{Missing: true}
 		return []*weir.ReadResult{missing, nil}, errors.New("broken")
 	}
@@ -591,16 +613,16 @@ func TestReadBatchChecksEveryKey(t *testing.T) {
 
 func TestNativeReadsMustReturnAnAllowedSequence(t *testing.T) {
 	store := &memoryStore{seqs: map[string]int64{}}
-	client := &scriptedClient{store: store, native: []byte("1")}
+	client := &scriptedClient{store: store, nativeBody: []byte("1")}
 	load, key := newTestWorker(store, client)
 	key.applied = 2
 	load.nativeTurn(readyTokens(1))
 	if count, kept := load.violations.snapshot(); count != 1 || kept[0].Kind != "weir-native" {
 		t.Fatalf("count=%d kept=%+v", count, kept)
 	}
-	client.native = []byte("refused")
+	client.nativeBody = []byte("refused")
 	load.nativeTurn(readyTokens(1))
-	client.native = []byte("2")
+	client.nativeBody = []byte("2")
 	load.nativeTurn(readyTokens(1))
 	count, _ := load.violations.snapshot()
 	api := load.stats.total().APIs[apiNative]

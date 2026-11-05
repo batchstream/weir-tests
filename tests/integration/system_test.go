@@ -178,14 +178,12 @@ func (s *system) testCancellation(t *testing.T) {
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
 	read := &weir.ReadRequest{Resource: backend.resource("primary")}
-	request := weir.ReadOneOptions{StoreName: backend.name, Request: read}
-	result, err := client.ReadOne(canceled, request)
+	result, err := readRecord(canceled, client, backend.name, read)
 	if result != nil || !cancellation(err) {
 		t.Fatalf("canceled Read: result=%v err=%v", result, err)
 	}
-	write := backend.write(t, "canceled_create", 123)
-	writeOptions := weir.WriteOptions{StoreName: backend.name, Request: write}
-	mutation, err := client.Create(canceled, writeOptions)
+	write := backend.writeAs(t, weir.MutationCreate, "canceled_create", 123)
+	mutation, err := mutateRecord(canceled, client, backend.name, write)
 	if mutation != nil || !cancellation(err) {
 		t.Fatalf("canceled Create: result=%v err=%v", mutation, err)
 	}
@@ -200,10 +198,9 @@ func (s *system) testRecovery(t *testing.T) {
 	t.Helper()
 	ctx, cluster, client, backends := s.ctx, s.cluster, s.client, s.backends
 	for _, backend := range backends {
-		write := backend.write(t, "durable", 99)
-		options := weir.WriteOptions{StoreName: backend.name, Request: write}
+		write := backend.writeAs(t, weir.MutationCreate, "durable", 99)
 		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		result, err := client.Create(rpc, options)
+		result, err := mutateRecord(rpc, client, backend.name, write)
 		cancel()
 		assertApplied(t, result, err)
 		backend.assertPersisted(t, ctx, "durable", 99)
@@ -227,9 +224,8 @@ func (s *system) testRecovery(t *testing.T) {
 		want := record{id: "durable", n: 99}
 		backend.assertRead(t, ctx, survivor, want)
 		read := &weir.ReadRequest{Resource: backend.resource("durable")}
-		readOptions := weir.ReadOneOptions{StoreName: backend.name, Request: read}
 		rpc, cancel := context.WithTimeout(ctx, rpcTimeout)
-		result, err := client.ReadOne(rpc, readOptions)
+		result, err := readRecord(rpc, client, backend.name, read)
 		cancel()
 		if result != nil || status.Code(err) != codes.Unavailable {
 			t.Fatalf("read through a stopped replica: want Unavailable, got result=%v err=%v", result, err)
@@ -314,6 +310,27 @@ func (s *system) nodeMetrics(t *testing.T) []observe.Snapshot {
 	return snapshots
 }
 
+// metricsAfterStream returns the nodes' metrics once a server has recorded the end
+// of a stream that started after before. A call returns with its last result, which
+// can reach the SDK before the server records that its stream ended.
+func (s *system) metricsAfterStream(t *testing.T, before []observe.Snapshot) []observe.Snapshot {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		after := s.nodeMetrics(t)
+		completed := 0.0
+		for index := range before {
+			left, _ := before[index].Sum("weir_rpc_completions_total", nil)
+			right, _ := after[index].Sum("weir_rpc_completions_total", nil)
+			completed += right - left
+		}
+		if completed != 0 || time.Now().After(deadline) {
+			return after
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
 type streamBatchEvidence struct {
 	Before, After []observe.Snapshot
 	Store, Method string
@@ -375,9 +392,8 @@ func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 		request := &weir.ReadRequest{Resource: backend.resource("primary")}
 		reads[index] = request
 	}
-	opts := weir.ReadOptions{StoreName: backend.name, Requests: reads}
 	rpc, cancel := context.WithTimeout(s.ctx, rpcTimeout)
-	results, err := s.client.Read(rpc, opts)
+	results, err := readRecords(rpc, s.client, backend.name, reads...)
 	cancel()
 	if err != nil || len(results) != len(reads) {
 		t.Fatalf("streamed batch: results=%d err=%v", len(results), err)
@@ -385,6 +401,6 @@ func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 	for _, result := range results {
 		backend.assertReadResult(t, result, nil, 5)
 	}
-	evidence := streamBatchEvidence{Before: before, After: s.nodeMetrics(t), Store: backend.name, Method: "read", Records: len(reads)}
+	evidence := streamBatchEvidence{Before: before, After: s.metricsAfterStream(t, before), Store: backend.name, Method: "read", Records: len(reads)}
 	assertStreamBatchMetrics(t, evidence)
 }

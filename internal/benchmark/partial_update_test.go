@@ -52,7 +52,7 @@ func TestPartialUpdateNativeAndWeirUseIdenticalSingleDocWithoutLua(t *testing.T)
 		t.Fatal(requests, err)
 	}
 	request := requests[0]
-	if request.Lua != nil || request.BackendExpression == nil || request.BackendExpression.ContentType != "application/vnd.weir.search-update.v1+json" || request.Action != weir.MutationAtomicTransform || request.Options.Visibility != weir.MutationQueryVisible {
+	if request.Lua != nil || request.BackendExpression == nil || request.BackendExpression.ContentType != "application/vnd.weir.search-update.v1+json" || request.Action != weir.MutationAtomicTransform || !crawlerQueryVisible(config) {
 		t.Fatal("mechanism included Lua or changed completion semantics", request)
 	}
 	var payload map[string]any
