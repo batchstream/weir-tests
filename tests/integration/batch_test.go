@@ -270,7 +270,7 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	for _, result := range results {
 		assertApplied(t, result, nil)
 	}
-	evidence := streamBatchEvidence{Before: before, After: s.metricsAfterStream(t, before), Store: backend.name, Method: "mutate", Records: count}
+	evidence := streamBatchEvidence{Before: before, After: s.metricsAtRest(t), Store: backend.name, Method: "mutate", Records: count}
 	assertStreamBatchMetrics(t, evidence)
 	for index := range mutations {
 		backend.assertPersisted(t, s.ctx, fmt.Sprintf("large_distinct_%03d", index), int64(10000+index))
@@ -285,7 +285,7 @@ func (s *system) testLargeDistinctBatch(t *testing.T, backend *backendData) {
 	for index, result := range readResults {
 		backend.assertReadResult(t, result, nil, int64(10000+count-1-index))
 	}
-	evidence.Before, evidence.After, evidence.Method = before, s.metricsAfterStream(t, before), "read"
+	evidence.Before, evidence.After, evidence.Method = before, s.metricsAtRest(t), "read"
 	assertStreamBatchMetrics(t, evidence)
 	t.Log("513 distinct native documents Put and Read in aggregation groups on one streamed call; every value independently persisted and reverse-order results verified")
 }

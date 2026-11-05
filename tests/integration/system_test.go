@@ -278,10 +278,19 @@ func (s *system) quiesce(t *testing.T) {
 		t.Fatal("create SDK client:", err)
 	}
 	s.client = client
+	s.metricsAtRest(t)
+}
+
+// metricsAtRest returns the nodes' metrics once they hold no business RPC. A call
+// returns with its last result, which can reach the SDK before the server ends the
+// call's streams, and a server counts a completed RPC before it stops holding it.
+func (s *system) metricsAtRest(t *testing.T) []observe.Snapshot {
+	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for {
+		snapshots := s.nodeMetrics(t)
 		sessions := 0.0
-		for index, snapshot := range s.nodeMetrics(t) {
+		for index, snapshot := range snapshots {
 			value, found := snapshot.Sum("weir_ingress_sessions", nil)
 			if !found {
 				t.Fatalf("node %d session observation unavailable", index)
@@ -289,10 +298,10 @@ func (s *system) quiesce(t *testing.T) {
 			sessions += value
 		}
 		if sessions == 0 {
-			return
+			return snapshots
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("closed SDK left %v sessions open", sessions)
+			t.Fatalf("SDK left %v sessions open", sessions)
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
@@ -308,27 +317,6 @@ func (s *system) nodeMetrics(t *testing.T) []observe.Snapshot {
 		}
 	}
 	return snapshots
-}
-
-// metricsAfterStream returns the nodes' metrics once a server has recorded the end
-// of a stream that started after before. A call returns with its last result, which
-// can reach the SDK before the server records that its stream ended.
-func (s *system) metricsAfterStream(t *testing.T, before []observe.Snapshot) []observe.Snapshot {
-	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		after := s.nodeMetrics(t)
-		completed := 0.0
-		for index := range before {
-			left, _ := before[index].Sum("weir_rpc_completions_total", nil)
-			right, _ := after[index].Sum("weir_rpc_completions_total", nil)
-			completed += right - left
-		}
-		if completed != 0 || time.Now().After(deadline) {
-			return after
-		}
-		time.Sleep(20 * time.Millisecond)
-	}
 }
 
 type streamBatchEvidence struct {
@@ -401,6 +389,6 @@ func (s *system) testBatchSingleStream(t *testing.T, backend *backendData) {
 	for _, result := range results {
 		backend.assertReadResult(t, result, nil, 5)
 	}
-	evidence := streamBatchEvidence{Before: before, After: s.metricsAfterStream(t, before), Store: backend.name, Method: "read", Records: len(reads)}
+	evidence := streamBatchEvidence{Before: before, After: s.metricsAtRest(t), Store: backend.name, Method: "read", Records: len(reads)}
 	assertStreamBatchMetrics(t, evidence)
 }

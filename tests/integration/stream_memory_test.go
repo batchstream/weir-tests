@@ -23,7 +23,7 @@ import (
 // streamPendingRecords is Weir's fixed per-stream transport window.
 const streamPendingRecords = 32
 
-// A ReadStream uses one Execute RPC with no other business RPCs active here.
+// A streamed Read uses one Execute RPC with no other business RPCs active here.
 // The stream's transport window bounds the records it can have queued.
 func streamReservations(ctx context.Context, nodes []fixture.Node, store string) (bool, error) {
 	idle := true
@@ -188,7 +188,7 @@ func (s *system) testStreamMemory(t *testing.T, backend *backendData) {
 			t.Fatalf("large call failed: count=%d consumed=%d bytes=%d error=%v", count, consumed, bytes, err)
 		}
 		s.waitStreamIdle(t, backend.name)
-		evidence := streamBatchEvidence{Before: before, After: s.metricsAfterStream(t, before), Store: backend.name, Method: "read", Records: count}
+		evidence := streamBatchEvidence{Before: before, After: s.metricsAtRest(t), Store: backend.name, Method: "read", Records: count}
 		assertStreamBatchMetrics(t, evidence)
 		if count == 1024 {
 			shortPeak = peak
