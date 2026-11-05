@@ -12,7 +12,7 @@ fresh MongoDB database and Search index, drops them at the end unless
 ## Profiles
 
 Each worker uses the SDK in one way, its profile, and `-profiles` sets their
-shares of a backend's workers. The default exercises every call:
+shares of a backend's workers. The default runs all of them:
 
 | Profile | Writes | Reads |
 | --- | --- | --- |
