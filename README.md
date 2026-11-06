@@ -109,7 +109,7 @@ python3 -m unittest discover -s scripts -p '*_test.py'
 ```
 
 [versions.json](versions.json) pins the Weir server and database images. `go.mod`
-pins the SDK and protocol. See [CI and output](docs/ci.md) before changing a pin.
+pins the SDK and protocol. See [CI and output](docs/ci.md) for what CI runs.
 
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Security reports: [SECURITY.md](SECURITY.md)
