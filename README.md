@@ -39,7 +39,7 @@ protocol. It imports no server packages.
 
 | Item | Requirement |
 | --- | --- |
-| Go | 1.27.3 |
+| Go | 1.27.4 |
 | Operating system | Linux or macOS |
 | Python | Python 3 |
 | `make`, `jq` | Any version |
